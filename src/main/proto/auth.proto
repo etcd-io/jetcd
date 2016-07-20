@@ -1,6 +1,9 @@
 syntax = "proto3";
 
-package jetcd;
+package authpb;
+
+option java_multiple_files = true;
+option java_package = "com.coreos.jetcd.api";
 
 // User is a single entry in the bucket authUsers
 message User {
