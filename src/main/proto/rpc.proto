@@ -1,6 +1,14 @@
 syntax = "proto3";
 
+import "kv.proto";
+import "auth.proto";
+
 package jetcd;
+
+option java_multiple_files = true;
+option java_package = "com.coreos.jetcd.api";
+option java_outer_classname = "JetcdProto";
+option objc_class_prefix = "Jetcd";
 
 service KV {
   // Range gets the keys in the range from the key-value store.
