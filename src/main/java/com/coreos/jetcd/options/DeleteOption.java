@@ -3,7 +3,8 @@ package com.coreos.jetcd.options;
 import com.google.common.base.Optional;
 import com.google.protobuf.ByteString;
 
-public class DeleteOption {
+public final class DeleteOption {
+    public static final DeleteOption DEFAULT = newBuilder().build();
 
     public static Builder newBuilder() {
         return new Builder();

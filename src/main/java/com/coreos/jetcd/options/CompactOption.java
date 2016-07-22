@@ -1,6 +1,7 @@
 package com.coreos.jetcd.options;
 
-public class CompactOption {
+public final class CompactOption {
+    public static final CompactOption DEFAULT = newBuilder().build();
 
     public static Builder newBuilder() {
         return new Builder();
@@ -30,7 +31,7 @@ public class CompactOption {
     private final long revision;
     private final boolean physical;
 
-    public CompactOption(long revision, boolean physical) {
+    private CompactOption(long revision, boolean physical) {
         this.revision = revision;
         this.physical = physical;
     }
