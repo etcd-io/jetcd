@@ -26,7 +26,7 @@ public class DeleteOption {
          * @param endKey end key
          * @return builder
          */
-        public Builder withEndKey(ByteString endKey) {
+        public Builder withRange(ByteString endKey) {
             this.endKey = Optional.fromNullable(endKey);
             return this;
         }
