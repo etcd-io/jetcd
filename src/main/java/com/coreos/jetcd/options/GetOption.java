@@ -7,7 +7,9 @@ import com.google.protobuf.ByteString;
 /**
  * The option for get operation.
  */
-public class GetOption {
+public final class GetOption {
+
+    public static final GetOption DEFAULT = newBuilder().build();
 
     /**
      * Create a builder to construct option for get operation.

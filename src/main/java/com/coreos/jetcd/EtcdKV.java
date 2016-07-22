@@ -1,6 +1,10 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.*;
+import com.coreos.jetcd.api.CompactionResponse;
+import com.coreos.jetcd.api.DeleteRangeResponse;
+import com.coreos.jetcd.api.PutResponse;
+import com.coreos.jetcd.api.RangeResponse;
+import com.coreos.jetcd.api.TxnResponse;
 import com.coreos.jetcd.op.Txn;
 import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
@@ -16,9 +20,27 @@ import com.google.protobuf.ByteString;
 @Beta
 public interface EtcdKV {
 
+    // ***************
+    // Op.PUT
+    // ***************
+
+    ListenableFuture<PutResponse> put(ByteString key, ByteString value);
+
     ListenableFuture<PutResponse> put(ByteString key, ByteString value, PutOption option);
 
+    // ***************
+    // Op.GET
+    // ***************
+
+    ListenableFuture<RangeResponse> get(ByteString key);
+
     ListenableFuture<RangeResponse> get(ByteString key, GetOption option);
+
+    // ***************
+    // Op.DELETE
+    // ***************
+
+    ListenableFuture<DeleteRangeResponse> delete(ByteString key);
 
     ListenableFuture<DeleteRangeResponse> delete(ByteString key, DeleteOption option);
 
