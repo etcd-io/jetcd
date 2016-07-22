@@ -13,6 +13,11 @@ public class EtcdClient {
         this.endpoints = endpoints;
     }
 
+    /**
+     * create a new KV client.
+     *
+     * @return new KV client
+     */
     public EtcdKV newKVClient() {
         return new EtcdKVImpl(endpoints);
     }
