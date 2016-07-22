@@ -7,12 +7,32 @@
     <artifactId>jetcd</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <name>Java Client for etcd V3</name>
+    <packaging>bundle</packaging>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <jdk.version>1.7</jdk.version>
+
+        <!-- plugins -->
+        <build-helper-maven-plugin.version>1.11</build-helper-maven-plugin.version>
+        <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
+        <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
+        <maven-resources-plugin.version>3.0.1</maven-resources-plugin.version>
+        <maven-javadoc-plugin.version>2.10.4</maven-javadoc-plugin.version>
+        <maven-bundle-plugin.version>3.2.0</maven-bundle-plugin.version>
+        <depends-maven-plugin.version>1.3.1</depends-maven-plugin.version>
+        <os-maven-plugin.version>1.5.0.Final</os-maven-plugin.version>
+        <protobuf-maven-plugin.version>0.5.0</protobuf-maven-plugin.version>
+
+        <!-- dependencies -->
         <grpc.version>0.15.0</grpc.version>
-        <netty.version>4.1.1.Final</netty.version>
+
+        <!-- should be in sync with protobuf grpc dependencies -->
         <protobuf.version>3.0.0-beta-3</protobuf.version>
 
+        <!-- test dependencies -->
         <testng.version>6.9.10</testng.version>
         <mockito.version>1.10.19</mockito.version>
         <assertj.version>3.4.1</assertj.version>
@@ -65,14 +85,14 @@
             <extension>
                 <groupId>kr.motd.maven</groupId>
                 <artifactId>os-maven-plugin</artifactId>
-                <version>1.5.0.Final</version>
+                <version>${os-maven-plugin.version}</version>
             </extension>
         </extensions>
         <plugins>
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
-                <version>0.5.0</version>
+                <version>${protobuf-maven-plugin.version}</version>
                 <configuration>
                     <protocArtifact>
                         com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}
@@ -94,7 +114,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.10</version>
+                <version>${build-helper-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>test</id>
@@ -113,7 +133,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>${maven-source-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -127,18 +147,18 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>${maven-compiler-plugin.version}</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${jdk.version}</source>
+                    <target>${jdk.version}</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>2.7</version>
+                <version>${maven-resources-plugin.version}</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
                 </configuration>
@@ -146,7 +166,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.2</version>
+                <version>${maven-javadoc-plugin.version}</version>
                 <configuration>
                     <aggregate>true</aggregate>
                     <encoding>UTF-8</encoding>
@@ -161,7 +181,64 @@
                     </execution>
                 </executions>
             </plugin>
+            <!--
+                generate maven dependencies versions file that can be used later
+                to install the right bundle in test phase.
+
+                The file is:
+
+                    target/classes/META-INF/maven/dependencies.properties
+            -->
+            <plugin>
+                <groupId>org.apache.servicemix.tooling</groupId>
+                <artifactId>depends-maven-plugin</artifactId>
+                <version>${depends-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-depends-file</id>
+                        <goals>
+                            <goal>generate-depends-file</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>${maven-bundle-plugin.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>CoreOS :: ${project.artifactId}</Bundle-Name>
+                        <Export-Package>com.coreos.jetcd.*;-noimport:=true</Export-Package>
+                    </instructions>
+                </configuration>
+                <executions>
+                    <!--
+                      This execution makes sure that the manifest is available
+                      when the tests are executed
+                    -->
+                    <execution>
+                        <goals>
+                            <goal>manifest</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>disable-java8-doclint</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <additionalparam>-Xdoclint:none</additionalparam>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>
