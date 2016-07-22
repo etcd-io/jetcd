@@ -1,10 +1,8 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.DeleteRangeResponse;
-import com.coreos.jetcd.api.PutResponse;
-import com.coreos.jetcd.api.RangeResponse;
-import com.coreos.jetcd.api.TxnResponse;
+import com.coreos.jetcd.api.*;
 import com.coreos.jetcd.op.Txn;
+import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
@@ -18,25 +16,46 @@ import java.util.List;
  */
 public class EtcdKVImpl implements EtcdKV {
 
-    private final List<String> endpoints;
+    private final KVGrpc.KVFutureStub kvStub;
 
-    EtcdKVImpl(List<String> endpoints) {
-        this.endpoints = endpoints;
+    EtcdKVImpl(final KVGrpc.KVFutureStub kvStub) {
+        this.kvStub = kvStub;
     }
 
     @Override
     public ListenableFuture<PutResponse> put(ByteString key, ByteString value, PutOption option) {
-        throw new UnsupportedOperationException();
+        PutRequest request =
+            PutRequest.newBuilder()
+                .setKey(key)
+                .setLease(option.getLeaseId())
+                .build();
+        return kvStub.put(request);
     }
 
     @Override
     public ListenableFuture<RangeResponse> get(ByteString key, GetOption option) {
-        throw new UnsupportedOperationException();
+        RangeRequest request =
+            RangeRequest.newBuilder()
+                .setKey(key)
+                .setCountOnly(option.isCountOnly())
+                .setKeysOnly(option.isKeysOnly())
+                .setLimit(option.getLimit())
+                .setSerializable(option.isSerializable())
+                .setSortOrder(option.getSortOrder())
+                .setSortTarget(option.getSortField())
+                .build();
+        return kvStub.range(request);
     }
 
     @Override
     public ListenableFuture<DeleteRangeResponse> delete(ByteString key, DeleteOption option) {
-        throw new UnsupportedOperationException();
+        DeleteRangeRequest request =
+            DeleteRangeRequest.newBuilder()
+                .setKey(key)
+                .setPrevKv(option.isPrevKV())
+                .setRangeEnd(option.getEndKey().get())
+                .build();
+        return kvStub.deleteRange(request);
     }
 
     @Override
@@ -44,4 +63,13 @@ public class EtcdKVImpl implements EtcdKV {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public ListenableFuture<CompactionResponse> compact(CompactOption option) {
+        CompactionRequest request =
+            CompactionRequest.newBuilder()
+                .setRevision(option.getRevision())
+                .setPhysical(option.isPhysical())
+                .build();
+        return kvStub.compact(request);
+    }
 }

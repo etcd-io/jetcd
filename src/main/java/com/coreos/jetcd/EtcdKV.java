@@ -1,10 +1,8 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.DeleteRangeResponse;
-import com.coreos.jetcd.api.PutResponse;
-import com.coreos.jetcd.api.RangeResponse;
-import com.coreos.jetcd.api.TxnResponse;
+import com.coreos.jetcd.api.*;
 import com.coreos.jetcd.op.Txn;
+import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
@@ -32,4 +30,5 @@ public interface EtcdKV {
      */
     ListenableFuture<TxnResponse> commit(Txn txn);
 
+    ListenableFuture<CompactionResponse> compact(CompactOption option);
 }
