@@ -9,23 +9,22 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 /**
- * etcd client builder.
- *
+ * ClientBuilder knows how to create an EtcdClient instance.
  */
 public class EtcdClientBuilder {
 
     private List<String> endpoints = Lists.newArrayList();
 
-    /**
-     * create a new builder.
-     *
-     * @return new builder
-     */
+    private EtcdClientBuilder() {
+    }
+
     public static EtcdClientBuilder newBuilder() {
         return new EtcdClientBuilder();
     }
 
-    private EtcdClientBuilder() {}
+    public List<String> endpoints() {
+        return this.endpoints;
+    }
 
     /**
      * configure etcd server endpoints.
@@ -48,6 +47,7 @@ public class EtcdClientBuilder {
         return this;
     }
 
+
     /**
      * build a new EtcdClient.
      *
@@ -56,7 +56,7 @@ public class EtcdClientBuilder {
      */
     public EtcdClient build() {
         checkState(!endpoints.isEmpty(), "please configure ectd serve endpoints by method endpoints() before build.");
-        return new EtcdClient(endpoints);
+        return new EtcdClient(null, this);
     }
 
 

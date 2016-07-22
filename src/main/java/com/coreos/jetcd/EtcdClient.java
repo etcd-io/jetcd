@@ -1,25 +1,37 @@
 package com.coreos.jetcd;
 
-import java.util.List;
+import com.coreos.jetcd.api.KVGrpc;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 
 /**
  * Etcd Client
  */
 public class EtcdClient {
 
-    private final List<String> endpoints;
+    private final ManagedChannelBuilder<?> channelBuilder;
+    private final String[] endpoints;
+    private final ManagedChannel channel;
 
-    EtcdClient(List<String> endpoints) {
-        this.endpoints = endpoints;
+    private final EtcdKV kvClient;
+
+    public EtcdClient(ManagedChannelBuilder<?> channelBuilder, EtcdClientBuilder builder) {
+        this.endpoints = (String[])builder.endpoints().toArray();
+        this.channelBuilder = channelBuilder != null ? channelBuilder : ManagedChannelBuilder.forTarget("");
+        this.channelBuilder.nameResolverFactory(null);
+        this.channel = this.channelBuilder.build();
+
+        KVGrpc.KVFutureStub kvStub = KVGrpc.newFutureStub(this.channel);
+
+        this.kvClient = newKVClient(kvStub);
     }
 
-    /**
-     * create a new KV client.
-     *
-     * @return new KV client
-     */
-    public EtcdKV newKVClient() {
-        return new EtcdKVImpl(endpoints);
+        /**
+         * create a new KV client.
+         *
+         * @return new KV client
+         */
+    public EtcdKV newKVClient(KVGrpc.KVFutureStub stub) {
+        return new EtcdKVImpl(stub);
     }
-
 }
