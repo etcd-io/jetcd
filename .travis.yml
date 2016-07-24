@@ -1,5 +1,7 @@
 language: java
 sudo: false
-script: mvn clean verify
+script:
+  - scripts/run_etcd.sh 
+  - mvn clean verify
 jdk:
   - oraclejdk8
