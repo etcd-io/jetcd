@@ -22,7 +22,14 @@ public class EtcdClientBuilder {
         return new EtcdClientBuilder();
     }
 
+    /**
+     * gets the endpoints for the builder
+     *
+     * @return the list of endpoints configured for the builder
+     * @throws IllegalArgumentException if endpoints is empty
+     */
     public List<String> endpoints() {
+        checkArgument(!endpoints.isEmpty(), "please configure at lease one endpoint ");
         return this.endpoints;
     }
 
