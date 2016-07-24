@@ -4,56 +4,56 @@ import com.coreos.jetcd.api.Compare;
 import com.google.protobuf.ByteString;
 
 /**
- * Compare target used in {@link Txn}
+ * Cmp target used in {@link Txn}
  *
  * @param <T>
  */
-public abstract class CompareTarget<T> {
+public abstract class CmpTarget<T> {
 
     /**
-     * Compare on a given <i>version</i>.
+     * Cmp on a given <i>version</i>.
      *
      * @param version version to compare
      * @return the version compare target
      */
-    public static VersionCompareTarget version(long version) {
-        return new VersionCompareTarget(version);
+    public static VersionCmpTarget version(long version) {
+        return new VersionCmpTarget(version);
     }
 
     /**
-     * Compare on the create <i>revision</i>.
+     * Cmp on the create <i>revision</i>.
      *
      * @param revision the create revision
      * @return the create revision compare target
      */
-    public static CreateRevisionCompareTarget createRevision(long revision) {
-        return new CreateRevisionCompareTarget(revision);
+    public static CreateRevisionCmpTarget createRevision(long revision) {
+        return new CreateRevisionCmpTarget(revision);
     }
 
     /**
-     * Compare on the modification <i>revision</i>.
+     * Cmp on the modification <i>revision</i>.
      *
      * @param revision the modification revision
      * @return the modification revision compare target
      */
-    public static ModRevisionCompareTarget modRevision(long revision) {
-        return new ModRevisionCompareTarget(revision);
+    public static ModRevisionCmpTarget modRevision(long revision) {
+        return new ModRevisionCmpTarget(revision);
     }
 
     /**
-     * Compare on the <i>value</i>.
+     * Cmp on the <i>value</i>.
      *
      * @param value the value to compare
      * @return the value compare target
      */
-    public static ValueCompareTarget value(ByteString value) {
-        return new ValueCompareTarget(value);
+    public static ValueCmpTarget value(ByteString value) {
+        return new ValueCmpTarget(value);
     }
 
     private final Compare.CompareTarget target;
     private final T targetValue;
 
-    protected CompareTarget(Compare.CompareTarget target, T targetValue) {
+    protected CmpTarget(Compare.CompareTarget target, T targetValue) {
         this.target = target;
         this.targetValue = targetValue;
     }
@@ -76,26 +76,26 @@ public abstract class CompareTarget<T> {
         return targetValue;
     }
 
-    private static final class VersionCompareTarget extends CompareTarget<Long> {
-        VersionCompareTarget(Long targetValue) {
+    private static final class VersionCmpTarget extends CmpTarget<Long> {
+        VersionCmpTarget(Long targetValue) {
             super(Compare.CompareTarget.VERSION, targetValue);
         }
     }
 
-    private static final class CreateRevisionCompareTarget extends CompareTarget<Long> {
-        CreateRevisionCompareTarget(Long targetValue) {
+    private static final class CreateRevisionCmpTarget extends CmpTarget<Long> {
+        CreateRevisionCmpTarget(Long targetValue) {
             super(Compare.CompareTarget.CREATE, targetValue);
         }
     }
 
-    private static final class ModRevisionCompareTarget extends CompareTarget<Long> {
-        ModRevisionCompareTarget(Long targetValue) {
+    private static final class ModRevisionCmpTarget extends CmpTarget<Long> {
+        ModRevisionCmpTarget(Long targetValue) {
             super(Compare.CompareTarget.MOD, targetValue);
         }
     }
 
-    private static final class ValueCompareTarget extends CompareTarget<ByteString> {
-        ValueCompareTarget(ByteString targetValue) {
+    private static final class ValueCmpTarget extends CmpTarget<ByteString> {
+        ValueCmpTarget(ByteString targetValue) {
             super(Compare.CompareTarget.VALUE, targetValue);
         }
     }

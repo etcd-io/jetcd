@@ -16,6 +16,7 @@ public final class PutOption {
     public static class Builder {
 
         private long leaseId = 0L;
+        private boolean prevKV = false;
 
         private Builder() {}
 
@@ -31,20 +32,32 @@ public final class PutOption {
         }
 
         /**
+         * When withPrevKV is set, put response contains previous key-value pair.
+         *
+         * @return builder
+         */
+        public Builder withPrevKV() {
+            this.prevKV= true;
+            return this;
+        }
+
+        /**
          * build the put option.
          *
-         * @return the put option.
+         * @return the put option
          */
         public PutOption build() {
-            return new PutOption(leaseId);
+            return new PutOption(this.leaseId, this.prevKV);
         }
 
     }
 
     private final long leaseId;
+    private final boolean prevKV;
 
-    private PutOption(long leaseId) {
+    private PutOption(long leaseId, boolean prevKV) {
         this.leaseId = leaseId;
+        this.prevKV = prevKV;
     }
 
     /**
@@ -53,7 +66,13 @@ public final class PutOption {
      * @return the lease id
      */
     public long getLeaseId() {
-        return leaseId;
+        return this.leaseId;
     }
 
+    /**
+     * Get the previous KV.
+     *
+     * @return the prevKV
+     */
+    public boolean getPrevKV() { return this.prevKV; }
 }
