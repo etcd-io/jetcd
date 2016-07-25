@@ -1,9 +1,11 @@
 package com.coreos.jetcd.op;
 
+import com.coreos.jetcd.api.Compare;
+import com.coreos.jetcd.api.TxnRequest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.protobuf.ByteString;
 
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -19,14 +21,14 @@ public class Txn {
 
     public static class Builder {
 
-        private List<Compare> compareList = (List<Compare>) EMPTY_LIST;
+        private List<Cmp> cmpList = (List<Cmp>) EMPTY_LIST;
         private List<Op> successOpList = (List<Op>) EMPTY_LIST;
         private List<Op> failureOpList = (List<Op>) EMPTY_LIST;
 
         private Builder() {}
 
-        public Builder If(Compare... compares) {
-            compareList = Lists.newArrayList(compares);
+        public Builder If(Cmp... cmps) {
+            cmpList = Lists.newArrayList(cmps);
             return this;
         }
 
@@ -41,19 +43,37 @@ public class Txn {
         }
 
         public Txn build() {
-            return new Txn(compareList, successOpList, failureOpList);
+            return new Txn(cmpList, successOpList, failureOpList);
         }
 
     }
 
-    private final List<Compare> compareList;
+    private final List<Cmp> cmpList;
     private final List<Op> successOpList;
     private final List<Op> failureOpList;
 
-    private Txn(List<Compare> compareList,
+    public TxnRequest toTxnRequest() {
+        TxnRequest.Builder requestBuilder = TxnRequest.newBuilder();
+
+        for (Cmp c : this.cmpList) {
+            requestBuilder.addCompare(c.toCompare());
+        }
+
+        for (Op o : this.successOpList) {
+            requestBuilder.addSuccess(o.toRequestOp());
+        }
+
+        for (Op o : this.failureOpList) {
+            requestBuilder.addFailure(o.toRequestOp());
+        }
+
+        return requestBuilder.build();
+    }
+
+    private Txn(List<Cmp> cmpList,
                 List<Op> successOpList,
                 List<Op> failureOpList) {
-        this.compareList = compareList;
+        this.cmpList = cmpList;
         this.successOpList = successOpList;
         this.failureOpList = failureOpList;
     }

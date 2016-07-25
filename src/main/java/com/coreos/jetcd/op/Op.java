@@ -1,5 +1,9 @@
 package com.coreos.jetcd.op;
 
+import com.coreos.jetcd.api.DeleteRangeRequest;
+import com.coreos.jetcd.api.PutRequest;
+import com.coreos.jetcd.api.RangeRequest;
+import com.coreos.jetcd.api.RequestOp;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
@@ -39,13 +43,7 @@ public abstract class Op {
         this.key = key;
     }
 
-    public Type getType() {
-        return this.type;
-    }
-
-    public ByteString getKey() {
-        return this.key;
-    }
+    abstract RequestOp toRequestOp();
 
     public static final class PutOp extends Op {
 
@@ -58,12 +56,15 @@ public abstract class Op {
             this.option = option;
         }
 
-        public ByteString getValue() {
-            return value;
-        }
+        RequestOp toRequestOp() {
+            PutRequest put = PutRequest.newBuilder()
+                    .setKey(this.key)
+                    .setValue(this.value)
+                    .setLease(this.option.getLeaseId())
+                    .setPrevKv(this.option.getPrevKV())
+                    .build();
 
-        public PutOption getOption() {
-            return option;
+            return RequestOp.newBuilder().setRequestPut(put).build();
         }
     }
 
@@ -76,8 +77,20 @@ public abstract class Op {
             this.option = option;
         }
 
-        public GetOption getOption() {
-            return this.option;
+        RequestOp toRequestOp() {
+            RangeRequest.Builder range = RangeRequest.newBuilder()
+                    .setKey(this.key)
+                    .setCountOnly(this.option.isCountOnly())
+                    .setLimit(this.option.getLimit())
+                    .setRevision(this.option.getRevision())
+                    .setKeysOnly(this.option.isKeysOnly())
+                    .setSerializable(this.option.isSerializable())
+                    .setSortOrder(this.option.getSortOrder())
+                    .setSortTarget(this.option.getSortField());
+            if (this.option.getEndKey().isPresent()) {
+                range.setRangeEnd(this.option.getEndKey().get());
+            }
+            return RequestOp.newBuilder().setRequestRange(range).build();
         }
     }
 
@@ -90,8 +103,14 @@ public abstract class Op {
             this.option = option;
         }
 
-        public DeleteOption getOption() {
-            return this.option;
+        RequestOp toRequestOp() {
+            DeleteRangeRequest.Builder delete = DeleteRangeRequest.newBuilder()
+                    .setKey(this.key)
+                    .setPrevKv(this.option.isPrevKV());
+            if (this.option.getEndKey().isPresent()) {
+                delete.setRangeEnd(this.option.getEndKey().get());
+            }
+            return RequestOp.newBuilder().setRequestDeleteRange(delete).build();
         }
     }
 

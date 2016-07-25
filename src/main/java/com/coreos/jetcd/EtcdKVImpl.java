@@ -1,15 +1,6 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.CompactionRequest;
-import com.coreos.jetcd.api.CompactionResponse;
-import com.coreos.jetcd.api.DeleteRangeRequest;
-import com.coreos.jetcd.api.DeleteRangeResponse;
-import com.coreos.jetcd.api.KVGrpc;
-import com.coreos.jetcd.api.PutRequest;
-import com.coreos.jetcd.api.PutResponse;
-import com.coreos.jetcd.api.RangeRequest;
-import com.coreos.jetcd.api.RangeResponse;
-import com.coreos.jetcd.api.TxnResponse;
+import com.coreos.jetcd.api.*;
 import com.coreos.jetcd.op.Txn;
 import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
@@ -96,7 +87,7 @@ class EtcdKVImpl implements EtcdKV {
 
     @Override
     public ListenableFuture<TxnResponse> commit(Txn txn) {
-        throw new UnsupportedOperationException();
+        return kvStub.txn(txn.toTxnRequest());
     }
 
     @Override
