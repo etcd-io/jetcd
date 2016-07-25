@@ -4,6 +4,7 @@ package com.coreos.jetcd.options;
  * The options for put operation.
  */
 public final class PutOption {
+
     public static final PutOption DEFAULT = newBuilder().build();
 
     public static Builder newBuilder() {

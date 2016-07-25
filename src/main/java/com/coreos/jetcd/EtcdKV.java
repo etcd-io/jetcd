@@ -44,13 +44,18 @@ public interface EtcdKV {
 
     ListenableFuture<DeleteRangeResponse> delete(ByteString key, DeleteOption option);
 
+    // ***************
+    // Op.COMPACT
+    // ***************
+
+    ListenableFuture<CompactionResponse> compact();
+
+    ListenableFuture<CompactionResponse> compact(CompactOption option);
+
     /**
      * Commit a transaction built from {@link com.coreos.jetcd.op.Txn.Builder}.
      *
      * @param txn txn to commit
-     * @return
      */
     ListenableFuture<TxnResponse> commit(Txn txn);
-
-    ListenableFuture<CompactionResponse> compact(CompactOption option);
 }

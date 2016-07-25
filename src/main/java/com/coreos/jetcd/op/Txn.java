@@ -1,10 +1,8 @@
 package com.coreos.jetcd.op;
 
-import com.coreos.jetcd.api.Compare;
 import com.coreos.jetcd.api.TxnRequest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.protobuf.ByteString;
 
 import java.util.List;
 
@@ -45,7 +43,6 @@ public class Txn {
         public Txn build() {
             return new Txn(cmpList, successOpList, failureOpList);
         }
-
     }
 
     private final List<Cmp> cmpList;
@@ -71,11 +68,10 @@ public class Txn {
     }
 
     private Txn(List<Cmp> cmpList,
-                List<Op> successOpList,
-                List<Op> failureOpList) {
+            List<Op> successOpList,
+            List<Op> failureOpList) {
         this.cmpList = cmpList;
         this.successOpList = successOpList;
         this.failureOpList = failureOpList;
     }
-
 }

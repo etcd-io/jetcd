@@ -1,6 +1,7 @@
 package com.coreos.jetcd;
 
 import com.coreos.jetcd.api.*;
+import com.coreos.jetcd.op.Op;
 import com.coreos.jetcd.op.Txn;
 import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
@@ -21,7 +22,6 @@ class EtcdKVImpl implements EtcdKV {
         this.kvStub = kvStub;
     }
 
-
     // ***************
     // Op.PUT
     // ***************
@@ -36,7 +36,9 @@ class EtcdKVImpl implements EtcdKV {
         PutRequest request =
             PutRequest.newBuilder()
                 .setKey(key)
+                .setValue(value)
                 .setLease(option.getLeaseId())
+                .setPrevKv(option.getPrevKV())
                 .build();
         return kvStub.put(request);
     }
@@ -52,17 +54,19 @@ class EtcdKVImpl implements EtcdKV {
 
     @Override
     public ListenableFuture<RangeResponse> get(ByteString key, GetOption option) {
-        RangeRequest request =
-            RangeRequest.newBuilder()
+        RangeRequest.Builder builder = RangeRequest.newBuilder()
                 .setKey(key)
                 .setCountOnly(option.isCountOnly())
-                .setKeysOnly(option.isKeysOnly())
                 .setLimit(option.getLimit())
+                .setRevision(option.getRevision())
+                .setKeysOnly(option.isKeysOnly())
                 .setSerializable(option.isSerializable())
                 .setSortOrder(option.getSortOrder())
-                .setSortTarget(option.getSortField())
-                .build();
-        return kvStub.range(request);
+                .setSortTarget(option.getSortField());
+        if (option.getEndKey().isPresent()) {
+            builder.setRangeEnd(option.getEndKey().get());
+        }
+        return kvStub.range(builder.build());
     }
 
     // ***************
@@ -76,27 +80,32 @@ class EtcdKVImpl implements EtcdKV {
 
     @Override
     public ListenableFuture<DeleteRangeResponse> delete(ByteString key, DeleteOption option) {
-        DeleteRangeRequest request =
-            DeleteRangeRequest.newBuilder()
+        DeleteRangeRequest.Builder builder = DeleteRangeRequest.newBuilder()
                 .setKey(key)
-                .setPrevKv(option.isPrevKV())
-                .setRangeEnd(option.getEndKey().get())
-                .build();
-        return kvStub.deleteRange(request);
+                .setPrevKv(option.isPrevKV());
+        if (option.getEndKey().isPresent()) {
+            builder.setRangeEnd(option.getEndKey().get());
+        }
+        return kvStub.deleteRange(builder.build());
     }
 
     @Override
-    public ListenableFuture<TxnResponse> commit(Txn txn) {
-        return kvStub.txn(txn.toTxnRequest());
+    public ListenableFuture<CompactionResponse> compact() {
+        return compact(CompactOption.DEFAULT);
     }
 
     @Override
     public ListenableFuture<CompactionResponse> compact(CompactOption option) {
         CompactionRequest request =
-            CompactionRequest.newBuilder()
-                .setRevision(option.getRevision())
-                .setPhysical(option.isPhysical())
-                .build();
+                CompactionRequest.newBuilder()
+                        .setRevision(option.getRevision())
+                        .setPhysical(option.isPhysical())
+                        .build();
         return kvStub.compact(request);
+    }
+
+    @Override
+    public ListenableFuture<TxnResponse> commit(Txn txn) {
+        return kvStub.txn(txn.toTxnRequest());
     }
 }
