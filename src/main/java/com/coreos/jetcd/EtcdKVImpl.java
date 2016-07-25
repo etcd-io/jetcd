@@ -75,7 +75,7 @@ class EtcdKVImpl implements EtcdKV {
     }
 
     // ***************
-    // Op.DEETE
+    // Op.DELETE
     // ***************
 
     @Override
