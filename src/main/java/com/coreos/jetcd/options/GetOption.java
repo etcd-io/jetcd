@@ -82,7 +82,7 @@ public final class GetOption {
         /**
          * Set the get request to be a serializable get request.
          * <p>Get requests are linearizable by default. For better performance, a serializable get request
-         * is served locally withut needing to reach consensus with other nodes in the cluster.
+         * is served locally without needing to reach consensus with other nodes in the cluster.
          *
          * @param serializable is the get request a serializable get request.
          * @return builder
@@ -206,5 +206,4 @@ public final class GetOption {
     public boolean isCountOnly() {
         return countOnly;
     }
-
 }

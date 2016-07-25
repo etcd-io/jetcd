@@ -14,18 +14,6 @@ import com.google.protobuf.ByteString;
  */
 public abstract class Op {
 
-    public static PutOp put(ByteString key, ByteString value, PutOption option) {
-        return new PutOp(key, value, option);
-    }
-
-    public static GetOp get(ByteString key, GetOption option) {
-        return new GetOp(key, option);
-    }
-
-    public static DeleteOp delete(ByteString key, DeleteOption option) {
-        return new DeleteOp(key, option);
-    }
-
     /**
      * Operation type.
      */
@@ -44,6 +32,18 @@ public abstract class Op {
     }
 
     abstract RequestOp toRequestOp();
+
+    public static PutOp put(ByteString key, ByteString value, PutOption option) {
+        return new PutOp(key, value, option);
+    }
+
+    public static GetOp get(ByteString key, GetOption option) {
+        return new GetOp(key, option);
+    }
+
+    public static DeleteOp delete(ByteString key, DeleteOption option) {
+        return new DeleteOp(key, option);
+    }
 
     public static final class PutOp extends Op {
 
@@ -113,5 +113,4 @@ public abstract class Op {
             return RequestOp.newBuilder().setRequestDeleteRange(delete).build();
         }
     }
-
 }

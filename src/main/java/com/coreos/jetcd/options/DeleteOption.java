@@ -4,6 +4,7 @@ import com.google.common.base.Optional;
 import com.google.protobuf.ByteString;
 
 public final class DeleteOption {
+
     public static final DeleteOption DEFAULT = newBuilder().build();
 
     public static Builder newBuilder() {
@@ -70,5 +71,4 @@ public final class DeleteOption {
     public boolean isPrevKV() {
         return prevKV;
     }
-
 }
