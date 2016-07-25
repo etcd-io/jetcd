@@ -12,11 +12,6 @@ public class EtcdClientBuilderTest {
         builder = EtcdClientBuilder.newBuilder();
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testEndPoints_NoEndPoint() {
-        builder.endpoints();
-    }
-
     @Test(expectedExceptions = NullPointerException.class)
     public void testEndPoints_Null() {
         builder.endpoints(null);

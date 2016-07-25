@@ -29,7 +29,6 @@ public class EtcdClientBuilder {
      * @throws IllegalArgumentException if endpoints is empty
      */
     public List<String> endpoints() {
-        checkArgument(!endpoints.isEmpty(), "please configure at lease one endpoint ");
         return this.endpoints;
     }
 
@@ -65,7 +64,4 @@ public class EtcdClientBuilder {
         checkState(!endpoints.isEmpty(), "please configure ectd serve endpoints by method endpoints() before build.");
         return new EtcdClient(null, this);
     }
-
-
-
 }

@@ -17,8 +17,7 @@ public class EtcdClient {
 
     public EtcdClient(ManagedChannelBuilder<?> channelBuilder, EtcdClientBuilder builder) {
         this.endpoints = (String[])builder.endpoints().toArray();
-        this.channelBuilder = channelBuilder != null ? channelBuilder : ManagedChannelBuilder.forTarget("");
-        this.channelBuilder.nameResolverFactory(null);
+        this.channelBuilder = channelBuilder != null ? channelBuilder : ManagedChannelBuilder.forAddress("localhost", 2379);
         this.channel = this.channelBuilder.build();
 
         KVGrpc.KVFutureStub kvStub = KVGrpc.newFutureStub(this.channel);
