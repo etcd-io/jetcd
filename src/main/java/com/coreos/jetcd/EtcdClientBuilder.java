@@ -44,6 +44,7 @@ public class EtcdClientBuilder {
         checkNotNull(endpoints, "endpoints can't be null");
         checkArgument(endpoints.length > 0, "please configure at lease one endpoint ");
 
+        // TODO: check endpoint is in host:port format
         for(String endpoint : endpoints) {
             checkNotNull(endpoint, "endpoint can't be null");
             final String trimmedEndpoint = endpoint.trim();
