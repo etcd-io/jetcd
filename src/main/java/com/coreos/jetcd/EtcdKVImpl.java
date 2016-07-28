@@ -7,8 +7,12 @@ import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
+
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 /**
@@ -33,8 +37,11 @@ class EtcdKVImpl implements EtcdKV {
 
     @Override
     public ListenableFuture<PutResponse> put(ByteString key, ByteString value, PutOption option) {
-        PutRequest request =
-            PutRequest.newBuilder()
+        checkNotNull(key, "key should not be null");
+        checkNotNull(value, "value should not be null");
+        checkNotNull(option, "option should not be null");
+
+        PutRequest request = PutRequest.newBuilder()
                 .setKey(key)
                 .setValue(value)
                 .setLease(option.getLeaseId())
@@ -54,6 +61,9 @@ class EtcdKVImpl implements EtcdKV {
 
     @Override
     public ListenableFuture<RangeResponse> get(ByteString key, GetOption option) {
+        checkNotNull(key, "key should not be null");
+        checkNotNull(option, "option should not be null");
+
         RangeRequest.Builder builder = RangeRequest.newBuilder()
                 .setKey(key)
                 .setCountOnly(option.isCountOnly())
@@ -80,6 +90,9 @@ class EtcdKVImpl implements EtcdKV {
 
     @Override
     public ListenableFuture<DeleteRangeResponse> delete(ByteString key, DeleteOption option) {
+        checkNotNull(key, "key should not be null");
+        checkNotNull(option, "option should not be null");
+
         DeleteRangeRequest.Builder builder = DeleteRangeRequest.newBuilder()
                 .setKey(key)
                 .setPrevKv(option.isPrevKV());
@@ -96,6 +109,8 @@ class EtcdKVImpl implements EtcdKV {
 
     @Override
     public ListenableFuture<CompactionResponse> compact(CompactOption option) {
+        checkNotNull(option, "option should not be null");
+
         CompactionRequest request =
                 CompactionRequest.newBuilder()
                         .setRevision(option.getRevision())
@@ -106,6 +121,7 @@ class EtcdKVImpl implements EtcdKV {
 
     @Override
     public ListenableFuture<TxnResponse> commit(Txn txn) {
+        checkNotNull(txn, "txn should not be null");
         return kvStub.txn(txn.toTxnRequest());
     }
 }

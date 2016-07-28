@@ -1,5 +1,7 @@
 package com.coreos.jetcd.options;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 /**
  * The options for put operation.
  */
@@ -26,8 +28,10 @@ public final class PutOption {
          *
          * @param leaseId lease id to apply to a put operation
          * @return builder
+         * @throws IllegalArgumentException if lease is less than zero.
          */
         public Builder withLeaseId(long leaseId) {
+            checkArgument(leaseId >= 0, "leaseId should greater than or equal to zero: leaseId=%s", leaseId);
             this.leaseId = leaseId;
             return this;
         }
