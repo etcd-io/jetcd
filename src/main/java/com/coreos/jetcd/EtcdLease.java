@@ -30,7 +30,8 @@ public interface EtcdLease {
 
     /**
      * keep alive one lease in background
-     * @param leaseId  id of lease to set handler
+     *
+     * @param leaseId          id of lease to set handler
      * @param etcdLeaseHandler the handler for the lease, this value can be null
      */
     void keepAlive(long leaseId, EtcdLeaseHandler etcdLeaseHandler);
@@ -45,7 +46,8 @@ public interface EtcdLease {
 
     /**
      * set EtcdLeaseHandler for lease
-     * @param leaseId id of the lease to set handler
+     *
+     * @param leaseId          id of the lease to set handler
      * @param etcdLeaseHandler the handler for the lease
      * @throws InvalidParameterException if lease do not exist
      */
@@ -61,6 +63,7 @@ public interface EtcdLease {
 
     /**
      * end the schedule for keep alive and remove dead leases
+     *
      * @throws IllegalStateException if the service is not running yet
      */
     void closeKeepAliveService() throws IllegalStateException;

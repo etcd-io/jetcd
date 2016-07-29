@@ -4,7 +4,7 @@ The EtcdLease interface provides methods to grant, revoke, and keepalive leases.
 
 ## grant function
 
-1. The function build leaseGrantRequest with ttl value.
+1. The function build leaseGrantRequest with ttl value (unit seconds).
 2. It call respond gRPC interface with leaseGrantRequest to build a new lease in etcd.
 
 ## revoke function
@@ -20,17 +20,17 @@ The EtcdLease interface provides methods to grant, revoke, and keepalive leases.
 
 ## closeKeepAliveService function
 
-1. This function will end the backgroud scheduler.
+1. This function will end the background scheduler.
 2. It will close the StreamObserver to etcd.
 
 ## setEtcdLeaseHandler function
 
-1. This function set EtcdLeaseHandler for etcd lease client.
+1. This function set EtcdLeaseHandler for the lease.
 2. The EtcdLeaseHandler interface:
      * onKeepAliveRespond
-         - It will be called when lease client receive response from etcd.
+         - It will be called when the lease receive response from etcd.
      * onLeaseExpired
-         - It will be called when any lease expire and removed from etcd.
+         - It will be called when the lease expire and removed from etcd.
      * onError
          - It will be called when some exception occurred.
 
@@ -38,7 +38,8 @@ The EtcdLease interface provides methods to grant, revoke, and keepalive leases.
 
 1. It will create a Lease Object, and keep the lease alive.
 2. It will add the created lease object to the keepAlives map.
-3. The background scheduler will send keep alive requests for the added lease when it approaches to the nextKeepAliveTime.
+3. It will set handler for the lease.
+4. The background scheduler will send keep alive requests for the added lease when it approaches to the nextKeepAliveTime.
 
 ## keepAliveExecutor function
 
