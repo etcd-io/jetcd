@@ -1,16 +1,23 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.*;
-import com.coreos.jetcd.op.Op;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.ByteString;
+
+import com.coreos.jetcd.api.CompactionRequest;
+import com.coreos.jetcd.api.CompactionResponse;
+import com.coreos.jetcd.api.DeleteRangeRequest;
+import com.coreos.jetcd.api.DeleteRangeResponse;
+import com.coreos.jetcd.api.KVGrpc;
+import com.coreos.jetcd.api.PutRequest;
+import com.coreos.jetcd.api.PutResponse;
+import com.coreos.jetcd.api.RangeRequest;
+import com.coreos.jetcd.api.RangeResponse;
+import com.coreos.jetcd.api.TxnResponse;
 import com.coreos.jetcd.op.Txn;
 import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
-
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ByteString;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

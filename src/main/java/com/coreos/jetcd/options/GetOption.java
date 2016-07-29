@@ -1,8 +1,9 @@
 package com.coreos.jetcd.options;
 
 import com.coreos.jetcd.api.RangeRequest;
-import com.google.common.base.Optional;
 import com.google.protobuf.ByteString;
+
+import java.util.Optional;
 
 /**
  * The option for get operation.
@@ -29,7 +30,7 @@ public final class GetOption {
         private boolean serializable = false;
         private boolean keysOnly = false;
         private boolean countOnly = false;
-        private Optional<ByteString> endKey = Optional.absent();
+        private Optional<ByteString> endKey = Optional.empty();
 
         private Builder() {}
 
@@ -125,7 +126,7 @@ public final class GetOption {
          * @return builder
          */
         public Builder withRange(ByteString endKey) {
-            this.endKey = Optional.fromNullable(endKey);
+            this.endKey = Optional.ofNullable(endKey);
             return this;
         }
 
