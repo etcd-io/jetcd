@@ -3,9 +3,8 @@ package com.coreos.jetcd;
 import com.coreos.jetcd.api.LeaseGrantResponse;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 import com.coreos.jetcd.api.LeaseRevokeResponse;
+import com.coreos.jetcd.lease.NoSuchLeaseException;
 import com.google.common.util.concurrent.ListenableFuture;
-
-import java.security.InvalidParameterException;
 
 /**
  * Interface of Lease talking to etcd
@@ -49,9 +48,9 @@ public interface EtcdLease {
      *
      * @param leaseId          id of the lease to set handler
      * @param etcdLeaseHandler the handler for the lease
-     * @throws InvalidParameterException if lease do not exist
+     * @throws NoSuchLeaseException if lease do not exist
      */
-    void setEtcdLeaseHandler(long leaseId, EtcdLeaseHandler etcdLeaseHandler) throws InvalidParameterException;
+    void setEtcdLeaseHandler(long leaseId, EtcdLeaseHandler etcdLeaseHandler) throws NoSuchLeaseException;
 
     /**
      * Init the request stream to etcd
