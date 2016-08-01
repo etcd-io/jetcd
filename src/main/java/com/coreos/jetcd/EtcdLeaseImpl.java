@@ -2,11 +2,11 @@ package com.coreos.jetcd;
 
 import com.coreos.jetcd.api.*;
 import com.coreos.jetcd.lease.Lease;
+import com.coreos.jetcd.lease.NoSuchLeaseException;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -171,20 +171,20 @@ public class EtcdLeaseImpl implements EtcdLease {
         throw new UnsupportedOperationException();
     }
 
-     /**
+    /**
      * set EtcdLeaseHandler for lease
      *
      * @param leaseId          id of the lease to set handler
      * @param etcdLeaseHandler the handler for the lease
-     * @throws InvalidParameterException if lease do not exist
+     * @throws NoSuchLeaseException if lease do not exist
      */
     @Override
-    public void setEtcdLeaseHandler(long leaseId, EtcdLeaseHandler etcdLeaseHandler) {
+    public void setEtcdLeaseHandler(long leaseId, EtcdLeaseHandler etcdLeaseHandler) throws NoSuchLeaseException {
         Lease lease = keepAlives.get(leaseId);
         if(lease!=null){
             lease.setEtcdLeaseHandler(etcdLeaseHandler);
         }else{
-            throw new InvalidParameterException("There is no lease: " + lease.getLeaseID());
+            throw new NoSuchLeaseException(leaseId);
         }
     }
 
@@ -272,6 +272,15 @@ public class EtcdLeaseImpl implements EtcdLease {
         keepAliveRequestStreamObserver = leaseStub.leaseKeepAlive(leaseKeepAliveResponseStreamObserver);
     }
 
+    /**
+     * It hints the status of the keep alive service
+     *
+     * @return whether the keep alive service is running.
+     */
+    @Override
+    public boolean isKeepAliveServiceRunning() {
+        return scheduledFuture!=null&&!scheduledFuture.isCancelled();
+    }
 
     /**
      * end the background heartbeat service for keep alive
