@@ -1,60 +1,33 @@
 package com.coreos.jetcd.resolver;
 
-import com.google.common.base.Preconditions;
 import io.grpc.Attributes;
-import io.grpc.NameResolver;
 import io.grpc.ResolvedServerInfo;
+import io.grpc.internal.SharedResourceHolder.Resource;
 
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.GuardedBy;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * SimpleEtcdNameResolver returns pre-configured addresses to the caller.
  */
-public class SimpleEtcdNameResolver extends NameResolver {
+public class SimpleEtcdNameResolver extends AbstractEtcdNameResolver {
 
-    private final String authority;
     private final URI[] uris;
 
-    @GuardedBy("this")
-    private boolean shutdown;
-    @GuardedBy("this")
-    private Listener listener;
-
-    public SimpleEtcdNameResolver(@Nullable String nsAuthority, String name, final URI... uris) {
-        URI nameUri = URI.create("//" + name);
-        authority = Preconditions.checkNotNull(nameUri.getAuthority(),
-                "nameUri (%s) doesn't have an authority", nameUri);
+    public SimpleEtcdNameResolver(String name, Resource<ExecutorService> executorResource, final URI... uris) {
+        super(name, executorResource);
         this.uris = uris;
     }
 
     @Override
-    public final String getServiceAuthority() {
-        return authority;
-    }
-
-    @Override
-    public final synchronized void start(Listener listener) {
-        Preconditions.checkState(this.listener == null, "already started");
-        this.listener = Preconditions.checkNotNull(listener, "listener");
-        List<ResolvedServerInfo> servers = new ArrayList<>(this.uris.length);
-        for (URI uri : this.uris) {
+    protected List<ResolvedServerInfo> getServers() {
+        List<ResolvedServerInfo> servers = new ArrayList<>(uris.length);
+        for (URI uri : uris) {
             servers.add(new ResolvedServerInfo(new InetSocketAddress(uri.getHost(), uri.getPort()), Attributes.EMPTY));
         }
-        this.listener.onUpdate(
-                Collections.singletonList(servers), Attributes.EMPTY);
-    }
-
-    @Override
-    public final synchronized void shutdown() {
-        if (shutdown) {
-            return;
-        }
-        shutdown = true;
+        return servers;
     }
 }

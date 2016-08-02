@@ -3,6 +3,7 @@ package com.coreos.jetcd.resolver;
 import com.google.common.base.Preconditions;
 import io.grpc.Attributes;
 import io.grpc.NameResolver;
+import io.grpc.internal.GrpcUtil;
 
 import javax.annotation.Nullable;
 import java.net.URI;
@@ -29,7 +30,7 @@ public class SimpleEtcdNameResolverFactory extends AbstractEtcdNameResolverFacto
             Preconditions.checkArgument(targetPath.startsWith("/"),
                     "the path component (%s) of the target (%s) must start with '/'", targetPath, targetUri);
             String name = targetPath.substring(1);
-            return new SimpleEtcdNameResolver(targetUri.getAuthority(), name, this.uris);
+            return new SimpleEtcdNameResolver(name, GrpcUtil.SHARED_CHANNEL_EXECUTOR, this.uris);
         } else {
             return null;
         }
