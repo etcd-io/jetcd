@@ -35,7 +35,7 @@ public abstract class AbstractEtcdNameResolver extends NameResolver {
         this.executorResource = executorResource;
         URI nameUri = URI.create("//" + name);
         authority = Preconditions.checkNotNull(nameUri.getAuthority(),
-                "nameUri (%s) doesn't have an authority", nameUri);
+            "nameUri (%s) doesn't have an authority", nameUri);
     }
 
     @Override
@@ -69,7 +69,7 @@ public abstract class AbstractEtcdNameResolver extends NameResolver {
         try {
             List<ResolvedServerInfo> servers = getServers();
             savedListener.onUpdate(
-                    Collections.singletonList(servers), Attributes.EMPTY);
+                Collections.singletonList(servers), Attributes.EMPTY);
         } finally {
             synchronized (AbstractEtcdNameResolver.this) {
                 resolving = false;
