@@ -68,6 +68,12 @@ public interface EtcdLease {
     void closeKeepAliveService() throws IllegalStateException;
 
     /**
+     * It hints the state of the keep alive service.
+     * @return whether the keep alive service is running.
+     */
+    boolean isKeepAliveServiceRunning();
+
+    /**
      * This interface is called by Etcd Lease client to notify user about lease expiration and exception
      */
     interface EtcdLeaseHandler {
