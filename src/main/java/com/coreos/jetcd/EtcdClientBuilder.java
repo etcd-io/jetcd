@@ -1,12 +1,13 @@
 package com.coreos.jetcd;
 
+import com.coreos.jetcd.exception.AuthFailedException;
+import com.coreos.jetcd.exception.ConnectException;
 import com.google.common.collect.Lists;
+import com.google.protobuf.ByteString;
 
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.*;
 
 /**
  * ClientBuilder knows how to create an EtcdClient instance.
@@ -14,6 +15,8 @@ import static com.google.common.base.Preconditions.checkState;
 public class EtcdClientBuilder {
 
     private List<String> endpoints = Lists.newArrayList();
+    private ByteString name;
+    private ByteString password;
 
     private EtcdClientBuilder() {
     }
@@ -37,15 +40,15 @@ public class EtcdClientBuilder {
      *
      * @param endpoints etcd server endpoints, at least one
      * @return this builder to train
-     * @throws NullPointerException if endpoints is null or one of endpoint is null
+     * @throws NullPointerException     if endpoints is null or one of endpoint is null
      * @throws IllegalArgumentException if endpoints is empty or some endpoint is invalid
      */
-    public EtcdClientBuilder endpoints(String ... endpoints) {
+    public EtcdClientBuilder endpoints(String... endpoints) {
         checkNotNull(endpoints, "endpoints can't be null");
         checkArgument(endpoints.length > 0, "please configure at lease one endpoint ");
 
         // TODO: check endpoint is in host:port format
-        for(String endpoint : endpoints) {
+        for (String endpoint : endpoints) {
             checkNotNull(endpoint, "endpoint can't be null");
             final String trimmedEndpoint = endpoint.trim();
             checkArgument(trimmedEndpoint.length() > 0, "invalid endpoint: endpoint=" + endpoint);
@@ -54,14 +57,48 @@ public class EtcdClientBuilder {
         return this;
     }
 
+    public ByteString getName() {
+        return name;
+    }
+
+    /**
+     * config etcd auth name
+     *
+     * @param name etcd auth name
+     * @return this builder
+     * @throws NullPointerException if name is null
+     */
+    public EtcdClientBuilder setName(ByteString name) {
+        checkNotNull(name, "name can't be null");
+        this.name = name;
+        return this;
+    }
+
+    public ByteString getPassword() {
+        return password;
+    }
+
+    /**
+     * config etcd auth password
+     *
+     * @param password etcd auth password
+     * @return this builder
+     * @throws NullPointerException if password is null
+     */
+    public EtcdClientBuilder setPassword(ByteString password) {
+        checkNotNull(name, "password can't be null");
+        this.password = password;
+        return this;
+    }
 
     /**
      * build a new EtcdClient.
      *
-     * @throws IllegalStateException if etcd serve endpoints are not set
      * @return EtcdClient instance.
+     * @throws ConnectException    As network reason, wrong address
+     * @throws AuthFailedException This may be caused as wrong username or password
      */
-    public EtcdClient build() {
+    public EtcdClient build() throws ConnectException, AuthFailedException {
         checkState(!endpoints.isEmpty(), "please configure ectd serve endpoints by method endpoints() before build.");
         return new EtcdClient(null, this);
     }
