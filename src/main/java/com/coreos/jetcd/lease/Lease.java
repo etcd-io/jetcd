@@ -8,15 +8,15 @@ import com.coreos.jetcd.api.LeaseGrantResponse;
  */
 public class Lease {
 
-    private final long leaseID;
+    private final long                 leaseID;
 
-    private long ttl;
+    private long                       ttl;
 
-    private LeaseGrantResponse leaseGrantResponse;
+    private LeaseGrantResponse         leaseGrantResponse;
 
-    private long deadLine;
+    private long                       deadLine;
 
-    private long nextKeepAlive;
+    private long                       nextKeepAlive;
 
     private EtcdLease.EtcdLeaseHandler etcdLeaseHandler;
 
@@ -51,8 +51,8 @@ public class Lease {
         return this;
     }
 
-    public boolean isContainHandler(){
-        return etcdLeaseHandler!=null;
+    public boolean isContainHandler() {
+        return etcdLeaseHandler != null;
     }
 
     public EtcdLease.EtcdLeaseHandler getEtcdLeaseHandler() {

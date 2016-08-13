@@ -1,40 +1,41 @@
 package com.coreos.jetcd;
 
+import java.nio.charset.Charset;
+import java.util.concurrent.ExecutionException;
+
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+import org.testng.asserts.Assertion;
+
 import com.coreos.jetcd.api.AuthRoleGetResponse;
 import com.coreos.jetcd.api.Permission;
 import com.coreos.jetcd.api.RangeResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.google.protobuf.ByteString;
-import io.grpc.StatusRuntimeException;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
 
-import java.nio.charset.Charset;
-import java.util.concurrent.ExecutionException;
+import io.grpc.StatusRuntimeException;
 
 /**
  * test etcd auth
  */
 public class EtcdAuthClientTest {
 
-    private EtcdAuth authClient;
-    private EtcdKV kvClient;
+    private EtcdAuth   authClient;
+    private EtcdKV     kvClient;
 
-
-    private ByteString roleName = ByteString.copyFromUtf8("root");
+    private ByteString roleName      = ByteString.copyFromUtf8("root");
 
     private ByteString keyRangeBegin = ByteString.copyFromUtf8("foo");
-    private ByteString keyRangeEnd = ByteString.copyFromUtf8("zoo");
+    private ByteString keyRangeEnd   = ByteString.copyFromUtf8("zoo");
 
-    private ByteString testKey = ByteString.copyFromUtf8("foo1");
-    private ByteString testName = ByteString.copyFromUtf8("bar");
+    private ByteString testKey       = ByteString.copyFromUtf8("foo1");
+    private ByteString testName      = ByteString.copyFromUtf8("bar");
 
-    private ByteString userName = ByteString.copyFrom("root", Charset.defaultCharset());
-    private ByteString password = ByteString.copyFrom("123", Charset.defaultCharset());
+    private ByteString userName      = ByteString.copyFrom("root", Charset.defaultCharset());
+    private ByteString password      = ByteString.copyFrom("123", Charset.defaultCharset());
 
-    private Assertion test;
+    private Assertion  test;
 
     private EtcdClient etcdClient;
     private EtcdClient authEtcdClient;
@@ -77,7 +78,7 @@ public class EtcdAuthClientTest {
     /**
      * grant user role
      */
-    @Test(dependsOnMethods = {"testUserAdd", "testRoleGrantPermission"}, groups = "user")
+    @Test(dependsOnMethods = { "testUserAdd", "testRoleGrantPermission" }, groups = "user")
     public void testUserGrantRole() throws ExecutionException, InterruptedException {
         this.authClient.userGrantRole(userName, roleName).get();
     }
@@ -95,8 +96,7 @@ public class EtcdAuthClientTest {
      */
     @Test(dependsOnMethods = "testEnableAuth", groups = "authEnable")
     public void setupAuthClient() throws AuthFailedException, ConnectException {
-        this.authEtcdClient =
-                EtcdClientBuilder.newBuilder().endpoints("localhost:2379").setName(userName).setPassword(password).build();
+        this.authEtcdClient = EtcdClientBuilder.newBuilder().endpoints("localhost:2379").setName(userName).setPassword(password).build();
 
     }
 

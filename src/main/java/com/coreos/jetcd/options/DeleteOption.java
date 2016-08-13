@@ -14,9 +14,10 @@ public final class DeleteOption {
     public static class Builder {
 
         private Optional<ByteString> endKey = Optional.absent();
-        private boolean prevKV = false;
+        private boolean              prevKV = false;
 
-        private Builder() {}
+        private Builder() {
+        }
 
         /**
          * Set the end key of the delete request. If it is set, the
@@ -51,10 +52,9 @@ public final class DeleteOption {
     }
 
     private final Optional<ByteString> endKey;
-    private final boolean prevKV;
+    private final boolean              prevKV;
 
-    private DeleteOption(Optional<ByteString> endKey,
-                         boolean prevKV) {
+    private DeleteOption(Optional<ByteString> endKey, boolean prevKV) {
         this.endKey = endKey;
         this.prevKV = prevKV;
     }

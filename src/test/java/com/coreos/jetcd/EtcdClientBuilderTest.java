@@ -1,9 +1,10 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.exception.AuthFailedException;
-import com.coreos.jetcd.exception.ConnectException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import com.coreos.jetcd.exception.AuthFailedException;
+import com.coreos.jetcd.exception.ConnectException;
 
 public class EtcdClientBuilderTest {
 

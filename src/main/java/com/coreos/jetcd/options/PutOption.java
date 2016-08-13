@@ -18,10 +18,11 @@ public final class PutOption {
      */
     public static class Builder {
 
-        private long leaseId = 0L;
-        private boolean prevKV = false;
+        private long    leaseId = 0L;
+        private boolean prevKV  = false;
 
-        private Builder() {}
+        private Builder() {
+        }
 
         /**
          * Assign a <i>leaseId</i> for a put operation. Zero means no lease.
@@ -42,7 +43,7 @@ public final class PutOption {
          * @return builder
          */
         public Builder withPrevKV() {
-            this.prevKV= true;
+            this.prevKV = true;
             return this;
         }
 
@@ -57,7 +58,7 @@ public final class PutOption {
 
     }
 
-    private final long leaseId;
+    private final long    leaseId;
     private final boolean prevKV;
 
     private PutOption(long leaseId, boolean prevKV) {
@@ -79,5 +80,7 @@ public final class PutOption {
      *
      * @return the prevKV
      */
-    public boolean getPrevKV() { return this.prevKV; }
+    public boolean getPrevKV() {
+        return this.prevKV;
+    }
 }

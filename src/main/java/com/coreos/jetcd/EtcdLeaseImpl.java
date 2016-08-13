@@ -1,48 +1,49 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.*;
-import com.coreos.jetcd.lease.Lease;
-import com.coreos.jetcd.lease.NoSuchLeaseException;
-import com.google.common.util.concurrent.ListenableFuture;
-import io.grpc.ManagedChannel;
-import io.grpc.stub.StreamObserver;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
+
+import com.coreos.jetcd.api.*;
+import com.coreos.jetcd.lease.Lease;
+import com.coreos.jetcd.lease.NoSuchLeaseException;
+import com.google.common.util.concurrent.ListenableFuture;
+
+import io.grpc.ManagedChannel;
+import io.grpc.stub.StreamObserver;
 
 /**
  * Implementation of lease client
  */
 public class EtcdLeaseImpl implements EtcdLease {
 
-    private final static int DEFAULT_TTL = 5000;
-    private final static int DEFAULT_SCAN_PERIOD = 500;
-    private final LeaseGrpc.LeaseFutureStub leaseFutureStub;
-    private final LeaseGrpc.LeaseStub leaseStub;
+    private final static int                       DEFAULT_TTL           = 5000;
+    private final static int                       DEFAULT_SCAN_PERIOD   = 500;
+    private final LeaseGrpc.LeaseFutureStub        leaseFutureStub;
+    private final LeaseGrpc.LeaseStub              leaseStub;
     /**
      * gRPC channel
      */
-    private ManagedChannel channel;
+    private ManagedChannel                         channel;
     /**
      * Timer schedule to send keep alive request
      */
-    private ScheduledExecutorService keepAliveSchedule;
-    private ScheduledFuture<?> scheduledFuture;
-    private long scanPeriod;
+    private ScheduledExecutorService               keepAliveSchedule;
+    private ScheduledFuture<?>                     scheduledFuture;
+    private long                                   scanPeriod;
 
-    private Map<Long, Lease> keepAlives = new ConcurrentHashMap<>();
+    private Map<Long, Lease>                       keepAlives            = new ConcurrentHashMap<>();
 
     /**
      * The first time interval
      */
-    private long firstKeepAliveTimeOut = DEFAULT_TTL;
+    private long                                   firstKeepAliveTimeOut = DEFAULT_TTL;
 
     /**
      * KeepAlive Request Stream, put request into this stream to keep the lease alive
      */
-    private StreamObserver<LeaseKeepAliveRequest> keepAliveRequestStreamObserver;
+    private StreamObserver<LeaseKeepAliveRequest>  keepAliveRequestStreamObserver;
 
     /**
      * KeepAlive Response Streamer, receive keep alive response from this stream and update the
@@ -87,10 +88,12 @@ public class EtcdLeaseImpl implements EtcdLease {
                 }
 
                 @Override
-                public void onError(Throwable throwable) {}
+                public void onError(Throwable throwable) {
+                }
 
                 @Override
-                public void onCompleted() {}
+                public void onCompleted() {
+                }
             };
 
             initRequestStream(keepAliveResponseStreamObserver);
@@ -101,15 +104,14 @@ public class EtcdLeaseImpl implements EtcdLease {
             if (this.keepAliveSchedule == null) {
                 this.keepAliveSchedule = Executors.newSingleThreadScheduledExecutor();
             }
-            this.scheduledFuture = this.keepAliveSchedule.scheduleAtFixedRate(
-                    () -> {
-                        /**
-                         * The keepAliveExecutor and deadLineExecutor will be sequentially executed in
-                         * one thread.
-                         */
-                        keepAliveExecutor();
-                        deadLineExecutor();
-                    }, 0, this.scanPeriod, TimeUnit.MILLISECONDS);
+            this.scheduledFuture = this.keepAliveSchedule.scheduleAtFixedRate(() -> {
+                /**
+                 * The keepAliveExecutor and deadLineExecutor will be sequentially executed in
+                 * one thread.
+                 */
+                keepAliveExecutor();
+                deadLineExecutor();
+            }, 0, this.scanPeriod, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -137,10 +139,7 @@ public class EtcdLeaseImpl implements EtcdLease {
      */
     @Override
     public ListenableFuture<LeaseGrantResponse> grant(long ttl) {
-        LeaseGrantRequest leaseGrantRequest =
-                LeaseGrantRequest.newBuilder()
-                        .setTTL(ttl)
-                        .build();
+        LeaseGrantRequest leaseGrantRequest = LeaseGrantRequest.newBuilder().setTTL(ttl).build();
         return this.leaseFutureStub.leaseGrant(leaseGrantRequest);
     }
 
@@ -152,10 +151,7 @@ public class EtcdLeaseImpl implements EtcdLease {
      */
     @Override
     public ListenableFuture<LeaseRevokeResponse> revoke(long leaseId) {
-        LeaseRevokeRequest leaseRevokeRequest =
-                LeaseRevokeRequest.newBuilder()
-                        .setID(leaseId)
-                        .build();
+        LeaseRevokeRequest leaseRevokeRequest = LeaseRevokeRequest.newBuilder().setID(leaseId).build();
         return this.leaseFutureStub.leaseRevoke(leaseRevokeRequest);
     }
 
@@ -172,8 +168,7 @@ public class EtcdLeaseImpl implements EtcdLease {
         if (!this.keepAlives.containsKey(leaseId)) {
             Lease lease = new Lease(leaseId, etcdLeaseHandler);
             long now = System.currentTimeMillis();
-            lease.setNextKeepAlive(now)
-                    .setDeadLine(now + firstKeepAliveTimeOut);
+            lease.setNextKeepAlive(now).setDeadLine(now + firstKeepAliveTimeOut);
             this.keepAlives.put(leaseId, lease);
         }
     }
@@ -190,8 +185,7 @@ public class EtcdLeaseImpl implements EtcdLease {
         /**
          * to be completed, I will return a ListenableFuture value in the future
          */
-        StreamObserver<LeaseKeepAliveRequest> requestObserver =
-                this.leaseStub.leaseKeepAlive(keepAliveResponseStreamObserver);
+        StreamObserver<LeaseKeepAliveRequest> requestObserver = this.leaseStub.leaseKeepAlive(keepAliveResponseStreamObserver);
         requestObserver.onNext(newKeepAliveRequest(leaseId));
         requestObserver.onCompleted();
 
@@ -273,7 +267,7 @@ public class EtcdLeaseImpl implements EtcdLease {
     public void processKeepAliveRespond(LeaseKeepAliveResponse leaseKeepAliveResponse) {
         long id = leaseKeepAliveResponse.getID();
         Lease lease = this.keepAlives.get(id);
-        if (lease!=null) {
+        if (lease != null) {
             /**
              * This function is called by stream callback from different thread, so
              * we sync here to make the lease set sequentially.
@@ -285,8 +279,7 @@ public class EtcdLeaseImpl implements EtcdLease {
                     }
                     removeLease(id);
                 } else {
-                    long nextKeepAlive =
-                            System.currentTimeMillis() + 1000 + leaseKeepAliveResponse.getTTL() * 1000 / 3;
+                    long nextKeepAlive = System.currentTimeMillis() + 1000 + leaseKeepAliveResponse.getTTL() * 1000 / 3;
                     lease.setNextKeepAlive(nextKeepAlive);
                     lease.setDeadLine(System.currentTimeMillis() + leaseKeepAliveResponse.getTTL() * 1000);
                 }
@@ -306,9 +299,7 @@ public class EtcdLeaseImpl implements EtcdLease {
     }
 
     private LeaseKeepAliveRequest newKeepAliveRequest(long leaseId) {
-        return LeaseKeepAliveRequest.newBuilder()
-                .setID(leaseId)
-                .build();
+        return LeaseKeepAliveRequest.newBuilder().setID(leaseId).build();
     }
 
     private void initRequestStream(StreamObserver<LeaseKeepAliveResponse> leaseKeepAliveResponseStreamObserver) {
@@ -317,7 +308,6 @@ public class EtcdLeaseImpl implements EtcdLease {
         }
         this.keepAliveRequestStreamObserver = this.leaseStub.leaseKeepAlive(leaseKeepAliveResponseStreamObserver);
     }
-
 
     /**
      * end the schedule for keep alive and remove dead leases

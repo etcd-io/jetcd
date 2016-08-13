@@ -6,20 +6,24 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.grpc.Attributes;
-import io.grpc.ResolvedServerInfo;
-import io.grpc.internal.SharedResourceHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.annotations.VisibleForTesting;
+
+import io.grpc.Attributes;
+import io.grpc.ResolvedServerInfo;
+import io.grpc.internal.SharedResourceHolder;
+
 final class DnsSrvNameResolver extends AbstractEtcdNameResolver {
-    private final static Logger LOGGER;
-    private final static String[] ATTRIBUTE_IDS;
+
+    private final static Logger                    LOGGER;
+    private final static String[]                  ATTRIBUTE_IDS;
     private final static Hashtable<String, String> ENV;
 
     static {
@@ -31,7 +35,7 @@ final class DnsSrvNameResolver extends AbstractEtcdNameResolver {
         ENV.put("java.naming.provider.url", "dns:");
     }
 
-    private final String name;
+    private final String                           name;
 
     public DnsSrvNameResolver(String name, SharedResourceHolder.Resource<ExecutorService> executorResource) {
         super(name, executorResource);
@@ -46,7 +50,7 @@ final class DnsSrvNameResolver extends AbstractEtcdNameResolver {
             List<ResolvedServerInfo> servers = new LinkedList<>();
 
             while (resolved.hasMore()) {
-                servers.add(srvRecordToServerInfo((String)resolved.next()));
+                servers.add(srvRecordToServerInfo((String) resolved.next()));
             }
 
             return servers;
@@ -68,9 +72,6 @@ final class DnsSrvNameResolver extends AbstractEtcdNameResolver {
     }
 
     private ResolvedServerInfo srvRecordToServerInfo(String dnsSrvRecord) {
-        return new ResolvedServerInfo(
-            srvRecordToAddress(dnsSrvRecord),
-            Attributes.EMPTY
-        );
+        return new ResolvedServerInfo(srvRecordToAddress(dnsSrvRecord), Attributes.EMPTY);
     }
 }

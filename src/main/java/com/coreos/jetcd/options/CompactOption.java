@@ -10,10 +10,11 @@ public final class CompactOption {
 
     public static class Builder {
 
-        private long revision = 0L;
+        private long    revision = 0L;
         private boolean physical = false;
 
-        private Builder() {}
+        private Builder() {
+        }
 
         /**
          * Provide the revision to use for the compact request.
@@ -43,7 +44,7 @@ public final class CompactOption {
         }
     }
 
-    private final long revision;
+    private final long    revision;
     private final boolean physical;
 
     private CompactOption(long revision, boolean physical) {

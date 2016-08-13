@@ -1,5 +1,10 @@
 package com.coreos.jetcd;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.concurrent.ExecutionException;
+
 import com.coreos.jetcd.api.AuthGrpc;
 import com.coreos.jetcd.api.AuthenticateRequest;
 import com.coreos.jetcd.api.AuthenticateResponse;
@@ -8,38 +13,35 @@ import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+
 import io.grpc.CallCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.stub.AbstractStub;
 
-import java.util.concurrent.ExecutionException;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Etcd Client
  */
 public class EtcdClient {
 
-    private static final String TOKEN = "token";
+    private static final String            TOKEN = "token";
 
     private final ManagedChannelBuilder<?> channelBuilder;
-    private final String[] endpoints;
-    private final ManagedChannel channel;
+    private final String[]                 endpoints;
+    private final ManagedChannel           channel;
 
-    private final EtcdKV kvClient;
-    private final EtcdAuth authClient;
+    private final EtcdKV                   kvClient;
+    private final EtcdAuth                 authClient;
 
-    private KVGrpc.KVFutureStub kvStub;
-    private AuthGrpc.AuthFutureStub authStub;
+    private KVGrpc.KVFutureStub            kvStub;
+    private AuthGrpc.AuthFutureStub        authStub;
 
     public EtcdClient(ManagedChannelBuilder<?> channelBuilder, EtcdClientBuilder builder) throws ConnectException, AuthFailedException {
         this.endpoints = new String[builder.endpoints().size()];
         builder.endpoints().toArray(this.endpoints);
-        this.channelBuilder = channelBuilder != null ? channelBuilder : ManagedChannelBuilder.forAddress("localhost", 2379).usePlaintext(true);
+        this.channelBuilder = channelBuilder != null ? channelBuilder : ManagedChannelBuilder.forAddress("localhost", 2379).usePlaintext(
+            true);
 
         this.channel = this.channelBuilder.build();
 
@@ -104,11 +106,8 @@ public class EtcdClient {
      */
     private ListenableFuture<AuthenticateResponse> authenticate(ManagedChannel channel, ByteString name, ByteString password) {
 
-        ListenableFuture<AuthenticateResponse> authResp = AuthGrpc.newFutureStub(channel)
-                .authenticate(AuthenticateRequest.newBuilder()
-                        .setNameBytes(name)
-                        .setPasswordBytes(password)
-                        .build());
+        ListenableFuture<AuthenticateResponse> authResp = AuthGrpc.newFutureStub(channel).authenticate(
+            AuthenticateRequest.newBuilder().setNameBytes(name).setPasswordBytes(password).build());
         return authResp;
     }
 
@@ -139,7 +138,6 @@ public class EtcdClient {
         }
         return null;
     }
-
 
     public void close() {
         channel.shutdownNow();

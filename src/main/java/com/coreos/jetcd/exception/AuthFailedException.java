@@ -5,7 +5,8 @@ package com.coreos.jetcd.exception;
  * may caused by wrong username or password
  */
 public class AuthFailedException extends Exception {
-    public AuthFailedException(String cause, Throwable throwable){
+
+    public AuthFailedException(String cause, Throwable throwable) {
         super(cause, throwable);
     }
 }
