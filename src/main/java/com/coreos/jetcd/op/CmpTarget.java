@@ -51,7 +51,7 @@ public abstract class CmpTarget<T> {
     }
 
     private final Compare.CompareTarget target;
-    private final T targetValue;
+    private final T                     targetValue;
 
     protected CmpTarget(Compare.CompareTarget target, T targetValue) {
         this.target = target;

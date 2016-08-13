@@ -9,13 +9,11 @@ import com.google.protobuf.ByteString;
 public class Cmp {
 
     public enum Op {
-        EQUAL,
-        GREATER,
-        LESS
+        EQUAL, GREATER, LESS
     }
 
-    private final ByteString key;
-    private final Op op;
+    private final ByteString   key;
+    private final Op           op;
     private final CmpTarget<?> target;
 
     public Cmp(ByteString key, Op compareOp, CmpTarget<?> target) {
@@ -23,7 +21,6 @@ public class Cmp {
         this.op = compareOp;
         this.target = target;
     }
-
 
     Compare toCompare() {
         Compare.Builder compareBuiler = Compare.newBuilder().setKey(this.key);

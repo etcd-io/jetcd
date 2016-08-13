@@ -1,13 +1,13 @@
 package com.coreos.jetcd;
 
+import static com.google.common.base.Preconditions.*;
+
+import java.util.List;
+
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-
-import java.util.List;
-
-import static com.google.common.base.Preconditions.*;
 
 /**
  * ClientBuilder knows how to create an EtcdClient instance.
@@ -15,8 +15,8 @@ import static com.google.common.base.Preconditions.*;
 public class EtcdClientBuilder {
 
     private List<String> endpoints = Lists.newArrayList();
-    private ByteString name;
-    private ByteString password;
+    private ByteString   name;
+    private ByteString   password;
 
     private EtcdClientBuilder() {
     }

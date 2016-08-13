@@ -3,7 +3,6 @@ package com.coreos.jetcd;
 import com.coreos.jetcd.api.*;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
-import io.grpc.ManagedChannel;
 
 /**
  * Implementation of etcd auth client

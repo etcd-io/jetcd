@@ -1,9 +1,9 @@
 package com.coreos.jetcd.options;
 
+import java.util.Optional;
+
 import com.coreos.jetcd.api.RangeRequest;
 import com.google.protobuf.ByteString;
-
-import java.util.Optional;
 
 /**
  * The option for get operation.
@@ -23,16 +23,17 @@ public final class GetOption {
 
     public static class Builder {
 
-        private long limit = 0L;
-        private long revision = 0L;
-        private RangeRequest.SortOrder sortOrder = RangeRequest.SortOrder.NONE;
-        private RangeRequest.SortTarget sortTarget = RangeRequest.SortTarget.KEY;
-        private boolean serializable = false;
-        private boolean keysOnly = false;
-        private boolean countOnly = false;
-        private Optional<ByteString> endKey = Optional.empty();
+        private long                    limit        = 0L;
+        private long                    revision     = 0L;
+        private RangeRequest.SortOrder  sortOrder    = RangeRequest.SortOrder.NONE;
+        private RangeRequest.SortTarget sortTarget   = RangeRequest.SortTarget.KEY;
+        private boolean                 serializable = false;
+        private boolean                 keysOnly     = false;
+        private boolean                 countOnly    = false;
+        private Optional<ByteString>    endKey       = Optional.empty();
 
-        private Builder() {}
+        private Builder() {
+        }
 
         /**
          * Limit the number of keys to return for a get request. By default is 0 - no limitation.
@@ -131,36 +132,22 @@ public final class GetOption {
         }
 
         public GetOption build() {
-            return new GetOption(
-                    endKey,
-                    limit,
-                    revision,
-                    sortOrder,
-                    sortTarget,
-                    serializable,
-                    keysOnly,
-                    countOnly);
+            return new GetOption(endKey, limit, revision, sortOrder, sortTarget, serializable, keysOnly, countOnly);
         }
 
     }
 
-    private final Optional<ByteString> endKey;
-    private final long limit;
-    private final long revision;
-    private final RangeRequest.SortOrder sortOrder;
+    private final Optional<ByteString>    endKey;
+    private final long                    limit;
+    private final long                    revision;
+    private final RangeRequest.SortOrder  sortOrder;
     private final RangeRequest.SortTarget sortTarget;
-    private final boolean serializable;
-    private final boolean keysOnly;
-    private final boolean countOnly;
+    private final boolean                 serializable;
+    private final boolean                 keysOnly;
+    private final boolean                 countOnly;
 
-    private GetOption(Optional<ByteString> endKey,
-                      long limit,
-                      long revision,
-                      RangeRequest.SortOrder sortOrder,
-                      RangeRequest.SortTarget sortTarget,
-                      boolean serializable,
-                      boolean keysOnly,
-                      boolean countOnly) {
+    private GetOption(Optional<ByteString> endKey, long limit, long revision, RangeRequest.SortOrder sortOrder,
+                      RangeRequest.SortTarget sortTarget, boolean serializable, boolean keysOnly, boolean countOnly) {
         this.endKey = endKey;
         this.limit = limit;
         this.revision = revision;

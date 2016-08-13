@@ -1,26 +1,15 @@
 package com.coreos.jetcd;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ByteString;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.coreos.jetcd.api.CompactionRequest;
-import com.coreos.jetcd.api.CompactionResponse;
-import com.coreos.jetcd.api.DeleteRangeRequest;
-import com.coreos.jetcd.api.DeleteRangeResponse;
-import com.coreos.jetcd.api.KVGrpc;
-import com.coreos.jetcd.api.PutRequest;
-import com.coreos.jetcd.api.PutResponse;
-import com.coreos.jetcd.api.RangeRequest;
-import com.coreos.jetcd.api.RangeResponse;
-import com.coreos.jetcd.api.TxnResponse;
+import com.coreos.jetcd.api.*;
 import com.coreos.jetcd.op.Txn;
 import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.ByteString;
 
 /**
  * Implementation of etcd kv client
@@ -48,12 +37,8 @@ class EtcdKVImpl implements EtcdKV {
         checkNotNull(value, "value should not be null");
         checkNotNull(option, "option should not be null");
 
-        PutRequest request = PutRequest.newBuilder()
-                .setKey(key)
-                .setValue(value)
-                .setLease(option.getLeaseId())
-                .setPrevKv(option.getPrevKV())
-                .build();
+        PutRequest request = PutRequest.newBuilder().setKey(key).setValue(value).setLease(option.getLeaseId())
+            .setPrevKv(option.getPrevKV()).build();
         return kvStub.put(request);
     }
 
@@ -71,15 +56,9 @@ class EtcdKVImpl implements EtcdKV {
         checkNotNull(key, "key should not be null");
         checkNotNull(option, "option should not be null");
 
-        RangeRequest.Builder builder = RangeRequest.newBuilder()
-                .setKey(key)
-                .setCountOnly(option.isCountOnly())
-                .setLimit(option.getLimit())
-                .setRevision(option.getRevision())
-                .setKeysOnly(option.isKeysOnly())
-                .setSerializable(option.isSerializable())
-                .setSortOrder(option.getSortOrder())
-                .setSortTarget(option.getSortField());
+        RangeRequest.Builder builder = RangeRequest.newBuilder().setKey(key).setCountOnly(option.isCountOnly()).setLimit(option.getLimit())
+            .setRevision(option.getRevision()).setKeysOnly(option.isKeysOnly()).setSerializable(option.isSerializable())
+            .setSortOrder(option.getSortOrder()).setSortTarget(option.getSortField());
         if (option.getEndKey().isPresent()) {
             builder.setRangeEnd(option.getEndKey().get());
         }
@@ -100,9 +79,7 @@ class EtcdKVImpl implements EtcdKV {
         checkNotNull(key, "key should not be null");
         checkNotNull(option, "option should not be null");
 
-        DeleteRangeRequest.Builder builder = DeleteRangeRequest.newBuilder()
-                .setKey(key)
-                .setPrevKv(option.isPrevKV());
+        DeleteRangeRequest.Builder builder = DeleteRangeRequest.newBuilder().setKey(key).setPrevKv(option.isPrevKV());
         if (option.getEndKey().isPresent()) {
             builder.setRangeEnd(option.getEndKey().get());
         }
@@ -118,11 +95,8 @@ class EtcdKVImpl implements EtcdKV {
     public ListenableFuture<CompactionResponse> compact(CompactOption option) {
         checkNotNull(option, "option should not be null");
 
-        CompactionRequest request =
-                CompactionRequest.newBuilder()
-                        .setRevision(option.getRevision())
-                        .setPhysical(option.isPhysical())
-                        .build();
+        CompactionRequest request = CompactionRequest.newBuilder().setRevision(option.getRevision()).setPhysical(option.isPhysical())
+            .build();
         return kvStub.compact(request);
     }
 
