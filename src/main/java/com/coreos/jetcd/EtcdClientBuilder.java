@@ -1,13 +1,14 @@
 package com.coreos.jetcd;
 
-import static com.google.common.base.Preconditions.*;
+import com.coreos.jetcd.exception.AuthFailedException;
+import com.coreos.jetcd.exception.ConnectException;
+import com.coreos.jetcd.resolver.AbstractEtcdNameResolverFactory;
+import com.google.common.collect.Lists;
+import com.google.protobuf.ByteString;
 
 import java.util.List;
 
-import com.coreos.jetcd.exception.AuthFailedException;
-import com.coreos.jetcd.exception.ConnectException;
-import com.google.common.collect.Lists;
-import com.google.protobuf.ByteString;
+import static com.google.common.base.Preconditions.*;
 
 /**
  * ClientBuilder knows how to create an EtcdClient instance.
@@ -17,6 +18,7 @@ public class EtcdClientBuilder {
     private List<String> endpoints = Lists.newArrayList();
     private ByteString   name;
     private ByteString   password;
+    private AbstractEtcdNameResolverFactory nameResolverFactory;
 
     private EtcdClientBuilder() {
     }
@@ -92,6 +94,28 @@ public class EtcdClientBuilder {
     }
 
     /**
+     * config etcd auth password
+     *
+     * @param nameResolverFactory etcd nameResolverFactory
+     * @return this builder
+     * @throws NullPointerException if password is null
+     */
+    public EtcdClientBuilder setNameResolverFactory(AbstractEtcdNameResolverFactory nameResolverFactory){
+        checkNotNull(nameResolverFactory);
+        this.nameResolverFactory = nameResolverFactory;
+        return this;
+    }
+
+    /**
+     * get nameResolverFactory for etcd client
+     *
+     * @return nameResolverFactory
+     */
+    public AbstractEtcdNameResolverFactory getNameResolverFactory() {
+        return nameResolverFactory;
+    }
+
+    /**
      * build a new EtcdClient.
      *
      * @return EtcdClient instance.
@@ -99,7 +123,7 @@ public class EtcdClientBuilder {
      * @throws AuthFailedException This may be caused as wrong username or password
      */
     public EtcdClient build() throws ConnectException, AuthFailedException {
-        checkState(!endpoints.isEmpty(), "please configure ectd serve endpoints by method endpoints() before build.");
+        checkState(!endpoints.isEmpty() || nameResolverFactory != null , "please configure ectd serve endpoints or nameResolverFactory before build.");
         return new EtcdClient(null, this);
     }
 }
