@@ -3,12 +3,16 @@ package com.coreos.jetcd;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.resolver.AbstractEtcdNameResolverFactory;
+import com.coreos.jetcd.resolver.SimpleEtcdNameResolverFactory;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.*;
+
 
 /**
  * ClientBuilder knows how to create an EtcdClient instance.
@@ -16,8 +20,8 @@ import static com.google.common.base.Preconditions.*;
 public class EtcdClientBuilder {
 
     private List<String> endpoints = Lists.newArrayList();
-    private ByteString   name;
-    private ByteString   password;
+    private ByteString name;
+    private ByteString password;
     private AbstractEtcdNameResolverFactory nameResolverFactory;
 
     private EtcdClientBuilder() {
@@ -100,7 +104,7 @@ public class EtcdClientBuilder {
      * @return this builder
      * @throws NullPointerException if password is null
      */
-    public EtcdClientBuilder setNameResolverFactory(AbstractEtcdNameResolverFactory nameResolverFactory){
+    public EtcdClientBuilder setNameResolverFactory(AbstractEtcdNameResolverFactory nameResolverFactory) {
         checkNotNull(nameResolverFactory);
         this.nameResolverFactory = nameResolverFactory;
         return this;
@@ -115,6 +119,22 @@ public class EtcdClientBuilder {
         return nameResolverFactory;
     }
 
+    private AbstractEtcdNameResolverFactory getSimpleNameResolveFactory(List<String> endpoints) {
+        URI[] uris = new URI[endpoints.size()];
+        for (int i = 0; i < endpoints.size(); ++i) {
+            try {
+                String endpoint = endpoints.get(i);
+                if (!endpoint.startsWith("http://")) {
+                    endpoint = "http://" + endpoint;
+                }
+                uris[i] = new URI(endpoint);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+        }
+        return new SimpleEtcdNameResolverFactory(uris);
+    }
+
     /**
      * build a new EtcdClient.
      *
@@ -123,7 +143,11 @@ public class EtcdClientBuilder {
      * @throws AuthFailedException This may be caused as wrong username or password
      */
     public EtcdClient build() throws ConnectException, AuthFailedException {
-        checkState(!endpoints.isEmpty() || nameResolverFactory != null , "please configure ectd serve endpoints or nameResolverFactory before build.");
-        return new EtcdClient(null, this);
+        checkState(!endpoints.isEmpty() || nameResolverFactory != null, "please configure ectd serve endpoints or nameResolverFactory before build.");
+        if (nameResolverFactory == null) {
+            //If no nameResolverFactory was set, use SimpleEtcdNameResolver
+            this.nameResolverFactory = getSimpleNameResolveFactory(this.endpoints);
+        }
+        return new EtcdClient(null, new EtcdConfig(this.endpoints, this.name, this.password, this.nameResolverFactory));
     }
 }
