@@ -34,6 +34,7 @@ public class EtcdClient {
 
     private final EtcdKV kvClient;
     private final EtcdAuth authClient;
+    private final EtcdMaintenance maintenanceClient;
     private final EtcdCluster clusterClient;
 
     private KVGrpc.KVFutureStub kvStub;
@@ -55,6 +56,8 @@ public class EtcdClient {
 
         this.kvStub = KVGrpc.newFutureStub(this.channel);
         this.authStub = AuthGrpc.newFutureStub(this.channel);
+        MaintenanceGrpc.MaintenanceFutureStub mainFStub = MaintenanceGrpc.newFutureStub(this.channel);
+        MaintenanceGrpc.MaintenanceStub mainStub = MaintenanceGrpc.newStub(this.channel);
         ClusterGrpc.ClusterFutureStub clusterStub = ClusterGrpc.newFutureStub(this.channel);
 
         String token = getToken(builder);
@@ -62,11 +65,14 @@ public class EtcdClient {
         if (token != null) {
             this.authStub = setTokenForStub(authStub, token);
             this.kvStub = setTokenForStub(kvStub, token);
+            mainFStub = setTokenForStub(mainFStub, token);
+            mainStub = setTokenForStub(mainStub, token);
             clusterStub = setTokenForStub(clusterStub, token);
         }
 
         this.kvClient = newKVClient(kvStub);
         this.authClient = newAuthClient(authStub);
+        this.maintenanceClient = newMaintenanceClient(mainFStub, mainStub);
         this.clusterClient = newClusterClient(clusterStub);
     }
 
@@ -87,6 +93,11 @@ public class EtcdClient {
         return new EtcdClusterImpl(stub);
     }
 
+    private EtcdMaintenance newMaintenanceClient(MaintenanceGrpc.MaintenanceFutureStub futureStub,
+                                                 MaintenanceGrpc.MaintenanceStub stub){
+        return new EtcdMaintenanceImpl(futureStub, stub);
+    }
+
     protected EtcdAuth getAuthClient() {
         return authClient;
     }
@@ -97,6 +108,10 @@ public class EtcdClient {
 
     protected EtcdCluster getClusterClient() {
         return clusterClient;
+    }
+
+    protected EtcdMaintenance getMaintenanceClient(){
+        return this.maintenanceClient;
     }
 
     /**
@@ -157,7 +172,6 @@ public class EtcdClient {
         }
         return null;
     }
-
 
     public void close() {
         channel.shutdownNow();
