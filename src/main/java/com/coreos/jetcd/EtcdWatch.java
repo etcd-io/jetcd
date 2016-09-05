@@ -1,9 +1,12 @@
 package com.coreos.jetcd;
 
+import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.data.EtcdHeader;
 import com.coreos.jetcd.options.WatchOption;
-import com.coreos.jetcd.util.ListenableSetFuture;
-import com.coreos.jetcd.watch.Watcher;
-import com.google.protobuf.ByteString;
+import com.coreos.jetcd.watch.WatchEvent;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Interface of watch client
@@ -21,12 +24,47 @@ public interface EtcdWatch {
      * @param callback    call back
      * @return ListenableFuture watcher
      */
-    ListenableSetFuture<Watcher> watch(ByteString key, WatchOption watchOption, Watcher.WatchCallback callback);
+    CompletableFuture<Watcher> watch(ByteSequence key, WatchOption watchOption, WatchCallback callback);
 
-    /**
-     * Cancel the watch task with the watcher, the onCanceled will be called after successfully canceled.
-     *
-     * @param watcher the watcher to be canceled
-     */
-    void cancelWatch(Watcher watcher);
+    interface Watcher{
+
+        /**
+         * get watcher id
+         * @return id
+         */
+        long getWatchID();
+
+        long getLastRevision();
+
+        ByteSequence getKey();
+
+        boolean isResuming();
+
+        /**
+         * get the watch option
+         * @return watch option
+         */
+        WatchOption getWatchOption();
+
+        /**
+         * cancel the watcher
+         * @return cancel result
+         */
+        CompletableFuture<Boolean> cancel();
+    }
+
+    interface WatchCallback {
+
+        /**
+         * onWatch will be called when watcher receive any events
+         *
+         * @param events received events
+         */
+        void onWatch(EtcdHeader header, List<WatchEvent> events);
+
+        /**
+         * onResuming will be called when the watcher is on resuming.
+         */
+        void onResuming();
+    }
 }

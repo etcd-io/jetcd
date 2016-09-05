@@ -1,14 +1,11 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.Event;
-import com.coreos.jetcd.api.WatchResponse;
+import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.data.EtcdHeader;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.options.WatchOption;
-import com.coreos.jetcd.util.ListenableSetFuture;
-import com.coreos.jetcd.watch.Watcher;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ByteString;
+import com.coreos.jetcd.watch.WatchEvent;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
@@ -24,12 +21,11 @@ public class EtcdWatchTest {
     private EtcdClient client;
     private EtcdWatch watchClient;
     private EtcdKV kvClient;
-    private BlockingQueue<Event> eventsQueue = new LinkedBlockingDeque<>();
+    private BlockingQueue<WatchEvent> eventsQueue = new LinkedBlockingDeque<>();
 
-    private ByteString key = ByteString.copyFromUtf8("test_key");
-    private ByteString value = ByteString.copyFromUtf8("test_val");
-    private Watcher watcher;
-    private ListenableSetFuture<WatchResponse> cancelResponse;
+    private ByteSequence key = ByteSequence.fromString("test_key");
+    private ByteSequence value = ByteSequence.fromString("test_val");
+    private EtcdWatchImpl.Watcher watcher;
 
     private Assertion test = new Assertion();
 
@@ -43,27 +39,27 @@ public class EtcdWatchTest {
     @Test
     public void testWatch() throws ExecutionException, InterruptedException {
         WatchOption option = WatchOption.DEFAULT;
-        cancelResponse = new ListenableSetFuture<>(null);
-        watcher = watchClient.watch(key, option, new Watcher.WatchCallback() {
+        watcher = watchClient.watch(key, option, new EtcdWatch.WatchCallback() {
+
+            /**
+             * onWatch will be called when watcher receive any events
+             *
+             * @param header
+             * @param events received events
+             */
             @Override
-            public void onWatch(List<Event> events) {
+            public void onWatch(EtcdHeader header, List<WatchEvent> events) {
                 EtcdWatchTest.this.eventsQueue.addAll(events);
             }
 
-            @Override
-            public void onCreateFailed(WatchResponse watchResponse) {
-
-            }
-
+            /**
+             * onResuming will be called when the watcher is on resuming.
+             */
             @Override
             public void onResuming() {
 
             }
 
-            @Override
-            public void onCanceled(WatchResponse response) {
-                cancelResponse.setResult(response);
-            }
         }).get();
 
     }
@@ -74,10 +70,10 @@ public class EtcdWatchTest {
      */
     @Test(dependsOnMethods = "testWatch")
     public void testWatchPut() throws InterruptedException {
-        kvClient.put(key, value);
-        Event event = eventsQueue.poll(5, TimeUnit.SECONDS);
-        test.assertEquals(event.getKv().getKey(), key);
-        test.assertEquals(event.getType(), Event.EventType.PUT);
+        kvClient.put(EtcdUtil.byteStringFromByteSequence(key), EtcdUtil.byteStringFromByteSequence(value));
+        WatchEvent event = eventsQueue.poll(5, TimeUnit.SECONDS);
+        test.assertEquals(event.getKeyValue().getKey(), key);
+        test.assertEquals(event.getEventType(), WatchEvent.EventType.PUT);
     }
 
     /**
@@ -86,10 +82,10 @@ public class EtcdWatchTest {
      */
     @Test(dependsOnMethods = "testWatchPut")
     public void testWatchDelete() throws InterruptedException {
-        kvClient.delete(key);
-        Event event = eventsQueue.poll(5, TimeUnit.SECONDS);
-        test.assertEquals(event.getKv().getKey(), key);
-        test.assertEquals(event.getType(), Event.EventType.DELETE);
+        kvClient.delete(EtcdUtil.byteStringFromByteSequence(key));
+        WatchEvent event = eventsQueue.poll(5, TimeUnit.SECONDS);
+        test.assertEquals(event.getKeyValue().getKey(), key);
+        test.assertEquals(event.getEventType(), WatchEvent.EventType.DELETE);
     }
 
     /**
@@ -98,8 +94,7 @@ public class EtcdWatchTest {
      */
     @Test(dependsOnMethods = "testWatchDelete")
     public void testCancelWatch() throws ExecutionException, InterruptedException, TimeoutException {
-        watchClient.cancelWatch(watcher);
-        WatchResponse watchResponse = cancelResponse.get(5, TimeUnit.SECONDS);
-        test.assertTrue(watchResponse.getCanceled());
+        CompletableFuture<Boolean> future = watcher.cancel();
+        test.assertTrue(future.get(5, TimeUnit.SECONDS));
     }
 }

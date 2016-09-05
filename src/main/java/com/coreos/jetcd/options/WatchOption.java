@@ -1,6 +1,7 @@
 package com.coreos.jetcd.options;
 
 import com.coreos.jetcd.api.WatchCreateRequest;
+import com.coreos.jetcd.data.ByteSequence;
 import com.google.protobuf.ByteString;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public final class WatchOption {
     public static class Builder {
 
         private long revision = 0L;
-        private Optional<ByteString> endKey = Optional.empty();
+        private Optional<ByteSequence> endKey = Optional.empty();
         private boolean prevKV = false;
         private boolean progressNotify = false;
         private boolean noPut = false;
@@ -59,7 +60,7 @@ public final class WatchOption {
          * @param endKey end key
          * @return builder
          */
-        public Builder withRange(ByteString endKey) {
+        public Builder withRange(ByteSequence endKey) {
             this.endKey = Optional.ofNullable(endKey);
             return this;
         }
@@ -125,7 +126,7 @@ public final class WatchOption {
 
     }
 
-    private final Optional<ByteString> endKey;
+    private final Optional<ByteSequence> endKey;
     private final long revision;
     private final boolean prevKV;
     private final boolean progressNotify;
@@ -133,7 +134,7 @@ public final class WatchOption {
     private final boolean noDelete;
     private final boolean resuming;
 
-    private WatchOption(Optional<ByteString> endKey,
+    private WatchOption(Optional<ByteSequence> endKey,
                         long revision,
                         boolean prevKV,
                         boolean progressNotify,
@@ -149,7 +150,7 @@ public final class WatchOption {
         this.resuming = resuming;
     }
 
-    public Optional<ByteString> getEndKey() {
+    public Optional<ByteSequence> getEndKey() {
         return this.endKey;
     }
 
