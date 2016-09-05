@@ -26,7 +26,7 @@ public class EtcdWatchImpl implements EtcdWatch {
 
     private ConcurrentHashMap<Long, WatcherImpl> watchers = new ConcurrentHashMap<>();
 
-    private WatchGrpc.WatchStub watchStub;
+    private final WatchGrpc.WatchStub watchStub;
 
     private ConcurrentLinkedQueue<Pair<WatcherImpl, CompletableFuture<Watcher>>> pendingCreateWatchers = new ConcurrentLinkedQueue<>();
     private Map<Long, CompletableFuture<Boolean>> pendingCancelFutures = new ConcurrentHashMap<>();
