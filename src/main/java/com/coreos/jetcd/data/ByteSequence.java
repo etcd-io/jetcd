@@ -5,22 +5,19 @@ import com.google.protobuf.ByteString;
 import java.io.UnsupportedEncodingException;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 
 /**
  * Etcd binary bytes, easy to convert between byte[], String and ByteString.
  */
 public class ByteSequence {
 
-    private final byte[] bytes;
     private final int hashVal;
     private final ByteString byteString;
 
 
     public ByteSequence(byte[] source) {
-        this.bytes = Arrays.copyOf(source, source.length);
-        hashVal = calcHashCore();
-        byteString = toByteString();
+        hashVal = calcHashCore(source);
+        byteString = toByteString(source);
     }
 
     protected ByteSequence(ByteString byteString) {
@@ -45,17 +42,9 @@ public class ByteSequence {
             return true;
         }
         if (obj instanceof ByteSequence) {
-            ByteSequence target = (ByteSequence) obj;
-            if (target.bytes.length == this.bytes.length) {
-                for (int i = 0; i < this.bytes.length; ++i) {
-                    if (bytes[i] != target.bytes[i]) {
-                        return false;
-                    }
-                }
-                return true;
-            } else {
-                return false;
-            }
+            ByteSequence other = (ByteSequence) obj;
+            if (other.hashCode() != hashCode()) return false;
+            return byteString.equals(other.byteString);
         } else {
             return false;
         }
@@ -65,11 +54,11 @@ public class ByteSequence {
         return this.byteString;
     }
 
-    private ByteString toByteString() {
+    private ByteString toByteString(byte[] bytes) {
         return ByteString.copyFrom(bytes);
     }
 
-    private int calcHashCore() {
+    private int calcHashCore(byte[] bytes) {
         int result = 0;
         for (int i = 0; i < bytes.length; ++i) {
             result = 31 * result + bytes[i];
@@ -95,7 +84,7 @@ public class ByteSequence {
     }
 
     public byte[] getBytes() {
-        return Arrays.copyOf(bytes, bytes.length);
+        return byteString.toByteArray();
     }
 
     public static ByteSequence fromString(String string) {

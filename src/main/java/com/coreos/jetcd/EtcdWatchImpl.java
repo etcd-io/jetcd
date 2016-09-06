@@ -8,11 +8,10 @@ import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
 import javafx.util.Pair;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.*;
 
 import static com.coreos.jetcd.EtcdUtil.apiToClientEvents;
 import static com.coreos.jetcd.EtcdUtil.apiToClientHeader;
@@ -75,7 +74,7 @@ public class EtcdWatchImpl implements EtcdWatch {
 
         WatchCancelRequest cancelRequest = WatchCancelRequest.newBuilder().setWatchId(id).build();
         WatchRequest request = WatchRequest.newBuilder().setCancelRequest(cancelRequest).build();
-        this.requestStream.onNext(request);
+        getRequestStream().onNext(request);
         return completableFuture;
     }
 
@@ -154,7 +153,8 @@ public class EtcdWatchImpl implements EtcdWatch {
         if (response.getCreated()) {
             if (response.getCanceled() || response.getCompactRevision() != 0) {
                 watcher.setCanceled(true);
-                requestPair.getValue().completeExceptionally(new WatchCreateException("the start revision has been compacted", apiToClientHeader(response.getHeader(), response.getCompactRevision())));;
+                requestPair.getValue().completeExceptionally(new WatchCreateException("the start revision has been compacted", apiToClientHeader(response.getHeader(), response.getCompactRevision())));
+                ;
             }
 
             if (response.getWatchId() == -1 && watcher.callback != null) {
@@ -379,6 +379,37 @@ public class EtcdWatchImpl implements EtcdWatch {
             this.resuming = resuming;
         }
 
+        /**
+         * Closes this stream and releases any system resources associated
+         * with it. If the stream is already closed then invoking this
+         * method has no effect.
+         * <p>
+         * <p> As noted in {@link AutoCloseable#close()}, cases where the
+         * close may fail require careful attention. It is strongly advised
+         * to relinquish the underlying resources and to internally
+         * <em>mark</em> the {@code Closeable} as closed, prior to throwing
+         * the {@code IOException}.
+         *
+         * @throws IOException if an I/O error occurs
+         */
+        @Override
+        public void close() throws IOException {
+            if (!isCanceled()) {
+                try {
+                    if (!cancel().get(5, TimeUnit.SECONDS)) {
+
+                    }
+                } catch (InterruptedException e) {
+                    throw new IOException("Close was interrupted.", e);
+                } catch (ExecutionException e) {
+                    throw new IOException("Exception during execute.", e);
+                } catch (TimeoutException e) {
+                    throw new IOException("Close out of time.", e);
+                } finally {
+                    setCanceled(true);
+                }
+            }
+        }
     }
 
 }

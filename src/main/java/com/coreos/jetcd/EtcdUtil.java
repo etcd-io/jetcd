@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * This util is to convert api class to client class.
  */
-public class EtcdUtil {
+class EtcdUtil {
 
     private EtcdUtil() {
     }

@@ -5,6 +5,7 @@ import com.coreos.jetcd.data.EtcdHeader;
 import com.coreos.jetcd.options.WatchOption;
 import com.coreos.jetcd.watch.WatchEvent;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -26,10 +27,11 @@ public interface EtcdWatch {
      */
     CompletableFuture<Watcher> watch(ByteSequence key, WatchOption watchOption, WatchCallback callback);
 
-    interface Watcher{
+    interface Watcher extends Closeable {
 
         /**
          * get watcher id
+         *
          * @return id
          */
         long getWatchID();
@@ -42,12 +44,14 @@ public interface EtcdWatch {
 
         /**
          * get the watch option
+         *
          * @return watch option
          */
         WatchOption getWatchOption();
 
         /**
          * cancel the watcher
+         *
          * @return cancel result
          */
         CompletableFuture<Boolean> cancel();

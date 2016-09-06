@@ -1,12 +1,8 @@
 package com.coreos.jetcd.options;
 
-import com.coreos.jetcd.api.WatchCreateRequest;
 import com.coreos.jetcd.data.ByteSequence;
-import com.google.protobuf.ByteString;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * The option for watch operation.
