@@ -3,8 +3,6 @@ package com.coreos.jetcd;
 import com.coreos.jetcd.api.*;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
-import com.coreos.jetcd.resolver.AbstractEtcdNameResolverFactory;
-import com.coreos.jetcd.resolver.SimpleEtcdNameResolverFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.CallCredentials;
@@ -13,8 +11,6 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.stub.AbstractStub;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.concurrent.ExecutionException;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -28,9 +24,8 @@ public class EtcdClient {
     private static final String TOKEN = "token";
 
     private final ManagedChannelBuilder<?> channelBuilder;
-    private final String[] endpoints;
+    private EtcdConfig etcdConfig;
     private final ManagedChannel channel;
-    private final AbstractEtcdNameResolverFactory nameResolverFactory;
 
     private final EtcdKV kvClient;
     private final EtcdAuth authClient;
@@ -40,18 +35,12 @@ public class EtcdClient {
     private KVGrpc.KVFutureStub kvStub;
     private AuthGrpc.AuthFutureStub authStub;
 
-    public EtcdClient(ManagedChannelBuilder<?> channelBuilder, EtcdClientBuilder builder) throws ConnectException, AuthFailedException {
-        if (builder.getNameResolverFactory() != null) {
-            endpoints = null;
-            this.nameResolverFactory = builder.getNameResolverFactory();
-        } else {
-            //If no nameResolverFactory was set, use SimpleEtcdNameResolver
-            this.endpoints = new String[builder.endpoints().size()];
-            builder.endpoints().toArray(this.endpoints);
-            this.nameResolverFactory = getSimpleNameResolveFactory(this.endpoints);
-        }
-
-        this.channelBuilder = channelBuilder != null ? channelBuilder : ManagedChannelBuilder.forTarget("etcd").nameResolverFactory(nameResolverFactory).usePlaintext(true);
+    /**
+     * construct an EtcdClient with EtcdConfig
+     */
+    public EtcdClient(ManagedChannelBuilder<?> channelBuilder, EtcdConfig config) throws ConnectException, AuthFailedException {
+        this.etcdConfig = config;
+        this.channelBuilder = channelBuilder != null ? channelBuilder : ManagedChannelBuilder.forTarget("etcd").nameResolverFactory(config.nameResolverFactory).usePlaintext(true);
         this.channel = this.channelBuilder.build();
 
         this.kvStub = KVGrpc.newFutureStub(this.channel);
@@ -60,7 +49,7 @@ public class EtcdClient {
         MaintenanceGrpc.MaintenanceStub mainStub = MaintenanceGrpc.newStub(this.channel);
         ClusterGrpc.ClusterFutureStub clusterStub = ClusterGrpc.newFutureStub(this.channel);
 
-        String token = getToken(builder);
+        String token = getToken(config);
 
         if (token != null) {
             this.authStub = setTokenForStub(authStub, token);
@@ -74,7 +63,9 @@ public class EtcdClient {
         this.authClient = newAuthClient(authStub);
         this.maintenanceClient = newMaintenanceClient(mainFStub, mainStub);
         this.clusterClient = newClusterClient(clusterStub);
+
     }
+
 
     /**
      * create a new KV client.
@@ -94,7 +85,7 @@ public class EtcdClient {
     }
 
     private EtcdMaintenance newMaintenanceClient(MaintenanceGrpc.MaintenanceFutureStub futureStub,
-                                                 MaintenanceGrpc.MaintenanceStub stub){
+                                                 MaintenanceGrpc.MaintenanceStub stub) {
         return new EtcdMaintenanceImpl(futureStub, stub);
     }
 
@@ -110,7 +101,7 @@ public class EtcdClient {
         return clusterClient;
     }
 
-    protected EtcdMaintenance getMaintenanceClient(){
+    protected EtcdMaintenance getMaintenanceClient() {
         return this.maintenanceClient;
     }
 
@@ -146,24 +137,24 @@ public class EtcdClient {
     }
 
     /**
-     * get token with EtcdClientBuilder
+     * get token with EtcdConfig
      *
-     * @param builder
+     * @param config
      * @return the auth token
      * @throws ConnectException    This may be caused as network reason, wrong address
      * @throws AuthFailedException This may be caused as wrong username or password
      */
-    private String getToken(EtcdClientBuilder builder) throws ConnectException, AuthFailedException {
+    private String getToken(EtcdConfig config) throws ConnectException, AuthFailedException {
 
-        if (builder.getName() != null || builder.getPassword() != null) {
+        if (config.name != null || config.password != null) {
 
-            checkNotNull(builder.getName(), "username can not be null.");
-            checkNotNull(builder.getPassword(), "password can not be null.");
-            checkArgument(builder.getName().toStringUtf8().trim().length() != 0, "username can not be null.");
-            checkArgument(builder.getPassword().toStringUtf8().trim().length() != 0, "password can not be null.");
+            checkNotNull(config.name, "username can not be null.");
+            checkNotNull(config.password, "password can not be null.");
+            checkArgument(config.name.toStringUtf8().trim().length() != 0, "username can not be null.");
+            checkArgument(config.password.toStringUtf8().trim().length() != 0, "password can not be null.");
 
             try {
-                return authenticate(this.channel, builder.getName(), builder.getPassword()).get().getToken();
+                return authenticate(this.channel, config.name, config.password).get().getToken();
             } catch (InterruptedException ite) {
                 throw new ConnectException("connect to etcd failed", ite);
             } catch (ExecutionException exee) {
@@ -175,22 +166,6 @@ public class EtcdClient {
 
     public void close() {
         channel.shutdownNow();
-    }
-
-    private AbstractEtcdNameResolverFactory getSimpleNameResolveFactory(String[] endpoints) {
-        URI[] uris = new URI[endpoints.length];
-        for (int i = 0; i < endpoints.length; ++i) {
-            try {
-                String endpoint = endpoints[i];
-                if (!endpoint.startsWith("http://")) {
-                    endpoint = "http://" + endpoint;
-                }
-                uris[i] = new URI(endpoint);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
-        }
-        return new SimpleEtcdNameResolverFactory(uris);
     }
 
 }
