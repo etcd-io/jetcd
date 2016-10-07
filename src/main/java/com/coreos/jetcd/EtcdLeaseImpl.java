@@ -3,13 +3,23 @@ package com.coreos.jetcd;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
-import com.coreos.jetcd.api.*;
+import com.coreos.jetcd.api.LeaseGrantRequest;
+import com.coreos.jetcd.api.LeaseGrantResponse;
+import com.coreos.jetcd.api.LeaseGrpc;
+import com.coreos.jetcd.api.LeaseKeepAliveRequest;
+import com.coreos.jetcd.api.LeaseKeepAliveResponse;
+import com.coreos.jetcd.api.LeaseRevokeRequest;
+import com.coreos.jetcd.api.LeaseRevokeResponse;
 import com.coreos.jetcd.lease.Lease;
 import com.coreos.jetcd.lease.NoSuchLeaseException;
 import com.google.common.util.concurrent.ListenableFuture;
-
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 
@@ -33,7 +43,7 @@ public class EtcdLeaseImpl implements EtcdLease {
     private ScheduledFuture<?>                     scheduledFuture;
     private long                                   scanPeriod;
 
-    private Map<Long, Lease>                       keepAlives            = new ConcurrentHashMap<>();
+    private final Map<Long, Lease>                 keepAlives            = new ConcurrentHashMap<>();
 
     /**
      * The first time interval
@@ -51,13 +61,13 @@ public class EtcdLeaseImpl implements EtcdLease {
      */
     private StreamObserver<LeaseKeepAliveResponse> keepAliveResponseStreamObserver;
 
-    public EtcdLeaseImpl(final ManagedChannel channel) {
+    public EtcdLeaseImpl(final ManagedChannel channel, Optional<String> token) {
         /**
          * Init lease stub
          */
         this.channel = channel;
-        this.leaseFutureStub = LeaseGrpc.newFutureStub(this.channel);
-        this.leaseStub = LeaseGrpc.newStub(this.channel);
+        this.leaseFutureStub = EtcdClientUtil.configureStub(LeaseGrpc.newFutureStub(this.channel), token);
+        this.leaseStub = EtcdClientUtil.configureStub(LeaseGrpc.newStub(this.channel), token);
         this.scanPeriod = DEFAULT_SCAN_PERIOD;
     }
 

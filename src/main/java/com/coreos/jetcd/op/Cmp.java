@@ -35,7 +35,7 @@ public class Cmp {
                 compareBuiler.setResult(Compare.CompareResult.LESS);
                 break;
             default:
-                throw new IllegalArgumentException("Unexpected compare type");
+                throw new IllegalArgumentException("Unexpected compare type (" + this.op + ")");
         }
 
         Compare.CompareTarget target = this.target.getTarget();
@@ -54,7 +54,7 @@ public class Cmp {
             case CREATE:
                 compareBuiler.setCreateRevision((Long) value);
             default:
-                throw new IllegalArgumentException("Unexpected target type");
+                throw new IllegalArgumentException("Unexpected target type (" + target + ")");
         }
 
         return compareBuiler.build();

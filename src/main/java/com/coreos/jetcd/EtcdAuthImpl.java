@@ -1,19 +1,51 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.*;
+import java.util.Optional;
+
+import com.coreos.jetcd.api.AuthDisableRequest;
+import com.coreos.jetcd.api.AuthDisableResponse;
+import com.coreos.jetcd.api.AuthEnableRequest;
+import com.coreos.jetcd.api.AuthEnableResponse;
+import com.coreos.jetcd.api.AuthGrpc;
+import com.coreos.jetcd.api.AuthRoleAddRequest;
+import com.coreos.jetcd.api.AuthRoleAddResponse;
+import com.coreos.jetcd.api.AuthRoleDeleteRequest;
+import com.coreos.jetcd.api.AuthRoleDeleteResponse;
+import com.coreos.jetcd.api.AuthRoleGetRequest;
+import com.coreos.jetcd.api.AuthRoleGetResponse;
+import com.coreos.jetcd.api.AuthRoleGrantPermissionRequest;
+import com.coreos.jetcd.api.AuthRoleGrantPermissionResponse;
+import com.coreos.jetcd.api.AuthRoleListRequest;
+import com.coreos.jetcd.api.AuthRoleListResponse;
+import com.coreos.jetcd.api.AuthRoleRevokePermissionRequest;
+import com.coreos.jetcd.api.AuthRoleRevokePermissionResponse;
+import com.coreos.jetcd.api.AuthUserAddRequest;
+import com.coreos.jetcd.api.AuthUserAddResponse;
+import com.coreos.jetcd.api.AuthUserChangePasswordRequest;
+import com.coreos.jetcd.api.AuthUserChangePasswordResponse;
+import com.coreos.jetcd.api.AuthUserDeleteRequest;
+import com.coreos.jetcd.api.AuthUserDeleteResponse;
+import com.coreos.jetcd.api.AuthUserGetRequest;
+import com.coreos.jetcd.api.AuthUserGetResponse;
+import com.coreos.jetcd.api.AuthUserGrantRoleRequest;
+import com.coreos.jetcd.api.AuthUserGrantRoleResponse;
+import com.coreos.jetcd.api.AuthUserListRequest;
+import com.coreos.jetcd.api.AuthUserListResponse;
+import com.coreos.jetcd.api.AuthUserRevokeRoleRequest;
+import com.coreos.jetcd.api.AuthUserRevokeRoleResponse;
+import com.coreos.jetcd.api.Permission;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+import io.grpc.ManagedChannel;
 
 /**
  * Implementation of etcd auth client
  */
 public class EtcdAuthImpl implements EtcdAuth {
+    private final AuthGrpc.AuthFutureStub stub;
 
-    private AuthGrpc.AuthFutureStub authStub;
-
-
-    public EtcdAuthImpl(AuthGrpc.AuthFutureStub authStub) {
-        this.authStub = authStub;
+    public EtcdAuthImpl(ManagedChannel channel, Optional<String> token) {
+        this.stub = EtcdClientUtil.configureStub(AuthGrpc.newFutureStub(channel), token);
     }
 
     // ***************
@@ -23,13 +55,13 @@ public class EtcdAuthImpl implements EtcdAuth {
     @Override
     public ListenableFuture<AuthEnableResponse> authEnable() {
         AuthEnableRequest enableRequest = AuthEnableRequest.getDefaultInstance();
-        return authStub.authEnable(enableRequest);
+        return this.stub.authEnable(enableRequest);
     }
 
     @Override
     public ListenableFuture<AuthDisableResponse> authDisable() {
         AuthDisableRequest disableRequest = AuthDisableRequest.getDefaultInstance();
-        return authStub.authDisable(disableRequest);
+        return this.stub.authDisable(disableRequest);
     }
 
     // ***************
@@ -42,14 +74,14 @@ public class EtcdAuthImpl implements EtcdAuth {
                 .setNameBytes(name)
                 .setPasswordBytes(password)
                 .build();
-        return authStub.userAdd(addRequest);
+        return this.stub.userAdd(addRequest);
     }
 
     @Override
     public ListenableFuture<AuthUserDeleteResponse> userDelete(ByteString name) {
         AuthUserDeleteRequest deleteRequest = AuthUserDeleteRequest.newBuilder()
                 .setNameBytes(name).build();
-        return authStub.userDelete(deleteRequest);
+        return this.stub.userDelete(deleteRequest);
     }
 
     @Override
@@ -58,7 +90,7 @@ public class EtcdAuthImpl implements EtcdAuth {
                 .setNameBytes(name)
                 .setPasswordBytes(password)
                 .build();
-        return authStub.userChangePassword(changePasswordRequest);
+        return this.stub.userChangePassword(changePasswordRequest);
     }
 
     @Override
@@ -67,13 +99,13 @@ public class EtcdAuthImpl implements EtcdAuth {
                 .setNameBytes(name)
                 .build();
 
-        return authStub.userGet(userGetRequest);
+        return this.stub.userGet(userGetRequest);
     }
 
     @Override
     public ListenableFuture<AuthUserListResponse> userList() {
         AuthUserListRequest userListRequest = AuthUserListRequest.getDefaultInstance();
-        return authStub.userList(userListRequest);
+        return this.stub.userList(userListRequest);
     }
 
     // ***************
@@ -86,7 +118,7 @@ public class EtcdAuthImpl implements EtcdAuth {
                 .setUserBytes(name)
                 .setRoleBytes(role)
                 .build();
-        return authStub.userGrantRole(userGrantRoleRequest);
+        return this.stub.userGrantRole(userGrantRoleRequest);
     }
 
     @Override
@@ -95,7 +127,7 @@ public class EtcdAuthImpl implements EtcdAuth {
                 .setNameBytes(name)
                 .setRoleBytes(role)
                 .build();
-        return authStub.userRevokeRole(userRevokeRoleRequest);
+        return this.stub.userRevokeRole(userRevokeRoleRequest);
     }
 
     // ***************
@@ -107,7 +139,7 @@ public class EtcdAuthImpl implements EtcdAuth {
         AuthRoleAddRequest roleAddRequest = AuthRoleAddRequest.newBuilder()
                 .setNameBytes(name)
                 .build();
-        return authStub.roleAdd(roleAddRequest);
+        return this.stub.roleAdd(roleAddRequest);
     }
 
     @Override
@@ -122,7 +154,7 @@ public class EtcdAuthImpl implements EtcdAuth {
                 .setPerm(perm)
                 .build();
 
-        return authStub.roleGrantPermission(roleGrantPermissionRequest);
+        return this.stub.roleGrantPermission(roleGrantPermissionRequest);
     }
 
     @Override
@@ -130,13 +162,13 @@ public class EtcdAuthImpl implements EtcdAuth {
         AuthRoleGetRequest roleGetRequest = AuthRoleGetRequest.newBuilder()
                 .setRoleBytes(role)
                 .build();
-        return authStub.roleGet(roleGetRequest);
+        return this.stub.roleGet(roleGetRequest);
     }
 
     @Override
     public ListenableFuture<AuthRoleListResponse> roleList() {
         AuthRoleListRequest roleListRequest = AuthRoleListRequest.getDefaultInstance();
-        return authStub.roleList(roleListRequest);
+        return this.stub.roleList(roleListRequest);
     }
 
     @Override
@@ -147,7 +179,7 @@ public class EtcdAuthImpl implements EtcdAuth {
                 .setKeyBytes(key)
                 .setRangeEndBytes(rangeEnd)
                 .build();
-        return authStub.roleRevokePermission(roleRevokePermissionRequest);
+        return this.stub.roleRevokePermission(roleRevokePermissionRequest);
     }
 
     @Override
@@ -156,7 +188,7 @@ public class EtcdAuthImpl implements EtcdAuth {
         AuthRoleDeleteRequest roleDeleteRequest = AuthRoleDeleteRequest.newBuilder()
                 .setRoleBytes(role)
                 .build();
-        return authStub.roleDelete(roleDeleteRequest);
+        return this.stub.roleDelete(roleDeleteRequest);
     }
 
 }

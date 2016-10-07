@@ -1,11 +1,10 @@
 package com.coreos.jetcd.resolver;
 
 import java.net.URI;
-
+import java.util.List;
 import javax.annotation.Nullable;
 
 import com.google.common.base.Preconditions;
-
 import io.grpc.Attributes;
 import io.grpc.NameResolver;
 import io.grpc.internal.GrpcUtil;
@@ -18,9 +17,9 @@ public class SimpleEtcdNameResolverFactory extends AbstractEtcdNameResolverFacto
     private static final String SCHEME = "etcd";
     private static final String NAME   = "simple";
 
-    private final URI[]         uris;
+    private final List<URI> uris;
 
-    public SimpleEtcdNameResolverFactory(final URI... uris) {
+    public SimpleEtcdNameResolverFactory(List<URI> uris) {
         this.uris = uris;
     }
 

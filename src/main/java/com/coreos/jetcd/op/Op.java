@@ -55,8 +55,12 @@ public abstract class Op {
         }
 
         RequestOp toRequestOp() {
-            PutRequest put = PutRequest.newBuilder().setKey(this.key).setValue(this.value).setLease(this.option.getLeaseId())
-                .setPrevKv(this.option.getPrevKV()).build();
+            PutRequest put = PutRequest.newBuilder()
+                .setKey(this.key)
+                .setValue(this.value)
+                .setLease(this.option.getLeaseId())
+                .setPrevKv(this.option.getPrevKV())
+                .build();
 
             return RequestOp.newBuilder().setRequestPut(put).build();
         }
@@ -72,13 +76,20 @@ public abstract class Op {
         }
 
         RequestOp toRequestOp() {
-            RangeRequest.Builder range = RangeRequest.newBuilder().setKey(this.key).setCountOnly(this.option.isCountOnly())
-                .setLimit(this.option.getLimit()).setRevision(this.option.getRevision()).setKeysOnly(this.option.isKeysOnly())
-                .setSerializable(this.option.isSerializable()).setSortOrder(this.option.getSortOrder())
+            RangeRequest.Builder range = RangeRequest.newBuilder()
+                .setKey(this.key)
+                .setCountOnly(this.option.isCountOnly())
+                .setLimit(this.option.getLimit())
+                .setRevision(this.option.getRevision())
+                .setKeysOnly(this.option.isKeysOnly())
+                .setSerializable(this.option.isSerializable())
+                .setSortOrder(this.option.getSortOrder())
                 .setSortTarget(this.option.getSortField());
+
             if (this.option.getEndKey().isPresent()) {
                 range.setRangeEnd(this.option.getEndKey().get());
             }
+
             return RequestOp.newBuilder().setRequestRange(range).build();
         }
     }
@@ -93,10 +104,14 @@ public abstract class Op {
         }
 
         RequestOp toRequestOp() {
-            DeleteRangeRequest.Builder delete = DeleteRangeRequest.newBuilder().setKey(this.key).setPrevKv(this.option.isPrevKV());
+            DeleteRangeRequest.Builder delete = DeleteRangeRequest.newBuilder()
+                .setKey(this.key)
+                .setPrevKv(this.option.isPrevKV());
+
             if (this.option.getEndKey().isPresent()) {
                 delete.setRangeEnd(this.option.getEndKey().get());
             }
+
             return RequestOp.newBuilder().setRequestDeleteRange(delete).build();
         }
     }
