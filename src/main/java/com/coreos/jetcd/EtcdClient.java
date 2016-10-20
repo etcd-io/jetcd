@@ -1,5 +1,12 @@
 package com.coreos.jetcd;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.concurrent.ExecutionException;
+
 import com.coreos.jetcd.api.*;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
@@ -7,38 +14,32 @@ import com.coreos.jetcd.resolver.AbstractEtcdNameResolverFactory;
 import com.coreos.jetcd.resolver.SimpleEtcdNameResolverFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+
 import io.grpc.CallCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.stub.AbstractStub;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.concurrent.ExecutionException;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Etcd Client
  */
 public class EtcdClient {
 
-    private static final String TOKEN = "token";
+    private static final String                   TOKEN = "token";
 
-    private final ManagedChannelBuilder<?> channelBuilder;
-    private final String[] endpoints;
-    private final ManagedChannel channel;
+    private final ManagedChannelBuilder<?>        channelBuilder;
+    private final String[]                        endpoints;
+    private final ManagedChannel                  channel;
     private final AbstractEtcdNameResolverFactory nameResolverFactory;
 
-    private final EtcdKV kvClient;
-    private final EtcdAuth authClient;
-    private final EtcdMaintenance maintenanceClient;
-    private final EtcdCluster clusterClient;
+    private final EtcdKV                          kvClient;
+    private final EtcdAuth                        authClient;
+    private final EtcdMaintenance                 maintenanceClient;
+    private final EtcdCluster                     clusterClient;
 
-    private KVGrpc.KVFutureStub kvStub;
-    private AuthGrpc.AuthFutureStub authStub;
+    private KVGrpc.KVFutureStub                   kvStub;
+    private AuthGrpc.AuthFutureStub               authStub;
 
     public EtcdClient(ManagedChannelBuilder<?> channelBuilder, EtcdClientBuilder builder) throws ConnectException, AuthFailedException {
         if (builder.getNameResolverFactory() != null) {
@@ -51,7 +52,8 @@ public class EtcdClient {
             this.nameResolverFactory = getSimpleNameResolveFactory(this.endpoints);
         }
 
-        this.channelBuilder = channelBuilder != null ? channelBuilder : ManagedChannelBuilder.forTarget("etcd").nameResolverFactory(nameResolverFactory).usePlaintext(true);
+        this.channelBuilder = channelBuilder != null ? channelBuilder : ManagedChannelBuilder.forTarget("etcd")
+            .nameResolverFactory(nameResolverFactory).usePlaintext(true);
         this.channel = this.channelBuilder.build();
 
         this.kvStub = KVGrpc.newFutureStub(this.channel);
@@ -81,7 +83,7 @@ public class EtcdClient {
      *
      * @return new KV client
      */
-    public EtcdKV newKVClient(KVGrpc.KVFutureStub stub) {
+    private EtcdKV newKVClient(KVGrpc.KVFutureStub stub) {
         return new EtcdKVImpl(stub);
     }
 
@@ -89,28 +91,27 @@ public class EtcdClient {
         return new EtcdAuthImpl(stub);
     }
 
-    protected EtcdCluster newClusterClient(ClusterGrpc.ClusterFutureStub stub) {
+    private EtcdCluster newClusterClient(ClusterGrpc.ClusterFutureStub stub) {
         return new EtcdClusterImpl(stub);
     }
 
-    private EtcdMaintenance newMaintenanceClient(MaintenanceGrpc.MaintenanceFutureStub futureStub,
-                                                 MaintenanceGrpc.MaintenanceStub stub){
+    private EtcdMaintenance newMaintenanceClient(MaintenanceGrpc.MaintenanceFutureStub futureStub, MaintenanceGrpc.MaintenanceStub stub) {
         return new EtcdMaintenanceImpl(futureStub, stub);
     }
 
-    protected EtcdAuth getAuthClient() {
+    public EtcdAuth getAuthClient() {
         return authClient;
     }
 
-    protected EtcdKV getKVClient() {
+    public EtcdKV getKVClient() {
         return kvClient;
     }
 
-    protected EtcdCluster getClusterClient() {
+    public EtcdCluster getClusterClient() {
         return clusterClient;
     }
 
-    protected EtcdMaintenance getMaintenanceClient(){
+    public EtcdMaintenance getMaintenanceClient() {
         return this.maintenanceClient;
     }
 
@@ -141,7 +142,7 @@ public class EtcdClient {
     private ListenableFuture<AuthenticateResponse> authenticate(ManagedChannel channel, ByteString name, ByteString password) {
 
         ListenableFuture<AuthenticateResponse> authResp = AuthGrpc.newFutureStub(channel).authenticate(
-                AuthenticateRequest.newBuilder().setNameBytes(name).setPasswordBytes(password).build());
+            AuthenticateRequest.newBuilder().setNameBytes(name).setPasswordBytes(password).build());
         return authResp;
     }
 
