@@ -18,7 +18,7 @@
         <!-- plugins -->
         <build-helper-maven-plugin.version>1.11</build-helper-maven-plugin.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
-        <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
+        <maven-compiler-plugin.version>3.6.0</maven-compiler-plugin.version>
         <maven-resources-plugin.version>3.0.1</maven-resources-plugin.version>
         <maven-javadoc-plugin.version>2.10.4</maven-javadoc-plugin.version>
         <maven-bundle-plugin.version>3.2.0</maven-bundle-plugin.version>
