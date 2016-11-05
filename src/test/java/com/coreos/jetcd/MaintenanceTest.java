@@ -14,8 +14,8 @@ import java.util.concurrent.ExecutionException;
 /**
  * Maintenance test.
  */
-public class MaintenanceTest {
-
+public class MaintenanceTest extends AbstractTest
+{
     private final EtcdClient etcdClient;
     private final EtcdMaintenance maintenance;
     private final Assertion test = new Assertion();
@@ -23,7 +23,8 @@ public class MaintenanceTest {
     private CountDownLatch finishLatch = new CountDownLatch(1);
 
     public MaintenanceTest() throws AuthFailedException, ConnectException {
-        this.etcdClient = EtcdClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
+        this.etcdClient = EtcdClientBuilder.newBuilder()
+                .endpoints(getEndpoints()).build();
         maintenance = etcdClient.getMaintenanceClient();
     }
 

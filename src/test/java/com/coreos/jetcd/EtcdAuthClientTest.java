@@ -1,8 +1,12 @@
 package com.coreos.jetcd;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
@@ -19,43 +23,47 @@ import io.grpc.StatusRuntimeException;
 /**
  * test etcd auth
  */
-public class EtcdAuthClientTest {
+public class EtcdAuthClientTest extends AbstractTest
+{
+    private EtcdAuth authClient;
+    private EtcdKV kvClient;
 
-    private EtcdAuth   authClient;
-    private EtcdKV     kvClient;
-
-    private ByteString roleName      = ByteString.copyFromUtf8("root");
+    private ByteString roleName = ByteString.copyFromUtf8("root");
 
     private ByteString keyRangeBegin = ByteString.copyFromUtf8("foo");
-    private ByteString keyRangeEnd   = ByteString.copyFromUtf8("zoo");
+    private ByteString keyRangeEnd = ByteString.copyFromUtf8("zoo");
 
-    private ByteString testKey       = ByteString.copyFromUtf8("foo1");
-    private ByteString testName      = ByteString.copyFromUtf8("bar");
+    private ByteString testKey = ByteString.copyFromUtf8("foo1");
+    private ByteString testName = ByteString.copyFromUtf8("bar");
 
-    private ByteString userName      = ByteString.copyFrom("root", Charset.defaultCharset());
-    private ByteString password      = ByteString.copyFrom("123", Charset.defaultCharset());
+    private ByteString userName = ByteString
+            .copyFrom("root", Charset.defaultCharset());
+    private ByteString password = ByteString
+            .copyFrom("123", Charset.defaultCharset());
 
-    private Assertion  test;
+    private Assertion test;
 
-    private EtcdClient etcdClient;
     private EtcdClient authEtcdClient;
 
     /**
      * Build etcd client to create role, permission
      */
     @BeforeTest
-    public void setupEnv() throws AuthFailedException, ConnectException {
+    public void setupEnv() throws AuthFailedException, ConnectException
+    {
         this.test = new Assertion();
-        this.etcdClient = EtcdClientBuilder.newBuilder().endpoints("localhost:2379").build();
-        this.kvClient = this.etcdClient.getKVClient();
-        this.authClient = this.etcdClient.getAuthClient();
+        final EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
+                .endpoints(getEndpoints()).build();
+        this.kvClient = etcdClient.getKVClient();
+        this.authClient = etcdClient.getAuthClient();
     }
 
     /**
      * create role with un-auth etcd client
      */
     @Test(groups = "role")
-    public void testRoleAdd() throws ExecutionException, InterruptedException {
+    public void testRoleAdd() throws ExecutionException, InterruptedException
+    {
         this.authClient.roleAdd(roleName).get();
     }
 
@@ -63,23 +71,31 @@ public class EtcdAuthClientTest {
      * grant permission to role
      */
     @Test(dependsOnMethods = "testRoleAdd", groups = "role")
-    public void testRoleGrantPermission() throws ExecutionException, InterruptedException {
-        this.authClient.roleGrantPermission(roleName, keyRangeBegin, keyRangeEnd, Permission.Type.READWRITE).get();
+    public void testRoleGrantPermission() throws ExecutionException,
+                                                 InterruptedException
+    {
+        this.authClient
+                .roleGrantPermission(roleName, keyRangeBegin, keyRangeEnd,
+                                     Permission.Type.READWRITE).get();
     }
 
     /**
      * add user with password and username
      */
     @Test(groups = "user")
-    public void testUserAdd() throws ExecutionException, InterruptedException {
+    public void testUserAdd() throws ExecutionException, InterruptedException
+    {
         this.authClient.userAdd(userName, password).get();
     }
 
     /**
      * grant user role
      */
-    @Test(dependsOnMethods = { "testUserAdd", "testRoleGrantPermission" }, groups = "user")
-    public void testUserGrantRole() throws ExecutionException, InterruptedException {
+    @Test(dependsOnMethods = {"testUserAdd",
+                              "testRoleGrantPermission"}, groups = "user")
+    public void testUserGrantRole() throws ExecutionException,
+                                           InterruptedException
+    {
         this.authClient.userGrantRole(userName, roleName).get();
     }
 
@@ -87,7 +103,8 @@ public class EtcdAuthClientTest {
      * enable etcd auth
      */
     @Test(dependsOnGroups = "user", groups = "authEnable")
-    public void testEnableAuth() throws ExecutionException, InterruptedException {
+    public void testEnableAuth() throws ExecutionException, InterruptedException
+    {
         this.authClient.authEnable().get();
     }
 
@@ -95,8 +112,11 @@ public class EtcdAuthClientTest {
      * auth client with password and user name
      */
     @Test(dependsOnMethods = "testEnableAuth", groups = "authEnable")
-    public void setupAuthClient() throws AuthFailedException, ConnectException {
-        this.authEtcdClient = EtcdClientBuilder.newBuilder().endpoints("localhost:2379").setName(userName).setPassword(password).build();
+    public void setupAuthClient() throws AuthFailedException, ConnectException
+    {
+        this.authEtcdClient = EtcdClientBuilder.newBuilder()
+                .endpoints(getEndpoints()).setName(userName)
+                .setPassword(password).build();
 
     }
 
@@ -104,13 +124,19 @@ public class EtcdAuthClientTest {
      * put and range with auth client
      */
     @Test(groups = "testAuth", dependsOnGroups = "authEnable")
-    public void testKVWithAuth() throws ExecutionException, InterruptedException {
+    public void testKVWithAuth() throws ExecutionException, InterruptedException
+    {
         Throwable err = null;
-        try {
+        try
+        {
             this.authEtcdClient.getKVClient().put(testKey, testName).get();
-            RangeResponse rangeResponse = this.authEtcdClient.getKVClient().get(testKey).get();
-            this.test.assertTrue(rangeResponse.getCount() != 0 && rangeResponse.getKvs(0).getValue().equals(testName));
-        } catch (StatusRuntimeException sre) {
+            RangeResponse rangeResponse = this.authEtcdClient.getKVClient()
+                    .get(testKey).get();
+            this.test.assertTrue(rangeResponse.getCount() != 0 && rangeResponse
+                    .getKvs(0).getValue().equals(testName));
+        }
+        catch (StatusRuntimeException sre)
+        {
             err = sre;
         }
         this.test.assertNull(err, "KV put range test with auth");
@@ -120,12 +146,16 @@ public class EtcdAuthClientTest {
      * put and range with auth client
      */
     @Test(groups = "testAuth", dependsOnGroups = "authEnable")
-    public void testKVWithoutAuth() throws InterruptedException {
+    public void testKVWithoutAuth() throws InterruptedException
+    {
         Throwable err = null;
-        try {
+        try
+        {
             this.kvClient.put(testKey, testName).get();
             this.kvClient.get(testKey).get();
-        } catch (ExecutionException sre) {
+        }
+        catch (ExecutionException sre)
+        {
             err = sre;
         }
         this.test.assertNotNull(err, "KV put range test without auth");
@@ -135,8 +165,10 @@ public class EtcdAuthClientTest {
      * get auth's permission
      */
     @Test(groups = "testAuth", dependsOnGroups = "authEnable")
-    public void testRoleGet() throws ExecutionException, InterruptedException {
-        AuthRoleGetResponse roleGetResponse = this.authEtcdClient.getAuthClient().roleGet(roleName).get();
+    public void testRoleGet() throws ExecutionException, InterruptedException
+    {
+        AuthRoleGetResponse roleGetResponse = this.authEtcdClient
+                .getAuthClient().roleGet(roleName).get();
         this.test.assertTrue(roleGetResponse.getPermCount() != 0);
     }
 
@@ -144,11 +176,15 @@ public class EtcdAuthClientTest {
      * disable etcd auth
      */
     @Test(dependsOnGroups = "testAuth", groups = "disableAuth")
-    public void testDisableAuth() {
+    public void testDisableAuth()
+    {
         Throwable err = null;
-        try {
+        try
+        {
             this.authEtcdClient.getAuthClient().authDisable().get();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             err = e;
         }
         this.test.assertNull(err, "auth disable");
@@ -158,11 +194,15 @@ public class EtcdAuthClientTest {
      * delete user
      */
     @Test(dependsOnGroups = "disableAuth", groups = "clearEnv")
-    public void delUser() {
+    public void delUser()
+    {
         Throwable err = null;
-        try {
+        try
+        {
             this.authEtcdClient.getAuthClient().userDelete(userName).get();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             err = e;
         }
         this.test.assertNull(err, "user delete");
@@ -172,11 +212,15 @@ public class EtcdAuthClientTest {
      * delete role
      */
     @Test(dependsOnGroups = "disableAuth", groups = "clearEnv")
-    public void delRole() {
+    public void delRole()
+    {
         Throwable err = null;
-        try {
+        try
+        {
             this.authEtcdClient.getAuthClient().roleDelete(roleName).get();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             err = e;
         }
         this.test.assertNull(err, "delete role");
