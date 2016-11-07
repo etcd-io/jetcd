@@ -68,12 +68,28 @@
 
 package com.coreos.jetcd;
 
-abstract class AbstractTest
+public class DockerContainer
 {
-    String[] getEndpoints()
+    private final DockerCommandRunner commandRunner;
+    private final char[] hash;
+
+
+    public DockerContainer(final char[] hash,
+                           final DockerCommandRunner dockerCommandRunner)
     {
-        final String endpointProperty =
-                System.getProperty("ENDPOINTS", "localhost:2379");
-        return endpointProperty.split(",");
+        this.commandRunner = dockerCommandRunner;
+        this.hash = hash;
+    }
+
+
+    public void destroy() throws Exception
+    {
+        commandRunner.runDockerCommand("docker", "stop", String.valueOf(hash));
+        commandRunner.runDockerCommand("docker", "rm", String.valueOf(hash));
+    }
+
+    protected String getEndpoint()
+    {
+        return System.getProperty("ENDPOINTS", "localhost:2379");
     }
 }

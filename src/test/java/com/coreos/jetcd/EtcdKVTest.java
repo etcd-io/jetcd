@@ -15,31 +15,28 @@ import com.coreos.jetcd.options.PutOption;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 
+
 /**
  * KV service test cases.
  */
-public class EtcdKVTest
+public class EtcdKVTest extends AbstractTest
 {
-
     private EtcdKV kvClient;
     private Assertion test;
-    private String[] endpoints;
 
     @BeforeTest
     public void setUp() throws Exception
     {
-        final String endpointProperty =
-                System.getProperty("endpoints", "localhost:2379");
-        this.endpoints = endpointProperty.split(",");
         test = new Assertion();
-        EtcdClient client = EtcdClientBuilder.newBuilder().endpoints(endpoints)
-                .build();
+        final EtcdClient client = EtcdClientBuilder.newBuilder()
+                .endpoints(getEndpoints()).build();
         kvClient = client.getKVClient();
     }
 
     /**
      * Clean the etcd KV pairings out.
-     * @throws Exception        Any issues.
+     *
+     * @throws Exception Any issues.
      */
     @AfterTest
     public void cleanUp() throws Exception

@@ -6,9 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 import org.testng.asserts.Assertion;
 
 import com.coreos.jetcd.api.AuthRoleGetResponse;
@@ -23,7 +21,7 @@ import io.grpc.StatusRuntimeException;
 /**
  * test etcd auth
  */
-public class EtcdAuthClientTest extends AbstractTest
+public class EtcdAuthClientTest extends DockerSetupTest
 {
     private EtcdAuth authClient;
     private EtcdKV kvClient;
@@ -42,8 +40,26 @@ public class EtcdAuthClientTest extends AbstractTest
             .copyFrom("123", Charset.defaultCharset());
 
     private Assertion test;
-
     private EtcdClient authEtcdClient;
+
+    private DockerContainer etcdInstance;
+
+
+    @BeforeSuite
+    public void ensureInstanceRunning() throws Exception
+    {
+        pullLatestImage();
+        this.etcdInstance = runSingleInstance();
+    }
+
+    @AfterSuite
+    public void killInstance() throws Exception
+    {
+        if (etcdInstance != null)
+        {
+            etcdInstance.destroy();
+        }
+    }
 
     /**
      * Build etcd client to create role, permission
@@ -53,7 +69,7 @@ public class EtcdAuthClientTest extends AbstractTest
     {
         this.test = new Assertion();
         final EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
-                .endpoints(getEndpoints()).build();
+                .endpoints(etcdInstance.getEndpoint()).build();
         this.kvClient = etcdClient.getKVClient();
         this.authClient = etcdClient.getAuthClient();
     }
@@ -115,7 +131,7 @@ public class EtcdAuthClientTest extends AbstractTest
     public void setupAuthClient() throws AuthFailedException, ConnectException
     {
         this.authEtcdClient = EtcdClientBuilder.newBuilder()
-                .endpoints(getEndpoints()).setName(userName)
+                .endpoints(etcdInstance.getEndpoint()).setName(userName)
                 .setPassword(password).build();
 
     }

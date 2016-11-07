@@ -68,12 +68,58 @@
 
 package com.coreos.jetcd;
 
-abstract class AbstractTest
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+
+public class DockerCommandRunner
 {
-    String[] getEndpoints()
+    private static final int DOCKER_PROCESS_COMPLETE = 0;
+
+
+    InputStream runDockerCommand(final String... command) throws Exception
     {
-        final String endpointProperty =
-                System.getProperty("ENDPOINTS", "localhost:2379");
-        return endpointProperty.split(",");
+        final ProcessBuilder processBuilder = new ProcessBuilder(command);
+        final Process process = processBuilder.start();
+
+        final int exitCode = process.waitFor();
+
+        if (exitCode == DOCKER_PROCESS_COMPLETE)
+        {
+            return process.getInputStream();
+        }
+        else
+        {
+            final InputStream errorStream = process.getErrorStream();
+
+            try (final BufferedReader reader =
+                         new BufferedReader(new InputStreamReader(errorStream)))
+            {
+                final StringBuilder message = new StringBuilder();
+                String line;
+
+                while ((line = reader.readLine()) != null)
+                {
+                    message.append(line).append("\n");
+                }
+
+                throw new RuntimeException(
+                        String.format("Unable to execute \n'%s'\n due to (%d): %s.",
+                                      String.join(" ", command),
+                                      exitCode, message.toString()));
+            }
+        }
+    }
+
+    DockerContainer run(final String[] command) throws Exception
+    {
+        final InputStream inputStream = runDockerCommand(command);
+
+        try (final BufferedReader reader =
+                     new BufferedReader(new InputStreamReader(inputStream)))
+        {
+            return new DockerContainer(reader.readLine().toCharArray(), this);
+        }
     }
 }

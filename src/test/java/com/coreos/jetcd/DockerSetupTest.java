@@ -68,12 +68,54 @@
 
 package com.coreos.jetcd;
 
-abstract class AbstractTest
+
+class DockerSetupTest extends AbstractTest
 {
-    String[] getEndpoints()
+    private static final DockerCommandRunner DOCKER_COMMAND_RUNNER =
+            new DockerCommandRunner();
+
+
+    void pullLatestImage() throws Exception
     {
-        final String endpointProperty =
-                System.getProperty("ENDPOINTS", "localhost:2379");
-        return endpointProperty.split(",");
+        final String dockerImageName = getETCDDockerImageName();
+        final String[] dockerPull = new String[] {
+                "docker", "pull", dockerImageName
+        };
+
+        DOCKER_COMMAND_RUNNER.runDockerCommand(dockerPull);
+    }
+
+    DockerContainer runSingleInstance() throws Exception
+    {
+        final String[] dockerRun = new String[] {
+                "docker", "run", "-d", "--name", "etcd",
+//                "-v /usr/share/ca-certificates/:/etc/ssl/certs",
+                "-p", "4001:4001", "-p", "2380:2380", "-p", "2379:2379",
+                getETCDDockerImageName(), "etcd", "-name", "etcd0",
+                "-advertise-client-urls http://localhost:2379,http://localhost:4001",
+                "-listen-client-urls http://0.0.0.0:2379,http://0.0.0.0:4001",
+                "-initial-advertise-peer-urls http://localhost:2380",
+                "-listen-peer-urls http://0.0.0.0:2380",
+                "-initial-cluster-token etcd-cluster-1",
+                "-initial-cluster etcd0=http://localhost:2380",
+                "-initial-cluster-state new"
+        };
+
+        return DOCKER_COMMAND_RUNNER.run(dockerRun);
+    }
+
+    /**
+     * Depends on *NIX because of the certificates.
+     *
+     * @throws Exception    If the command won't run.
+     */
+    DockerContainer[] runCluster() throws Exception
+    {
+        return null;
+    }
+
+    private String getETCDDockerImageName()
+    {
+        return System.getProperty("ETCD_DOCKER_IMAGE", "quay.io/coreos/etcd");
     }
 }

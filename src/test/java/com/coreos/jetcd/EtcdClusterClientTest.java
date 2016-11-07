@@ -6,23 +6,31 @@ import com.coreos.jetcd.api.MemberListResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+
 /**
  * test etcd cluster client
  */
-public class EtcdClusterClientTest extends AbstractTest
+public class EtcdClusterClientTest extends DockerSetupTest
 {
     private Assertion assertion = new Assertion();
     private Member addedMember;
 
+
+    @BeforeClass
+    public void setupCluster() throws Exception
+    {
+        pullLatestImage();
+        runCluster();
+    }
 
     /**
      * test list cluster function
@@ -36,15 +44,13 @@ public class EtcdClusterClientTest extends AbstractTest
                                          InterruptedException,
                                          AuthFailedException, ConnectException
     {
-        final String[] endpoints = getEndpoints();
-        EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
-                .endpoints(endpoints).build();
-        EtcdCluster clusterClient = etcdClient.getClusterClient();
+        final EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
+                .endpoints(TestConstants.ENDPOINTS).build();
+        final EtcdCluster clusterClient = etcdClient.getClusterClient();
+        final MemberListResponse response = clusterClient.listMember().get();
 
-        MemberListResponse response = clusterClient.listMember().get();
-        assertion.assertEquals(response.getMembersCount(),
-                               endpoints.length, "Members: "
-                                                 + response.getMembersCount());
+        assertion.assertEquals(response.getMembersCount(), 3,
+                              "Members: " + response.getMembersCount());
     }
 
     /**
@@ -56,18 +62,15 @@ public class EtcdClusterClientTest extends AbstractTest
                                        ExecutionException, InterruptedException,
                                        TimeoutException
     {
-        final String[] endpoints = getEndpoints();
         EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
-                .endpoints(endpoints).build();
+                .endpoints(Arrays.copyOfRange(TestConstants.ENDPOINTS, 0, 2))
+                .build();
         EtcdCluster clusterClient = etcdClient.getClusterClient();
         MemberListResponse response = clusterClient.listMember().get();
-        assertion.assertEquals(response.getMembersCount(),
-                               endpoints.length);
+        assertion.assertEquals(response.getMembersCount(), 3);
         ListenableFuture<MemberAddResponse> responseListenableFuture =
-                clusterClient.addMember(
-                        Collections.singletonList("http://localhost:4001"));
-//                clusterClient.addMember(Arrays.asList(Arrays.copyOfRange(
-//                        TestConstants.peerUrls, 2, 3)));
+                clusterClient.addMember(Arrays.asList(Arrays.copyOfRange(
+                        TestConstants.PEER_URLS, 2, 3)));
         MemberAddResponse addResponse = responseListenableFuture
                 .get(5, TimeUnit.SECONDS);
         addedMember = addResponse.getMember();
@@ -79,30 +82,17 @@ public class EtcdClusterClientTest extends AbstractTest
      * test update peer url for member
      */
     @Test(dependsOnMethods = "testAddMember")
-    public void testUpdateMember()
+    public void testUpdateMember() throws Exception
     {
-        final String[] endpoints = getEndpoints();
-        if (endpoints.length > 1)
-        {
-            Throwable throwable = null;
-            try
-            {
-                EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
-                        .endpoints(endpoints).build();
-                EtcdCluster clusterClient = etcdClient.getClusterClient();
-                MemberListResponse response = clusterClient.listMember().get();
-                String[] newPeerUrl = new String[]{"http://localhost:12380"};
-                clusterClient
-                        .updateMember(response.getMembers(0).getID(), Arrays
-                                .asList(newPeerUrl)).get();
-            }
-            catch (Exception e)
-            {
-                System.out.println(e);
-                throwable = e;
-            }
-            assertion.assertNull(throwable, "update for member");
-        }
+        final EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
+                .endpoints(Arrays.copyOfRange(TestConstants.ENDPOINTS, 1, 3))
+                .build();
+        final EtcdCluster clusterClient = etcdClient.getClusterClient();
+        final MemberListResponse response = clusterClient.listMember().get();
+        final String[] newPeerUrl = new String[]{"http://localhost:12380"};
+
+        clusterClient.updateMember(response.getMembers(0).getID(), Arrays
+                .asList(newPeerUrl)).get();
     }
 
     /**
@@ -113,15 +103,13 @@ public class EtcdClusterClientTest extends AbstractTest
                                           InterruptedException,
                                           AuthFailedException, ConnectException
     {
-        final String[] endpoints = getEndpoints();
         EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
-                .endpoints(endpoints).build();
+                .endpoints(Arrays.copyOfRange(TestConstants.ENDPOINTS, 0, 2))
+                .build();
         EtcdCluster clusterClient = etcdClient.getClusterClient();
         clusterClient.removeMember(addedMember.getID()).get();
         int newCount = clusterClient.listMember().get().getMembersCount();
-        assertion.assertEquals(newCount, endpoints.length,
-                               "delete added member("
-                               + addedMember.getID() + "), and left "
-                               + newCount + " members");
+        assertion.assertEquals(newCount, 3, "delete added member(" + addedMember
+                .getID() + "), and left " + newCount + " members");
     }
 }
