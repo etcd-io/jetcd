@@ -68,17 +68,21 @@
 
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.integration.DockerContainerIntance;
+import com.coreos.jetcd.integration.DockerContainerInstance;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 
 public class DockerCommandRunner
 {
+    private static final Logger LOGGER = Logger.getLogger(
+            DockerCommandRunner.class.getName());
     private static final int DOCKER_PROCESS_COMPLETE = 0;
     private static final String DEFAULT_DOCKER_IMAGE_NAME =
             "quay.io/coreos/etcd";
@@ -102,36 +106,25 @@ public class DockerCommandRunner
         {
             final InputStream errorStream = process.getErrorStream();
 
-            try (final BufferedReader reader =
-                         new BufferedReader(new InputStreamReader(errorStream)))
-            {
-                final StringBuilder message = new StringBuilder();
-                String line;
-
-                while ((line = reader.readLine()) != null)
-                {
-                    message.append(line).append("\n");
-                }
-
-                throw new RuntimeException(
-                        String.format("Unable to execute \n'%s'\n due to (%d): %s.",
-                                      String.join(" ", command),
-                                      exitCode, message.toString()));
-            }
+            throw new RuntimeException(
+                    String.format("Unable to execute \n'%s'\n due to (%d): %s.",
+                                  String.join(" ", command),
+                                  exitCode, readMessage(errorStream)));
         }
     }
 
-    void pullLatestImage() throws Exception
+    private void pullLatestImage() throws Exception
     {
+        LOGGER.info("Pulling latest image...");
         final String dockerImageName = getETCDDockerImageName();
         final String[] dockerPull = new String[] {
                 "docker", "pull", dockerImageName
         };
 
-        runDockerCommand(dockerPull);
+        LOGGER.info(readMessage(runDockerCommand(dockerPull)));
     }
 
-    String getETCDDockerImageName()
+    private String getETCDDockerImageName()
     {
         return System.getProperty(DOCKER_IMAGE_NAME_PROPERTY_KEY,
                                   DEFAULT_DOCKER_IMAGE_NAME);
@@ -143,11 +136,9 @@ public class DockerCommandRunner
                 runDockerCommand("docker", "network", "ls", "-q", "--filter",
                                  "name=etcd_test");
 
-        final String output =
-                new BufferedReader(new InputStreamReader(inputStream))
-                        .readLine();
+        final String output = readMessage(inputStream);
 
-        if ((output == null) || output.trim().equals(""))
+        if (output.trim().equals(""))
         {
             runDockerCommand("docker", "network", "create", "etcd_test");
         }
@@ -155,35 +146,35 @@ public class DockerCommandRunner
 
     /**
      * Start a single instance.
-     * @param name
-     * @param host
-     * @return
-     * @throws Exception
+     * @return          The running instance.
+     * @throws Exception    Any errors starting it up.
      */
-    DockerContainerIntance run(final String name, final String host)
-            throws Exception
+    DockerContainerInstance run() throws Exception
     {
-        final Map<String, String> entries = new HashMap<>();
-        entries.put(name, host);
-
-        return run(entries)[0];
+        return run(1)[0];
     }
 
     /**
      * Run a cluster of name:host instances.
      *
-     * @param nameHosts         The name:host mapping.
+     * @param count             The number of items in the cluster.
      * @return                  Array in the cluster.
-     * @throws Exception
+     * @throws Exception    Any errors starting it up.
      */
-    DockerContainerIntance[] run(final Map<String, String> nameHosts)
-            throws Exception
+    DockerContainerInstance[] run(final int count) throws Exception
     {
         pullLatestImage();
         ensureNetworkExists();
 
-        final DockerContainerIntance[] instances =
-                new DockerContainerIntance[nameHosts.size()];
+        final DockerContainerInstance[] instances =
+                new DockerContainerInstance[count];
+        final Map<String, String> nameHosts = new HashMap<>();
+
+        for (int i = 0; i < count; i++)
+        {
+            nameHosts.put("etcd" + i, "localhost");
+        }
+
         final String clusterString = getClusterString(nameHosts);
 
         int currIndex = 0;
@@ -191,15 +182,14 @@ public class DockerCommandRunner
         {
             final String name = entry.getKey();
             final String host = entry.getValue();
-            final String portPrefix = (currIndex + 1) + "";
-            final String port2379 = (portPrefix.equals("1") ? "" : portPrefix) + "2379";
+            final String portPrefix = (count == 1) ? "" : ((currIndex + 1) + "");
 
-            final String[] command = new String[]{
+            final String[] command = new String[] {
                     "docker", "run", "-d", "--name", name,
                     "--net=etcd_test",
                     //                "-v /usr/share/ca-certificates/:/etc/ssl/certs",
                     "-p", portPrefix + "4001:4001", "-p",
-                    portPrefix + "2380:2380", "-p", port2379 + ":2379",
+                    portPrefix + "2380:2380", "-p", portPrefix + "2379:2379",
                     getETCDDockerImageName(), "etcd",
                     "-name", name,
                     "-advertise-client-urls",
@@ -215,16 +205,15 @@ public class DockerCommandRunner
 
             final InputStream inputStream = runDockerCommand(command);
 
+            // Allow each container to start up.  Not sleeping here causes the
+            // yet-to-be ready cluster to fail adding a node.
             Thread.sleep(2500L);
 
-            try (final BufferedReader reader =
-                         new BufferedReader(new InputStreamReader(inputStream)))
-            {
-                instances[currIndex++] =
-                        new DockerContainerIntance(this,
-                                                   reader.readLine().toCharArray(),
-                                                   host + ":" + port2379);
-            }
+            instances[currIndex++] =
+                    new DockerContainerInstance(this,
+                                                readMessage(inputStream).toCharArray(),
+                                                host + ":" + portPrefix
+                                                + "2379");
         }
 
         return instances;
@@ -243,5 +232,21 @@ public class DockerCommandRunner
         clusterString.deleteCharAt(clusterString.lastIndexOf(","));
 
         return clusterString.toString();
+    }
+
+    private String readMessage(final InputStream inputStream) throws IOException
+    {
+        final BufferedReader bufferedReader =
+                new BufferedReader(new InputStreamReader(inputStream));
+        final StringBuilder message = new StringBuilder();
+        String line;
+
+        while ((line = bufferedReader.readLine()) != null)
+        {
+            message.append(line).append("\n");
+        }
+
+        bufferedReader.close();
+        return message.toString().trim();
     }
 }

@@ -74,6 +74,8 @@ import com.coreos.jetcd.integration.ExternalInstance;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 
+import java.util.logging.Logger;
+
 
 /**
  * Test to provide running instances for tests, if necessary.
@@ -82,6 +84,8 @@ import org.testng.annotations.BeforeSuite;
  */
 class EtcDInstanceTest extends AbstractTest
 {
+    private static final Logger LOGGER =
+            Logger.getLogger(EtcDInstanceTest.class.getName());
     private static final DockerCommandRunner DOCKER_COMMAND_RUNNER =
             new DockerCommandRunner();
 
@@ -94,6 +98,7 @@ class EtcDInstanceTest extends AbstractTest
     {
         if (etcdInstance != null)
         {
+            LOGGER.info("Destroying instance " + etcdInstance.getEndpoint());
             etcdInstance.destroy();
         }
     }
@@ -109,7 +114,9 @@ class EtcDInstanceTest extends AbstractTest
         final String[] endpoints = getEndpoints();
 
         this.etcdInstance = (endpoints.length == 0)
-               ? DOCKER_COMMAND_RUNNER.run("etcd0", "localhost")
+               ? DOCKER_COMMAND_RUNNER.run()
                : new ExternalInstance(endpoints[0]);
+
+        LOGGER.info("Created instance " + etcdInstance.getEndpoint());
     }
 }

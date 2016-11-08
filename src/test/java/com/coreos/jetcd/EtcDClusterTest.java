@@ -74,11 +74,13 @@ import org.testng.annotations.BeforeSuite;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
+import java.util.logging.Logger;
 
 
 public class EtcDClusterTest extends AbstractTest
 {
+    private static final Logger LOGGER =
+            Logger.getLogger(EtcDClusterTest.class.getName());
     private static final DockerCommandRunner DOCKER_COMMAND_RUNNER =
             new DockerCommandRunner();
 
@@ -90,6 +92,8 @@ public class EtcDClusterTest extends AbstractTest
     {
         if (clusterInstances != null)
         {
+            LOGGER.info("Destroying cluster with three (3) instances.");
+
             for (final EtcdInstance instance : clusterInstances)
             {
                 instance.destroy();
@@ -108,14 +112,22 @@ public class EtcDClusterTest extends AbstractTest
     @BeforeSuite
     public void ensureClusterRunning() throws Exception
     {
-        final Map<String, String> instanceMap = new HashMap<>();
-        final Random random = new Random();
-
-        for (int i = 0; i < TestConstants.ENDPOINTS.length; i++)
+        if ((clusterInstances == null) || (clusterInstances.length == 0))
         {
-            instanceMap.put("etcd" + random.nextInt(300), "localhost");
+            LOGGER.info("Starting cluster with three (3) instances.");
+            clusterInstances = DOCKER_COMMAND_RUNNER.run(3);
+        }
+    }
+
+    String[] getClusterEndpoints()
+    {
+        final String[] endpoints = new String[clusterInstances.length];
+
+        for (int i = 0; i < clusterInstances.length; i++)
+        {
+            endpoints[i] = clusterInstances[i].getEndpoint();
         }
 
-        clusterInstances = DOCKER_COMMAND_RUNNER.run(instanceMap);
+        return endpoints;
     }
 }

@@ -37,7 +37,7 @@ public class EtcDClusterClientTest extends EtcDClusterTest
                                          AuthFailedException, ConnectException
     {
         final EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
-                .endpoints(TestConstants.ENDPOINTS).build();
+                .endpoints(getClusterEndpoints()).build();
         final EtcdCluster clusterClient = etcdClient.getClusterClient();
         final MemberListResponse response = clusterClient.listMember().get();
 
@@ -55,7 +55,7 @@ public class EtcDClusterClientTest extends EtcDClusterTest
                                        TimeoutException
     {
         EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
-                .endpoints(Arrays.copyOfRange(TestConstants.ENDPOINTS, 0, 2))
+                .endpoints(Arrays.copyOfRange(getClusterEndpoints(), 0, 2))
                 .build();
         EtcdCluster clusterClient = etcdClient.getClusterClient();
         MemberListResponse response = clusterClient.listMember().get();
@@ -77,7 +77,7 @@ public class EtcDClusterClientTest extends EtcDClusterTest
     public void testUpdateMember() throws Exception
     {
         final EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
-                .endpoints(Arrays.copyOfRange(TestConstants.ENDPOINTS, 1, 3))
+                .endpoints(Arrays.copyOfRange(getClusterEndpoints(), 1, 3))
                 .build();
         final EtcdCluster clusterClient = etcdClient.getClusterClient();
         final MemberListResponse response = clusterClient.listMember().get();
@@ -96,7 +96,7 @@ public class EtcDClusterClientTest extends EtcDClusterTest
                                           AuthFailedException, ConnectException
     {
         EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
-                .endpoints(Arrays.copyOfRange(TestConstants.ENDPOINTS, 0, 2))
+                .endpoints(Arrays.copyOfRange(getClusterEndpoints(), 0, 2))
                 .build();
         EtcdCluster clusterClient = etcdClient.getClusterClient();
         clusterClient.removeMember(addedMember.getID()).get();

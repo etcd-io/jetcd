@@ -71,26 +71,20 @@ package com.coreos.jetcd.integration;
 import com.coreos.jetcd.DockerCommandRunner;
 
 
-public class DockerContainerIntance implements EtcdInstance
+public class DockerContainerInstance implements EtcdInstance
 {
     private final DockerCommandRunner commandRunner;
     private final char[] hash;
     private final String endpoint;
 
 
-    public DockerContainerIntance(final DockerCommandRunner dockerCommandRunner,
-                                  final char[] hash,
-                                  final String endpoint)
+    public DockerContainerInstance(final DockerCommandRunner dockerCommandRunner,
+                                   final char[] hash,
+                                   final String endpoint)
     {
         this.commandRunner = dockerCommandRunner;
         this.hash = hash;
         this.endpoint = endpoint;
-    }
-
-    public DockerContainerIntance(final DockerCommandRunner commandRunner,
-                                  final char[] hash)
-    {
-        this(commandRunner, hash, "localhost:2379");
     }
 
     @Override
