@@ -68,30 +68,54 @@
 
 package com.coreos.jetcd;
 
-abstract class AbstractTest
+import com.coreos.jetcd.integration.EtcdInstance;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+
+
+public class EtcDClusterTest extends AbstractTest
 {
-    static final String ENDPOINTS_PROPERTY_KEY = "ENDPOINTS";
+    private static final DockerCommandRunner DOCKER_COMMAND_RUNNER =
+            new DockerCommandRunner();
+
+    EtcdInstance[] clusterInstances;
+
+
+    @AfterSuite
+    public void destroyCluster() throws Exception
+    {
+        if (clusterInstances != null)
+        {
+            for (final EtcdInstance instance : clusterInstances)
+            {
+                instance.destroy();
+            }
+        }
+
+        clusterInstances = null;
+    }
 
 
     /**
-     * Obtain the endpoints from already running Etcd instance(s).
-     * @return      String[] endpoint array, never null.
+     * Depends on *NIX because of the certificates.
+     *
+     * @throws Exception    If the command won't run.
      */
-    String[] getEndpoints()
+    @BeforeSuite
+    public void ensureClusterRunning() throws Exception
     {
-        final String[] endpoints;
-        final String endpointProperty =
-                System.getProperty(ENDPOINTS_PROPERTY_KEY);
+        final Map<String, String> instanceMap = new HashMap<>();
+        final Random random = new Random();
 
-        if (endpointProperty == null)
+        for (int i = 0; i < TestConstants.ENDPOINTS.length; i++)
         {
-            endpoints = new String[0];
-        }
-        else
-        {
-            endpoints = endpointProperty.split(",");
+            instanceMap.put("etcd" + random.nextInt(300), "localhost");
         }
 
-        return endpoints;
+        clusterInstances = DOCKER_COMMAND_RUNNER.run(instanceMap);
     }
 }

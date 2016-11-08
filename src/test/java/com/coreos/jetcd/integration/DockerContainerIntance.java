@@ -66,32 +66,43 @@
  ************************************************************************
  */
 
-package com.coreos.jetcd;
+package com.coreos.jetcd.integration;
 
-abstract class AbstractTest
+import com.coreos.jetcd.DockerCommandRunner;
+
+
+public class DockerContainerIntance implements EtcdInstance
 {
-    static final String ENDPOINTS_PROPERTY_KEY = "ENDPOINTS";
+    private final DockerCommandRunner commandRunner;
+    private final char[] hash;
+    private final String endpoint;
 
 
-    /**
-     * Obtain the endpoints from already running Etcd instance(s).
-     * @return      String[] endpoint array, never null.
-     */
-    String[] getEndpoints()
+    public DockerContainerIntance(final DockerCommandRunner dockerCommandRunner,
+                                  final char[] hash,
+                                  final String endpoint)
     {
-        final String[] endpoints;
-        final String endpointProperty =
-                System.getProperty(ENDPOINTS_PROPERTY_KEY);
+        this.commandRunner = dockerCommandRunner;
+        this.hash = hash;
+        this.endpoint = endpoint;
+    }
 
-        if (endpointProperty == null)
-        {
-            endpoints = new String[0];
-        }
-        else
-        {
-            endpoints = endpointProperty.split(",");
-        }
+    public DockerContainerIntance(final DockerCommandRunner commandRunner,
+                                  final char[] hash)
+    {
+        this(commandRunner, hash, "localhost:2379");
+    }
 
-        return endpoints;
+    @Override
+    public void destroy() throws Exception
+    {
+        commandRunner.runDockerCommand("docker", "stop", String.valueOf(hash));
+        commandRunner.runDockerCommand("docker", "rm", String.valueOf(hash));
+    }
+
+    @Override
+    public String getEndpoint()
+    {
+        return endpoint;
     }
 }

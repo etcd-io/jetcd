@@ -68,17 +68,26 @@
 
 package com.coreos.jetcd;
 
+import com.coreos.jetcd.integration.DockerContainerIntance;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class DockerCommandRunner
 {
     private static final int DOCKER_PROCESS_COMPLETE = 0;
+    private static final String DEFAULT_DOCKER_IMAGE_NAME =
+            "quay.io/coreos/etcd";
+    private static final String DOCKER_IMAGE_NAME_PROPERTY_KEY =
+            "ETCD_DOCKER_IMAGE";
 
 
-    InputStream runDockerCommand(final String... command) throws Exception
+    public InputStream runDockerCommand(final String... command)
+            throws Exception
     {
         final ProcessBuilder processBuilder = new ProcessBuilder(command);
         final Process process = processBuilder.start();
@@ -112,14 +121,127 @@ public class DockerCommandRunner
         }
     }
 
-    DockerContainer run(final String[] command) throws Exception
+    void pullLatestImage() throws Exception
     {
-        final InputStream inputStream = runDockerCommand(command);
+        final String dockerImageName = getETCDDockerImageName();
+        final String[] dockerPull = new String[] {
+                "docker", "pull", dockerImageName
+        };
 
-        try (final BufferedReader reader =
-                     new BufferedReader(new InputStreamReader(inputStream)))
+        runDockerCommand(dockerPull);
+    }
+
+    String getETCDDockerImageName()
+    {
+        return System.getProperty(DOCKER_IMAGE_NAME_PROPERTY_KEY,
+                                  DEFAULT_DOCKER_IMAGE_NAME);
+    }
+
+    private void ensureNetworkExists() throws Exception
+    {
+        final InputStream inputStream =
+                runDockerCommand("docker", "network", "ls", "-q", "--filter",
+                                 "name=etcd_test");
+
+        final String output =
+                new BufferedReader(new InputStreamReader(inputStream))
+                        .readLine();
+
+        if ((output == null) || output.trim().equals(""))
         {
-            return new DockerContainer(reader.readLine().toCharArray(), this);
+            runDockerCommand("docker", "network", "create", "etcd_test");
         }
+    }
+
+    /**
+     * Start a single instance.
+     * @param name
+     * @param host
+     * @return
+     * @throws Exception
+     */
+    DockerContainerIntance run(final String name, final String host)
+            throws Exception
+    {
+        final Map<String, String> entries = new HashMap<>();
+        entries.put(name, host);
+
+        return run(entries)[0];
+    }
+
+    /**
+     * Run a cluster of name:host instances.
+     *
+     * @param nameHosts         The name:host mapping.
+     * @return                  Array in the cluster.
+     * @throws Exception
+     */
+    DockerContainerIntance[] run(final Map<String, String> nameHosts)
+            throws Exception
+    {
+        pullLatestImage();
+        ensureNetworkExists();
+
+        final DockerContainerIntance[] instances =
+                new DockerContainerIntance[nameHosts.size()];
+        final String clusterString = getClusterString(nameHosts);
+
+        int currIndex = 0;
+        for (final Map.Entry<String, String> entry : nameHosts.entrySet())
+        {
+            final String name = entry.getKey();
+            final String host = entry.getValue();
+            final String portPrefix = (currIndex + 1) + "";
+            final String port2379 = (portPrefix.equals("1") ? "" : portPrefix) + "2379";
+
+            final String[] command = new String[]{
+                    "docker", "run", "-d", "--name", name,
+                    "--net=etcd_test",
+                    //                "-v /usr/share/ca-certificates/:/etc/ssl/certs",
+                    "-p", portPrefix + "4001:4001", "-p",
+                    portPrefix + "2380:2380", "-p", port2379 + ":2379",
+                    getETCDDockerImageName(), "etcd",
+                    "-name", name,
+                    "-advertise-client-urls",
+                    "http://" + name + ":2379,http://" + name + ":4001",
+                    "-listen-client-urls",
+                    "http://" + name + ":2379,http://" + name + ":4001",
+                    "-initial-advertise-peer-urls", "http://" + name + ":2380",
+                    "-listen-peer-urls", "http://" + name + ":2380",
+                    "-initial-cluster-token", "etcd-cluster-1",
+                    "-initial-cluster", clusterString,
+                    "-initial-cluster-state", "new"
+            };
+
+            final InputStream inputStream = runDockerCommand(command);
+
+            Thread.sleep(2500L);
+
+            try (final BufferedReader reader =
+                         new BufferedReader(new InputStreamReader(inputStream)))
+            {
+                instances[currIndex++] =
+                        new DockerContainerIntance(this,
+                                                   reader.readLine().toCharArray(),
+                                                   host + ":" + port2379);
+            }
+        }
+
+        return instances;
+    }
+
+    private String getClusterString(final Map<String, String> nameHosts)
+    {
+        final StringBuilder clusterString = new StringBuilder();
+        for (final Map.Entry<String, String> entry : nameHosts.entrySet())
+        {
+            final String name = entry.getKey();
+            clusterString.append(name).append("=http://").append(name)
+                    .append(":2380,");
+        }
+
+        clusterString.deleteCharAt(clusterString.lastIndexOf(","));
+
+        return clusterString.toString();
     }
 }

@@ -6,7 +6,6 @@ import com.coreos.jetcd.api.MemberListResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
 
@@ -19,18 +18,11 @@ import java.util.concurrent.TimeoutException;
 /**
  * test etcd cluster client
  */
-public class EtcdClusterClientTest extends DockerSetupTest
+public class EtcDClusterClientTest extends EtcDClusterTest
 {
     private Assertion assertion = new Assertion();
     private Member addedMember;
 
-
-    @BeforeClass
-    public void setupCluster() throws Exception
-    {
-        pullLatestImage();
-        runCluster();
-    }
 
     /**
      * test list cluster function

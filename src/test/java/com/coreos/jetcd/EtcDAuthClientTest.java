@@ -1,9 +1,6 @@
 package com.coreos.jetcd;
 
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.testng.annotations.*;
@@ -18,10 +15,11 @@ import com.google.protobuf.ByteString;
 
 import io.grpc.StatusRuntimeException;
 
+
 /**
  * test etcd auth
  */
-public class EtcdAuthClientTest extends DockerSetupTest
+public class EtcDAuthClientTest extends EtcDInstanceTest
 {
     private EtcdAuth authClient;
     private EtcdKV kvClient;
@@ -42,24 +40,6 @@ public class EtcdAuthClientTest extends DockerSetupTest
     private Assertion test;
     private EtcdClient authEtcdClient;
 
-    private DockerContainer etcdInstance;
-
-
-    @BeforeSuite
-    public void ensureInstanceRunning() throws Exception
-    {
-        pullLatestImage();
-        this.etcdInstance = runSingleInstance();
-    }
-
-    @AfterSuite
-    public void killInstance() throws Exception
-    {
-        if (etcdInstance != null)
-        {
-            etcdInstance.destroy();
-        }
-    }
 
     /**
      * Build etcd client to create role, permission

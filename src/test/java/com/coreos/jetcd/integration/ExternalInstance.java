@@ -66,30 +66,40 @@
  ************************************************************************
  */
 
-package com.coreos.jetcd;
+package com.coreos.jetcd.integration;
 
-public class DockerContainer
+public class ExternalInstance implements EtcdInstance
 {
-    private final DockerCommandRunner commandRunner;
-    private final char[] hash;
+    private final String endpoint;
 
 
-    public DockerContainer(final char[] hash,
-                           final DockerCommandRunner dockerCommandRunner)
+    public ExternalInstance(String endpoint)
     {
-        this.commandRunner = dockerCommandRunner;
-        this.hash = hash;
+        this.endpoint = endpoint;
     }
 
 
+    /**
+     * Obtain the endpoint for this instance.
+     *
+     * @return String endpoint (scheme://host:port/path)
+     */
+    @Override
+    public String getEndpoint()
+    {
+        return endpoint;
+    }
+
+    /**
+     * Destroy this instance.
+     *
+     * @throws Exception            For any errors.
+     */
+    @Override
     public void destroy() throws Exception
     {
-        commandRunner.runDockerCommand("docker", "stop", String.valueOf(hash));
-        commandRunner.runDockerCommand("docker", "rm", String.valueOf(hash));
-    }
-
-    protected String getEndpoint()
-    {
-        return System.getProperty("ENDPOINTS", "localhost:2379");
+        System.out.println(
+                String.format("Can't destroy the already running instance at '%s'.",
+                              endpoint));
     }
 }

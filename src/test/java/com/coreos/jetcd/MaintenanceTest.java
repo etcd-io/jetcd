@@ -2,9 +2,9 @@ package com.coreos.jetcd;
 
 import com.coreos.jetcd.api.SnapshotResponse;
 import com.coreos.jetcd.api.StatusResponse;
+
 import com.google.protobuf.ByteString;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
 
@@ -15,34 +15,20 @@ import java.util.concurrent.ExecutionException;
 /**
  * Maintenance test.
  */
-public class MaintenanceTest extends DockerSetupTest
+public class MaintenanceTest extends EtcDInstanceTest
 {
     private EtcdMaintenance maintenance;
     private Assertion test = new Assertion();
     private volatile ByteString snapshotBlob;
     private CountDownLatch finishLatch = new CountDownLatch(1);
 
-    private DockerContainer etcdInstance;
 
-
-    @BeforeSuite
-    public void ensureInstanceRunning() throws Exception
+    @BeforeTest
+    public void setupTest() throws Exception
     {
-        pullLatestImage();
-        this.etcdInstance = runSingleInstance();
-
         final EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
                 .endpoints(etcdInstance.getEndpoint()).build();
         maintenance = etcdClient.getMaintenanceClient();
-    }
-
-    @AfterSuite
-    public void killInstance() throws Exception
-    {
-        if (etcdInstance != null)
-        {
-            etcdInstance.destroy();
-        }
     }
 
 
