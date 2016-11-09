@@ -68,66 +68,66 @@
 
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.integration.EtcdInstance;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.coreos.jetcd.integration.EtcdInstance;
+import com.coreos.jetcd.integration.ExternalInstance;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+
 import java.util.logging.Logger;
 
 
-public class EtcDClusterTest extends AbstractTest
+/**
+ * Test to provide running instances for tests, if necessary.
+ *
+ * Set the ENDPOINTS System property if you have a running instance already.
+ */
+abstract class AbstractEtcDInstanceTest extends AbstractTest
 {
     private static final Logger LOGGER =
-            Logger.getLogger(EtcDClusterTest.class.getName());
+            Logger.getLogger(AbstractEtcDInstanceTest.class.getName());
     private static final DockerCommandRunner DOCKER_COMMAND_RUNNER =
             new DockerCommandRunner();
 
-    EtcdInstance[] clusterInstances;
+
+    EtcdInstance etcdInstance;
 
 
-    @AfterSuite
-    public void destroyCluster() throws Exception
+    @AfterClass
+    public void destroy() throws Exception
     {
-        if (clusterInstances != null)
+        if (etcdInstance != null)
         {
-            LOGGER.info("Destroying cluster with three (3) instances.");
-
-            for (final EtcdInstance instance : clusterInstances)
-            {
-                instance.destroy();
-            }
+            LOGGER.info("\nDestroying instance " + etcdInstance.getEndpoint()
+                        + "\n");
+            etcdInstance.destroy();
         }
-
-        clusterInstances = null;
     }
-
 
     /**
-     * Depends on *NIX because of the certificates.
+     * Spin up a Docker etcd instance if no endpoints are specified.
      *
-     * @throws Exception    If the command won't run.
+     * @throws Exception    For any problems starting up.
      */
-    @BeforeSuite
-    public void ensureClusterRunning() throws Exception
+    @BeforeClass
+    public void ensureRunningInstance() throws Exception
     {
-        if ((clusterInstances == null) || (clusterInstances.length == 0))
+        LOGGER.info("\n" + System.currentTimeMillis() + "\n");
+        if (etcdInstance == null)
         {
-            LOGGER.info("Starting cluster with three (3) instances.");
-            clusterInstances = DOCKER_COMMAND_RUNNER.run(3);
+            final String[] endpoints = getEndpoints();
+
+            etcdInstance = (endpoints.length == 0)
+                                ? DOCKER_COMMAND_RUNNER.run()
+                                : new ExternalInstance(endpoints[0]);
+
+            LOGGER.info("\nCreated instance " + etcdInstance.getEndpoint()
+                        + "\n");
         }
-    }
-
-    String[] getClusterEndpoints()
-    {
-        final String[] endpoints = new String[clusterInstances.length];
-
-        for (int i = 0; i < clusterInstances.length; i++)
+        else
         {
-            endpoints[i] = clusterInstances[i].getEndpoint();
+            LOGGER.info("\nInstance " + etcdInstance.getEndpoint()
+                        + " already running.\n");
         }
-
-        return endpoints;
     }
 }

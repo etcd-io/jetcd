@@ -1,0 +1,91 @@
+buildscript {
+    repositories {
+        jcenter()
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.0'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'idea'
+apply plugin: 'com.google.protobuf'
+
+group = 'com.coreos'
+version = '0.1.0-SNAPSHOT'
+
+description = 'Java Client for etcd V3'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
+}
+
+sourceSets {
+    main {
+        proto {
+            include '**/*.proto'
+        }
+    }
+}
+
+protobuf {
+    generatedFilesBaseDir = 'target/generated-sources/protobuf'
+    protoc {
+        // Download from repositories
+        artifact = 'com.google.protobuf:protoc:3.0.0'
+    }
+
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.0.0-pre2'
+        }
+    }
+
+    generateProtoTasks {
+        all().each { task ->
+            task.plugins {
+                grpc {
+                    // Write the generated files under
+                    // "$generatedFilesBaseDir/$sourceSet/grpcjava"
+                    outputSubDir = 'grpc-java'
+                }
+            }
+        }
+    }
+}
+
+idea {
+    module {
+        sourceDirs += file("${protobuf.generatedFilesBaseDir}/main/java");
+        sourceDirs += file("${protobuf.generatedFilesBaseDir}/main/grpc-java");
+    }
+}
+
+repositories {
+    jcenter()
+    maven { url "http://repo.maven.apache.org/maven2" }
+}
+
+test {
+    useTestNG() {
+        suites 'testng.xml'
+    }
+}
+
+dependencies {
+    compile group: 'io.grpc', name: 'grpc-core', version:'1.+'
+    compile group: 'io.grpc', name: 'grpc-netty', version:'1.+'
+    compile group: 'io.grpc', name: 'grpc-protobuf', version:'1.+'
+    compile group: 'io.grpc', name: 'grpc-stub', version:'1.+'
+    compile group: 'org.slf4j', name: 'slf4j-api', version:'1.7.21'
+    compile group: 'commons-io', name: 'commons-io', version: '2.+'
+
+    testCompile group: 'org.testng', name: 'testng', version:'6.9.10'
+    testCompile group: 'org.assertj', name: 'assertj-core', version:'3.4.1'
+    testCompile group: 'org.mockito', name: 'mockito-core', version:'1.10.19'
+    testCompile group: 'org.slf4j', name: 'slf4j-simple', version:'1.7.21'
+}

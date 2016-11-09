@@ -18,18 +18,14 @@ import java.util.concurrent.TimeoutException;
 /**
  * test etcd cluster client
  */
-public class EtcDClusterClientTest extends EtcDClusterTest
+public class EtcDClusterClientTest extends AbstractEtcDClusterTest
 {
     private Assertion assertion = new Assertion();
     private Member addedMember;
 
 
     /**
-     * test list cluster function
-     *
-     * TODO: This assumes a fresh, predictable cluster (instance).  The JEtcD
-     * TODO: test framework should probably be doing some environmental setup.
-     * TODO: at88mph 2016.11.03
+     * Test list cluster function
      */
     @Test
     public void testListCluster() throws ExecutionException,

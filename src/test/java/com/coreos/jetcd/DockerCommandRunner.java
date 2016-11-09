@@ -74,6 +74,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -108,20 +109,20 @@ public class DockerCommandRunner
 
             throw new RuntimeException(
                     String.format("Unable to execute \n'%s'\n due to (%d): %s.",
-                                  String.join(" ", command),
+                                  Arrays.toString(command),
                                   exitCode, readMessage(errorStream)));
         }
     }
 
     private void pullLatestImage() throws Exception
     {
-        LOGGER.info("Pulling latest image...");
+        LOGGER.info("\nPulling latest image...\n");
         final String dockerImageName = getETCDDockerImageName();
         final String[] dockerPull = new String[] {
                 "docker", "pull", dockerImageName
         };
 
-        LOGGER.info(readMessage(runDockerCommand(dockerPull)));
+        runDockerCommand(dockerPull);
     }
 
     private String getETCDDockerImageName()
@@ -130,17 +131,18 @@ public class DockerCommandRunner
                                   DEFAULT_DOCKER_IMAGE_NAME);
     }
 
-    private void ensureNetworkExists() throws Exception
+    private void ensureNetworkExists(final String networkName) throws Exception
     {
         final InputStream inputStream =
                 runDockerCommand("docker", "network", "ls", "-q", "--filter",
-                                 "name=etcd_test");
+                                 "name=" + networkName);
 
         final String output = readMessage(inputStream);
 
         if (output.trim().equals(""))
         {
-            runDockerCommand("docker", "network", "create", "etcd_test");
+            LOGGER.info("Creating network " + networkName);
+            runDockerCommand("docker", "network", "create", networkName);
         }
     }
 
@@ -163,14 +165,19 @@ public class DockerCommandRunner
      */
     DockerContainerInstance[] run(final int count) throws Exception
     {
+        final String networkName = "etcd_test";
+
         pullLatestImage();
-        ensureNetworkExists();
+        ensureNetworkExists(networkName);
 
         final DockerContainerInstance[] instances =
                 new DockerContainerInstance[count];
         final Map<String, String> nameHosts = new HashMap<>();
 
-        for (int i = 0; i < count; i++)
+        final int startIndex = (count == 1) ? 0 : 1;
+        final int endIndex = (count == 1) ? count : (count + 1);
+
+        for (int i = startIndex; i < endIndex; i++)
         {
             nameHosts.put("etcd" + i, "localhost");
         }
@@ -186,7 +193,7 @@ public class DockerCommandRunner
 
             final String[] command = new String[] {
                     "docker", "run", "-d", "--name", name,
-                    "--net=etcd_test",
+                    "--net=" + networkName,
                     //                "-v /usr/share/ca-certificates/:/etc/ssl/certs",
                     "-p", portPrefix + "4001:4001", "-p",
                     portPrefix + "2380:2380", "-p", portPrefix + "2379:2379",
@@ -234,7 +241,7 @@ public class DockerCommandRunner
         return clusterString.toString();
     }
 
-    private String readMessage(final InputStream inputStream) throws IOException
+    public String readMessage(final InputStream inputStream) throws IOException
     {
         final BufferedReader bufferedReader =
                 new BufferedReader(new InputStreamReader(inputStream));

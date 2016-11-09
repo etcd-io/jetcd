@@ -1,8 +1,6 @@
 package com.coreos.jetcd;
 
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 import org.testng.asserts.Assertion;
 
 import com.coreos.jetcd.api.*;
@@ -19,17 +17,18 @@ import com.google.protobuf.ByteString;
 /**
  * KV service test cases.
  */
-public class EtcdKVTest extends AbstractTest
+public class EtcdKVTest extends AbstractEtcDInstanceTest
 {
     private EtcdKV kvClient;
     private Assertion test;
 
-    @BeforeTest
+
+    @BeforeMethod
     public void setUp() throws Exception
     {
         test = new Assertion();
         final EtcdClient client = EtcdClientBuilder.newBuilder()
-                .endpoints(getEndpoints()).build();
+                .endpoints(etcdInstance.getEndpoint()).build();
         kvClient = client.getKVClient();
     }
 
@@ -38,7 +37,7 @@ public class EtcdKVTest extends AbstractTest
      *
      * @throws Exception Any issues.
      */
-    @AfterTest
+    @AfterMethod
     public void cleanUp() throws Exception
     {
         final ByteString key = ByteString.copyFrom("*", "UTF-8");

@@ -70,9 +70,14 @@ package com.coreos.jetcd.integration;
 
 import com.coreos.jetcd.DockerCommandRunner;
 
+import java.io.InputStream;
+import java.util.logging.Logger;
+
 
 public class DockerContainerInstance implements EtcdInstance
 {
+    private final Logger LOGGER =
+            Logger.getLogger(DockerContainerInstance.class.getName());
     private final DockerCommandRunner commandRunner;
     private final char[] hash;
     private final String endpoint;
@@ -90,8 +95,14 @@ public class DockerContainerInstance implements EtcdInstance
     @Override
     public void destroy() throws Exception
     {
-        commandRunner.runDockerCommand("docker", "stop", String.valueOf(hash));
-        commandRunner.runDockerCommand("docker", "rm", String.valueOf(hash));
+        final String hashString = String.valueOf(hash);
+
+        LOGGER.info("\nDestroying " + hashString + "\n");
+        commandRunner.runDockerCommand("docker", "stop", hashString);
+        final InputStream inputStream =
+                commandRunner.runDockerCommand("docker", "rm", hashString);
+
+        LOGGER.info("\n" + commandRunner.readMessage(inputStream) + "\n");
     }
 
     @Override

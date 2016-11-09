@@ -19,7 +19,7 @@ import io.grpc.StatusRuntimeException;
 /**
  * test etcd auth
  */
-public class EtcDAuthClientTest extends EtcDInstanceTest
+public class EtcDAuthClientTest extends AbstractEtcDInstanceTest
 {
     private EtcdAuth authClient;
     private EtcdKV kvClient;
@@ -44,7 +44,7 @@ public class EtcDAuthClientTest extends EtcDInstanceTest
     /**
      * Build etcd client to create role, permission
      */
-    @BeforeTest
+    @BeforeMethod
     public void setupEnv() throws AuthFailedException, ConnectException
     {
         this.test = new Assertion();

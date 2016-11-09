@@ -4,18 +4,17 @@ import com.coreos.jetcd.api.SnapshotResponse;
 import com.coreos.jetcd.api.StatusResponse;
 
 import com.google.protobuf.ByteString;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 
 
 /**
  * Maintenance test.
  */
-public class MaintenanceTest extends EtcDInstanceTest
+public class MaintenanceTest extends AbstractEtcDInstanceTest
 {
     private EtcdMaintenance maintenance;
     private Assertion test = new Assertion();
@@ -23,7 +22,7 @@ public class MaintenanceTest extends EtcDInstanceTest
     private CountDownLatch finishLatch = new CountDownLatch(1);
 
 
-    @BeforeTest
+    @BeforeMethod
     public void setupTest() throws Exception
     {
         final EtcdClient etcdClient = EtcdClientBuilder.newBuilder()
@@ -36,8 +35,7 @@ public class MaintenanceTest extends EtcDInstanceTest
      * test status member function
      */
     @Test
-    public void testStatusMember() throws ExecutionException,
-                                          InterruptedException
+    public void testStatusMember() throws Exception
     {
         StatusResponse statusResponse = maintenance.statusMember().get();
         test.assertTrue(statusResponse.getDbSize() > 0);
@@ -49,7 +47,7 @@ public class MaintenanceTest extends EtcDInstanceTest
      * TODO disarm the alarm member, valid whether disarm will work with listAlarms.
      */
     @Test
-    public void testAlarmList() throws ExecutionException, InterruptedException
+    public void testAlarmList() throws Exception
     {
         maintenance.listAlarms().get();
     }
@@ -60,7 +58,7 @@ public class MaintenanceTest extends EtcDInstanceTest
      * TODO test removeSnapShotCallback
      */
     @Test
-    void testAddSnapshotCallback()
+    void testAddSnapshotCallback() throws Exception
     {
         maintenance.setSnapshotCallback(new EtcdMaintenance.SnapshotCallback()
         {
@@ -97,7 +95,7 @@ public class MaintenanceTest extends EtcDInstanceTest
      * test defragmentMember function
      */
     @Test
-    void testDefragment() throws ExecutionException, InterruptedException
+    void testDefragment() throws Exception
     {
         maintenance.defragmentMember().get();
     }
