@@ -69,6 +69,7 @@
 package com.coreos.jetcd;
 
 import com.coreos.jetcd.integration.EtcdInstance;
+import com.coreos.jetcd.integration.ExternalInstance;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
@@ -113,8 +114,23 @@ abstract class AbstractEtcDClusterTest extends AbstractTest
     {
         if ((clusterInstances == null) || (clusterInstances.length == 0))
         {
-            LOGGER.info("Starting cluster with three (3) instances.");
-            clusterInstances = DOCKER_COMMAND_RUNNER.run(3);
+            final String[] configuredEndpoints = getConfiguredClusterEndpoints();
+
+            if (configuredEndpoints == null)
+            {
+                LOGGER.info("Starting cluster with three (3) instances.");
+                clusterInstances = DOCKER_COMMAND_RUNNER.run(3);
+            }
+            else
+            {
+                clusterInstances =
+                        new ExternalInstance[configuredEndpoints.length];
+                for (int i = 0; i < clusterInstances.length; i++)
+                {
+                    clusterInstances[i] =
+                            new ExternalInstance(configuredEndpoints[i]);
+                }
+            }
         }
         else
         {

@@ -115,11 +115,11 @@ abstract class AbstractEtcDInstanceTest extends AbstractTest
         LOGGER.info("\n" + System.currentTimeMillis() + "\n");
         if (etcdInstance == null)
         {
-            final String[] endpoints = getEndpoints();
+            final String endpoint = getConfiguredSingleEndpoint();
 
-            etcdInstance = (endpoints.length == 0)
+            etcdInstance = (endpoint == null)
                                 ? DOCKER_COMMAND_RUNNER.run()
-                                : new ExternalInstance(endpoints[0]);
+                                : new ExternalInstance(endpoint);
 
             LOGGER.info("\nCreated instance " + etcdInstance.getEndpoint()
                         + "\n");

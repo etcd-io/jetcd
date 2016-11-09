@@ -70,28 +70,30 @@ package com.coreos.jetcd;
 
 abstract class AbstractTest
 {
-    static final String ENDPOINTS_PROPERTY_KEY = "ENDPOINTS";
+    private static final String SINGLE_ENDPOINT_PROPERTY_KEY =
+            "SINGLE_ENDPOINT";
+    private static final String CLUSTER_ENDPOINTS_PROPERTY_KEY =
+            "CLUSTER_ENDPOINTS";
 
 
     /**
      * Obtain the endpoints from already running Etcd instance(s).
      * @return      String[] endpoint array, never null.
      */
-    String[] getEndpoints()
+    String getConfiguredSingleEndpoint()
     {
-        final String[] endpoints;
         final String endpointProperty =
-                System.getProperty(ENDPOINTS_PROPERTY_KEY);
+                System.getProperty(SINGLE_ENDPOINT_PROPERTY_KEY);
 
-        if (endpointProperty == null)
-        {
-            endpoints = new String[0];
-        }
-        else
-        {
-            endpoints = endpointProperty.split(",");
-        }
+        return (endpointProperty == null) ? null : endpointProperty;
+    }
 
-        return endpoints;
+    String[] getConfiguredClusterEndpoints()
+    {
+        final String clusterEndpointPropertyValue =
+                System.getProperty(CLUSTER_ENDPOINTS_PROPERTY_KEY);
+
+        return (clusterEndpointPropertyValue == null)
+               ? null : clusterEndpointPropertyValue.split(",");
     }
 }
