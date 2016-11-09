@@ -34,7 +34,12 @@ For full etcd v3 API, plesase refer to [API_Reference](https://github.com/coreos
 
 ```gradle clean build```
 
-Will produce a usable artifact (JAR) and will run all integration tests.
+### Maven
+
+```mvn clean verify```
+
+
+Both will produce a usable artifact (JAR) and will run all integration tests.
 
 The tests rely on a usable environment, and will, by default, pull down the
 etcd Docker image from [Quay.io](https://quay.io/repository/coreos/etcd), and
@@ -51,6 +56,11 @@ instances.
 You can pass in the instance endpoints like so:
 
 ```gradle -DSINGLE_ENDPOINT=http://localhost:2379 -DCLUSTER_ENDPOINTS=http://localhost:12379,http://localhost:22379,http://localhost:32379 clean build```
+
+```mvn -DSINGLE_ENDPOINT=http://localhost:2379 -DCLUSTER_ENDPOINTS=http://localhost:12379,http://localhost:22379,http://localhost:32379 clean verify```
+
+
+
 
 ## Contact
 
