@@ -1,7 +1,20 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.*;
+import java.util.Optional;
+
+import com.coreos.jetcd.api.AlarmMember;
+import com.coreos.jetcd.api.AlarmRequest;
+import com.coreos.jetcd.api.AlarmResponse;
+import com.coreos.jetcd.api.AlarmType;
+import com.coreos.jetcd.api.DefragmentRequest;
+import com.coreos.jetcd.api.DefragmentResponse;
+import com.coreos.jetcd.api.MaintenanceGrpc;
+import com.coreos.jetcd.api.SnapshotRequest;
+import com.coreos.jetcd.api.SnapshotResponse;
+import com.coreos.jetcd.api.StatusRequest;
+import com.coreos.jetcd.api.StatusResponse;
 import com.google.common.util.concurrent.ListenableFuture;
+import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -10,16 +23,14 @@ import static com.google.common.base.Preconditions.checkArgument;
  * Implementation of maintenance client
  */
 public class EtcdMaintenanceImpl implements EtcdMaintenance {
-
     private MaintenanceGrpc.MaintenanceFutureStub futureStub;
     private MaintenanceGrpc.MaintenanceStub streamStub;
     private volatile StreamObserver<SnapshotResponse> snapshotObserver;
     private volatile SnapshotCallback snapshotCallback;
 
-    public EtcdMaintenanceImpl(MaintenanceGrpc.MaintenanceFutureStub futureStub,
-                               MaintenanceGrpc.MaintenanceStub streamStub) {
-        this.futureStub = futureStub;
-        this.streamStub = streamStub;
+    public EtcdMaintenanceImpl(ManagedChannel channel, Optional<String> token) {
+        this.futureStub = EtcdClientUtil.configureStub(MaintenanceGrpc.newFutureStub(channel), token);
+        this.streamStub = EtcdClientUtil.configureStub(MaintenanceGrpc.newStub(channel), token);
     }
 
     /**

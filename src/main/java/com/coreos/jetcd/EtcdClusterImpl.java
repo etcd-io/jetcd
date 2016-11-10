@@ -1,19 +1,28 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.*;
-import com.google.common.util.concurrent.ListenableFuture;
-
 import java.util.List;
+import java.util.Optional;
+
+import com.coreos.jetcd.api.ClusterGrpc;
+import com.coreos.jetcd.api.MemberAddRequest;
+import com.coreos.jetcd.api.MemberAddResponse;
+import com.coreos.jetcd.api.MemberListRequest;
+import com.coreos.jetcd.api.MemberListResponse;
+import com.coreos.jetcd.api.MemberRemoveRequest;
+import com.coreos.jetcd.api.MemberRemoveResponse;
+import com.coreos.jetcd.api.MemberUpdateRequest;
+import com.coreos.jetcd.api.MemberUpdateResponse;
+import com.google.common.util.concurrent.ListenableFuture;
+import io.grpc.ManagedChannel;
 
 /**
  * Implementation of cluster client
  */
 public class EtcdClusterImpl implements EtcdCluster {
+    private final ClusterGrpc.ClusterFutureStub stub;
 
-    private ClusterGrpc.ClusterFutureStub clusterStub;
-
-    public EtcdClusterImpl(ClusterGrpc.ClusterFutureStub stub){
-        this.clusterStub = stub;
+    public EtcdClusterImpl(ManagedChannel channel, Optional<String> token){
+        this.stub = EtcdClientUtil.configureStub(ClusterGrpc.newFutureStub(channel), token);
     }
 
     /**
@@ -23,8 +32,7 @@ public class EtcdClusterImpl implements EtcdCluster {
      */
     @Override
     public ListenableFuture<MemberListResponse> listMember() {
-        return clusterStub.memberList(
-                MemberListRequest.getDefaultInstance());
+        return stub.memberList(MemberListRequest.getDefaultInstance());
     }
 
     /**
@@ -36,7 +44,7 @@ public class EtcdClusterImpl implements EtcdCluster {
     @Override
     public ListenableFuture<MemberAddResponse> addMember(List<String> endpoints) {
         MemberAddRequest memberAddRequest = MemberAddRequest.newBuilder().addAllPeerURLs(endpoints).build();
-        return clusterStub.memberAdd(memberAddRequest);
+        return stub.memberAdd(memberAddRequest);
     }
 
     /**
@@ -48,7 +56,7 @@ public class EtcdClusterImpl implements EtcdCluster {
     @Override
     public ListenableFuture<MemberRemoveResponse> removeMember(long memberID) {
         MemberRemoveRequest memberRemoveRequest = MemberRemoveRequest.newBuilder().setID(memberID).build();
-        return clusterStub.memberRemove(memberRemoveRequest);
+        return stub.memberRemove(memberRemoveRequest);
     }
 
     /**
@@ -64,6 +72,6 @@ public class EtcdClusterImpl implements EtcdCluster {
                 .addAllPeerURLs(endpoints)
                 .setID(memberID)
                 .build();
-        return clusterStub.memberUpdate(memberUpdateRequest);
+        return stub.memberUpdate(memberUpdateRequest);
     }
 }

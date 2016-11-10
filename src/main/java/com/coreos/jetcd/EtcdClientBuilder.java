@@ -1,14 +1,16 @@
 package com.coreos.jetcd;
 
+import java.util.List;
+
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.resolver.AbstractEtcdNameResolverFactory;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 
-import java.util.List;
-
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * ClientBuilder knows how to create an EtcdClient instance.
@@ -123,7 +125,7 @@ public class EtcdClientBuilder {
      * @throws AuthFailedException This may be caused as wrong username or password
      */
     public EtcdClient build() throws ConnectException, AuthFailedException {
-        checkState(!endpoints.isEmpty() || nameResolverFactory != null , "please configure ectd serve endpoints or nameResolverFactory before build.");
+        checkState(!endpoints.isEmpty() || nameResolverFactory != null , "please configure etcd server endpoints or nameResolverFactory before build.");
         return new EtcdClient(null, this);
     }
 }
