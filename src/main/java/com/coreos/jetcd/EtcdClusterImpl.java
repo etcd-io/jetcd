@@ -8,13 +8,11 @@ import java.util.List;
 /**
  * Implementation of cluster client
  */
-public class EtcdClusterImpl implements EtcdCluster
-{
+public class EtcdClusterImpl implements EtcdCluster {
 
     private ClusterGrpc.ClusterFutureStub clusterStub;
 
-    public EtcdClusterImpl(ClusterGrpc.ClusterFutureStub stub)
-    {
+    public EtcdClusterImpl(ClusterGrpc.ClusterFutureStub stub){
         this.clusterStub = stub;
     }
 
@@ -24,8 +22,7 @@ public class EtcdClusterImpl implements EtcdCluster
      * @return
      */
     @Override
-    public ListenableFuture<MemberListResponse> listMember()
-    {
+    public ListenableFuture<MemberListResponse> listMember() {
         return clusterStub.memberList(
                 MemberListRequest.getDefaultInstance());
     }
@@ -37,10 +34,8 @@ public class EtcdClusterImpl implements EtcdCluster
      * @return
      */
     @Override
-    public ListenableFuture<MemberAddResponse> addMember(List<String> endpoints)
-    {
-        MemberAddRequest memberAddRequest = MemberAddRequest.newBuilder()
-                .addAllPeerURLs(endpoints).build();
+    public ListenableFuture<MemberAddResponse> addMember(List<String> endpoints) {
+        MemberAddRequest memberAddRequest = MemberAddRequest.newBuilder().addAllPeerURLs(endpoints).build();
         return clusterStub.memberAdd(memberAddRequest);
     }
 
@@ -51,26 +46,21 @@ public class EtcdClusterImpl implements EtcdCluster
      * @return
      */
     @Override
-    public ListenableFuture<MemberRemoveResponse> removeMember(long memberID)
-    {
-        MemberRemoveRequest memberRemoveRequest = MemberRemoveRequest
-                .newBuilder().setID(memberID).build();
+    public ListenableFuture<MemberRemoveResponse> removeMember(long memberID) {
+        MemberRemoveRequest memberRemoveRequest = MemberRemoveRequest.newBuilder().setID(memberID).build();
         return clusterStub.memberRemove(memberRemoveRequest);
     }
 
     /**
      * update peer addresses of the member
      *
-     * @param memberID  the id of member to update
+     * @param memberID the id of member to update
      * @param endpoints the new endpoints for the member
      * @return
      */
     @Override
-    public ListenableFuture<MemberUpdateResponse> updateMember(long memberID,
-                                                               List<String> endpoints)
-    {
-        MemberUpdateRequest memberUpdateRequest = MemberUpdateRequest
-                .newBuilder()
+    public ListenableFuture<MemberUpdateResponse> updateMember(long memberID, List<String> endpoints) {
+        MemberUpdateRequest memberUpdateRequest = MemberUpdateRequest.newBuilder()
                 .addAllPeerURLs(endpoints)
                 .setID(memberID)
                 .build();

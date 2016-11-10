@@ -1,4 +1,4 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.test;
 
 import com.coreos.jetcd.integration.DockerContainerInstance;
 
@@ -86,7 +86,7 @@ public class DockerCommandRunner
      * @return          The running instance.
      * @throws Exception    Any errors starting it up.
      */
-    DockerContainerInstance run() throws Exception
+    public DockerContainerInstance run() throws Exception
     {
         return run(1)[0];
     }
@@ -98,7 +98,7 @@ public class DockerCommandRunner
      * @return                  Array in the cluster.
      * @throws Exception    Any errors starting it up.
      */
-    DockerContainerInstance[] run(final int count) throws Exception
+    public DockerContainerInstance[] run(final int count) throws Exception
     {
         final String networkName = "etcd_test";
 

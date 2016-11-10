@@ -1,6 +1,6 @@
 package com.coreos.jetcd.integration;
 
-import com.coreos.jetcd.DockerCommandRunner;
+import com.coreos.jetcd.test.DockerCommandRunner;
 
 import java.io.InputStream;
 import java.util.logging.Logger;

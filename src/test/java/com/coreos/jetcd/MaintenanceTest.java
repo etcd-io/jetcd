@@ -14,7 +14,7 @@ import java.util.concurrent.CountDownLatch;
 /**
  * Maintenance test.
  */
-public class MaintenanceTest extends AbstractEtcDInstanceTest
+public class MaintenanceTest extends AbstractEtcdInstanceTest
 {
     private EtcdMaintenance maintenance;
     private Assertion test = new Assertion();

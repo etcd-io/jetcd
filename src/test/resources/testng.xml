@@ -3,10 +3,10 @@
 <suite name="JEtcDSuite" parallel="instances" thread-count="1">
   <test name="All">
     <classes>
-      <class name="com.coreos.jetcd.EtcDAuthClientTest" />
+      <class name="com.coreos.jetcd.EtcdAuthClientTest" />
       <class name="com.coreos.jetcd.MaintenanceTest" />
       <class name="com.coreos.jetcd.EtcdKVTest" />
-      <class name="com.coreos.jetcd.EtcDClusterClientTest" />
+      <class name="com.coreos.jetcd.EtcdClusterClientTest" />
     </classes>
   </test>
 </suite>

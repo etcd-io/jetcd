@@ -3,6 +3,7 @@ package com.coreos.jetcd;
 
 import com.coreos.jetcd.integration.EtcdInstance;
 import com.coreos.jetcd.integration.ExternalInstance;
+import com.coreos.jetcd.test.DockerCommandRunner;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
@@ -14,10 +15,10 @@ import java.util.logging.Logger;
  *
  * Set the ENDPOINTS System property if you have a running instance already.
  */
-abstract class AbstractEtcDInstanceTest extends AbstractTest
+abstract class AbstractEtcdInstanceTest extends AbstractTest
 {
     private static final Logger LOGGER =
-            Logger.getLogger(AbstractEtcDInstanceTest.class.getName());
+            Logger.getLogger(AbstractEtcdInstanceTest.class.getName());
     private static final DockerCommandRunner DOCKER_COMMAND_RUNNER =
             new DockerCommandRunner();
 

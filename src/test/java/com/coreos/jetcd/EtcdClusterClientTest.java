@@ -18,7 +18,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * test etcd cluster client
  */
-public class EtcDClusterClientTest extends AbstractEtcDClusterTest
+public class EtcdClusterClientTest extends AbstractEtcdClusterTest
 {
     private Assertion assertion = new Assertion();
     private Member addedMember;

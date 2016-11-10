@@ -19,7 +19,7 @@ import io.grpc.StatusRuntimeException;
 /**
  * test etcd auth
  */
-public class EtcDAuthClientTest extends AbstractEtcDInstanceTest
+public class EtcdAuthClientTest extends AbstractEtcdInstanceTest
 {
     private EtcdAuth authClient;
     private EtcdKV kvClient;

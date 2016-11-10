@@ -17,7 +17,7 @@ import com.google.protobuf.ByteString;
 /**
  * KV service test cases.
  */
-public class EtcdKVTest extends AbstractEtcDInstanceTest
+public class EtcdKVTest extends AbstractEtcdInstanceTest
 {
     private EtcdKV kvClient;
     private Assertion test;

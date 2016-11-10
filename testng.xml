@@ -9,7 +9,7 @@
   -->
   <test name="Auth">
     <classes>
-      <class name="com.coreos.jetcd.EtcDAuthClientTest" />
+      <class name="com.coreos.jetcd.EtcdAuthClientTest" />
     </classes>
   </test>
   <test name="KV">
@@ -24,7 +24,7 @@
   </test>
   <test name="Cluster">
     <classes>
-      <class name="com.coreos.jetcd.EtcDClusterClientTest" />
+      <class name="com.coreos.jetcd.EtcdClusterClientTest" />
     </classes>
   </test>
 </suite>

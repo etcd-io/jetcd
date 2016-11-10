@@ -2,6 +2,7 @@ package com.coreos.jetcd;
 
 import com.coreos.jetcd.integration.EtcdInstance;
 import com.coreos.jetcd.integration.ExternalInstance;
+import com.coreos.jetcd.test.DockerCommandRunner;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
@@ -9,10 +10,10 @@ import java.util.Arrays;
 import java.util.logging.Logger;
 
 
-abstract class AbstractEtcDClusterTest extends AbstractTest
+abstract class AbstractEtcdClusterTest extends AbstractTest
 {
     private static final Logger LOGGER =
-            Logger.getLogger(AbstractEtcDClusterTest.class.getName());
+            Logger.getLogger(AbstractEtcdClusterTest.class.getName());
     private static final DockerCommandRunner DOCKER_COMMAND_RUNNER =
             new DockerCommandRunner();
 
