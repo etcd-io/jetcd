@@ -30,14 +30,9 @@ For full etcd v3 API, plesase refer to [API_Reference](https://github.com/coreos
 
 ## Building
 
-### Gradle
-
-```gradle clean build```
-
 ### Maven
 
 ```mvn clean verify```
-
 
 Both will produce a usable artifact (JAR) and will run all integration tests.
 
@@ -54,8 +49,6 @@ Otherwise, the tests rely on a single instance running, and a cluster of three (
 instances.
 
 You can pass in the instance endpoints like so:
-
-```gradle -DSINGLE_ENDPOINT=http://localhost:2379 -DCLUSTER_ENDPOINTS=http://localhost:12379,http://localhost:22379,http://localhost:32379 clean build```
 
 ```mvn -DSINGLE_ENDPOINT=http://localhost:2379 -DCLUSTER_ENDPOINTS=http://localhost:12379,http://localhost:22379,http://localhost:32379 clean verify```
 

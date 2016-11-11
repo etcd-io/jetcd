@@ -5,6 +5,6 @@ services:
 before_install:
   - docker pull quay.io/coreos/etcd
 script:
-  - gradle clean build
+  - mvn clean verify 
 jdk:
   - oraclejdk8
