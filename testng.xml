@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="JEtcDSuite" parallel="methods" thread-count="1">
+
+  <!--
+    Fine grained control is necessary here so that each test is run in series
+    due to the amount of environmental setup.
+    at88mph 2016.11.08
+  -->
+  <test name="Auth">
+    <classes>
+      <class name="com.coreos.jetcd.EtcdAuthClientTest" />
+    </classes>
+  </test>
+  <test name="KV">
+    <classes>
+      <class name="com.coreos.jetcd.EtcdKVTest" />
+    </classes>
+  </test>
+  <test name="Maintenance">
+    <classes>
+      <class name="com.coreos.jetcd.MaintenanceTest" />
+    </classes>
+  </test>
+  <test name="Cluster">
+    <classes>
+      <class name="com.coreos.jetcd.EtcdClusterClientTest" />
+    </classes>
+  </test>
+</suite>

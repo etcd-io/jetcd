@@ -1,7 +1,10 @@
 language: java
-sudo: false
+sudo: required
+services:
+  - docker
+before_install:
+  - docker pull quay.io/coreos/etcd
 script:
-  - scripts/run_etcd.sh 
-  - mvn clean verify
+  - gradle clean build
 jdk:
   - oraclejdk8
