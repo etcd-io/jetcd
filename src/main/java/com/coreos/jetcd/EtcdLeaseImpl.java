@@ -4,11 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import com.coreos.jetcd.api.LeaseGrantRequest;
 import com.coreos.jetcd.api.LeaseGrantResponse;
@@ -85,7 +81,7 @@ public class EtcdLeaseImpl implements EtcdLease {
          */
         synchronized (this) {
             if (isKeepAliveServiceRunning()) {
-                throw new IllegalStateException("Lease keep alive service already start");
+                throw new IllegalStateException("Lease keep alive service already started");
             }
             keepAliveResponseStreamObserver = new StreamObserver<LeaseKeepAliveResponse>() {
                 @Override
@@ -172,14 +168,37 @@ public class EtcdLeaseImpl implements EtcdLease {
      *
      * @param leaseId          id of lease to set handler
      * @param etcdLeaseHandler the handler for the lease, this value can be null
+     *
+     * @throws IllegalStateException this exception hints that the keep alive service wasn't started
      */
     @Override
     public synchronized void keepAlive(long leaseId, EtcdLeaseHandler etcdLeaseHandler) {
+        if(!isKeepAliveServiceRunning()){
+            throw new IllegalStateException("Lease keep alive service not started yet");
+        }
         if (!this.keepAlives.containsKey(leaseId)) {
             Lease lease = new Lease(leaseId, etcdLeaseHandler);
             long now = System.currentTimeMillis();
             lease.setNextKeepAlive(now).setDeadLine(now + firstKeepAliveTimeOut);
             this.keepAlives.put(leaseId, lease);
+        }
+    }
+
+    /**
+     * cancel keep alive for lease in background
+     *
+     * @param leaseId id of lease
+     */
+    @Override
+    public synchronized void cancelKeepAlive(long leaseId) throws ExecutionException, InterruptedException {
+        if(!isKeepAliveServiceRunning()){
+            throw new IllegalStateException("Lease keep alive service not started yet");
+        }
+        if (this.keepAlives.containsKey(leaseId)) {
+            keepAlives.remove(leaseId);
+            revoke(leaseId).get();
+        }else{
+            throw new IllegalStateException("Lease is not registered in the keep alive service");
         }
     }
 
@@ -338,7 +357,7 @@ public class EtcdLeaseImpl implements EtcdLease {
                 this.scheduledFuture.cancel(true);
                 this.scheduledFuture = null;
             } else {
-                throw new IllegalStateException("Lease keep alive service not start yet");
+                throw new IllegalStateException("Lease keep alive service not started yet");
             }
         }
     }

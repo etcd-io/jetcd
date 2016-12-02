@@ -6,6 +6,8 @@ import com.coreos.jetcd.api.LeaseRevokeResponse;
 import com.coreos.jetcd.lease.NoSuchLeaseException;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.util.concurrent.ExecutionException;
+
 /**
  * Interface of Lease talking to etcd
  */
@@ -34,6 +36,13 @@ public interface EtcdLease {
      * @param etcdLeaseHandler the handler for the lease, this value can be null
      */
     void keepAlive(long leaseId, EtcdLeaseHandler etcdLeaseHandler);
+
+    /**
+     * cancel keep alive for lease in background
+     *
+     * @param leaseId          id of lease
+    */
+    void cancelKeepAlive(long leaseId) throws ExecutionException, InterruptedException;
 
     /**
      * keep alive one lease only once
