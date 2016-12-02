@@ -5,12 +5,14 @@ import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.options.WatchOption;
 import com.coreos.jetcd.watch.WatchCreateException;
 import com.google.protobuf.ByteString;
+import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import javafx.util.Pair;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.*;
 
 import static com.coreos.jetcd.EtcdUtil.apiToClientEvents;
@@ -30,8 +32,8 @@ public class EtcdWatchImpl implements EtcdWatch {
     private ConcurrentLinkedQueue<Pair<WatcherImpl, CompletableFuture<Watcher>>> pendingCreateWatchers = new ConcurrentLinkedQueue<>();
     private Map<Long, CompletableFuture<Boolean>> pendingCancelFutures = new ConcurrentHashMap<>();
 
-    public EtcdWatchImpl(WatchGrpc.WatchStub watchStub) {
-        this.watchStub = watchStub;
+    public EtcdWatchImpl(ManagedChannel channel, Optional<String> token) {
+        this.watchStub = EtcdClientUtil.configureStub(WatchGrpc.newStub(channel), token);
     }
 
     /**
