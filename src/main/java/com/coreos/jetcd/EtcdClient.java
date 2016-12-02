@@ -33,6 +33,7 @@ public class EtcdClient {
     private final Supplier<EtcdAuth>              authClient;
     private final Supplier<EtcdMaintenance>       maintenanceClient;
     private final Supplier<EtcdCluster>           clusterClient;
+    private final Supplier<EtcdLease>             leaseClient;
 
     public EtcdClient(EtcdClientBuilder builder) throws ConnectException, AuthFailedException {
         this(Optional.empty(), builder);
@@ -60,6 +61,7 @@ public class EtcdClient {
         this.authClient =  Suppliers.memoize(() -> new EtcdAuthImpl(channel, token));
         this.maintenanceClient = Suppliers.memoize(() -> new EtcdMaintenanceImpl(channel, token));
         this.clusterClient =  Suppliers.memoize(() -> new EtcdClusterImpl(channel, token));
+        this.leaseClient =  Suppliers.memoize(() -> new EtcdLeaseImpl(channel, token));
     }
 
     // ************************
@@ -80,6 +82,10 @@ public class EtcdClient {
 
     public EtcdMaintenance getMaintenanceClient() {
         return this.maintenanceClient.get();
+    }
+
+    public EtcdLease getLeaseClient() {
+        return this.leaseClient.get();
     }
 
     public void close() {
