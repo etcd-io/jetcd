@@ -1,23 +1,22 @@
 package com.coreos.jetcd;
 
+import com.coreos.jetcd.api.*;
+import com.coreos.jetcd.data.EtcdHeader;
+import com.coreos.jetcd.lease.Lease;
+import com.coreos.jetcd.lease.NoSuchLeaseException;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.util.concurrent.ListenableFuture;
+import io.grpc.ManagedChannel;
+import io.grpc.stub.StreamObserver;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.*;
 
-import com.coreos.jetcd.api.LeaseGrantRequest;
-import com.coreos.jetcd.api.LeaseGrantResponse;
-import com.coreos.jetcd.api.LeaseGrpc;
-import com.coreos.jetcd.api.LeaseKeepAliveRequest;
-import com.coreos.jetcd.api.LeaseKeepAliveResponse;
-import com.coreos.jetcd.api.LeaseRevokeRequest;
-import com.coreos.jetcd.api.LeaseRevokeResponse;
-import com.coreos.jetcd.lease.Lease;
-import com.coreos.jetcd.lease.NoSuchLeaseException;
-import com.google.common.util.concurrent.ListenableFuture;
-import io.grpc.ManagedChannel;
-import io.grpc.stub.StreamObserver;
+import static com.coreos.jetcd.EtcdUtil.*;
 
 /**
  * Implementation of lease client
@@ -37,9 +36,11 @@ public class EtcdLeaseImpl implements EtcdLease {
      */
     private ScheduledExecutorService               keepAliveSchedule;
     private ScheduledFuture<?>                     scheduledFuture;
+    private Supplier<Executor>                     callExecutor;
     private long                                   scanPeriod;
 
-    private final Map<Long, Lease>                 keepAlives            = new ConcurrentHashMap<>();
+    private final Map<Long, LeaseHolder>                 keepAlives            = new ConcurrentHashMap<>();
+    private final Map<Long, CompletableFuture<EtcdHeader>>    onceKeepAlives = new ConcurrentHashMap<>();
 
     /**
      * The first time interval
@@ -65,6 +66,7 @@ public class EtcdLeaseImpl implements EtcdLease {
         this.leaseFutureStub = EtcdClientUtil.configureStub(LeaseGrpc.newFutureStub(this.channel), token);
         this.leaseStub = EtcdClientUtil.configureStub(LeaseGrpc.newStub(this.channel), token);
         this.scanPeriod = DEFAULT_SCAN_PERIOD;
+        callExecutor = Suppliers.memoize(()->Executors.newSingleThreadExecutor());
     }
 
     /**
@@ -87,9 +89,9 @@ public class EtcdLeaseImpl implements EtcdLease {
                 @Override
                 public void onNext(LeaseKeepAliveResponse leaseKeepAliveResponse) {
                     processKeepAliveRespond(leaseKeepAliveResponse);
-                    Lease lease = keepAlives.get(leaseKeepAliveResponse.getID());
-                    if (lease != null && lease.isContainHandler()) {
-                        lease.getEtcdLeaseHandler().onKeepAliveRespond(leaseKeepAliveResponse);
+                    LeaseHolder leaseHolder = keepAlives.get(leaseKeepAliveResponse.getID());
+                    if (leaseHolder != null && leaseHolder.isContainHandler()) {
+                        leaseHolder.getEtcdLeaseHandler().onKeepAliveRespond(leaseKeepAliveResponse);
                     }
                 }
 
@@ -144,21 +146,25 @@ public class EtcdLeaseImpl implements EtcdLease {
      * @return
      */
     @Override
-    public ListenableFuture<LeaseGrantResponse> grant(long ttl) {
+    public CompletableFuture<Lease> grant(long ttl) {
         LeaseGrantRequest leaseGrantRequest = LeaseGrantRequest.newBuilder().setTTL(ttl).build();
-        return this.leaseFutureStub.leaseGrant(leaseGrantRequest);
+        return completableFromListenableFuture(this.leaseFutureStub.leaseGrant(leaseGrantRequest),
+                (LeaseGrantResponse l)->apiToClientLease(l),
+                callExecutor.get());
     }
 
     /**
      * revoke one lease and the key bind to this lease will be removed
      *
-     * @param leaseId id of the lease to revoke
+     * @param lease the lease to revoke
      * @return
      */
     @Override
-    public ListenableFuture<LeaseRevokeResponse> revoke(long leaseId) {
-        LeaseRevokeRequest leaseRevokeRequest = LeaseRevokeRequest.newBuilder().setID(leaseId).build();
-        return this.leaseFutureStub.leaseRevoke(leaseRevokeRequest);
+    public CompletableFuture<EtcdHeader> revoke(Lease lease) {
+        LeaseRevokeRequest leaseRevokeRequest = LeaseRevokeRequest.newBuilder().setID(lease.getLeaseID()).build();
+        return completableFromListenableFuture(this.leaseFutureStub.leaseRevoke(leaseRevokeRequest),
+                (LeaseRevokeResponse l)->apiToClientHeader(l.getHeader()),
+                callExecutor.get());
     }
 
     /**
@@ -166,37 +172,37 @@ public class EtcdLeaseImpl implements EtcdLease {
      * user thread, it can be thread unsafe, so we sync function here
      * to avoid put twice.
      *
-     * @param leaseId          id of lease to set handler
+     * @param lease          of lease to set handler
      * @param etcdLeaseHandler the handler for the lease, this value can be null
      *
      * @throws IllegalStateException this exception hints that the keep alive service wasn't started
      */
     @Override
-    public synchronized void keepAlive(long leaseId, EtcdLeaseHandler etcdLeaseHandler) {
+    public synchronized void keepAlive(Lease lease, EtcdLeaseHandler etcdLeaseHandler) {
         if(!isKeepAliveServiceRunning()){
             throw new IllegalStateException("Lease keep alive service not started yet");
         }
-        if (!this.keepAlives.containsKey(leaseId)) {
-            Lease lease = new Lease(leaseId, etcdLeaseHandler);
+        if (!this.keepAlives.containsKey(lease.getLeaseID())) {
+            LeaseHolder leaseHolder = new LeaseHolder(lease, etcdLeaseHandler);
             long now = System.currentTimeMillis();
-            lease.setNextKeepAlive(now).setDeadLine(now + firstKeepAliveTimeOut);
-            this.keepAlives.put(leaseId, lease);
+            leaseHolder.setNextKeepAlive(now).setDeadLine(now + firstKeepAliveTimeOut);
+            this.keepAlives.put(lease.getLeaseID(), leaseHolder);
         }
     }
 
     /**
      * cancel keep alive for lease in background
      *
-     * @param leaseId id of lease
+     * @param lease lease to cancel keep alive
      */
     @Override
-    public synchronized void cancelKeepAlive(long leaseId) throws ExecutionException, InterruptedException {
+    public synchronized void cancelKeepAlive(Lease lease) throws ExecutionException, InterruptedException {
         if(!isKeepAliveServiceRunning()){
             throw new IllegalStateException("Lease keep alive service not started yet");
         }
-        if (this.keepAlives.containsKey(leaseId)) {
-            keepAlives.remove(leaseId);
-            revoke(leaseId).get();
+        if (this.keepAlives.containsKey(lease.getLeaseID())) {
+            keepAlives.remove(lease.getLeaseID());
+            revoke(lease).get();
         }else{
             throw new IllegalStateException("Lease is not registered in the keep alive service");
         }
@@ -205,42 +211,43 @@ public class EtcdLeaseImpl implements EtcdLease {
     /**
      * keep alive one lease only once
      *
-     * @param leaseId id of lease to keep alive once
+     * @param lease lease to keep alive once
      * @return The keep alive response
      */
     @Override
-    public ListenableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId) {
-
-        /**
-         * to be completed, I will return a ListenableFuture value in the future
-         */
-        StreamObserver<LeaseKeepAliveRequest> requestObserver = this.leaseStub.leaseKeepAlive(keepAliveResponseStreamObserver);
-        requestObserver.onNext(newKeepAliveRequest(leaseId));
-        requestObserver.onCompleted();
-
-        throw new UnsupportedOperationException();
+    public synchronized CompletableFuture<EtcdHeader> keepAliveOnce(Lease lease) {
+        if(keepAlives.containsKey(lease.getLeaseID())||onceKeepAlives.containsKey(lease.getLeaseID())){
+            throw new IllegalStateException("lease already registered in keep alive service");
+        }
+        if(!isKeepAliveServiceRunning()){
+            throw new IllegalStateException("Lease keep alive service not started yet");
+        }
+        CompletableFuture<EtcdHeader> completableFuture = new CompletableFuture<>();
+        onceKeepAlives.put(lease.getLeaseID(), completableFuture);
+        this.keepAliveRequestStreamObserver.onNext(newKeepAliveRequest(lease.getLeaseID()));
+        return completableFuture;
     }
 
     /**
      * set EtcdLeaseHandler for lease
      *
-     * @param leaseId          id of the lease to set handler
+     * @param lease          lease to set handler
      * @param etcdLeaseHandler the handler for the lease
      * @throws NoSuchLeaseException if lease do not exist
      */
     @Override
-    public void setEtcdLeaseHandler(long leaseId, EtcdLeaseHandler etcdLeaseHandler) throws NoSuchLeaseException {
-        Lease lease = this.keepAlives.get(leaseId);
-        if (lease != null) {
+    public void setEtcdLeaseHandler(Lease lease, EtcdLeaseHandler etcdLeaseHandler) throws NoSuchLeaseException {
+        LeaseHolder leaseHolder = this.keepAlives.get(lease.getLeaseID());
+        if (leaseHolder != null) {
             /**
              * This function may be called with different threads, so
              * we sync here to do it sequentially.
              */
-            synchronized (lease) {
-                lease.setEtcdLeaseHandler(etcdLeaseHandler);
+            synchronized (leaseHolder) {
+                leaseHolder.setEtcdLeaseHandler(etcdLeaseHandler);
             }
         } else {
-            throw new NoSuchLeaseException(leaseId);
+            throw new NoSuchLeaseException(lease.getLeaseID());
         }
     }
 
@@ -253,9 +260,9 @@ public class EtcdLeaseImpl implements EtcdLease {
     private void keepAliveExecutor() {
         long now = System.currentTimeMillis();
         List<Long> toSendIds = new ArrayList<>();
-        for (Lease l : this.keepAlives.values()) {
+        for (LeaseHolder l : this.keepAlives.values()) {
             if (now > l.getNextKeepAlive()) {
-                toSendIds.add(l.getLeaseID());
+                toSendIds.add(l.lease.getLeaseID());
             }
         }
 
@@ -273,14 +280,14 @@ public class EtcdLeaseImpl implements EtcdLease {
     private void deadLineExecutor() {
         long now = System.currentTimeMillis();
         List<Long> expireLeases = new ArrayList<>();
-        for (Lease l : this.keepAlives.values()) {
+        for (LeaseHolder l : this.keepAlives.values()) {
             if (now > l.getDeadLine()) {
-                expireLeases.add(l.getLeaseID());
+                expireLeases.add(l.lease.getLeaseID());
             }
         }
 
         for (Long id : expireLeases) {
-            Lease lease = this.keepAlives.get(id);
+            LeaseHolder lease = this.keepAlives.get(id);
             if (lease != null && lease.isContainHandler()) {
                 lease.getEtcdLeaseHandler().onLeaseExpired(id);
             }
@@ -295,24 +302,26 @@ public class EtcdLeaseImpl implements EtcdLease {
      */
     public void processKeepAliveRespond(LeaseKeepAliveResponse leaseKeepAliveResponse) {
         long id = leaseKeepAliveResponse.getID();
-        Lease lease = this.keepAlives.get(id);
-        if (lease != null) {
+        LeaseHolder leaseHolder = this.keepAlives.get(id);
+        if (leaseHolder != null) {
             /**
              * This function is called by stream callback from different thread, so
              * we sync here to make the lease set sequentially.
              */
-            synchronized (lease) {
+            synchronized (leaseHolder) {
                 if (leaseKeepAliveResponse.getTTL() <= 0) {
-                    if (lease != null && lease.isContainHandler()) {
-                        lease.getEtcdLeaseHandler().onLeaseExpired(id);
+                    if (leaseHolder != null && leaseHolder.isContainHandler()) {
+                        leaseHolder.getEtcdLeaseHandler().onLeaseExpired(id);
                     }
                     removeLease(id);
                 } else {
                     long nextKeepAlive = System.currentTimeMillis() + 1000 + leaseKeepAliveResponse.getTTL() * 1000 / 3;
-                    lease.setNextKeepAlive(nextKeepAlive);
-                    lease.setDeadLine(System.currentTimeMillis() + leaseKeepAliveResponse.getTTL() * 1000);
+                    leaseHolder.setNextKeepAlive(nextKeepAlive);
+                    leaseHolder.setDeadLine(System.currentTimeMillis() + leaseKeepAliveResponse.getTTL() * 1000);
                 }
             }
+        }else if(onceKeepAlives.containsKey(id)){
+            onceKeepAlives.remove(id).complete(apiToClientHeader(leaseKeepAliveResponse.getHeader()));
         }
     }
 
@@ -361,4 +370,58 @@ public class EtcdLeaseImpl implements EtcdLease {
             }
         }
     }
+
+    static class LeaseHolder{
+
+        final Lease lease;
+
+        private LeaseGrantResponse         leaseGrantResponse;
+
+        private long                       deadLine;
+
+        private long                       nextKeepAlive;
+
+        private EtcdLease.EtcdLeaseHandler etcdLeaseHandler;
+
+        public LeaseHolder(Lease lease) {
+            this.lease = lease;
+        }
+
+        public LeaseHolder(Lease lease, EtcdLeaseHandler etcdLeaseHandler) {
+            this.lease = lease;
+            this.etcdLeaseHandler = etcdLeaseHandler;
+        }
+
+        public long getDeadLine() {
+            return deadLine;
+        }
+
+        LeaseHolder setDeadLine(long deadLine) {
+            this.deadLine = deadLine;
+            return this;
+        }
+
+        public long getNextKeepAlive() {
+            return nextKeepAlive;
+        }
+
+        public LeaseHolder setNextKeepAlive(long nextKeepAlive) {
+            this.nextKeepAlive = nextKeepAlive;
+            return this;
+        }
+
+        public boolean isContainHandler() {
+            return etcdLeaseHandler != null;
+        }
+
+        public EtcdLease.EtcdLeaseHandler getEtcdLeaseHandler() {
+            return etcdLeaseHandler;
+        }
+
+        public void setEtcdLeaseHandler(EtcdLease.EtcdLeaseHandler etcdLeaseHandler) {
+            this.etcdLeaseHandler = etcdLeaseHandler;
+        }
+    }
+
+
 }

@@ -1,5 +1,7 @@
 package com.coreos.jetcd.options;
 
+import com.coreos.jetcd.lease.Lease;
+
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
@@ -25,15 +27,15 @@ public final class PutOption {
         }
 
         /**
-         * Assign a <i>leaseId</i> for a put operation. Zero means no lease.
+         * Assign a <i>lease</i> for a put operation. Zero means no lease.
          *
-         * @param leaseId lease id to apply to a put operation
+         * @param lease lease to apply to a put operation
          * @return builder
          * @throws IllegalArgumentException if lease is less than zero.
          */
-        public Builder withLeaseId(long leaseId) {
-            checkArgument(leaseId >= 0, "leaseId should greater than or equal to zero: leaseId=%s", leaseId);
-            this.leaseId = leaseId;
+        public Builder withLease(Lease lease) {
+            checkArgument(lease.getLeaseID() >= 0, "lease id should greater than or equal to zero: leaseId=%s", lease.getLeaseID());
+            this.leaseId = lease.getLeaseID();
             return this;
         }
 
