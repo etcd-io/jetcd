@@ -6,13 +6,12 @@ import com.coreos.jetcd.api.MemberListResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
-
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.testng.annotations.Test;
+import org.testng.asserts.Assertion;
 
 /**
  * test etcd cluster client

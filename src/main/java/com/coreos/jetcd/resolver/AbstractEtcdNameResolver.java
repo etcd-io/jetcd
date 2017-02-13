@@ -1,17 +1,16 @@
 package com.coreos.jetcd.resolver;
 
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import javax.annotation.concurrent.GuardedBy;
-
 import com.google.common.base.Preconditions;
 import io.grpc.Attributes;
 import io.grpc.NameResolver;
 import io.grpc.ResolvedServerInfo;
 import io.grpc.internal.SharedResourceHolder;
 import io.grpc.internal.SharedResourceHolder.Resource;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import javax.annotation.concurrent.GuardedBy;
 
 /**
  * The abstract etcd name resolver, all other name resolvers should

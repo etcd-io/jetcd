@@ -1,6 +1,6 @@
 package com.coreos.jetcd;
 
-import java.util.Optional;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.api.CompactionRequest;
 import com.coreos.jetcd.api.CompactionResponse;
@@ -20,8 +20,7 @@ import com.coreos.jetcd.options.PutOption;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Optional;
 
 /**
  * Implementation of etcd kv client

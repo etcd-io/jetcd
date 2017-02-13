@@ -5,11 +5,10 @@ import com.coreos.jetcd.api.StatusResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.google.protobuf.ByteString;
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import org.testng.annotations.Test;
+import org.testng.asserts.Assertion;
 
 /**
  * Maintenance test.

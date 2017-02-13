@@ -1,12 +1,10 @@
 package com.coreos.jetcd.resolver;
 
-import java.net.URI;
-
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
-
 import io.grpc.Attributes;
 import io.grpc.internal.GrpcUtil;
+import java.net.URI;
+import org.testng.annotations.Test;
+import org.testng.asserts.Assertion;
 
 public class DnsSrvNameResolverTest {
 

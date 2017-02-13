@@ -1,17 +1,16 @@
 package com.coreos.jetcd;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import com.coreos.jetcd.resolver.SimpleEtcdNameResolverFactory;
 import io.grpc.CallCredentials;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.NameResolver;
 import io.grpc.stub.AbstractStub;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public final class EtcdClientUtil {
 

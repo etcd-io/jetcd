@@ -1,10 +1,9 @@
 package com.coreos.jetcd.op;
 
-import java.util.List;
-
 import com.coreos.jetcd.api.TxnRequest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import java.util.List;
 
 /**
  * Build an etcd transaction.

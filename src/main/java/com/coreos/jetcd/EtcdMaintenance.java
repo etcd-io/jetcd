@@ -1,8 +1,11 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.*;
+import com.coreos.jetcd.api.AlarmMember;
+import com.coreos.jetcd.api.AlarmResponse;
+import com.coreos.jetcd.api.DefragmentResponse;
+import com.coreos.jetcd.api.SnapshotResponse;
+import com.coreos.jetcd.api.StatusResponse;
 import com.google.common.util.concurrent.ListenableFuture;
-import io.grpc.stub.StreamObserver;
 
 /**
  * Interface of maintenance talking to etcd

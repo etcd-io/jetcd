@@ -1,8 +1,5 @@
 package com.coreos.jetcd;
 
-import java.util.List;
-import java.util.Optional;
-
 import com.coreos.jetcd.api.ClusterGrpc;
 import com.coreos.jetcd.api.MemberAddRequest;
 import com.coreos.jetcd.api.MemberAddResponse;
@@ -14,6 +11,8 @@ import com.coreos.jetcd.api.MemberUpdateRequest;
 import com.coreos.jetcd.api.MemberUpdateResponse;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.ManagedChannel;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Implementation of cluster client
