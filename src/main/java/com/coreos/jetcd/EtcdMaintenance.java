@@ -25,72 +25,70 @@ import io.grpc.stub.StreamObserver;
  */
 public interface EtcdMaintenance {
 
-    /**
-     * get all active keyspace alarm
-     */
-    ListenableFuture<AlarmResponse> listAlarms();
+  /**
+   * get all active keyspace alarm
+   */
+  ListenableFuture<AlarmResponse> listAlarms();
+
+  /**
+   * disarms a given alarm
+   *
+   * @param member the alarm
+   * @return the response result
+   */
+  ListenableFuture<AlarmResponse> disalarm(AlarmMember member);
+
+  /**
+   * defragment one member of the cluster
+   * <p>
+   * After compacting the keyspace, the backend database may exhibit internal
+   * fragmentation. Any internal fragmentation is space that is free to use
+   * by the backend but still consumes storage space. The process of
+   * defragmentation releases this storage space back to the file system.
+   * Defragmentation is issued on a per-member so that cluster-wide latency
+   * spikes may be avoided.
+   * <p>
+   * Defragment is an expensive operation. User should avoid defragmenting
+   * multiple members at the same time.
+   * To defragment multiple members in the cluster, user need to call defragment
+   * multiple times with different endpoints.
+   */
+  ListenableFuture<DefragmentResponse> defragmentMember();
+
+  /**
+   * get the status of one member
+   */
+  ListenableFuture<StatusResponse> statusMember();
+
+  /**
+   * Set callback for snapshot.
+   * <p> The onSnapshot will be called when the member make a snapshot.
+   * <p> The onError will be called as exception, and the callback will be canceled.
+   *
+   * @param callback Snapshot callback
+   */
+  void setSnapshotCallback(SnapshotCallback callback);
+
+  /**
+   * Remove callback for snapshot.
+   */
+  void removeSnapShotCallback();
+
+  /**
+   * Callback to process snapshot events.
+   */
+  interface SnapshotCallback {
 
     /**
-     * disarms a given alarm
+     * The onSnapshot will be called when the member make a snapshot
      *
-     * @param member the alarm
-     * @return the response result
+     * @param snapshotResponse snapshot response
      */
-    ListenableFuture<AlarmResponse> disalarm(AlarmMember member);
+    void onSnapShot(SnapshotResponse snapshotResponse);
 
     /**
-     * defragment one member of the cluster
-     * <p>
-     * After compacting the keyspace, the backend database may exhibit internal
-     * fragmentation. Any internal fragmentation is space that is free to use
-     * by the backend but still consumes storage space. The process of
-     * defragmentation releases this storage space back to the file system.
-     * Defragmentation is issued on a per-member so that cluster-wide latency
-     * spikes may be avoided.
-     * <p>
-     * Defragment is an expensive operation. User should avoid defragmenting
-     * multiple members at the same time.
-     * To defragment multiple members in the cluster, user need to call defragment
-     * multiple times with different endpoints.
+     * The onError will be called as exception, and the callback will be canceled.
      */
-    ListenableFuture<DefragmentResponse> defragmentMember();
-
-    /**
-     * get the status of one member
-     */
-    ListenableFuture<StatusResponse> statusMember();
-
-    /**
-     * Set callback for snapshot.
-     * <p> The onSnapshot will be called when the member make a snapshot.
-     * <p> The onError will be called as exception, and the callback will be canceled.
-     *
-     * @param callback Snapshot callback
-     */
-    void setSnapshotCallback(SnapshotCallback callback);
-
-    /**
-     * Remove callback for snapshot.
-     */
-    void removeSnapShotCallback();
-
-    /**
-     * Callback to process snapshot events.
-     */
-    interface SnapshotCallback{
-
-        /**
-         * The onSnapshot will be called when the member make a snapshot
-         *
-         * @param snapshotResponse snapshot response
-         */
-        void onSnapShot(SnapshotResponse snapshotResponse);
-
-        /**
-         * The onError will be called as exception, and the callback will be canceled.
-         *
-         * @param throwable
-         */
-        void onError(Throwable throwable);
-    }
+    void onError(Throwable throwable);
+  }
 }

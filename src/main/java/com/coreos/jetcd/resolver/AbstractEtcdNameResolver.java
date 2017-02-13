@@ -19,91 +19,92 @@ import io.grpc.internal.SharedResourceHolder.Resource;
  */
 public abstract class AbstractEtcdNameResolver extends NameResolver {
 
-    private final String                    authority;
-    private final Resource<ExecutorService> executorResource;
-    private final Runnable                  resolutionRunnable;
+  private final String authority;
+  private final Resource<ExecutorService> executorResource;
+  private final Runnable resolutionRunnable;
 
-    @GuardedBy("this")
-    private boolean                         shutdown;
-    @GuardedBy("this")
-    private boolean                         resolving;
-    @GuardedBy("this")
-    private Listener                        listener;
-    @GuardedBy("this")
-    private ExecutorService                 executor;
+  @GuardedBy("this")
+  private boolean shutdown;
+  @GuardedBy("this")
+  private boolean resolving;
+  @GuardedBy("this")
+  private Listener listener;
+  @GuardedBy("this")
+  private ExecutorService executor;
 
-    public AbstractEtcdNameResolver(String name, Resource<ExecutorService> executorResource) {
-        URI nameUri = URI.create("//" + name);
+  public AbstractEtcdNameResolver(String name, Resource<ExecutorService> executorResource) {
+    URI nameUri = URI.create("//" + name);
 
-        this.executorResource = executorResource;
-        this.authority = Preconditions.checkNotNull(nameUri.getAuthority(), "nameUri (%s) doesn't have an authority", nameUri);
-        this.resolutionRunnable = new ResolverTask();
+    this.executorResource = executorResource;
+    this.authority = Preconditions
+        .checkNotNull(nameUri.getAuthority(), "nameUri (%s) doesn't have an authority", nameUri);
+    this.resolutionRunnable = new ResolverTask();
+  }
+
+  @Override
+  public String getServiceAuthority() {
+    return authority;
+  }
+
+  @Override
+  public final synchronized void start(Listener listener) {
+    Preconditions.checkState(this.listener == null, "already started");
+    this.executor = SharedResourceHolder.get(executorResource);
+    this.listener = Preconditions.checkNotNull(listener, "listener");
+    resolve();
+  }
+
+  @Override
+  public final synchronized void refresh() {
+    Preconditions.checkState(listener != null, "not started");
+    resolve();
+  }
+
+  @Override
+  public final synchronized void shutdown() {
+    if (shutdown) {
+      return;
     }
+    shutdown = true;
+    if (executor != null) {
+      executor = SharedResourceHolder.release(executorResource, executor);
+    }
+  }
+
+  @GuardedBy("this")
+  private void resolve() {
+    if (resolving || shutdown) {
+      return;
+    }
+    executor.execute(resolutionRunnable);
+  }
+
+  protected abstract List<ResolvedServerInfo> getServers();
+
+  /**
+   * Helper task to resolve servers
+   */
+  private final class ResolverTask implements Runnable {
 
     @Override
-    public String getServiceAuthority() {
-        return authority;
-    }
-
-    @Override
-    public final synchronized void start(Listener listener) {
-        Preconditions.checkState(this.listener == null, "already started");
-        this.executor = SharedResourceHolder.get(executorResource);
-        this.listener = Preconditions.checkNotNull(listener, "listener");
-        resolve();
-    }
-
-    @Override
-    public final synchronized void refresh() {
-        Preconditions.checkState(listener != null, "not started");
-        resolve();
-    }
-
-    @Override
-    public final synchronized void shutdown() {
+    public void run() {
+      Listener savedListener;
+      synchronized (AbstractEtcdNameResolver.this) {
         if (shutdown) {
-            return;
+          return;
         }
-        shutdown = true;
-        if (executor != null) {
-            executor = SharedResourceHolder.release(executorResource, executor);
+        resolving = true;
+        savedListener = listener;
+      }
+
+      try {
+        List<ResolvedServerInfo> servers = getServers();
+        savedListener.onUpdate(Collections.singletonList(servers), Attributes.EMPTY);
+      } finally {
+        synchronized (AbstractEtcdNameResolver.this) {
+          resolving = false;
         }
+      }
     }
-
-    @GuardedBy("this")
-    private void resolve() {
-        if (resolving || shutdown) {
-            return;
-        }
-        executor.execute(resolutionRunnable);
-    }
-
-    protected abstract List<ResolvedServerInfo> getServers();
-
-    /**
-     * Helper task to resolve servers
-     */
-    private final class ResolverTask implements Runnable {
-
-        @Override
-        public void run() {
-            Listener savedListener;
-            synchronized (AbstractEtcdNameResolver.this) {
-                if (shutdown) {
-                    return;
-                }
-                resolving = true;
-                savedListener = listener;
-            }
-
-            try {
-                List<ResolvedServerInfo> servers = getServers();
-                savedListener.onUpdate(Collections.singletonList(servers), Attributes.EMPTY);
-            } finally {
-                synchronized (AbstractEtcdNameResolver.this) {
-                    resolving = false;
-                }
-            }
-        }
-    }
+  }
 }

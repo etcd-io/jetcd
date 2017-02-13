@@ -13,36 +13,26 @@ import java.util.List;
  */
 public interface EtcdCluster {
 
-    /**
-     * lists the current cluster membership
-     *
-     * @return
-     */
-    ListenableFuture<MemberListResponse> listMember();
+  /**
+   * lists the current cluster membership
+   */
+  ListenableFuture<MemberListResponse> listMember();
 
-    /**
-     * add a new member into the cluster
-     *
-     * @param endpoints the address of the new member
-     * @return
-     */
-    ListenableFuture<MemberAddResponse> addMember(List<String> endpoints);
+  /**
+   * add a new member into the cluster
+   *
+   * @param endpoints the address of the new member
+   */
+  ListenableFuture<MemberAddResponse> addMember(List<String> endpoints);
 
-    /**
-     * removes an existing member from the cluster
-     *
-     * @param memberID
-     * @return
-     */
-    ListenableFuture<MemberRemoveResponse> removeMember(long memberID);
+  /**
+   * removes an existing member from the cluster
+   */
+  ListenableFuture<MemberRemoveResponse> removeMember(long memberID);
 
-    /**
-     * update peer addresses of the member
-     *
-     * @param memberID
-     * @param endpoints
-     * @return
-     */
-    ListenableFuture<MemberUpdateResponse> updateMember(long memberID, List<String> endpoints);
+  /**
+   * update peer addresses of the member
+   */
+  ListenableFuture<MemberUpdateResponse> updateMember(long memberID, List<String> endpoints);
 
 }

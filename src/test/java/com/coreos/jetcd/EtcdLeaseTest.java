@@ -20,68 +20,71 @@ import java.util.concurrent.ExecutionException;
  */
 public class EtcdLeaseTest {
 
-    private EtcdKV kvClient;
-    private EtcdClient etcdClient;
-    private EtcdLease leaseClient;
-    private Assertion test;
+  private EtcdKV kvClient;
+  private EtcdClient etcdClient;
+  private EtcdLease leaseClient;
+  private Assertion test;
 
 
-    private ByteString testKey       = ByteString.copyFromUtf8("foo1");
-    private ByteString testName      = ByteString.copyFromUtf8("bar");
+  private ByteString testKey = ByteString.copyFromUtf8("foo1");
+  private ByteString testName = ByteString.copyFromUtf8("bar");
 
-    @BeforeTest
-    public void setUp() throws Exception {
-        test = new Assertion();
-        etcdClient = EtcdClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
-        kvClient = etcdClient.getKVClient();
+  @BeforeTest
+  public void setUp() throws Exception {
+    test = new Assertion();
+    etcdClient = EtcdClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
+    kvClient = etcdClient.getKVClient();
 
-        leaseClient = etcdClient.getLeaseClient();
-    }
+    leaseClient = etcdClient.getLeaseClient();
+  }
 
-    @Test
-    public void testGrant() throws Exception {
-        long leaseID = leaseClient.grant(5).get().getID();
-        PutResponse putRep = kvClient.put(testKey, testName, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
-        test.assertEquals(kvClient.get(testKey).get().getCount(), 1);
+  @Test
+  public void testGrant() throws Exception {
+    long leaseID = leaseClient.grant(5).get().getID();
+    PutResponse putRep = kvClient
+        .put(testKey, testName, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+    test.assertEquals(kvClient.get(testKey).get().getCount(), 1);
 
-        Thread.sleep(6000);
-        test.assertEquals(kvClient.get(testKey).get().getCount(), 0);
-    }
+    Thread.sleep(6000);
+    test.assertEquals(kvClient.get(testKey).get().getCount(), 0);
+  }
 
-    @Test(dependsOnMethods = "testGrant")
-    public void testRevoke() throws Exception {
-        long leaseID = leaseClient.grant(5).get().getID();
-        PutResponse putRep = kvClient.put(testKey, testName, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
-        test.assertEquals(kvClient.get(testKey).get().getCount(), 1);
-        leaseClient.revoke(leaseID).get();
-        test.assertEquals(kvClient.get(testKey).get().getCount(), 0);
-    }
+  @Test(dependsOnMethods = "testGrant")
+  public void testRevoke() throws Exception {
+    long leaseID = leaseClient.grant(5).get().getID();
+    PutResponse putRep = kvClient
+        .put(testKey, testName, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+    test.assertEquals(kvClient.get(testKey).get().getCount(), 1);
+    leaseClient.revoke(leaseID).get();
+    test.assertEquals(kvClient.get(testKey).get().getCount(), 0);
+  }
 
-    @Test(dependsOnMethods = "testRevoke")
-    public void testkeepAlive() throws Exception {
-        long leaseID = leaseClient.grant(5).get().getID();
-        PutResponse putRep = kvClient.put(testKey, testName, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
-        test.assertEquals(kvClient.get(testKey).get().getCount(), 1);
-        leaseClient.startKeepAliveService();
-        leaseClient.keepAlive(leaseID, new EtcdLease.EtcdLeaseHandler() {
-            @Override
-            public void onKeepAliveRespond(LeaseKeepAliveResponse keepAliveResponse) {
+  @Test(dependsOnMethods = "testRevoke")
+  public void testkeepAlive() throws Exception {
+    long leaseID = leaseClient.grant(5).get().getID();
+    PutResponse putRep = kvClient
+        .put(testKey, testName, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+    test.assertEquals(kvClient.get(testKey).get().getCount(), 1);
+    leaseClient.startKeepAliveService();
+    leaseClient.keepAlive(leaseID, new EtcdLease.EtcdLeaseHandler() {
+      @Override
+      public void onKeepAliveRespond(LeaseKeepAliveResponse keepAliveResponse) {
 
-            }
+      }
 
-            @Override
-            public void onLeaseExpired(long leaseId) {
+      @Override
+      public void onLeaseExpired(long leaseId) {
 
-            }
+      }
 
-            @Override
-            public void onError(Throwable throwable) {
+      @Override
+      public void onError(Throwable throwable) {
 
-            }
-        });
-        Thread.sleep(6000);
-        test.assertEquals(kvClient.get(testKey).get().getCount(), 1);
-        leaseClient.cancelKeepAlive(leaseID);
-        test.assertEquals(kvClient.get(testKey).get().getCount(), 0);
-    }
+      }
+    });
+    Thread.sleep(6000);
+    test.assertEquals(kvClient.get(testKey).get().getCount(), 1);
+    leaseClient.cancelKeepAlive(leaseID);
+    test.assertEquals(kvClient.get(testKey).get().getCount(), 0);
+  }
 }

@@ -27,112 +27,113 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Implementation of etcd kv client
  */
 class EtcdKVImpl implements EtcdKV {
-    private final KVGrpc.KVFutureStub stub;
-    
-    EtcdKVImpl(ManagedChannel channel, Optional<String> token) {
-        this.stub = EtcdClientUtil.configureStub(KVGrpc.newFutureStub(channel), token);
+
+  private final KVGrpc.KVFutureStub stub;
+
+  EtcdKVImpl(ManagedChannel channel, Optional<String> token) {
+    this.stub = EtcdClientUtil.configureStub(KVGrpc.newFutureStub(channel), token);
+  }
+
+  // ***************
+  // Op.PUT
+  // ***************
+
+  @Override
+  public ListenableFuture<PutResponse> put(ByteString key, ByteString value) {
+    return put(key, value, PutOption.DEFAULT);
+  }
+
+  @Override
+  public ListenableFuture<PutResponse> put(ByteString key, ByteString value, PutOption option) {
+    checkNotNull(key, "key should not be null");
+    checkNotNull(value, "value should not be null");
+    checkNotNull(option, "option should not be null");
+
+    PutRequest request = PutRequest.newBuilder()
+        .setKey(key)
+        .setValue(value)
+        .setLease(option.getLeaseId())
+        .setPrevKv(option.getPrevKV())
+        .build();
+
+    return this.stub.put(request);
+  }
+
+  // ***************
+  // Op.GET
+  // ***************
+
+  @Override
+  public ListenableFuture<RangeResponse> get(ByteString key) {
+    return get(key, GetOption.DEFAULT);
+  }
+
+  @Override
+  public ListenableFuture<RangeResponse> get(ByteString key, GetOption option) {
+    checkNotNull(key, "key should not be null");
+    checkNotNull(option, "option should not be null");
+
+    RangeRequest.Builder builder = RangeRequest.newBuilder()
+        .setKey(key)
+        .setCountOnly(option.isCountOnly())
+        .setLimit(option.getLimit())
+        .setRevision(option.getRevision())
+        .setKeysOnly(option.isKeysOnly())
+        .setSerializable(option.isSerializable())
+        .setSortOrder(option.getSortOrder())
+        .setSortTarget(option.getSortField());
+
+    if (option.getEndKey().isPresent()) {
+      builder.setRangeEnd(option.getEndKey().get());
     }
 
-    // ***************
-    // Op.PUT
-    // ***************
+    return this.stub.range(builder.build());
+  }
 
-    @Override
-    public ListenableFuture<PutResponse> put(ByteString key, ByteString value) {
-        return put(key, value, PutOption.DEFAULT);
+  // ***************
+  // Op.DELETE
+  // ***************
+
+  @Override
+  public ListenableFuture<DeleteRangeResponse> delete(ByteString key) {
+    return delete(key, DeleteOption.DEFAULT);
+  }
+
+  @Override
+  public ListenableFuture<DeleteRangeResponse> delete(ByteString key, DeleteOption option) {
+    checkNotNull(key, "key should not be null");
+    checkNotNull(option, "option should not be null");
+
+    DeleteRangeRequest.Builder builder = DeleteRangeRequest.newBuilder()
+        .setKey(key)
+        .setPrevKv(option.isPrevKV());
+
+    if (option.getEndKey().isPresent()) {
+      builder.setRangeEnd(option.getEndKey().get());
     }
+    return this.stub.deleteRange(builder.build());
+  }
 
-    @Override
-    public ListenableFuture<PutResponse> put(ByteString key, ByteString value, PutOption option) {
-        checkNotNull(key, "key should not be null");
-        checkNotNull(value, "value should not be null");
-        checkNotNull(option, "option should not be null");
+  @Override
+  public ListenableFuture<CompactionResponse> compact() {
+    return compact(CompactOption.DEFAULT);
+  }
 
-        PutRequest request = PutRequest.newBuilder()
-            .setKey(key)
-            .setValue(value)
-            .setLease(option.getLeaseId())
-            .setPrevKv(option.getPrevKV())
-            .build();
+  @Override
+  public ListenableFuture<CompactionResponse> compact(CompactOption option) {
+    checkNotNull(option, "option should not be null");
 
-        return this.stub.put(request);
-    }
+    CompactionRequest request = CompactionRequest.newBuilder()
+        .setRevision(option.getRevision())
+        .setPhysical(option.isPhysical())
+        .build();
 
-    // ***************
-    // Op.GET
-    // ***************
+    return this.stub.compact(request);
+  }
 
-    @Override
-    public ListenableFuture<RangeResponse> get(ByteString key) {
-        return get(key, GetOption.DEFAULT);
-    }
-
-    @Override
-    public ListenableFuture<RangeResponse> get(ByteString key, GetOption option) {
-        checkNotNull(key, "key should not be null");
-        checkNotNull(option, "option should not be null");
-
-        RangeRequest.Builder builder = RangeRequest.newBuilder()
-            .setKey(key)
-            .setCountOnly(option.isCountOnly())
-            .setLimit(option.getLimit())
-            .setRevision(option.getRevision())
-            .setKeysOnly(option.isKeysOnly())
-            .setSerializable(option.isSerializable())
-            .setSortOrder(option.getSortOrder())
-            .setSortTarget(option.getSortField());
-
-        if (option.getEndKey().isPresent()) {
-            builder.setRangeEnd(option.getEndKey().get());
-        }
-
-        return this.stub.range(builder.build());
-    }
-
-    // ***************
-    // Op.DELETE
-    // ***************
-
-    @Override
-    public ListenableFuture<DeleteRangeResponse> delete(ByteString key) {
-        return delete(key, DeleteOption.DEFAULT);
-    }
-
-    @Override
-    public ListenableFuture<DeleteRangeResponse> delete(ByteString key, DeleteOption option) {
-        checkNotNull(key, "key should not be null");
-        checkNotNull(option, "option should not be null");
-
-        DeleteRangeRequest.Builder builder = DeleteRangeRequest.newBuilder()
-            .setKey(key)
-            .setPrevKv(option.isPrevKV());
-
-        if (option.getEndKey().isPresent()) {
-            builder.setRangeEnd(option.getEndKey().get());
-        }
-        return this.stub.deleteRange(builder.build());
-    }
-
-    @Override
-    public ListenableFuture<CompactionResponse> compact() {
-        return compact(CompactOption.DEFAULT);
-    }
-
-    @Override
-    public ListenableFuture<CompactionResponse> compact(CompactOption option) {
-        checkNotNull(option, "option should not be null");
-
-        CompactionRequest request = CompactionRequest.newBuilder()
-            .setRevision(option.getRevision())
-            .setPhysical(option.isPhysical())
-            .build();
-
-        return this.stub.compact(request);
-    }
-
-    @Override
-    public ListenableFuture<TxnResponse> commit(Txn txn) {
-        checkNotNull(txn, "txn should not be null");
-        return this.stub.txn(txn.toTxnRequest());
-    }
+  @Override
+  public ListenableFuture<TxnResponse> commit(Txn txn) {
+    checkNotNull(txn, "txn should not be null");
+    return this.stub.txn(txn.toTxnRequest());
+  }
 }

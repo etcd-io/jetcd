@@ -16,20 +16,22 @@ import io.grpc.internal.SharedResourceHolder.Resource;
  */
 public class SimpleEtcdNameResolver extends AbstractEtcdNameResolver {
 
-    private final List<ResolvedServerInfo> servers;
+  private final List<ResolvedServerInfo> servers;
 
-    public SimpleEtcdNameResolver(String name, Resource<ExecutorService> executorResource, List<URI> uris) {
-        super(name, executorResource);
+  public SimpleEtcdNameResolver(String name, Resource<ExecutorService> executorResource,
+      List<URI> uris) {
+    super(name, executorResource);
 
-        this.servers = Collections.unmodifiableList(
-            uris.stream()
-                .map(uri -> new ResolvedServerInfo(new InetSocketAddress(uri.getHost(), uri.getPort()), Attributes.EMPTY))
-                .collect(Collectors.toList())
-        );
-    }
+    this.servers = Collections.unmodifiableList(
+        uris.stream()
+            .map(uri -> new ResolvedServerInfo(new InetSocketAddress(uri.getHost(), uri.getPort()),
+                Attributes.EMPTY))
+            .collect(Collectors.toList())
+    );
+  }
 
-    @Override
-    protected List<ResolvedServerInfo> getServers() {
-        return servers;
-    }
+  @Override
+  protected List<ResolvedServerInfo> getServers() {
+    return servers;
+  }
 }

@@ -20,42 +20,42 @@ import com.google.protobuf.ByteString;
 @Beta
 public interface EtcdKV {
 
-    // ***************
-    // Op.PUT
-    // ***************
+  // ***************
+  // Op.PUT
+  // ***************
 
-    ListenableFuture<PutResponse> put(ByteString key, ByteString value);
+  ListenableFuture<PutResponse> put(ByteString key, ByteString value);
 
-    ListenableFuture<PutResponse> put(ByteString key, ByteString value, PutOption option);
+  ListenableFuture<PutResponse> put(ByteString key, ByteString value, PutOption option);
 
-    // ***************
-    // Op.GET
-    // ***************
+  // ***************
+  // Op.GET
+  // ***************
 
-    ListenableFuture<RangeResponse> get(ByteString key);
+  ListenableFuture<RangeResponse> get(ByteString key);
 
-    ListenableFuture<RangeResponse> get(ByteString key, GetOption option);
+  ListenableFuture<RangeResponse> get(ByteString key, GetOption option);
 
-    // ***************
-    // Op.DELETE
-    // ***************
+  // ***************
+  // Op.DELETE
+  // ***************
 
-    ListenableFuture<DeleteRangeResponse> delete(ByteString key);
+  ListenableFuture<DeleteRangeResponse> delete(ByteString key);
 
-    ListenableFuture<DeleteRangeResponse> delete(ByteString key, DeleteOption option);
+  ListenableFuture<DeleteRangeResponse> delete(ByteString key, DeleteOption option);
 
-    // ***************
-    // Op.COMPACT
-    // ***************
+  // ***************
+  // Op.COMPACT
+  // ***************
 
-    ListenableFuture<CompactionResponse> compact();
+  ListenableFuture<CompactionResponse> compact();
 
-    ListenableFuture<CompactionResponse> compact(CompactOption option);
+  ListenableFuture<CompactionResponse> compact(CompactOption option);
 
-    /**
-     * Commit a transaction built from {@link com.coreos.jetcd.op.Txn.Builder}.
-     *
-     * @param txn txn to commit
-     */
-    ListenableFuture<TxnResponse> commit(Txn txn);
+  /**
+   * Commit a transaction built from {@link com.coreos.jetcd.op.Txn.Builder}.
+   *
+   * @param txn txn to commit
+   */
+  ListenableFuture<TxnResponse> commit(Txn txn);
 }
