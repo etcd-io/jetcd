@@ -5,7 +5,7 @@ package com.coreos.jetcd.lease;
  */
 public class NoSuchLeaseException extends Exception {
 
-    public NoSuchLeaseException(long leaseId) {
-        super("No such lease: " + leaseId);
-    }
+  public NoSuchLeaseException(long leaseId) {
+    super("No such lease: " + leaseId);
+  }
 }

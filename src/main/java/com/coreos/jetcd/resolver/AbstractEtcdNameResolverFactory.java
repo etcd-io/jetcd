@@ -9,6 +9,6 @@ import io.grpc.NameResolver;
  */
 public abstract class AbstractEtcdNameResolverFactory extends NameResolver.Factory {
 
-    // Gets name of name resolver, only "simple" and "dns" are validate.
-    public abstract String name();
+  // Gets name of name resolver, only "simple" and "dns" are validate.
+  public abstract String name();
 }

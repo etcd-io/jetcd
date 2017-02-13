@@ -42,153 +42,161 @@ import io.grpc.ManagedChannel;
  * Implementation of etcd auth client
  */
 public class EtcdAuthImpl implements EtcdAuth {
-    private final AuthGrpc.AuthFutureStub stub;
 
-    public EtcdAuthImpl(ManagedChannel channel, Optional<String> token) {
-        this.stub = EtcdClientUtil.configureStub(AuthGrpc.newFutureStub(channel), token);
-    }
+  private final AuthGrpc.AuthFutureStub stub;
 
-    // ***************
-    // Auth Manage
-    // ***************
+  public EtcdAuthImpl(ManagedChannel channel, Optional<String> token) {
+    this.stub = EtcdClientUtil.configureStub(AuthGrpc.newFutureStub(channel), token);
+  }
 
-    @Override
-    public ListenableFuture<AuthEnableResponse> authEnable() {
-        AuthEnableRequest enableRequest = AuthEnableRequest.getDefaultInstance();
-        return this.stub.authEnable(enableRequest);
-    }
+  // ***************
+  // Auth Manage
+  // ***************
 
-    @Override
-    public ListenableFuture<AuthDisableResponse> authDisable() {
-        AuthDisableRequest disableRequest = AuthDisableRequest.getDefaultInstance();
-        return this.stub.authDisable(disableRequest);
-    }
+  @Override
+  public ListenableFuture<AuthEnableResponse> authEnable() {
+    AuthEnableRequest enableRequest = AuthEnableRequest.getDefaultInstance();
+    return this.stub.authEnable(enableRequest);
+  }
 
-    // ***************
-    // User Manage
-    // ***************
+  @Override
+  public ListenableFuture<AuthDisableResponse> authDisable() {
+    AuthDisableRequest disableRequest = AuthDisableRequest.getDefaultInstance();
+    return this.stub.authDisable(disableRequest);
+  }
 
-    @Override
-    public ListenableFuture<AuthUserAddResponse> userAdd(ByteString name, ByteString password) {
-        AuthUserAddRequest addRequest = AuthUserAddRequest.newBuilder()
-                .setNameBytes(name)
-                .setPasswordBytes(password)
-                .build();
-        return this.stub.userAdd(addRequest);
-    }
+  // ***************
+  // User Manage
+  // ***************
 
-    @Override
-    public ListenableFuture<AuthUserDeleteResponse> userDelete(ByteString name) {
-        AuthUserDeleteRequest deleteRequest = AuthUserDeleteRequest.newBuilder()
-                .setNameBytes(name).build();
-        return this.stub.userDelete(deleteRequest);
-    }
+  @Override
+  public ListenableFuture<AuthUserAddResponse> userAdd(ByteString name, ByteString password) {
+    AuthUserAddRequest addRequest = AuthUserAddRequest.newBuilder()
+        .setNameBytes(name)
+        .setPasswordBytes(password)
+        .build();
+    return this.stub.userAdd(addRequest);
+  }
 
-    @Override
-    public ListenableFuture<AuthUserChangePasswordResponse> userChangePassword(ByteString name, ByteString password) {
-        AuthUserChangePasswordRequest changePasswordRequest = AuthUserChangePasswordRequest.newBuilder()
-                .setNameBytes(name)
-                .setPasswordBytes(password)
-                .build();
-        return this.stub.userChangePassword(changePasswordRequest);
-    }
+  @Override
+  public ListenableFuture<AuthUserDeleteResponse> userDelete(ByteString name) {
+    AuthUserDeleteRequest deleteRequest = AuthUserDeleteRequest.newBuilder()
+        .setNameBytes(name).build();
+    return this.stub.userDelete(deleteRequest);
+  }
 
-    @Override
-    public ListenableFuture<AuthUserGetResponse> userGet(ByteString name) {
-        AuthUserGetRequest userGetRequest = AuthUserGetRequest.newBuilder()
-                .setNameBytes(name)
-                .build();
+  @Override
+  public ListenableFuture<AuthUserChangePasswordResponse> userChangePassword(ByteString name,
+      ByteString password) {
+    AuthUserChangePasswordRequest changePasswordRequest = AuthUserChangePasswordRequest.newBuilder()
+        .setNameBytes(name)
+        .setPasswordBytes(password)
+        .build();
+    return this.stub.userChangePassword(changePasswordRequest);
+  }
 
-        return this.stub.userGet(userGetRequest);
-    }
+  @Override
+  public ListenableFuture<AuthUserGetResponse> userGet(ByteString name) {
+    AuthUserGetRequest userGetRequest = AuthUserGetRequest.newBuilder()
+        .setNameBytes(name)
+        .build();
 
-    @Override
-    public ListenableFuture<AuthUserListResponse> userList() {
-        AuthUserListRequest userListRequest = AuthUserListRequest.getDefaultInstance();
-        return this.stub.userList(userListRequest);
-    }
+    return this.stub.userGet(userGetRequest);
+  }
 
-    // ***************
-    // User Role Manage
-    // ***************
+  @Override
+  public ListenableFuture<AuthUserListResponse> userList() {
+    AuthUserListRequest userListRequest = AuthUserListRequest.getDefaultInstance();
+    return this.stub.userList(userListRequest);
+  }
 
-    @Override
-    public ListenableFuture<AuthUserGrantRoleResponse> userGrantRole(ByteString name, ByteString role) {
-        AuthUserGrantRoleRequest userGrantRoleRequest = AuthUserGrantRoleRequest.newBuilder()
-                .setUserBytes(name)
-                .setRoleBytes(role)
-                .build();
-        return this.stub.userGrantRole(userGrantRoleRequest);
-    }
+  // ***************
+  // User Role Manage
+  // ***************
 
-    @Override
-    public ListenableFuture<AuthUserRevokeRoleResponse> userRevokeRole(ByteString name, ByteString role) {
-        AuthUserRevokeRoleRequest userRevokeRoleRequest = AuthUserRevokeRoleRequest.newBuilder()
-                .setNameBytes(name)
-                .setRoleBytes(role)
-                .build();
-        return this.stub.userRevokeRole(userRevokeRoleRequest);
-    }
+  @Override
+  public ListenableFuture<AuthUserGrantRoleResponse> userGrantRole(ByteString name,
+      ByteString role) {
+    AuthUserGrantRoleRequest userGrantRoleRequest = AuthUserGrantRoleRequest.newBuilder()
+        .setUserBytes(name)
+        .setRoleBytes(role)
+        .build();
+    return this.stub.userGrantRole(userGrantRoleRequest);
+  }
 
-    // ***************
-    // Role Manage
-    // ***************
+  @Override
+  public ListenableFuture<AuthUserRevokeRoleResponse> userRevokeRole(ByteString name,
+      ByteString role) {
+    AuthUserRevokeRoleRequest userRevokeRoleRequest = AuthUserRevokeRoleRequest.newBuilder()
+        .setNameBytes(name)
+        .setRoleBytes(role)
+        .build();
+    return this.stub.userRevokeRole(userRevokeRoleRequest);
+  }
 
-    @Override
-    public ListenableFuture<AuthRoleAddResponse> roleAdd(ByteString name) {
-        AuthRoleAddRequest roleAddRequest = AuthRoleAddRequest.newBuilder()
-                .setNameBytes(name)
-                .build();
-        return this.stub.roleAdd(roleAddRequest);
-    }
+  // ***************
+  // Role Manage
+  // ***************
 
-    @Override
-    public ListenableFuture<AuthRoleGrantPermissionResponse> roleGrantPermission(ByteString role, ByteString key, ByteString rangeEnd, Permission.Type permType) {
-        Permission perm = Permission.newBuilder()
-                .setKey(key)
-                .setRangeEnd(rangeEnd)
-                .setPermType(permType)
-                .build();
-        AuthRoleGrantPermissionRequest roleGrantPermissionRequest = AuthRoleGrantPermissionRequest.newBuilder()
-                .setNameBytes(role)
-                .setPerm(perm)
-                .build();
+  @Override
+  public ListenableFuture<AuthRoleAddResponse> roleAdd(ByteString name) {
+    AuthRoleAddRequest roleAddRequest = AuthRoleAddRequest.newBuilder()
+        .setNameBytes(name)
+        .build();
+    return this.stub.roleAdd(roleAddRequest);
+  }
 
-        return this.stub.roleGrantPermission(roleGrantPermissionRequest);
-    }
+  @Override
+  public ListenableFuture<AuthRoleGrantPermissionResponse> roleGrantPermission(ByteString role,
+      ByteString key, ByteString rangeEnd, Permission.Type permType) {
+    Permission perm = Permission.newBuilder()
+        .setKey(key)
+        .setRangeEnd(rangeEnd)
+        .setPermType(permType)
+        .build();
+    AuthRoleGrantPermissionRequest roleGrantPermissionRequest = AuthRoleGrantPermissionRequest
+        .newBuilder()
+        .setNameBytes(role)
+        .setPerm(perm)
+        .build();
 
-    @Override
-    public ListenableFuture<AuthRoleGetResponse> roleGet(ByteString role) {
-        AuthRoleGetRequest roleGetRequest = AuthRoleGetRequest.newBuilder()
-                .setRoleBytes(role)
-                .build();
-        return this.stub.roleGet(roleGetRequest);
-    }
+    return this.stub.roleGrantPermission(roleGrantPermissionRequest);
+  }
 
-    @Override
-    public ListenableFuture<AuthRoleListResponse> roleList() {
-        AuthRoleListRequest roleListRequest = AuthRoleListRequest.getDefaultInstance();
-        return this.stub.roleList(roleListRequest);
-    }
+  @Override
+  public ListenableFuture<AuthRoleGetResponse> roleGet(ByteString role) {
+    AuthRoleGetRequest roleGetRequest = AuthRoleGetRequest.newBuilder()
+        .setRoleBytes(role)
+        .build();
+    return this.stub.roleGet(roleGetRequest);
+  }
 
-    @Override
-    public ListenableFuture<AuthRoleRevokePermissionResponse> roleRevokePermission(ByteString role, ByteString key, ByteString rangeEnd) {
+  @Override
+  public ListenableFuture<AuthRoleListResponse> roleList() {
+    AuthRoleListRequest roleListRequest = AuthRoleListRequest.getDefaultInstance();
+    return this.stub.roleList(roleListRequest);
+  }
 
-        AuthRoleRevokePermissionRequest roleRevokePermissionRequest = AuthRoleRevokePermissionRequest.newBuilder()
-                .setRoleBytes(role)
-                .setKeyBytes(key)
-                .setRangeEndBytes(rangeEnd)
-                .build();
-        return this.stub.roleRevokePermission(roleRevokePermissionRequest);
-    }
+  @Override
+  public ListenableFuture<AuthRoleRevokePermissionResponse> roleRevokePermission(ByteString role,
+      ByteString key, ByteString rangeEnd) {
 
-    @Override
-    public ListenableFuture<AuthRoleDeleteResponse> roleDelete(ByteString role) {
+    AuthRoleRevokePermissionRequest roleRevokePermissionRequest = AuthRoleRevokePermissionRequest
+        .newBuilder()
+        .setRoleBytes(role)
+        .setKeyBytes(key)
+        .setRangeEndBytes(rangeEnd)
+        .build();
+    return this.stub.roleRevokePermission(roleRevokePermissionRequest);
+  }
 
-        AuthRoleDeleteRequest roleDeleteRequest = AuthRoleDeleteRequest.newBuilder()
-                .setRoleBytes(role)
-                .build();
-        return this.stub.roleDelete(roleDeleteRequest);
-    }
+  @Override
+  public ListenableFuture<AuthRoleDeleteResponse> roleDelete(ByteString role) {
+
+    AuthRoleDeleteRequest roleDeleteRequest = AuthRoleDeleteRequest.newBuilder()
+        .setRoleBytes(role)
+        .build();
+    return this.stub.roleDelete(roleDeleteRequest);
+  }
 
 }
