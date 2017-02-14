@@ -1,9 +1,8 @@
 package com.coreos.jetcd;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
+import static com.coreos.jetcd.EtcdClientUtil.defaultChannelBuilder;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.api.AuthGrpc;
 import com.coreos.jetcd.api.AuthenticateRequest;
@@ -17,10 +16,10 @@ import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.NameResolver;
-
-import static com.coreos.jetcd.EtcdClientUtil.defaultChannelBuilder;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Etcd Client

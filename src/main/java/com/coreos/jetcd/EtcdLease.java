@@ -5,7 +5,6 @@ import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 import com.coreos.jetcd.api.LeaseRevokeResponse;
 import com.coreos.jetcd.lease.NoSuchLeaseException;
 import com.google.common.util.concurrent.ListenableFuture;
-
 import java.util.concurrent.ExecutionException;
 
 /**

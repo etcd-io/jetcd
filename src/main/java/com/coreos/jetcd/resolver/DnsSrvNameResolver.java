@@ -1,24 +1,20 @@
 package com.coreos.jetcd.resolver;
 
+import com.google.common.annotations.VisibleForTesting;
+import io.grpc.Attributes;
+import io.grpc.ResolvedServerInfo;
+import io.grpc.internal.SharedResourceHolder;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.annotations.VisibleForTesting;
-
-import io.grpc.Attributes;
-import io.grpc.ResolvedServerInfo;
-import io.grpc.internal.SharedResourceHolder;
 
 final class DnsSrvNameResolver extends AbstractEtcdNameResolver {
 

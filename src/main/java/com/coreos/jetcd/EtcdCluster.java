@@ -5,7 +5,6 @@ import com.coreos.jetcd.api.MemberListResponse;
 import com.coreos.jetcd.api.MemberRemoveResponse;
 import com.coreos.jetcd.api.MemberUpdateResponse;
 import com.google.common.util.concurrent.ListenableFuture;
-
 import java.util.List;
 
 /**

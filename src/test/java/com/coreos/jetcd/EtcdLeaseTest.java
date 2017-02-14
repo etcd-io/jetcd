@@ -1,19 +1,12 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.*;
-import com.coreos.jetcd.op.Cmp;
-import com.coreos.jetcd.op.CmpTarget;
-import com.coreos.jetcd.op.Op;
-import com.coreos.jetcd.op.Txn;
-import com.coreos.jetcd.options.GetOption;
+import com.coreos.jetcd.api.LeaseKeepAliveResponse;
+import com.coreos.jetcd.api.PutResponse;
 import com.coreos.jetcd.options.PutOption;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
-
-import java.util.concurrent.ExecutionException;
 
 /**
  * KV service test cases.

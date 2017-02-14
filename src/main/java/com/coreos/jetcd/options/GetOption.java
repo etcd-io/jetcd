@@ -1,9 +1,8 @@
 package com.coreos.jetcd.options;
 
-import java.util.Optional;
-
 import com.coreos.jetcd.api.RangeRequest;
 import com.google.protobuf.ByteString;
+import java.util.Optional;
 
 /**
  * The option for get operation.

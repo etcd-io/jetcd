@@ -1,20 +1,17 @@
 package com.coreos.jetcd;
 
-import java.nio.charset.Charset;
-import java.util.concurrent.ExecutionException;
-
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
-
 import com.coreos.jetcd.api.AuthRoleGetResponse;
 import com.coreos.jetcd.api.Permission;
 import com.coreos.jetcd.api.RangeResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.google.protobuf.ByteString;
-
 import io.grpc.StatusRuntimeException;
+import java.nio.charset.Charset;
+import java.util.concurrent.ExecutionException;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+import org.testng.asserts.Assertion;
 
 /**
  * test etcd auth

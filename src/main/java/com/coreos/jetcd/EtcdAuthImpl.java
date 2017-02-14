@@ -1,7 +1,5 @@
 package com.coreos.jetcd;
 
-import java.util.Optional;
-
 import com.coreos.jetcd.api.AuthDisableRequest;
 import com.coreos.jetcd.api.AuthDisableResponse;
 import com.coreos.jetcd.api.AuthEnableRequest;
@@ -37,6 +35,7 @@ import com.coreos.jetcd.api.Permission;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
+import java.util.Optional;
 
 /**
  * Implementation of etcd auth client

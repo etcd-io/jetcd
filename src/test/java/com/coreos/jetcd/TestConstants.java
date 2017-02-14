@@ -1,8 +1,5 @@
 package com.coreos.jetcd;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Test constants, contain the cluster info.
  */

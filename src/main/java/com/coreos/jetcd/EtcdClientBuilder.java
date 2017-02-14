@@ -1,16 +1,15 @@
 package com.coreos.jetcd;
 
-import java.util.List;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.resolver.AbstractEtcdNameResolverFactory;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import java.util.List;
 
 /**
  * ClientBuilder knows how to create an EtcdClient instance.

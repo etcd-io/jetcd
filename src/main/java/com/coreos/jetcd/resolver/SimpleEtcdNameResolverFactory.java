@@ -1,13 +1,12 @@
 package com.coreos.jetcd.resolver;
 
-import java.net.URI;
-import java.util.List;
-import javax.annotation.Nullable;
-
 import com.google.common.base.Preconditions;
 import io.grpc.Attributes;
 import io.grpc.NameResolver;
 import io.grpc.internal.GrpcUtil;
+import java.net.URI;
+import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * A custom name resolver factory which creates etcd name resolver.
