@@ -22,7 +22,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Etcd Client
+ * Etcd Client.
  */
 public class EtcdClient {
 
@@ -100,7 +100,7 @@ public class EtcdClient {
   // ************************
 
   /**
-   * get token from etcd with name and password
+   * get token from etcd with name and password.
    *
    * @param channel channel to etcd
    * @param name auth name
@@ -118,7 +118,7 @@ public class EtcdClient {
   }
 
   /**
-   * get token with EtcdClientBuilder
+   * get token with EtcdClientBuilder.
    *
    * @return the auth token
    * @throws ConnectException This may be caused as network reason, wrong address

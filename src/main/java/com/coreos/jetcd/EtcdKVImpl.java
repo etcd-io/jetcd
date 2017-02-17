@@ -23,7 +23,7 @@ import io.grpc.ManagedChannel;
 import java.util.Optional;
 
 /**
- * Implementation of etcd kv client
+ * Implementation of etcd kv client.
  */
 class EtcdKVImpl implements EtcdKV {
 

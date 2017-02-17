@@ -21,9 +21,15 @@ public final class DeleteOption {
 
     /**
      * Set the end key of the delete request. If it is set, the delete request will delete the keys
-     * from <i>key</i> to <i>endKey</i> (exclusive). <p>If end key is '\0', the range is all keys >=
-     * key. <p>If the end key is one bit larger than the given key, then it deletes all keys with
-     * the prefix (the given key). <p>If both key and end key are '\0', it deletes all keys.
+     * from <i>key</i> to <i>endKey</i> (exclusive).
+     *
+     * <p>If end key is '\0', the range is all keys >=
+     * key.
+     *
+     * <p>If the end key is one bit larger than the given key, then it deletes all keys with
+     * the prefix (the given key).
+     *
+     * <p>If both key and end key are '\0', it deletes all keys.
      *
      * @param endKey end key
      * @return builder

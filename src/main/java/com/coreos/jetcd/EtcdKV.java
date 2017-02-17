@@ -15,7 +15,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 
 /**
- * Interface of kv client talking to etcd
+ * Interface of kv client talking to etcd.
  */
 @Beta
 public interface EtcdKV {

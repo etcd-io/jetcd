@@ -8,14 +8,14 @@ import com.coreos.jetcd.api.StatusResponse;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * Interface of maintenance talking to etcd
- * <p>
- * An etcd cluster needs periodic maintenance to remain reliable. Depending
+ * Interface of maintenance talking to etcd.
+ *
+ * <p>An etcd cluster needs periodic maintenance to remain reliable. Depending
  * on an etcd application's needs, this maintenance can usually be
  * automated and performed without downtime or significantly degraded
  * performance.
- * <p>
- * All etcd maintenance manages storage resources consumed by the etcd
+ *
+ * <p>All etcd maintenance manages storage resources consumed by the etcd
  * keyspace. Failure to adequately control the keyspace size is guarded by
  * storage space quotas; if an etcd member runs low on space, a quota will
  * trigger cluster-wide alarms which will put the system into a
@@ -29,12 +29,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 public interface EtcdMaintenance {
 
   /**
-   * get all active keyspace alarm
+   * get all active keyspace alarm.
    */
   ListenableFuture<AlarmResponse> listAlarms();
 
   /**
-   * disarms a given alarm
+   * disarms a given alarm.
    *
    * @param member the alarm
    * @return the response result
@@ -42,16 +42,16 @@ public interface EtcdMaintenance {
   ListenableFuture<AlarmResponse> disalarm(AlarmMember member);
 
   /**
-   * defragment one member of the cluster
-   * <p>
-   * After compacting the keyspace, the backend database may exhibit internal
+   * defragment one member of the cluster.
+   *
+   * <p>After compacting the keyspace, the backend database may exhibit internal
    * fragmentation. Any internal fragmentation is space that is free to use
    * by the backend but still consumes storage space. The process of
    * defragmentation releases this storage space back to the file system.
    * Defragmentation is issued on a per-member so that cluster-wide latency
    * spikes may be avoided.
-   * <p>
-   * Defragment is an expensive operation. User should avoid defragmenting
+   *
+   * <p>Defragment is an expensive operation. User should avoid defragmenting
    * multiple members at the same time.
    * To defragment multiple members in the cluster, user need to call defragment
    * multiple times with different endpoints.
@@ -59,14 +59,16 @@ public interface EtcdMaintenance {
   ListenableFuture<DefragmentResponse> defragmentMember();
 
   /**
-   * get the status of one member
+   * get the status of one member.
    */
   ListenableFuture<StatusResponse> statusMember();
 
   /**
    * Set callback for snapshot.
-   * <p> The onSnapshot will be called when the member make a snapshot.
-   * <p> The onError will be called as exception, and the callback will be canceled.
+   *
+   * <p>The onSnapshot will be called when the member make a snapshot.
+   *
+   * <p>The onError will be called as exception, and the callback will be canceled.
    *
    * @param callback Snapshot callback
    */
@@ -83,7 +85,7 @@ public interface EtcdMaintenance {
   interface SnapshotCallback {
 
     /**
-     * The onSnapshot will be called when the member make a snapshot
+     * The onSnapshot will be called when the member make a snapshot.
      *
      * @param snapshotResponse snapshot response
      */

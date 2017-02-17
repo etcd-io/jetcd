@@ -14,7 +14,7 @@ public final class PutOption {
   }
 
   /**
-   * Builder to construct a put option
+   * Builder to construct a put option.
    */
   public static class Builder {
 

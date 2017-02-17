@@ -20,7 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 
 /**
- * Interface of auth talking to etcd
+ * Interface of auth talking to etcd.
  */
 public interface EtcdAuth {
 

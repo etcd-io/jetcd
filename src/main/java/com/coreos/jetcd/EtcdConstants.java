@@ -3,7 +3,7 @@ package com.coreos.jetcd;
 import com.google.protobuf.ByteString;
 
 /**
- * Constants of Etcd
+ * Constants of Etcd.
  */
 public class EtcdConstants {
 

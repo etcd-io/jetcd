@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Implementation of cluster client
+ * Implementation of cluster client.
  */
 public class EtcdClusterImpl implements EtcdCluster {
 
@@ -26,7 +26,7 @@ public class EtcdClusterImpl implements EtcdCluster {
   }
 
   /**
-   * lists the current cluster membership
+   * lists the current cluster membership.
    */
   @Override
   public ListenableFuture<MemberListResponse> listMember() {
@@ -34,7 +34,7 @@ public class EtcdClusterImpl implements EtcdCluster {
   }
 
   /**
-   * add a new member into the cluster
+   * add a new member into the cluster.
    *
    * @param endpoints the address of the new member
    */
@@ -46,7 +46,7 @@ public class EtcdClusterImpl implements EtcdCluster {
   }
 
   /**
-   * removes an existing member from the cluster
+   * removes an existing member from the cluster.
    *
    * @param memberID the id of the member
    */
@@ -58,7 +58,7 @@ public class EtcdClusterImpl implements EtcdCluster {
   }
 
   /**
-   * update peer addresses of the member
+   * update peer addresses of the member.
    *
    * @param memberID the id of member to update
    * @param endpoints the new endpoints for the member

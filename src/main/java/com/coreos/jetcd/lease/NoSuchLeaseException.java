@@ -1,7 +1,7 @@
 package com.coreos.jetcd.lease;
 
 /**
- * Signals that the lease client do not have this lease
+ * Signals that the lease client do not have this lease.
  */
 public class NoSuchLeaseException extends Exception {
 

@@ -18,7 +18,7 @@ public final class EtcdClientUtil {
   }
 
   /**
-   * add token to channel's head
+   * add token to channel's head.
    *
    * @param stub the stub to attach head
    * @param token the token for auth

@@ -47,7 +47,9 @@ public final class GetOption {
 
     /**
      * Provide the revision to use for the get request.
+     *
      * <p>If the revision is less or equal to zero, the get is over the newest key-value store.
+     *
      * <p>If the revision has been compacted, ErrCompacted is returned as a response.
      *
      * @param revision the revision to get.
@@ -82,7 +84,9 @@ public final class GetOption {
     }
 
     /**
-     * Set the get request to be a serializable get request. <p>Get requests are linearizable by
+     * Set the get request to be a serializable get request.
+     *
+     * <p>Get requests are linearizable by
      * default. For better performance, a serializable get request is served locally without needing
      * to reach consensus with other nodes in the cluster.
      *
@@ -95,7 +99,7 @@ public final class GetOption {
     }
 
     /**
-     * Set the get request to only return keys
+     * Set the get request to only return keys.
      *
      * @param keysOnly flag to only return keys
      * @return builder
@@ -106,7 +110,7 @@ public final class GetOption {
     }
 
     /**
-     * Set the get request to only return count of the keys
+     * Set the get request to only return count of the keys.
      *
      * @param countOnly flag to only return count of the keys
      * @return builder
@@ -118,9 +122,14 @@ public final class GetOption {
 
     /**
      * Set the end key of the get request. If it is set, the get request will return the keys from
-     * <i>key</i> to <i>endKey</i> (exclusive). <p>If end key is '\0', the range is all keys >= key.
+     * <i>key</i> to <i>endKey</i> (exclusive).
+     *
+     * <p>If end key is '\0', the range is all keys >= key.
+     *
      * <p>If the end key is one bit larger than the given key, then it gets all keys with the prefix
-     * (the given key). <p>If both key and end key are '\0', it returns all keys.
+     * (the given key).
+     *
+     * <p>If both key and end key are '\0', it returns all keys.
      *
      * @param endKey end key
      * @return builder
