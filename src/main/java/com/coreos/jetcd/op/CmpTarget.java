@@ -4,7 +4,7 @@ import com.coreos.jetcd.api.Compare;
 import com.google.protobuf.ByteString;
 
 /**
- * Cmp target used in {@link Txn}
+ * Cmp target used in {@link Txn}.
  */
 public abstract class CmpTarget<T> {
 

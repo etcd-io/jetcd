@@ -8,26 +8,26 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Interface of Lease talking to etcd
+ * Interface of Lease talking to etcd.
  */
 public interface EtcdLease {
 
   /**
-   * New a lease with ttl value
+   * New a lease with ttl value.
    *
    * @param ttl ttl value, unit seconds
    */
   ListenableFuture<LeaseGrantResponse> grant(long ttl);
 
   /**
-   * revoke one lease and the key bind to this lease will be removed
+   * revoke one lease and the key bind to this lease will be removed.
    *
    * @param leaseId id of the lease to revoke
    */
   ListenableFuture<LeaseRevokeResponse> revoke(long leaseId);
 
   /**
-   * keep alive one lease in background
+   * keep alive one lease in background.
    *
    * @param leaseId id of lease to set handler
    * @param etcdLeaseHandler the handler for the lease, this value can be null
@@ -35,14 +35,14 @@ public interface EtcdLease {
   void keepAlive(long leaseId, EtcdLeaseHandler etcdLeaseHandler);
 
   /**
-   * cancel keep alive for lease in background
+   * cancel keep alive for lease in background.
    *
    * @param leaseId id of lease
    */
   void cancelKeepAlive(long leaseId) throws ExecutionException, InterruptedException;
 
   /**
-   * keep alive one lease only once
+   * keep alive one lease only once.
    *
    * @param leaseId id of lease to keep alive once
    * @return The keep alive response
@@ -50,7 +50,7 @@ public interface EtcdLease {
   ListenableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId);
 
   /**
-   * set EtcdLeaseHandler for lease
+   * set EtcdLeaseHandler for lease.
    *
    * @param leaseId id of the lease to set handler
    * @param etcdLeaseHandler the handler for the lease
@@ -60,15 +60,15 @@ public interface EtcdLease {
       throws NoSuchLeaseException;
 
   /**
-   * Init the request stream to etcd
-   * start schedule to keep heartbeat to keep alive and remove dead leases
+   * Init the request stream to etcd.
+   * start schedule to keep heartbeat to keep alive and remove dead leases.
    *
    * @throws IllegalStateException if the service is running already
    */
   void startKeepAliveService() throws IllegalStateException;
 
   /**
-   * end the schedule for keep alive and remove dead leases
+   * end the schedule for keep alive and remove dead leases.
    *
    * @throws IllegalStateException if the service is not running yet
    */
@@ -83,7 +83,7 @@ public interface EtcdLease {
 
   /**
    * This interface is called by Etcd Lease client to notify user about lease expiration and
-   * exception
+   * exception.
    */
   interface EtcdLeaseHandler {
 
@@ -98,7 +98,7 @@ public interface EtcdLease {
     void onLeaseExpired(long leaseId);
 
     /**
-     * onError will be called when keep alive encountered exception
+     * onError will be called when keep alive encountered exception.
      */
     void onError(Throwable throwable);
   }

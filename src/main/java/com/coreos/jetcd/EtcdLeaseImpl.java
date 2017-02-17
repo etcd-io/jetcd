@@ -24,7 +24,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Implementation of lease client
+ * Implementation of lease client.
  */
 public class EtcdLeaseImpl implements EtcdLease {
 
@@ -33,11 +33,11 @@ public class EtcdLeaseImpl implements EtcdLease {
   private final LeaseGrpc.LeaseFutureStub leaseFutureStub;
   private final LeaseGrpc.LeaseStub leaseStub;
   /**
-   * gRPC channel
+   * gRPC channel.
    */
   private ManagedChannel channel;
   /**
-   * Timer schedule to send keep alive request
+   * Timer schedule to send keep alive request.
    */
   private ScheduledExecutorService keepAliveSchedule;
   private ScheduledFuture<?> scheduledFuture;
@@ -46,12 +46,12 @@ public class EtcdLeaseImpl implements EtcdLease {
   private final Map<Long, Lease> keepAlives = new ConcurrentHashMap<>();
 
   /**
-   * The first time interval
+   * The first time interval.
    */
   private long firstKeepAliveTimeOut = DEFAULT_TTL;
 
   /**
-   * KeepAlive Request Stream, put request into this stream to keep the lease alive
+   * KeepAlive Request Stream, put request into this stream to keep the lease alive.
    */
   private StreamObserver<LeaseKeepAliveRequest> keepAliveRequestStreamObserver;
 
@@ -63,7 +63,7 @@ public class EtcdLeaseImpl implements EtcdLease {
 
   public EtcdLeaseImpl(final ManagedChannel channel, Optional<String> token) {
     /**
-     * Init lease stub
+     * Init lease stub.
      */
     this.channel = channel;
     this.leaseFutureStub = EtcdClientUtil
@@ -74,7 +74,7 @@ public class EtcdLeaseImpl implements EtcdLease {
 
   /**
    * Init the request stream to etcd
-   * start schedule to keep heartbeat to keep alive and remove dead leases
+   * start schedule to keep heartbeat to keep alive and remove dead leases.
    *
    * @throws IllegalStateException if the service is running already
    */
@@ -110,7 +110,7 @@ public class EtcdLeaseImpl implements EtcdLease {
       initRequestStream(keepAliveResponseStreamObserver);
 
       /**
-       * Start heartbeat schedule to keep alive leases and remove dead leases
+       * Start heartbeat schedule to keep alive leases and remove dead leases.
        */
       if (this.keepAliveSchedule == null) {
         this.keepAliveSchedule = Executors.newSingleThreadScheduledExecutor();
@@ -143,7 +143,7 @@ public class EtcdLeaseImpl implements EtcdLease {
   }
 
   /**
-   * New a lease with ttl value
+   * New a lease with ttl value.
    *
    * @param ttl ttl value, unit seconds
    */
@@ -154,7 +154,7 @@ public class EtcdLeaseImpl implements EtcdLease {
   }
 
   /**
-   * revoke one lease and the key bind to this lease will be removed
+   * revoke one lease and the key bind to this lease will be removed.
    *
    * @param leaseId id of the lease to revoke
    */
@@ -187,7 +187,7 @@ public class EtcdLeaseImpl implements EtcdLease {
   }
 
   /**
-   * cancel keep alive for lease in background
+   * cancel keep alive for lease in background.
    *
    * @param leaseId id of lease
    */
@@ -206,7 +206,7 @@ public class EtcdLeaseImpl implements EtcdLease {
   }
 
   /**
-   * keep alive one lease only once
+   * keep alive one lease only once.
    *
    * @param leaseId id of lease to keep alive once
    * @return The keep alive response
@@ -215,7 +215,7 @@ public class EtcdLeaseImpl implements EtcdLease {
   public ListenableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId) {
 
     /**
-     * to be completed, I will return a ListenableFuture value in the future
+     * to be completed, I will return a ListenableFuture value in the future.
      */
     StreamObserver<LeaseKeepAliveRequest> requestObserver = this.leaseStub
         .leaseKeepAlive(keepAliveResponseStreamObserver);
@@ -226,7 +226,7 @@ public class EtcdLeaseImpl implements EtcdLease {
   }
 
   /**
-   * set EtcdLeaseHandler for lease
+   * set EtcdLeaseHandler for lease.
    *
    * @param leaseId id of the lease to set handler
    * @param etcdLeaseHandler the handler for the lease
@@ -294,7 +294,7 @@ public class EtcdLeaseImpl implements EtcdLease {
   }
 
   /**
-   * This method update the deadline and NextKeepAlive time
+   * This method update the deadline and NextKeepAlive time.
    *
    * @param leaseKeepAliveResponse The response receive from etcd server
    */
@@ -323,7 +323,7 @@ public class EtcdLeaseImpl implements EtcdLease {
   }
 
   /**
-   * remove the lease from keep alive map
+   * remove the lease from keep alive map.
    */
   private void removeLease(long leaseId) {
     if (this.keepAlives.containsKey(leaseId)) {
@@ -345,7 +345,7 @@ public class EtcdLeaseImpl implements EtcdLease {
   }
 
   /**
-   * end the schedule for keep alive and remove dead leases
+   * end the schedule for keep alive and remove dead leases.
    *
    * @throws IllegalStateException if the service is not running yet
    */

@@ -18,6 +18,7 @@ public final class CompactOption {
 
     /**
      * Provide the revision to use for the compact request.
+     *
      * <p>All superseded keys with a revision less than the compaction revision will be removed..
      *
      * @param revision the revision to compact.

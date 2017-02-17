@@ -4,7 +4,7 @@ import com.coreos.jetcd.EtcdLease;
 import com.coreos.jetcd.api.LeaseGrantResponse;
 
 /**
- * The Lease hold the keepAlive information for lease
+ * The Lease hold the keepAlive information for lease.
  */
 public class Lease {
 

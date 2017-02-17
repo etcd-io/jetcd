@@ -4,7 +4,7 @@ import com.coreos.jetcd.api.Compare;
 import com.google.protobuf.ByteString;
 
 /**
- * The compare predicate in {@link Txn}
+ * The compare predicate in {@link Txn}.
  */
 public class Cmp {
 

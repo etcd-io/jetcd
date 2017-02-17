@@ -14,7 +14,7 @@ import javax.annotation.concurrent.GuardedBy;
 
 /**
  * The abstract etcd name resolver, all other name resolvers should
- * extend this one instead of {@link NameResolver}
+ * extend this one instead of {@link NameResolver}.
  */
 public abstract class AbstractEtcdNameResolver extends NameResolver {
 
@@ -81,7 +81,7 @@ public abstract class AbstractEtcdNameResolver extends NameResolver {
   protected abstract List<ResolvedServerInfo> getServers();
 
   /**
-   * Helper task to resolve servers
+   * Helper task to resolve servers.
    */
   private final class ResolverTask implements Runnable {
 

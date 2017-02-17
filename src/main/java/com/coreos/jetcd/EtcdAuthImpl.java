@@ -38,7 +38,7 @@ import io.grpc.ManagedChannel;
 import java.util.Optional;
 
 /**
- * Implementation of etcd auth client
+ * Implementation of etcd auth client.
  */
 public class EtcdAuthImpl implements EtcdAuth {
 

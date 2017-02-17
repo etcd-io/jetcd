@@ -2,7 +2,7 @@ package com.coreos.jetcd.exception;
 
 /**
  * Signals that an error occurred while attempting to connect to
- * etcd
+ * etcd.
  */
 public class ConnectException extends Exception {
 

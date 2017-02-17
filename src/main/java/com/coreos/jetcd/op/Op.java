@@ -10,7 +10,7 @@ import com.coreos.jetcd.options.PutOption;
 import com.google.protobuf.ByteString;
 
 /**
- * Etcd Operation
+ * Etcd Operation.
  */
 public abstract class Op {
 

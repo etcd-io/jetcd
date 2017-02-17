@@ -29,7 +29,7 @@ public class EtcdClientBuilder {
   }
 
   /**
-   * gets the endpoints for the builder
+   * gets the endpoints for the builder.
    *
    * @return the list of endpoints configured for the builder
    * @throws IllegalArgumentException if endpoints is empty
@@ -65,7 +65,7 @@ public class EtcdClientBuilder {
   }
 
   /**
-   * config etcd auth name
+   * config etcd auth name.
    *
    * @param name etcd auth name
    * @return this builder
@@ -82,7 +82,7 @@ public class EtcdClientBuilder {
   }
 
   /**
-   * config etcd auth password
+   * config etcd auth password.
    *
    * @param password etcd auth password
    * @return this builder
@@ -95,7 +95,7 @@ public class EtcdClientBuilder {
   }
 
   /**
-   * config etcd auth password
+   * config etcd auth password.
    *
    * @param nameResolverFactory etcd nameResolverFactory
    * @return this builder
@@ -109,7 +109,7 @@ public class EtcdClientBuilder {
   }
 
   /**
-   * get nameResolverFactory for etcd client
+   * get nameResolverFactory for etcd client.
    *
    * @return nameResolverFactory
    */
