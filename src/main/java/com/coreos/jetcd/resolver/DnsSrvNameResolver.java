@@ -18,9 +18,9 @@ import org.slf4j.LoggerFactory;
 
 final class DnsSrvNameResolver extends AbstractEtcdNameResolver {
 
-  private final static Logger LOGGER;
-  private final static String[] ATTRIBUTE_IDS;
-  private final static Hashtable<String, String> ENV;
+  private static final Logger LOGGER;
+  private static final String[] ATTRIBUTE_IDS;
+  private static final Hashtable<String, String> ENV;
 
   static {
     LOGGER = LoggerFactory.getLogger(DnsSrvNameResolver.class);
