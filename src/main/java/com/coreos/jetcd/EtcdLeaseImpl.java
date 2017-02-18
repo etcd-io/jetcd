@@ -28,8 +28,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class EtcdLeaseImpl implements EtcdLease {
 
-  private final static int DEFAULT_TTL = 5000;
-  private final static int DEFAULT_SCAN_PERIOD = 500;
+  private static final int DEFAULT_TTL = 5000;
+  private static final int DEFAULT_SCAN_PERIOD = 500;
   private final LeaseGrpc.LeaseFutureStub leaseFutureStub;
   private final LeaseGrpc.LeaseStub leaseStub;
   /**

@@ -51,8 +51,10 @@ public class Cmp {
         break;
       case MOD:
         compareBuiler.setModRevision((Long) value);
+        break;
       case CREATE:
         compareBuiler.setCreateRevision((Long) value);
+        break;
       default:
         throw new IllegalArgumentException("Unexpected target type (" + target + ")");
     }
