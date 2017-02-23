@@ -5,3 +5,6 @@ target/
 logs/
 *.releaseBackup
 *.versionsBackup
+
+# Created by './scripts/run_etcd.sh'
+/external/
