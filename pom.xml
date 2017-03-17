@@ -246,7 +246,7 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>7.5.1</version>
+                        <version>7.6</version>
                     </dependency>
                     <dependency>
                         <groupId>com.google.guava</groupId>
@@ -264,7 +264,8 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <configLocation>google_checks.xml</configLocation>
+                    <!-- use custom google_checks.xml -->
+                    <configLocation>properties/checkstyle.xml</configLocation>
                     <encoding>UTF-8</encoding>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
