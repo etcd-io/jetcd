@@ -24,18 +24,23 @@ public class Txn {
 
     private Builder() {
     }
-
+    //CHECKSTYLE:OFF
     public Builder If(Cmp... cmps) {
+      //CHECKSTYLE:ON
       cmpList = Lists.newArrayList(cmps);
       return this;
     }
 
+    //CHECKSTYLE:OFF
     public Builder Then(Op... ops) {
+      //CHECKSTYLE:ON
       successOpList = Lists.newArrayList(ops);
       return this;
     }
 
+    //CHECKSTYLE:OFF
     public Builder Else(Op... ops) {
+      //CHECKSTYLE:ON
       failureOpList = Lists.newArrayList(ops);
       return this;
     }

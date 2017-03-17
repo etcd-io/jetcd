@@ -28,11 +28,11 @@ public final class EtcdClientUtil {
   static final <T extends AbstractStub<T>> T configureStub(T stub, Optional<String> token) {
     return token.map(t -> {
           Metadata metadata = new Metadata();
-          Metadata.Key<String> TOKEN_KEY = Metadata.Key
+          Metadata.Key<String> tokenKey = Metadata.Key
               .of(EtcdConstants.TOKEN, Metadata.ASCII_STRING_MARSHALLER);
-          metadata.put(TOKEN_KEY, t);
-          CallCredentials callCredentials = (methodDescriptor, attributes, executor, metadataApplier) -> metadataApplier
-              .apply(metadata);
+          metadata.put(tokenKey, t);
+          CallCredentials callCredentials = (methodDescriptor, attributes,
+              executor, metadataApplier) -> metadataApplier.apply(metadata);
           return stub.withCallCredentials(callCredentials);
         }
     ).orElse(stub);

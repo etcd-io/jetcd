@@ -270,8 +270,9 @@
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <!-- enabling this after refactoring of making coding style consistent -->
-                    <!-- <failOnViolation>true</failOnViolation> -->
-                    <!-- <violationSeverity>warning</violationSeverity> -->
+                    <failOnViolation>true</failOnViolation>
+                    <violationSeverity>warning</violationSeverity>
+
                     <format>xml</format>
                     <format>html</format>
                     <outputFile>${project.build.directory}/test/checkstyle-errors.xml</outputFile>
