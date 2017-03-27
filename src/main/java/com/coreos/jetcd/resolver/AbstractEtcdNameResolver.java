@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import io.grpc.Attributes;
 import io.grpc.NameResolver;
 import io.grpc.ResolvedServerInfo;
+import io.grpc.ResolvedServerInfoGroup;
 import io.grpc.internal.SharedResourceHolder;
 import io.grpc.internal.SharedResourceHolder.Resource;
 import java.net.URI;
@@ -98,7 +99,9 @@ public abstract class AbstractEtcdNameResolver extends NameResolver {
 
       try {
         List<ResolvedServerInfo> servers = getServers();
-        savedListener.onUpdate(Collections.singletonList(servers), Attributes.EMPTY);
+        savedListener.onUpdate(
+            Collections.singletonList(ResolvedServerInfoGroup.builder().addAll(servers).build()),
+            Attributes.EMPTY);
       } finally {
         synchronized (AbstractEtcdNameResolver.this) {
           resolving = false;
