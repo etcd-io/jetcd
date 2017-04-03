@@ -11,7 +11,7 @@ public abstract class KeyPrefixUtil {
   /**
    * Gets the range end of the given prefix.
    *
-   * <p> The range end is the key plus one (e.g., "aa"+1 == "ab", "a\xff"+1 == "b").
+   * <p>The range end is the key plus one (e.g., "aa"+1 == "ab", "a\xff"+1 == "b").
    *
    * @param prefix the given prefix
    * @return the range end of the given prefix
