@@ -89,7 +89,7 @@ public class EtcdClientBuilder {
    * @throws NullPointerException if password is null
    */
   public EtcdClientBuilder setPassword(ByteString password) {
-    checkNotNull(name, "password can't be null");
+    checkNotNull(password, "password can't be null");
     this.password = password;
     return this;
   }
