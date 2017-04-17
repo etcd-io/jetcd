@@ -3,6 +3,7 @@ package com.coreos.jetcd.op;
 import com.coreos.jetcd.api.TxnRequest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -18,30 +19,49 @@ public class Txn {
 
   public static class Builder {
 
-    private List<Cmp> cmpList = (List<Cmp>) EMPTY_LIST;
-    private List<Op> successOpList = (List<Op>) EMPTY_LIST;
-    private List<Op> failureOpList = (List<Op>) EMPTY_LIST;
+    private List<Cmp> cmpList = Collections.emptyList();
+    private List<Op> successOpList = Collections.emptyList();
+    private List<Op> failureOpList = Collections.emptyList();
 
     private Builder() {
     }
+
     //CHECKSTYLE:OFF
     public Builder If(Cmp... cmps) {
       //CHECKSTYLE:ON
-      cmpList = Lists.newArrayList(cmps);
+      return If(ImmutableList.copyOf(cmps));
+    }
+
+    //CHECKSTYLE:OFF
+    public Builder If(List<Cmp> cmps) {
+      //CHECKSTYLE:ON
+      cmpList.addAll(cmps);
       return this;
     }
 
     //CHECKSTYLE:OFF
     public Builder Then(Op... ops) {
       //CHECKSTYLE:ON
-      successOpList = Lists.newArrayList(ops);
+      return Then(ImmutableList.copyOf(ops));
+    }
+
+    //CHECKSTYLE:OFF
+    public Builder Then(List<Op> ops) {
+      //CHECKSTYLE:ON
+      successOpList.addAll(ops);
       return this;
     }
 
     //CHECKSTYLE:OFF
     public Builder Else(Op... ops) {
       //CHECKSTYLE:ON
-      failureOpList = Lists.newArrayList(ops);
+      return Else(ImmutableList.copyOf(ops));
+    }
+
+    //CHECKSTYLE:OFF
+    public Builder Else(List<Op> ops) {
+      //CHECKSTYLE:ON
+      failureOpList.addAll(ops);
       return this;
     }
 
