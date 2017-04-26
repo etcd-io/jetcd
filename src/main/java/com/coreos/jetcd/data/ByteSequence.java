@@ -1,7 +1,6 @@
 package com.coreos.jetcd.data;
 
 import com.google.protobuf.ByteString;
-
 import java.io.UnsupportedEncodingException;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -11,100 +10,102 @@ import java.nio.charset.Charset;
  */
 public class ByteSequence {
 
-    private final int hashVal;
-    private final ByteString byteString;
+  private final int hashVal;
+  private final ByteString byteString;
 
 
-    public ByteSequence(byte[] source) {
-        hashVal = calcHashCore(source);
-        byteString = toByteString(source);
+  public ByteSequence(byte[] source) {
+    hashVal = calcHashCore(source);
+    byteString = toByteString(source);
+  }
+
+  protected ByteSequence(ByteString byteString) {
+    this(byteString.toByteArray());
+  }
+
+  public ByteSequence(String string) {
+    this(string.getBytes());
+  }
+
+  public ByteSequence(CharBuffer charBuffer) {
+    this(String.valueOf(charBuffer.array()));
+  }
+
+  public ByteSequence(CharSequence charSequence) {
+    this(java.nio.CharBuffer.wrap(charSequence));
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
     }
-
-    protected ByteSequence(ByteString byteString) {
-        this(byteString.toByteArray());
+    if (obj instanceof ByteSequence) {
+      ByteSequence other = (ByteSequence) obj;
+      if (other.hashCode() != hashCode()) {
+        return false;
+      }
+      return byteString.equals(other.byteString);
+    } else {
+      return false;
     }
+  }
 
-    public ByteSequence(String string) {
-        this(string.getBytes());
-    }
+  protected ByteString getByteString() {
+    return this.byteString;
+  }
 
-    public ByteSequence(CharBuffer charBuffer) {
-        this(String.valueOf(charBuffer.array()));
-    }
+  private ByteString toByteString(byte[] bytes) {
+    return ByteString.copyFrom(bytes);
+  }
 
-    public ByteSequence(CharSequence charSequence) {
-        this(java.nio.CharBuffer.wrap(charSequence));
+  private int calcHashCore(byte[] bytes) {
+    int result = 0;
+    for (int i = 0; i < bytes.length; ++i) {
+      result = 31 * result + bytes[i];
     }
+    return result;
+  }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (obj instanceof ByteSequence) {
-            ByteSequence other = (ByteSequence) obj;
-            if (other.hashCode() != hashCode()) return false;
-            return byteString.equals(other.byteString);
-        } else {
-            return false;
-        }
-    }
+  @Override
+  public int hashCode() {
+    return hashVal;
+  }
 
-    protected ByteString getByteString() {
-        return this.byteString;
-    }
+  public String toStringUtf8() {
+    return byteString.toStringUtf8();
+  }
 
-    private ByteString toByteString(byte[] bytes) {
-        return ByteString.copyFrom(bytes);
-    }
+  public String toString(Charset charset) {
+    return byteString.toString(charset);
+  }
 
-    private int calcHashCore(byte[] bytes) {
-        int result = 0;
-        for (int i = 0; i < bytes.length; ++i) {
-            result = 31 * result + bytes[i];
-        }
-        return result;
-    }
+  public String toString(String charsetName) throws UnsupportedEncodingException {
+    return byteString.toString(charsetName);
+  }
 
-    @Override
-    public int hashCode() {
-        return hashVal;
-    }
+  public byte[] getBytes() {
+    return byteString.toByteArray();
+  }
 
-    public String toStringUtf8() {
-        return byteString.toStringUtf8();
-    }
+  public static ByteSequence fromString(String string) {
+    return new ByteSequence(string);
+  }
 
-    public String toString(Charset charset) {
-        return byteString.toString(charset);
-    }
+  public static ByteSequence fromCharSequence(CharSequence charSequence) {
+    return new ByteSequence(charSequence);
+  }
 
-    public String toString(String charsetName) throws UnsupportedEncodingException {
-        return byteString.toString(charsetName);
-    }
+  public static ByteSequence fromCharBuffer(CharBuffer charBuffer) {
+    return new ByteSequence(charBuffer);
+  }
 
-    public byte[] getBytes() {
-        return byteString.toByteArray();
-    }
+  protected static ByteSequence fromByteString(ByteString byteString) {
+    return new ByteSequence(byteString);
+  }
 
-    public static ByteSequence fromString(String string) {
-        return new ByteSequence(string);
-    }
-
-    public static ByteSequence fromCharSequence(CharSequence charSequence) {
-        return new ByteSequence(charSequence);
-    }
-
-    public static ByteSequence fromCharBuffer(CharBuffer charBuffer) {
-        return new ByteSequence(charBuffer);
-    }
-
-    protected static ByteSequence fromByteString(ByteString byteString) {
-        return new ByteSequence(byteString);
-    }
-
-    public static ByteSequence fromBytes(byte[] bytes) {
-        return new ByteSequence(bytes);
-    }
+  public static ByteSequence fromBytes(byte[] bytes) {
+    return new ByteSequence(bytes);
+  }
 
 }

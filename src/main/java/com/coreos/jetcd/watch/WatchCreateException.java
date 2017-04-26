@@ -7,10 +7,10 @@ import com.coreos.jetcd.data.EtcdHeader;
  */
 public class WatchCreateException extends Exception {
 
-    public final EtcdHeader header;
+  public final EtcdHeader header;
 
-    public WatchCreateException(String cause, EtcdHeader header) {
-        super(cause);
-        this.header = header;
-    }
+  public WatchCreateException(String cause, EtcdHeader header) {
+    super(cause);
+    this.header = header;
+  }
 }

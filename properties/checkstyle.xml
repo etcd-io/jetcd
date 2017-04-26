@@ -171,7 +171,9 @@
           <property name="allowedAbbreviationLength" value="10"/>
       </module>
       <module name="OverloadMethodsDeclarationOrder"/>
-      <module name="VariableDeclarationUsageDistance"/>
+      <module name="VariableDeclarationUsageDistance">
+          <property name="allowedDistance" value="4"/>
+      </module>
       <module name="CustomImportOrder">
           <property name="sortImportsInGroupAlphabetically" value="true"/>
           <property name="separateLineBetweenGroups" value="true"/>

@@ -7,33 +7,33 @@ import com.coreos.jetcd.data.KeyValue;
  */
 public class WatchEvent {
 
-    public enum EventType {
-        PUT,
-        DELETE,
-        UNRECOGNIZED,
-    }
+  public enum EventType {
+    PUT,
+    DELETE,
+    UNRECOGNIZED,
+  }
 
-    private final KeyValue keyValue;
+  private final KeyValue keyValue;
 
-    private final KeyValue prevKV;
+  private final KeyValue prevKV;
 
-    private final EventType eventType;
+  private final EventType eventType;
 
-    public WatchEvent(KeyValue keyValue, KeyValue prevKV, EventType eventType) {
-        this.keyValue = keyValue;
-        this.prevKV = prevKV;
-        this.eventType = eventType;
-    }
+  public WatchEvent(KeyValue keyValue, KeyValue prevKV, EventType eventType) {
+    this.keyValue = keyValue;
+    this.prevKV = prevKV;
+    this.eventType = eventType;
+  }
 
-    public KeyValue getKeyValue() {
-        return keyValue;
-    }
+  public KeyValue getKeyValue() {
+    return keyValue;
+  }
 
-    public KeyValue getPrevKV() {
-        return prevKV;
-    }
+  public KeyValue getPrevKV() {
+    return prevKV;
+  }
 
-    public EventType getEventType() {
-        return eventType;
-    }
+  public EventType getEventType() {
+    return eventType;
+  }
 }
