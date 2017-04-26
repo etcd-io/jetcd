@@ -25,7 +25,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javafx.util.Pair;
 
 /**
  * etcd watcher Implementation.
@@ -423,6 +422,39 @@ public class EtcdWatchImpl implements EtcdWatch {
           setCanceled(true);
         }
       }
+    }
+  }
+
+  class Pair<K, V> {
+
+    final K key;
+    final V value;
+
+    Pair(K k, V v) {
+      this.key = k;
+      this.value = v;
+    }
+
+    K getKey() {
+      return key;
+    }
+
+    V getValue() {
+      return value;
+    }
+
+    @Override
+    public int hashCode() {
+      return key.hashCode() + value.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == null || !(obj instanceof Pair)) {
+        return false;
+      }
+      Pair<K, V> other = (Pair<K, V>) obj;
+      return key.equals(other.key) && value.equals(other.value);
     }
   }
 
