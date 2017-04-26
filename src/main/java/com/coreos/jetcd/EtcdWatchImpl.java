@@ -98,7 +98,7 @@ public class EtcdWatchImpl implements EtcdWatch {
    */
   private synchronized void resume() {
     this.requestStream = null;
-    WatcherImpl[] resumeWatchers = (WatcherImpl[]) watchers.values().toArray();
+    WatcherImpl[] resumeWatchers = watchers.values().toArray(new WatcherImpl[watchers.size()]);
     this.watchers.clear();
     for (CompletableFuture<Boolean> watcherCompletableFuture : pendingCancelFutures.values()) {
       watcherCompletableFuture.complete(Boolean.TRUE);
