@@ -9,6 +9,7 @@ import com.coreos.jetcd.op.Cmp;
 import com.coreos.jetcd.op.CmpTarget;
 import com.coreos.jetcd.op.Op;
 import com.coreos.jetcd.op.Txn;
+import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -99,6 +100,27 @@ public class EtcdKVTest {
   }
 
   @Test
+  public void testGetWithPrefix() throws Exception {
+    ByteString key1 = ByteString.copyFromUtf8("/org.etcd.RegistryService/v1.0.0/10.12.100.100");
+    ByteString value1 = ByteString.copyFromUtf8("service-endpoint-1-metadata");
+    ByteString key2 = ByteString.copyFromUtf8("/org.etcd.RegistryService/v1.0.0/10.12.100.101");
+    ByteString value2 = ByteString.copyFromUtf8("service-endpoint-2-metadata");
+
+    try {
+      kvClient.put(key1, value1);
+      kvClient.put(key2, value2);
+
+      ByteString key = ByteString.copyFromUtf8("/org.etcd.RegistryService/v1.0.0/");
+      GetOption getOpt = GetOption.newBuilder()
+          .withPrefix(key).build();
+      RangeResponse response = kvClient.get(key, getOpt).get();
+      test.assertEquals(response.getCount(), 2);
+    } catch (Exception e) {
+      // empty
+    }
+  }
+
+  @Test
   public void testGetSortedPrefix() throws Exception {
     ByteString key = ByteString.copyFrom("test_key", "UTF-8");
     ByteString testValue = ByteString.copyFrom("test_value", "UTF-8");
@@ -141,6 +163,27 @@ public class EtcdKVTest {
       ListenableFuture<DeleteRangeResponse> deleteFuture = kvClient.delete(keyToDelete);
       DeleteRangeResponse delResp = deleteFuture.get();
       test.assertEquals(resp.getKvsList().size(), delResp.getDeleted());
+    } catch (Exception e) {
+      // empty
+    }
+  }
+
+  @Test(dependsOnMethods = "testGetWithPrefix")
+  public void testDeleteWithPrefix() throws Exception {
+    ByteString key = ByteString.copyFromUtf8("/org.etcd.RegistryService/v1.0.0/");
+    try {
+      // count keys about to delete
+      ListenableFuture<RangeResponse> getFuture = kvClient
+              .get(key, GetOption.newBuilder().withPrefix(key).build());
+      RangeResponse getResp = getFuture.get();
+      test.assertTrue((getResp.getCount() > 1), "Size of matched keys should be more than one");
+
+      // delete all the keys with matching prefix
+      DeleteOption deleteOpt = DeleteOption.newBuilder()
+              .withPrefix(key).build();
+      ListenableFuture<DeleteRangeResponse> delFuture = kvClient.delete(key, deleteOpt);
+      DeleteRangeResponse delResp = delFuture.get();
+      test.assertEquals(delResp.getDeleted(), getResp.getCount());
     } catch (Exception e) {
       // empty
     }
