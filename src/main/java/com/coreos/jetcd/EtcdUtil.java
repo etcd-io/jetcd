@@ -28,7 +28,7 @@ class EtcdUtil {
   /**
    * convert ByteString to ByteSequence.
    */
-  protected static ByteSequence byteSequceFromByteString(ByteString byteString) {
+  protected static ByteSequence byteSequenceFromByteString(ByteString byteString) {
     return ByteSequence.fromBytes(byteString.toByteArray());
   }
 
@@ -37,8 +37,8 @@ class EtcdUtil {
    */
   protected static KeyValue apiToClientKV(com.coreos.jetcd.api.KeyValue keyValue) {
     return new KeyValue(
-        byteSequceFromByteString(keyValue.getKey()),
-        byteSequceFromByteString(keyValue.getValue()),
+        byteSequenceFromByteString(keyValue.getKey()),
+        byteSequenceFromByteString(keyValue.getValue()),
         keyValue.getCreateRevision(),
         keyValue.getModRevision(),
         keyValue.getVersion(),
