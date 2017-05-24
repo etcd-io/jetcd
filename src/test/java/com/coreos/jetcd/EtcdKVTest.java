@@ -14,9 +14,11 @@ import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+import java.util.concurrent.ExecutionException;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
+
 
 /**
  * KV service test cases.
@@ -100,27 +102,6 @@ public class EtcdKVTest {
   }
 
   @Test
-  public void testGetWithPrefix() throws Exception {
-    ByteString key1 = ByteString.copyFromUtf8("/org.etcd.RegistryService/v1.0.0/10.12.100.100");
-    ByteString value1 = ByteString.copyFromUtf8("service-endpoint-1-metadata");
-    ByteString key2 = ByteString.copyFromUtf8("/org.etcd.RegistryService/v1.0.0/10.12.100.101");
-    ByteString value2 = ByteString.copyFromUtf8("service-endpoint-2-metadata");
-
-    try {
-      kvClient.put(key1, value1);
-      kvClient.put(key2, value2);
-
-      ByteString key = ByteString.copyFromUtf8("/org.etcd.RegistryService/v1.0.0/");
-      GetOption getOpt = GetOption.newBuilder()
-          .withPrefix(key).build();
-      RangeResponse response = kvClient.get(key, getOpt).get();
-      test.assertEquals(response.getCount(), 2);
-    } catch (Exception e) {
-      // empty
-    }
-  }
-
-  @Test
   public void testGetSortedPrefix() throws Exception {
     ByteString key = ByteString.copyFrom("test_key", "UTF-8");
     ByteString testValue = ByteString.copyFrom("test_value", "UTF-8");
@@ -168,24 +149,38 @@ public class EtcdKVTest {
     }
   }
 
-  @Test(dependsOnMethods = "testGetWithPrefix")
-  public void testDeleteWithPrefix() throws Exception {
-    ByteString key = ByteString.copyFromUtf8("/org.etcd.RegistryService/v1.0.0/");
-    try {
-      // count keys about to delete
-      ListenableFuture<RangeResponse> getFuture = kvClient
-              .get(key, GetOption.newBuilder().withPrefix(key).build());
-      RangeResponse getResp = getFuture.get();
-      test.assertTrue((getResp.getCount() > 1), "Size of matched keys should be more than one");
+  @Test
+  public void testGetAndDeleteWithPrefix() throws Exception {
+    String prefix = randomString();
+    ByteString key = ByteString.copyFromUtf8(prefix);
+    int numPrefixes = 10;
 
-      // delete all the keys with matching prefix
-      DeleteOption deleteOpt = DeleteOption.newBuilder()
-              .withPrefix(key).build();
-      ListenableFuture<DeleteRangeResponse> delFuture = kvClient.delete(key, deleteOpt);
-      DeleteRangeResponse delResp = delFuture.get();
-      test.assertEquals(delResp.getDeleted(), getResp.getCount());
-    } catch (Exception e) {
-      // empty
+    putKeysWithPrefix(prefix, numPrefixes);
+
+    // verify get withPrefix.
+    ListenableFuture<RangeResponse> getFuture = kvClient
+        .get(key, GetOption.newBuilder().withPrefix(key).build());
+    RangeResponse getResp = getFuture.get();
+    test.assertEquals(getResp.getCount(), numPrefixes);
+
+    // verify del withPrefix.
+    DeleteOption deleteOpt = DeleteOption.newBuilder()
+        .withPrefix(key).build();
+    ListenableFuture<DeleteRangeResponse> delFuture = kvClient.delete(key, deleteOpt);
+    DeleteRangeResponse delResp = delFuture.get();
+    test.assertEquals(delResp.getDeleted(), numPrefixes);
+  }
+
+  String randomString() {
+    return java.util.UUID.randomUUID().toString();
+  }
+
+  private void putKeysWithPrefix(String prefix, int numPrefixes)
+      throws ExecutionException, InterruptedException {
+    for (int i = 0; i < numPrefixes; i++) {
+      ByteString key = ByteString.copyFromUtf8(prefix + i);
+      ByteString value = ByteString.copyFromUtf8(String.valueOf(i));
+      kvClient.put(key, value).get();
     }
   }
 

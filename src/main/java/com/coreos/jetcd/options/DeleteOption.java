@@ -2,7 +2,6 @@ package com.coreos.jetcd.options;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.coreos.jetcd.util.KeyPrefixUtil;
 import com.google.common.base.Optional;
 import com.google.protobuf.ByteString;
 
@@ -54,7 +53,7 @@ public final class DeleteOption {
      */
     public Builder withPrefix(ByteString prefix) {
       checkNotNull(prefix, "prefix should not be null");
-      ByteString prefixEnd = KeyPrefixUtil.prefixEndOf(prefix);
+      ByteString prefixEnd = OptionsUtil.prefixEndOf(prefix);
       this.withRange(prefixEnd);
       return this;
     }

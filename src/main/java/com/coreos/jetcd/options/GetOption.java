@@ -3,7 +3,6 @@ package com.coreos.jetcd.options;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.api.RangeRequest;
-import com.coreos.jetcd.util.KeyPrefixUtil;
 import com.google.protobuf.ByteString;
 import java.util.Optional;
 
@@ -154,7 +153,7 @@ public final class GetOption {
      */
     public Builder withPrefix(ByteString prefix) {
       checkNotNull(prefix, "prefix should not be null");
-      ByteString prefixEnd = KeyPrefixUtil.prefixEndOf(prefix);
+      ByteString prefixEnd = OptionsUtil.prefixEndOf(prefix);
       this.withRange(prefixEnd);
       return this;
     }
