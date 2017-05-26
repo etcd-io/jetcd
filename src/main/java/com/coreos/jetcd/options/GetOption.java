@@ -1,5 +1,7 @@
 package com.coreos.jetcd.options;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.coreos.jetcd.api.RangeRequest;
 import com.google.protobuf.ByteString;
 import java.util.Optional;
@@ -136,6 +138,23 @@ public final class GetOption {
      */
     public Builder withRange(ByteString endKey) {
       this.endKey = Optional.ofNullable(endKey);
+      return this;
+    }
+
+    /**
+     * Enables 'Get' requests to obtain all the keys with matching prefix.
+     *
+     * <p>You should pass the key that is passed into
+     * {@link com.coreos.jetcd.EtcdKV#get(ByteString) EtcdKV.get} method
+     * into this method as the given key.
+     *
+     * @param prefix the common prefix of all the keys that you want to get
+     * @return builder
+     */
+    public Builder withPrefix(ByteString prefix) {
+      checkNotNull(prefix, "prefix should not be null");
+      ByteString prefixEnd = OptionsUtil.prefixEndOf(prefix);
+      this.withRange(prefixEnd);
       return this;
     }
 

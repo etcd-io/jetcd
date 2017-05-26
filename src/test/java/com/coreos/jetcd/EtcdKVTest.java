@@ -9,13 +9,16 @@ import com.coreos.jetcd.op.Cmp;
 import com.coreos.jetcd.op.CmpTarget;
 import com.coreos.jetcd.op.Op;
 import com.coreos.jetcd.op.Txn;
+import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+import java.util.concurrent.ExecutionException;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
+
 
 /**
  * KV service test cases.
@@ -143,6 +146,41 @@ public class EtcdKVTest {
       test.assertEquals(resp.getKvsList().size(), delResp.getDeleted());
     } catch (Exception e) {
       // empty
+    }
+  }
+
+  @Test
+  public void testGetAndDeleteWithPrefix() throws Exception {
+    String prefix = randomString();
+    ByteString key = ByteString.copyFromUtf8(prefix);
+    int numPrefixes = 10;
+
+    putKeysWithPrefix(prefix, numPrefixes);
+
+    // verify get withPrefix.
+    ListenableFuture<RangeResponse> getFuture = kvClient
+        .get(key, GetOption.newBuilder().withPrefix(key).build());
+    RangeResponse getResp = getFuture.get();
+    test.assertEquals(getResp.getCount(), numPrefixes);
+
+    // verify del withPrefix.
+    DeleteOption deleteOpt = DeleteOption.newBuilder()
+        .withPrefix(key).build();
+    ListenableFuture<DeleteRangeResponse> delFuture = kvClient.delete(key, deleteOpt);
+    DeleteRangeResponse delResp = delFuture.get();
+    test.assertEquals(delResp.getDeleted(), numPrefixes);
+  }
+
+  String randomString() {
+    return java.util.UUID.randomUUID().toString();
+  }
+
+  private void putKeysWithPrefix(String prefix, int numPrefixes)
+      throws ExecutionException, InterruptedException {
+    for (int i = 0; i < numPrefixes; i++) {
+      ByteString key = ByteString.copyFromUtf8(prefix + i);
+      ByteString value = ByteString.copyFromUtf8(String.valueOf(i));
+      kvClient.put(key, value).get();
     }
   }
 

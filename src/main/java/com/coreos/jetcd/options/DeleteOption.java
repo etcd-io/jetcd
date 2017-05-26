@@ -1,5 +1,7 @@
 package com.coreos.jetcd.options;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.base.Optional;
 import com.google.protobuf.ByteString;
 
@@ -36,6 +38,23 @@ public final class DeleteOption {
      */
     public Builder withRange(ByteString endKey) {
       this.endKey = Optional.fromNullable(endKey);
+      return this;
+    }
+
+    /**
+     * Enables 'Delete' requests to delete all the keys with matching prefix.
+     *
+     * <p>You should pass the key that is passed into
+     * {@link com.coreos.jetcd.EtcdKV#delete(ByteString) EtcdKV.delete} method
+     * into this method as the given key.
+     *
+     * @param prefix the common prefix of all the keys that you want to delete
+     * @return builder
+     */
+    public Builder withPrefix(ByteString prefix) {
+      checkNotNull(prefix, "prefix should not be null");
+      ByteString prefixEnd = OptionsUtil.prefixEndOf(prefix);
+      this.withRange(prefixEnd);
       return this;
     }
 
