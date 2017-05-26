@@ -162,7 +162,7 @@ public class EtcdAuthClientTest {
   public void delUser() {
     Throwable err = null;
     try {
-      this.authEtcdClient.getAuthClient().userDelete(userName).get();
+      this.etcdClient.getAuthClient().userDelete(userName).get();
     } catch (Exception e) {
       err = e;
     }
@@ -176,7 +176,7 @@ public class EtcdAuthClientTest {
   public void delRole() {
     Throwable err = null;
     try {
-      this.authEtcdClient.getAuthClient().roleDelete(roleName).get();
+      this.etcdClient.getAuthClient().roleDelete(roleName).get();
     } catch (Exception e) {
       err = e;
     }
