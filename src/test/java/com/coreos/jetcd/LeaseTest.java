@@ -1,5 +1,6 @@
 package com.coreos.jetcd;
 
+import com.coreos.jetcd.Lease.LeaseHandler;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 import com.coreos.jetcd.api.PutResponse;
 import com.coreos.jetcd.options.PutOption;
@@ -11,11 +12,11 @@ import org.testng.asserts.Assertion;
 /**
  * KV service test cases.
  */
-public class EtcdLeaseTest {
+public class LeaseTest {
 
-  private EtcdKV kvClient;
-  private EtcdClient etcdClient;
-  private EtcdLease leaseClient;
+  private KV kvClient;
+  private Client client;
+  private Lease leaseClient;
   private Assertion test;
 
 
@@ -25,10 +26,10 @@ public class EtcdLeaseTest {
   @BeforeTest
   public void setUp() throws Exception {
     test = new Assertion();
-    etcdClient = EtcdClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
-    kvClient = etcdClient.getKVClient();
+    client = ClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
+    kvClient = client.getKVClient();
 
-    leaseClient = etcdClient.getLeaseClient();
+    leaseClient = client.getLeaseClient();
   }
 
   @Test
@@ -59,7 +60,7 @@ public class EtcdLeaseTest {
         .put(testKey, testName, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
     test.assertEquals(kvClient.get(testKey).get().getCount(), 1);
     leaseClient.startKeepAliveService();
-    leaseClient.keepAlive(leaseID, new EtcdLease.EtcdLeaseHandler() {
+    leaseClient.keepAlive(leaseID, new LeaseHandler() {
       @Override
       public void onKeepAliveRespond(LeaseKeepAliveResponse keepAliveResponse) {
 

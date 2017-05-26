@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Interface of cluster client talking to etcd.
  */
-public interface EtcdCluster {
+public interface Cluster {
 
   /**
    * lists the current cluster membership.

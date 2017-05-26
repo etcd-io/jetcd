@@ -1,6 +1,6 @@
 # Overview
 
-The etcdWatch provide methods to watch on a key interval and cancel a watcher. If the watcher is disconnected on error, it will be resumed automatically.
+The Watch provide methods to watch on a key interval and cancel a watcher. If the watcher is disconnected on error, it will be resumed automatically.
 
 # Goals
 

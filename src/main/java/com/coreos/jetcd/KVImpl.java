@@ -25,12 +25,12 @@ import java.util.Optional;
 /**
  * Implementation of etcd kv client.
  */
-class EtcdKVImpl implements EtcdKV {
+class KVImpl implements KV {
 
   private final KVGrpc.KVFutureStub stub;
 
-  EtcdKVImpl(ManagedChannel channel, Optional<String> token) {
-    this.stub = EtcdClientUtil.configureStub(KVGrpc.newFutureStub(channel), token);
+  KVImpl(ManagedChannel channel, Optional<String> token) {
+    this.stub = ClientUtil.configureStub(KVGrpc.newFutureStub(channel), token);
   }
 
   // ***************

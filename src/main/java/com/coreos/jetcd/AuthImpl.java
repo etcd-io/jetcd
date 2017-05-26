@@ -40,12 +40,12 @@ import java.util.Optional;
 /**
  * Implementation of etcd auth client.
  */
-public class EtcdAuthImpl implements EtcdAuth {
+public class AuthImpl implements Auth {
 
   private final AuthGrpc.AuthFutureStub stub;
 
-  public EtcdAuthImpl(ManagedChannel channel, Optional<String> token) {
-    this.stub = EtcdClientUtil.configureStub(AuthGrpc.newFutureStub(channel), token);
+  public AuthImpl(ManagedChannel channel, Optional<String> token) {
+    this.stub = ClientUtil.configureStub(AuthGrpc.newFutureStub(channel), token);
   }
 
   // ***************

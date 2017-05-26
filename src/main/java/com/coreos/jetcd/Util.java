@@ -3,7 +3,7 @@ package com.coreos.jetcd;
 import com.coreos.jetcd.api.Event;
 import com.coreos.jetcd.api.ResponseHeader;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.data.EtcdHeader;
+import com.coreos.jetcd.data.Header;
 import com.coreos.jetcd.data.KeyValue;
 import com.coreos.jetcd.watch.WatchEvent;
 import com.google.protobuf.ByteString;
@@ -13,9 +13,9 @@ import java.util.List;
 /**
  * This util is to convert api class to client class.
  */
-class EtcdUtil {
+class Util {
 
-  private EtcdUtil() {
+  private Util() {
   }
 
   /**
@@ -75,8 +75,8 @@ class EtcdUtil {
   /**
    * convert API response header to self defined header.
    */
-  protected static EtcdHeader apiToClientHeader(ResponseHeader header, long compactRevision) {
-    return new EtcdHeader(header.getClusterId(), header.getMemberId(), header.getRevision(),
+  protected static Header apiToClientHeader(ResponseHeader header, long compactRevision) {
+    return new Header(header.getClusterId(), header.getMemberId(), header.getRevision(),
         header.getRaftTerm(), compactRevision);
   }
 }

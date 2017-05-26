@@ -12,20 +12,20 @@ import com.google.protobuf.ByteString;
 import java.util.List;
 
 /**
- * ClientBuilder knows how to create an EtcdClient instance.
+ * ClientBuilder knows how to create an Client instance.
  */
-public class EtcdClientBuilder {
+public class ClientBuilder {
 
   private List<String> endpoints = Lists.newArrayList();
   private ByteString name;
   private ByteString password;
   private AbstractEtcdNameResolverFactory nameResolverFactory;
 
-  private EtcdClientBuilder() {
+  private ClientBuilder() {
   }
 
-  public static EtcdClientBuilder newBuilder() {
-    return new EtcdClientBuilder();
+  public static ClientBuilder newBuilder() {
+    return new ClientBuilder();
   }
 
   /**
@@ -46,7 +46,7 @@ public class EtcdClientBuilder {
    * @throws NullPointerException if endpoints is null or one of endpoint is null
    * @throws IllegalArgumentException if endpoints is empty or some endpoint is invalid
    */
-  public EtcdClientBuilder endpoints(String... endpoints) {
+  public ClientBuilder endpoints(String... endpoints) {
     checkNotNull(endpoints, "endpoints can't be null");
     checkArgument(endpoints.length > 0, "please configure at lease one endpoint ");
 
@@ -71,7 +71,7 @@ public class EtcdClientBuilder {
    * @return this builder
    * @throws NullPointerException if name is null
    */
-  public EtcdClientBuilder setName(ByteString name) {
+  public ClientBuilder setName(ByteString name) {
     checkNotNull(name, "name can't be null");
     this.name = name;
     return this;
@@ -88,7 +88,7 @@ public class EtcdClientBuilder {
    * @return this builder
    * @throws NullPointerException if password is null
    */
-  public EtcdClientBuilder setPassword(ByteString password) {
+  public ClientBuilder setPassword(ByteString password) {
     checkNotNull(password, "password can't be null");
     this.password = password;
     return this;
@@ -101,7 +101,7 @@ public class EtcdClientBuilder {
    * @return this builder
    * @throws NullPointerException if password is null
    */
-  public EtcdClientBuilder setNameResolverFactory(
+  public ClientBuilder setNameResolverFactory(
       AbstractEtcdNameResolverFactory nameResolverFactory) {
     checkNotNull(nameResolverFactory);
     this.nameResolverFactory = nameResolverFactory;
@@ -118,15 +118,15 @@ public class EtcdClientBuilder {
   }
 
   /**
-   * build a new EtcdClient.
+   * build a new Client.
    *
-   * @return EtcdClient instance.
+   * @return Client instance.
    * @throws ConnectException As network reason, wrong address
    * @throws AuthFailedException This may be caused as wrong username or password
    */
-  public EtcdClient build() throws ConnectException, AuthFailedException {
+  public Client build() throws ConnectException, AuthFailedException {
     checkState(!endpoints.isEmpty() || nameResolverFactory != null,
         "please configure etcd server endpoints or nameResolverFactory before build.");
-    return new EtcdClient(null, this);
+    return new Client(null, this);
   }
 }

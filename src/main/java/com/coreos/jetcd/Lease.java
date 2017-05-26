@@ -8,9 +8,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Interface of Lease talking to etcd.
+ * Interface of KeepAlive talking to etcd.
  */
-public interface EtcdLease {
+public interface Lease {
 
   /**
    * New a lease with ttl value.
@@ -30,9 +30,9 @@ public interface EtcdLease {
    * keep alive one lease in background.
    *
    * @param leaseId id of lease to set handler
-   * @param etcdLeaseHandler the handler for the lease, this value can be null
+   * @param leaseHandler the handler for the lease, this value can be null
    */
-  void keepAlive(long leaseId, EtcdLeaseHandler etcdLeaseHandler);
+  void keepAlive(long leaseId, LeaseHandler leaseHandler);
 
   /**
    * cancel keep alive for lease in background.
@@ -50,13 +50,13 @@ public interface EtcdLease {
   ListenableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId);
 
   /**
-   * set EtcdLeaseHandler for lease.
+   * set LeaseHandler for lease.
    *
    * @param leaseId id of the lease to set handler
-   * @param etcdLeaseHandler the handler for the lease
+   * @param leaseHandler the handler for the lease
    * @throws NoSuchLeaseException if lease do not exist
    */
-  void setEtcdLeaseHandler(long leaseId, EtcdLeaseHandler etcdLeaseHandler)
+  void setLeaseHandler(long leaseId, LeaseHandler leaseHandler)
       throws NoSuchLeaseException;
 
   /**
@@ -82,10 +82,10 @@ public interface EtcdLease {
   boolean isKeepAliveServiceRunning();
 
   /**
-   * This interface is called by Etcd Lease client to notify user about lease expiration and
+   * This interface is called by Etcd KeepAlive client to notify user about lease expiration and
    * exception.
    */
-  interface EtcdLeaseHandler {
+  interface LeaseHandler {
 
     /**
      * keepAliveResponse will be called when heartbeat keep alive call respond.

@@ -18,7 +18,7 @@ import com.google.protobuf.ByteString;
  * Interface of kv client talking to etcd.
  */
 @Beta
-public interface EtcdKV {
+public interface KV {
 
   // ***************
   // Op.PUT

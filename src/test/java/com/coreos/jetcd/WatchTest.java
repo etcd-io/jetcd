@@ -1,7 +1,7 @@
 package com.coreos.jetcd;
 
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.data.EtcdHeader;
+import com.coreos.jetcd.data.Header;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.options.WatchOption;
@@ -20,22 +20,22 @@ import org.testng.asserts.Assertion;
 /**
  * watch test case.
  */
-public class EtcdWatchTest {
+public class WatchTest {
 
-  private EtcdClient client;
-  private EtcdWatch watchClient;
-  private EtcdKV kvClient;
+  private Client client;
+  private Watch watchClient;
+  private KV kvClient;
   private BlockingQueue<WatchEvent> eventsQueue = new LinkedBlockingDeque<>();
 
   private ByteSequence key = ByteSequence.fromString("test_key");
   private ByteSequence value = ByteSequence.fromString("test_val");
-  private EtcdWatchImpl.Watcher watcher;
+  private WatchImpl.Watcher watcher;
 
   private Assertion test = new Assertion();
 
   @BeforeTest
   public void newEtcdClient() throws AuthFailedException, ConnectException {
-    client = EtcdClientBuilder.newBuilder().endpoints("localhost:2379").build();
+    client = ClientBuilder.newBuilder().endpoints("localhost:2379").build();
     watchClient = client.getWatchClient();
     kvClient = client.getKVClient();
   }
@@ -43,7 +43,7 @@ public class EtcdWatchTest {
   @Test
   public void testWatch() throws ExecutionException, InterruptedException {
     WatchOption option = WatchOption.DEFAULT;
-    watcher = watchClient.watch(key, option, new EtcdWatch.WatchCallback() {
+    watcher = watchClient.watch(key, option, new Watch.WatchCallback() {
 
       /**
        * onWatch will be called when watcher receive any events
@@ -52,8 +52,8 @@ public class EtcdWatchTest {
        * @param events received events
        */
       @Override
-      public void onWatch(EtcdHeader header, List<WatchEvent> events) {
-        EtcdWatchTest.this.eventsQueue.addAll(events);
+      public void onWatch(Header header, List<WatchEvent> events) {
+        WatchTest.this.eventsQueue.addAll(events);
       }
 
       /**
@@ -75,7 +75,7 @@ public class EtcdWatchTest {
   @Test(dependsOnMethods = "testWatch")
   public void testWatchPut() throws InterruptedException {
     kvClient
-        .put(EtcdUtil.byteStringFromByteSequence(key), EtcdUtil.byteStringFromByteSequence(value));
+        .put(Util.byteStringFromByteSequence(key), Util.byteStringFromByteSequence(value));
     WatchEvent event = eventsQueue.poll(5, TimeUnit.SECONDS);
     test.assertEquals(event.getKeyValue().getKey(), key);
     test.assertEquals(event.getEventType(), WatchEvent.EventType.PUT);
@@ -87,7 +87,7 @@ public class EtcdWatchTest {
    */
   @Test(dependsOnMethods = "testWatchPut")
   public void testWatchDelete() throws InterruptedException {
-    kvClient.delete(EtcdUtil.byteStringFromByteSequence(key));
+    kvClient.delete(Util.byteStringFromByteSequence(key));
     WatchEvent event = eventsQueue.poll(5, TimeUnit.SECONDS);
     test.assertEquals(event.getKeyValue().getKey(), key);
     test.assertEquals(event.getEventType(), WatchEvent.EventType.DELETE);
