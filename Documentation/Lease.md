@@ -1,6 +1,6 @@
 # Overview
 
-The EtcdLease interface provides methods to grant, revoke, and keepalive leases.
+The Lease interface provides methods to grant, revoke, and keepalive leases.
 
 ## grant function
 
@@ -14,7 +14,7 @@ The EtcdLease interface provides methods to grant, revoke, and keepalive leases.
 
 ## startKeepAliveService function
 
-1. The function will start a backgroud scheduler `keepAliveSchedule` to send keep alive request for lease registered to EtcdLease Client.
+1. The function will start a background scheduler `keepAliveSchedule` to send keep alive request for lease registered to Lease Client.
 2. It will open a StreamObserver to etcd, send request to this StreamObserver can keep the lease alive.
 3. It will new a ScheduledExecutorService to run `keepAliveExecutor` and `deadLineExecutor` periodically.
 
@@ -23,12 +23,12 @@ The EtcdLease interface provides methods to grant, revoke, and keepalive leases.
 1. This function will end the background scheduler.
 2. It will close the StreamObserver to etcd.
 
-## setEtcdLeaseHandler function
+## setLeaseHandler function
 
-1. This function set EtcdLeaseHandler for the lease.
-2. The EtcdLeaseHandler interface:
+1. This function set LeaseHandler for the lease.
+2. The LeaseHandler interface:
      * onKeepAliveRespond
-         - It will be called when the lease receive response from etcd.
+         - It will be called when the receive lease response from etcd.
      * onLeaseExpired
          - It will be called when the lease expire and removed from etcd.
      * onError
@@ -36,10 +36,10 @@ The EtcdLease interface provides methods to grant, revoke, and keepalive leases.
 
 ## keepAlive function
 
-1. It will create a Lease Object, and keep the lease alive.
-2. It will add the created lease object to the keepAlives map.
-3. It will set handler for the lease.
-4. The background scheduler will send keep alive requests for the added lease when it approaches to the nextKeepAliveTime.
+1. It will create a keepAlive Object, and keep the lease alive.
+2. It will add the created keepAlive object to the keepAlives map.
+3. It will set handler for the keepAlive.
+4. The background scheduler will send keep alive requests for the added keepAlive when it approaches to the nextKeepAliveTime.
 
 ## keepAliveExecutor function
 
@@ -58,9 +58,9 @@ The EtcdLease interface provides methods to grant, revoke, and keepalive leases.
 
 ## processKeepAliveRespond function
 
-1. It will get the lease instance based on the leaseID.
-2. if ttl < 0, it remove respond lease from keepAlives map and call `onLeaseExpired`.
-3. else it reset the lease's nextKeepAliveTime and deadLine value.
+1. It will get the keepAlive instance based on the leaseID.
+2. if ttl < 0, it remove respond keepAlive from keepAlives map and call `onLeaseExpired`.
+3. else it reset the keepAlive's nextKeepAliveTime and deadLine value.
 
 ## keepAliveResponseStreamObserver interface instance
 

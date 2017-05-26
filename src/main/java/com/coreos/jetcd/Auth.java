@@ -22,7 +22,7 @@ import com.google.protobuf.ByteString;
 /**
  * Interface of auth talking to etcd.
  */
-public interface EtcdAuth {
+public interface Auth {
 
   // ***************
   // Auth Manage

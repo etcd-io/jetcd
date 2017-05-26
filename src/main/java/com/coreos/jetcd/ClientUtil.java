@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public final class EtcdClientUtil {
+public final class ClientUtil {
 
-  private EtcdClientUtil() {
+  private ClientUtil() {
   }
 
   /**
@@ -29,7 +29,7 @@ public final class EtcdClientUtil {
     return token.map(t -> {
           Metadata metadata = new Metadata();
           Metadata.Key<String> tokenKey = Metadata.Key
-              .of(EtcdConstants.TOKEN, Metadata.ASCII_STRING_MARSHALLER);
+              .of(Constants.TOKEN, Metadata.ASCII_STRING_MARSHALLER);
           metadata.put(tokenKey, t);
           CallCredentials callCredentials = (methodDescriptor, attributes,
               executor, metadataApplier) -> metadataApplier.apply(metadata);
@@ -41,7 +41,7 @@ public final class EtcdClientUtil {
   static final NameResolver.Factory simpleNameResolveFactory(List<String> endpoints) {
     return new SimpleEtcdNameResolverFactory(
         endpoints.stream()
-            .map(EtcdClientUtil::endpointToUri)
+            .map(ClientUtil::endpointToUri)
             .collect(Collectors.toList())
     );
   }

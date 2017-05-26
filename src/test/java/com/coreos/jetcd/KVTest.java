@@ -23,15 +23,15 @@ import org.testng.asserts.Assertion;
 /**
  * KV service test cases.
  */
-public class EtcdKVTest {
+public class KVTest {
 
-  private EtcdKV kvClient;
+  private KV kvClient;
   private Assertion test;
 
   @BeforeTest
   public void setUp() throws Exception {
     test = new Assertion();
-    EtcdClient client = EtcdClientBuilder.newBuilder().endpoints("http://localhost:2379").build();
+    Client client = ClientBuilder.newBuilder().endpoints("http://localhost:2379").build();
     kvClient = client.getKVClient();
   }
 

@@ -21,16 +21,16 @@ import java.util.Optional;
 /**
  * Implementation of maintenance client.
  */
-public class EtcdMaintenanceImpl implements EtcdMaintenance {
+public class MaintenanceImpl implements Maintenance {
 
   private MaintenanceGrpc.MaintenanceFutureStub futureStub;
   private MaintenanceGrpc.MaintenanceStub streamStub;
   private volatile StreamObserver<SnapshotResponse> snapshotObserver;
   private volatile SnapshotCallback snapshotCallback;
 
-  public EtcdMaintenanceImpl(ManagedChannel channel, Optional<String> token) {
-    this.futureStub = EtcdClientUtil.configureStub(MaintenanceGrpc.newFutureStub(channel), token);
-    this.streamStub = EtcdClientUtil.configureStub(MaintenanceGrpc.newStub(channel), token);
+  public MaintenanceImpl(ManagedChannel channel, Optional<String> token) {
+    this.futureStub = ClientUtil.configureStub(MaintenanceGrpc.newFutureStub(channel), token);
+    this.streamStub = ClientUtil.configureStub(MaintenanceGrpc.newStub(channel), token);
   }
 
   /**
@@ -109,7 +109,7 @@ public class EtcdMaintenanceImpl implements EtcdMaintenance {
         @Override
         public void onNext(SnapshotResponse snapshotResponse) {
           if (snapshotCallback != null) {
-            synchronized (EtcdMaintenanceImpl.this) {
+            synchronized (MaintenanceImpl.this) {
               if (snapshotCallback != null) {
                 snapshotCallback.onSnapShot(snapshotResponse);
               }
@@ -119,7 +119,7 @@ public class EtcdMaintenanceImpl implements EtcdMaintenance {
 
         @Override
         public void onError(Throwable throwable) {
-          synchronized (EtcdMaintenanceImpl.this) {
+          synchronized (MaintenanceImpl.this) {
             if (snapshotCallback != null) {
               snapshotCallback.onError(throwable);
             }

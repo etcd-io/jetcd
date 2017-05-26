@@ -1,6 +1,6 @@
 package com.coreos.jetcd;
 
-import static com.coreos.jetcd.EtcdClientUtil.defaultChannelBuilder;
+import static com.coreos.jetcd.ClientUtil.defaultChannelBuilder;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -24,36 +24,36 @@ import java.util.concurrent.ExecutionException;
 /**
  * Etcd Client.
  */
-public class EtcdClient {
+public class Client {
 
   private final List<String> endpoints;
   private final ManagedChannel channel;
   private final NameResolver.Factory nameResolverFactory;
-  private final Supplier<EtcdKV> kvClient;
-  private final Supplier<EtcdAuth> authClient;
-  private final Supplier<EtcdMaintenance> maintenanceClient;
-  private final Supplier<EtcdCluster> clusterClient;
-  private final Supplier<EtcdLease> leaseClient;
-  private final Supplier<EtcdWatch> watchClient;
+  private final Supplier<KV> kvClient;
+  private final Supplier<Auth> authClient;
+  private final Supplier<Maintenance> maintenanceClient;
+  private final Supplier<Cluster> clusterClient;
+  private final Supplier<Lease> leaseClient;
+  private final Supplier<Watch> watchClient;
 
-  public EtcdClient(EtcdClientBuilder builder) throws ConnectException, AuthFailedException {
+  public Client(ClientBuilder builder) throws ConnectException, AuthFailedException {
     this(Optional.empty(), builder);
   }
 
-  public EtcdClient(ManagedChannelBuilder<?> channelBuilder, EtcdClientBuilder clientBuilder)
+  public Client(ManagedChannelBuilder<?> channelBuilder, ClientBuilder clientBuilder)
       throws ConnectException, AuthFailedException {
     this(Optional.ofNullable(channelBuilder), clientBuilder);
   }
 
-  private EtcdClient(Optional<ManagedChannelBuilder<?>> channelBuilder,
-      EtcdClientBuilder clientBuilder) throws ConnectException, AuthFailedException {
+  private Client(Optional<ManagedChannelBuilder<?>> channelBuilder,
+      ClientBuilder clientBuilder) throws ConnectException, AuthFailedException {
     if (clientBuilder.getNameResolverFactory() != null) {
       this.endpoints = null;
       this.nameResolverFactory = clientBuilder.getNameResolverFactory();
     } else {
       //If no nameResolverFactory was set, use SimpleEtcdNameResolver
       this.endpoints = new ArrayList<>(clientBuilder.endpoints());
-      this.nameResolverFactory = EtcdClientUtil.simpleNameResolveFactory(this.endpoints);
+      this.nameResolverFactory = ClientUtil.simpleNameResolveFactory(this.endpoints);
     }
 
     this.channel = channelBuilder.orElseGet(() -> defaultChannelBuilder(nameResolverFactory))
@@ -61,39 +61,39 @@ public class EtcdClient {
 
     Optional<String> token = getToken(channel, clientBuilder);
 
-    this.kvClient = Suppliers.memoize(() -> new EtcdKVImpl(channel, token));
-    this.authClient = Suppliers.memoize(() -> new EtcdAuthImpl(channel, token));
-    this.maintenanceClient = Suppliers.memoize(() -> new EtcdMaintenanceImpl(channel, token));
-    this.clusterClient = Suppliers.memoize(() -> new EtcdClusterImpl(channel, token));
-    this.leaseClient = Suppliers.memoize(() -> new EtcdLeaseImpl(channel, token));
-    this.watchClient = Suppliers.memoize(() -> new EtcdWatchImpl(channel, token));
+    this.kvClient = Suppliers.memoize(() -> new KVImpl(channel, token));
+    this.authClient = Suppliers.memoize(() -> new AuthImpl(channel, token));
+    this.maintenanceClient = Suppliers.memoize(() -> new MaintenanceImpl(channel, token));
+    this.clusterClient = Suppliers.memoize(() -> new ClusterImpl(channel, token));
+    this.leaseClient = Suppliers.memoize(() -> new LeaseImpl(channel, token));
+    this.watchClient = Suppliers.memoize(() -> new WatchImpl(channel, token));
   }
 
   // ************************
   //
   // ************************
 
-  public EtcdAuth getAuthClient() {
+  public Auth getAuthClient() {
     return authClient.get();
   }
 
-  public EtcdKV getKVClient() {
+  public KV getKVClient() {
     return kvClient.get();
   }
 
-  public EtcdCluster getClusterClient() {
+  public Cluster getClusterClient() {
     return clusterClient.get();
   }
 
-  public EtcdMaintenance getMaintenanceClient() {
+  public Maintenance getMaintenanceClient() {
     return this.maintenanceClient.get();
   }
 
-  public EtcdLease getLeaseClient() {
+  public Lease getLeaseClient() {
     return this.leaseClient.get();
   }
 
-  public EtcdWatch getWatchClient() {
+  public Watch getWatchClient() {
     return this.watchClient.get();
   }
 
@@ -124,13 +124,13 @@ public class EtcdClient {
   }
 
   /**
-   * get token with EtcdClientBuilder.
+   * get token with ClientBuilder.
    *
    * @return the auth token
    * @throws ConnectException This may be caused as network reason, wrong address
    * @throws AuthFailedException This may be caused as wrong username or password
    */
-  private static Optional<String> getToken(ManagedChannel channel, EtcdClientBuilder builder)
+  private static Optional<String> getToken(ManagedChannel channel, ClientBuilder builder)
       throws ConnectException, AuthFailedException {
     if (builder.getName() != null || builder.getPassword() != null) {
       checkNotNull(builder.getName(), "username can not be null.");

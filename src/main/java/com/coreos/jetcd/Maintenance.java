@@ -26,7 +26,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  * to recover any unintended logical data loss or corruption caused by
  * operational error.
  */
-public interface EtcdMaintenance {
+public interface Maintenance {
 
   /**
    * get all active keyspace alarm.

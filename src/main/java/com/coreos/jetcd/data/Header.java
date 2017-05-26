@@ -3,7 +3,7 @@ package com.coreos.jetcd.data;
 /**
  * Etcd message header information.
  */
-public class EtcdHeader {
+public class Header {
 
   private final long clusterId;
   private final long memberId;
@@ -11,7 +11,7 @@ public class EtcdHeader {
   private final long raftTerm;
   private final long compactRevision;
 
-  public EtcdHeader(long clusterId, long memberId, long revision, long raftTerm,
+  public Header(long clusterId, long memberId, long revision, long raftTerm,
       long compactRevision) {
     this.clusterId = clusterId;
     this.memberId = memberId;

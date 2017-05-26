@@ -15,15 +15,15 @@ import org.testng.asserts.Assertion;
  */
 public class MaintenanceTest {
 
-  private final EtcdClient etcdClient;
-  private final EtcdMaintenance maintenance;
+  private final Client client;
+  private final Maintenance maintenance;
   private final Assertion test = new Assertion();
   private volatile ByteString snapshotBlob;
   private CountDownLatch finishLatch = new CountDownLatch(1);
 
   public MaintenanceTest() throws AuthFailedException, ConnectException {
-    this.etcdClient = EtcdClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
-    maintenance = etcdClient.getMaintenanceClient();
+    this.client = ClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
+    maintenance = client.getMaintenanceClient();
   }
 
   /**
@@ -52,7 +52,7 @@ public class MaintenanceTest {
    */
   @Test
   void testAddSnapshotCallback() {
-    maintenance.setSnapshotCallback(new EtcdMaintenance.SnapshotCallback() {
+    maintenance.setSnapshotCallback(new Maintenance.SnapshotCallback() {
       @Override
       public synchronized void onSnapShot(SnapshotResponse snapshotResponse) {
         // blob contains the next chunk of the snapshot in the snapshot stream, blob is the bytes snapshot.

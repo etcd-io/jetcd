@@ -1,7 +1,7 @@
 package com.coreos.jetcd;
 
-import static com.coreos.jetcd.EtcdUtil.apiToClientEvents;
-import static com.coreos.jetcd.EtcdUtil.apiToClientHeader;
+import static com.coreos.jetcd.Util.apiToClientEvents;
+import static com.coreos.jetcd.Util.apiToClientHeader;
 
 import com.coreos.jetcd.api.Event;
 import com.coreos.jetcd.api.WatchCancelRequest;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * etcd watcher Implementation.
  */
-public class EtcdWatchImpl implements EtcdWatch {
+public class WatchImpl implements Watch {
 
   private volatile StreamObserver<WatchRequest> requestStream;
 
@@ -41,8 +41,8 @@ public class EtcdWatchImpl implements EtcdWatch {
       pendingCreateWatchers = new ConcurrentLinkedQueue<>();
   private Map<Long, CompletableFuture<Boolean>> pendingCancelFutures = new ConcurrentHashMap<>();
 
-  public EtcdWatchImpl(ManagedChannel channel, Optional<String> token) {
-    this.watchStub = EtcdClientUtil.configureStub(WatchGrpc.newStub(channel), token);
+  public WatchImpl(ManagedChannel channel, Optional<String> token) {
+    this.watchStub = ClientUtil.configureStub(WatchGrpc.newStub(channel), token);
   }
 
   /**
@@ -58,7 +58,7 @@ public class EtcdWatchImpl implements EtcdWatch {
   @Override
   public CompletableFuture<Watcher> watch(ByteSequence key, WatchOption watchOption,
       WatchCallback callback) {
-    WatchRequest request = optionToWatchCreateRequest(EtcdUtil.byteStringFromByteSequence(key),
+    WatchRequest request = optionToWatchCreateRequest(Util.byteStringFromByteSequence(key),
         watchOption);
     WatcherImpl watcher = new WatcherImpl(key, watchOption, callback);
     CompletableFuture<Watcher> waitFuture = new CompletableFuture();
@@ -272,7 +272,7 @@ public class EtcdWatchImpl implements EtcdWatch {
         .setStartRevision(option.getRevision());
 
     if (option.getEndKey().isPresent()) {
-      builder.setRangeEnd(EtcdUtil.byteStringFromByteSequence(option.getEndKey().get()));
+      builder.setRangeEnd(Util.byteStringFromByteSequence(option.getEndKey().get()));
     }
 
     if (option.isNoDelete()) {

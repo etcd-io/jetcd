@@ -1,7 +1,7 @@
 package com.coreos.jetcd;
 
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.data.EtcdHeader;
+import com.coreos.jetcd.data.Header;
 import com.coreos.jetcd.options.WatchOption;
 import com.coreos.jetcd.watch.WatchEvent;
 import java.io.Closeable;
@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Interface of watch client.
  */
-public interface EtcdWatch {
+public interface Watch {
 
 
   /**
@@ -64,7 +64,7 @@ public interface EtcdWatch {
      *
      * @param events received events
      */
-    void onWatch(EtcdHeader header, List<WatchEvent> events);
+    void onWatch(Header header, List<WatchEvent> events);
 
     /**
      * onResuming will be called when the watcher is on resuming.

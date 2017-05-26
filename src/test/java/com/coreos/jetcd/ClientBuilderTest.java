@@ -5,13 +5,13 @@ import com.coreos.jetcd.exception.ConnectException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-public class EtcdClientBuilderTest {
+public class ClientBuilderTest {
 
-  private EtcdClientBuilder builder;
+  private ClientBuilder builder;
 
   @BeforeMethod
   public void setup() {
-    builder = EtcdClientBuilder.newBuilder();
+    builder = ClientBuilder.newBuilder();
   }
 
   @Test(expectedExceptions = NullPointerException.class)

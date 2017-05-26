@@ -17,12 +17,12 @@ import java.util.Optional;
 /**
  * Implementation of cluster client.
  */
-public class EtcdClusterImpl implements EtcdCluster {
+public class ClusterImpl implements Cluster {
 
   private final ClusterGrpc.ClusterFutureStub stub;
 
-  public EtcdClusterImpl(ManagedChannel channel, Optional<String> token) {
-    this.stub = EtcdClientUtil.configureStub(ClusterGrpc.newFutureStub(channel), token);
+  public ClusterImpl(ManagedChannel channel, Optional<String> token) {
+    this.stub = ClientUtil.configureStub(ClusterGrpc.newFutureStub(channel), token);
   }
 
   /**
