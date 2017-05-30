@@ -11,8 +11,6 @@ import java.util.List;
  */
 public class Txn {
 
-  private static final ImmutableList<?> EMPTY_LIST = ImmutableList.copyOf(new Object[0]);
-
   public static Builder newBuilder() {
     return new Builder();
   }
