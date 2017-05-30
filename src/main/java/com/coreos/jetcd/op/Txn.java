@@ -2,7 +2,7 @@ package com.coreos.jetcd.op;
 
 import com.coreos.jetcd.api.TxnRequest;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -10,38 +10,73 @@ import java.util.List;
  */
 public class Txn {
 
-  private static final ImmutableList<?> EMPTY_LIST = ImmutableList.copyOf(new Object[0]);
-
   public static Builder newBuilder() {
     return new Builder();
   }
 
   public static class Builder {
 
-    private List<Cmp> cmpList = (List<Cmp>) EMPTY_LIST;
-    private List<Op> successOpList = (List<Op>) EMPTY_LIST;
-    private List<Op> failureOpList = (List<Op>) EMPTY_LIST;
+    private List<Cmp> cmpList = new ArrayList<>();
+    private List<Op> successOpList = new ArrayList<>();
+    private List<Op> failureOpList = new ArrayList<>();
+
+    private boolean seenThen = false;
+    private boolean seenElse = false;
 
     private Builder() {
     }
+
     //CHECKSTYLE:OFF
     public Builder If(Cmp... cmps) {
       //CHECKSTYLE:ON
-      cmpList = Lists.newArrayList(cmps);
+      return If(ImmutableList.copyOf(cmps));
+    }
+
+    //CHECKSTYLE:OFF
+    public Builder If(List<Cmp> cmps) {
+      //CHECKSTYLE:ON
+      if (this.seenThen) {
+        throw new IllegalArgumentException("cannot call If after Then!");
+      }
+      if (this.seenElse) {
+        throw new IllegalArgumentException("cannot call If after Else!");
+      }
+
+      cmpList.addAll(cmps);
       return this;
     }
 
     //CHECKSTYLE:OFF
     public Builder Then(Op... ops) {
       //CHECKSTYLE:ON
-      successOpList = Lists.newArrayList(ops);
+      return Then(ImmutableList.copyOf(ops));
+    }
+
+    //CHECKSTYLE:OFF
+    public Builder Then(List<Op> ops) {
+      //CHECKSTYLE:ON
+      if (this.seenElse) {
+        throw new IllegalArgumentException("cannot call Then after Else!");
+      }
+
+      this.seenThen = true;
+
+      successOpList.addAll(ops);
       return this;
     }
 
     //CHECKSTYLE:OFF
     public Builder Else(Op... ops) {
       //CHECKSTYLE:ON
-      failureOpList = Lists.newArrayList(ops);
+      return Else(ImmutableList.copyOf(ops));
+    }
+
+    //CHECKSTYLE:OFF
+    public Builder Else(List<Op> ops) {
+      //CHECKSTYLE:ON
+      this.seenElse = true;
+
+      failureOpList.addAll(ops);
       return this;
     }
 
