@@ -2,8 +2,7 @@ package com.coreos.jetcd.op;
 
 import com.coreos.jetcd.api.TxnRequest;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,9 +16,12 @@ public class Txn {
 
   public static class Builder {
 
-    private List<Cmp> cmpList = Collections.emptyList();
-    private List<Op> successOpList = Collections.emptyList();
-    private List<Op> failureOpList = Collections.emptyList();
+    private List<Cmp> cmpList = new ArrayList<>();
+    private List<Op> successOpList = new ArrayList<>();
+    private List<Op> failureOpList = new ArrayList<>();
+
+    private boolean seenThen = false;
+    private boolean seenElse = false;
 
     private Builder() {
     }
@@ -33,6 +35,13 @@ public class Txn {
     //CHECKSTYLE:OFF
     public Builder If(List<Cmp> cmps) {
       //CHECKSTYLE:ON
+      if (this.seenThen) {
+        throw new IllegalArgumentException("cannot call If after Then!");
+      }
+      if (this.seenElse) {
+        throw new IllegalArgumentException("cannot call If after Else!");
+      }
+
       cmpList.addAll(cmps);
       return this;
     }
@@ -46,6 +55,12 @@ public class Txn {
     //CHECKSTYLE:OFF
     public Builder Then(List<Op> ops) {
       //CHECKSTYLE:ON
+      if (this.seenElse) {
+        throw new IllegalArgumentException("cannot call Then after Else!");
+      }
+
+      this.seenThen = true;
+
       successOpList.addAll(ops);
       return this;
     }
@@ -59,6 +74,8 @@ public class Txn {
     //CHECKSTYLE:OFF
     public Builder Else(List<Op> ops) {
       //CHECKSTYLE:ON
+      this.seenElse = true;
+
       failureOpList.addAll(ops);
       return this;
     }
