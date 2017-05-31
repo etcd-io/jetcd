@@ -162,7 +162,7 @@ public class AuthClientTest {
   public void delUser() {
     Throwable err = null;
     try {
-      this.secureClient.getAuthClient().userDelete(userName).get();
+      this.client.getAuthClient().userDelete(userName).get();
     } catch (Exception e) {
       err = e;
     }
@@ -176,7 +176,7 @@ public class AuthClientTest {
   public void delRole() {
     Throwable err = null;
     try {
-      this.secureClient.getAuthClient().roleDelete(roleName).get();
+      this.client.getAuthClient().roleDelete(roleName).get();
     } catch (Exception e) {
       err = e;
     }
