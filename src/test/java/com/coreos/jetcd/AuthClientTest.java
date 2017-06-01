@@ -51,7 +51,7 @@ public class AuthClientTest {
   /**
    * create role with un-auth etcd client
    */
-  @Test(groups = "role")
+  @Test(groups = "role", priority = 1)
   public void testRoleAdd() throws ExecutionException, InterruptedException {
     this.authClient.roleAdd(roleName).get();
   }
@@ -59,7 +59,7 @@ public class AuthClientTest {
   /**
    * grant permission to role
    */
-  @Test(dependsOnMethods = "testRoleAdd", groups = "role")
+  @Test(dependsOnMethods = "testRoleAdd", groups = "role", priority = 1)
   public void testRoleGrantPermission() throws ExecutionException, InterruptedException {
     this.authClient
         .roleGrantPermission(roleName, keyRangeBegin, keyRangeEnd, Permission.Type.READWRITE).get();
@@ -68,7 +68,7 @@ public class AuthClientTest {
   /**
    * add user with password and username
    */
-  @Test(groups = "user")
+  @Test(groups = "user", priority = 1)
   public void testUserAdd() throws ExecutionException, InterruptedException {
     this.authClient.userAdd(userName, password).get();
   }
@@ -76,7 +76,7 @@ public class AuthClientTest {
   /**
    * grant user role
    */
-  @Test(dependsOnMethods = {"testUserAdd", "testRoleGrantPermission"}, groups = "user")
+  @Test(dependsOnMethods = {"testUserAdd", "testRoleGrantPermission"}, groups = "user", priority = 1)
   public void testUserGrantRole() throws ExecutionException, InterruptedException {
     this.authClient.userGrantRole(userName, roleName).get();
   }
@@ -84,7 +84,7 @@ public class AuthClientTest {
   /**
    * enable etcd auth
    */
-  @Test(dependsOnGroups = "user", groups = "authEnable")
+  @Test(dependsOnGroups = "user", groups = "authEnable", priority = 1)
   public void testEnableAuth() throws ExecutionException, InterruptedException {
     this.authClient.authEnable().get();
   }
@@ -92,7 +92,7 @@ public class AuthClientTest {
   /**
    * auth client with password and user name
    */
-  @Test(dependsOnMethods = "testEnableAuth", groups = "authEnable")
+  @Test(dependsOnMethods = "testEnableAuth", groups = "authEnable", priority = 1)
   public void setupAuthClient() throws AuthFailedException, ConnectException {
     this.secureClient = ClientBuilder.newBuilder().endpoints("localhost:2379")
         .setName(userName).setPassword(password).build();
@@ -102,7 +102,7 @@ public class AuthClientTest {
   /**
    * put and range with auth client
    */
-  @Test(groups = "testAuth", dependsOnGroups = "authEnable")
+  @Test(groups = "testAuth", dependsOnGroups = "authEnable", priority = 1)
   public void testKVWithAuth() throws ExecutionException, InterruptedException {
     Throwable err = null;
     try {
@@ -119,7 +119,7 @@ public class AuthClientTest {
   /**
    * put and range with auth client
    */
-  @Test(groups = "testAuth", dependsOnGroups = "authEnable")
+  @Test(groups = "testAuth", dependsOnGroups = "authEnable", priority = 1)
   public void testKVWithoutAuth() throws InterruptedException {
     Throwable err = null;
     try {
@@ -134,7 +134,7 @@ public class AuthClientTest {
   /**
    * get auth's permission
    */
-  @Test(groups = "testAuth", dependsOnGroups = "authEnable")
+  @Test(groups = "testAuth", dependsOnGroups = "authEnable", priority = 1)
   public void testRoleGet() throws ExecutionException, InterruptedException {
     AuthRoleGetResponse roleGetResponse = this.secureClient.getAuthClient().roleGet(roleName)
         .get();
@@ -144,7 +144,7 @@ public class AuthClientTest {
   /**
    * disable etcd auth
    */
-  @Test(dependsOnGroups = "testAuth", groups = "disableAuth")
+  @Test(dependsOnGroups = "testAuth", groups = "disableAuth", priority = 1)
   public void testDisableAuth() {
     Throwable err = null;
     try {
@@ -158,7 +158,7 @@ public class AuthClientTest {
   /**
    * delete user
    */
-  @Test(dependsOnGroups = "disableAuth", groups = "clearEnv")
+  @Test(dependsOnGroups = "disableAuth", groups = "clearEnv", priority = 1)
   public void delUser() {
     Throwable err = null;
     try {
@@ -172,7 +172,7 @@ public class AuthClientTest {
   /**
    * delete role
    */
-  @Test(dependsOnGroups = "disableAuth", groups = "clearEnv")
+  @Test(dependsOnGroups = "disableAuth", groups = "clearEnv", priority = 1)
   public void delRole() {
     Throwable err = null;
     try {
