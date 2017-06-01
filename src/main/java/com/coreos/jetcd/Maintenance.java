@@ -3,9 +3,11 @@ package com.coreos.jetcd;
 import com.coreos.jetcd.api.AlarmMember;
 import com.coreos.jetcd.api.AlarmResponse;
 import com.coreos.jetcd.api.DefragmentResponse;
-import com.coreos.jetcd.api.SnapshotResponse;
 import com.coreos.jetcd.api.StatusResponse;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * Interface of maintenance talking to etcd.
@@ -64,36 +66,43 @@ public interface Maintenance {
   ListenableFuture<StatusResponse> statusMember();
 
   /**
-   * Set callback for snapshot.
+   * retrieves backend snapshot.
    *
-   * <p>The onSnapshot will be called when the member make a snapshot.
+   * <p>-- ex: save backend snapshot to ./snapshot.db --
+   * <pre>
+   * {@code
+   * // create snapshot.db file current folder.
+   * String dir = Paths.get("").toAbsolutePath().toString();
+   * File snapfile = new File(dir, "snapshot.db");
    *
-   * <p>The onError will be called as exception, and the callback will be canceled.
+   * // leverage try-with-resources
+   * try (Snapshot snapshot = maintenance.snapshot();
+   * FileOutputStream fop = newFileOutputStream(snapfile)) {
+   * snapshot.write(fop);
+   * } catch (Exception e) {
+   * snapfile.delete();
+   * }
+   * }
+   * </pre>
    *
-   * @param callback Snapshot callback
+   * @return a Snapshot for retrieving backend snapshot.
    */
-  void setSnapshotCallback(SnapshotCallback callback);
+  Snapshot snapshot();
 
-  /**
-   * Remove callback for snapshot.
-   */
-  void removeSnapShotCallback();
-
-  /**
-   * Callback to process snapshot events.
-   */
-  interface SnapshotCallback {
+  interface Snapshot extends Closeable {
 
     /**
-     * The onSnapshot will be called when the member make a snapshot.
+     * Write backend snapshot to user provided OutputStream.
      *
-     * @param snapshotResponse snapshot response
+     * <p>write can only be called once; multiple calls on write results
+     * IOException thrown after first call.
+     *
+     * <p>this method blocks until farther snapshot data are available,
+     * end of stream is detected, or an exception is thrown.
+     *
+     * @throws IOException if connection issue, Snapshot closed, and any I/O issues.
      */
-    void onSnapShot(SnapshotResponse snapshotResponse);
-
-    /**
-     * The onError will be called as exception, and the callback will be canceled.
-     */
-    void onError(Throwable throwable);
+    void write(OutputStream os) throws IOException;
   }
+
 }
