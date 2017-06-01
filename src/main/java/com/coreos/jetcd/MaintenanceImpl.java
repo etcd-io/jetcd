@@ -65,7 +65,7 @@ public class MaintenanceImpl implements Maintenance {
    * @return the response result
    */
   @Override
-  public ListenableFuture<AlarmResponse> disalarm(AlarmMember member) {
+  public ListenableFuture<AlarmResponse> alarmDisarm(AlarmMember member) {
     AlarmRequest alarmRequest = AlarmRequest.newBuilder()
         .setAlarm(AlarmType.NOSPACE)
         .setAction(AlarmRequest.AlarmAction.DEACTIVATE)
