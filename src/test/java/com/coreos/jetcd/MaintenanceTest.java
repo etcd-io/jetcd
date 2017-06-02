@@ -34,7 +34,7 @@ public class MaintenanceTest {
    */
   @Test
   public void testStatusMember() throws ExecutionException, InterruptedException {
-    StatusResponse statusResponse = maintenance.statusMember().get();
+    StatusResponse statusResponse = maintenance.statusMember(TestConstants.endpoints[0]).get();
     test.assertTrue(statusResponse.getDbSize() > 0);
   }
 
@@ -69,6 +69,6 @@ public class MaintenanceTest {
    */
   @Test
   void testDefragment() throws ExecutionException, InterruptedException {
-    maintenance.defragmentMember().get();
+    maintenance.defragmentMember(TestConstants.endpoints[0]).get();
   }
 }
