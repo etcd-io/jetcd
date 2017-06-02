@@ -7,9 +7,12 @@ import com.coreos.jetcd.Maintenance.Snapshot;
 import com.coreos.jetcd.api.MaintenanceGrpc.MaintenanceImplBase;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
+import com.coreos.jetcd.api.StatusResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.google.protobuf.ByteString;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.Server;
 import io.grpc.Status;
 import io.grpc.inprocess.InProcessChannelBuilder;
@@ -19,7 +22,6 @@ import io.grpc.util.MutableHandlerRegistry;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,9 +48,9 @@ public class MaintenanceUnitTest {
     fakeServer = InProcessServerBuilder.forName(uniqueServerName)
         .fallbackHandlerRegistry(serviceRegistry).directExecutor().build().start();
 
-    maintenanceCli = new MaintenanceImpl(
-        InProcessChannelBuilder.forName(uniqueServerName).directExecutor().build(),
-        Optional.empty());
+    ManagedChannelBuilder channelBuilder = InProcessChannelBuilder.forName(uniqueServerName).directExecutor();
+    ClientBuilder clientBuilder = ClientBuilder.newBuilder().endpoints("test");
+    maintenanceCli = new Client(channelBuilder, clientBuilder).getMaintenanceClient();
 
     MaintenanceImplBase base = this.defaultBase(responseObserverRef);
     serviceRegistry.addService(base);
@@ -129,7 +131,7 @@ public class MaintenanceUnitTest {
   }
 
   @Test(timeOut = 1000)
-  void testWrite() throws IOException {
+  public void testWrite() throws IOException {
     Snapshot snapshot = maintenanceCli.snapshot();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     ByteString blob = ByteString.copyFromUtf8("blob");
@@ -142,7 +144,6 @@ public class MaintenanceUnitTest {
     snapshot.write(out);
     assertThat(out.toByteArray()).isEqualTo(blob.toByteArray());
   }
-
 
   public MaintenanceImplBase defaultBase(
       AtomicReference<StreamObserver<SnapshotResponse>> responseObserverRef) {

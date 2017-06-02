@@ -65,9 +65,9 @@ public class MaintenanceImpl implements Maintenance {
   private interface DialFunction {
 
     /**
-     * dial dials to an endpoint and returns a managed channel its associated token.
+     * dial dials to an endpoint and returns a managed channel and its associated token.
      *
-     * @return a managed channel its associated token.
+     * @return a managed channel and its associated token.
      */
     Pair<ManagedChannel, Optional<String>> dial(String endpoint)
         throws ConnectException, AuthFailedException;
