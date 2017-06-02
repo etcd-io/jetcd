@@ -41,7 +41,7 @@ public interface Maintenance {
    * @param member the alarm
    * @return the response result
    */
-  ListenableFuture<AlarmResponse> disalarm(AlarmMember member);
+  ListenableFuture<AlarmResponse> alarmDisarm(AlarmMember member);
 
   /**
    * defragment one member of the cluster.
