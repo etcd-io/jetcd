@@ -1,5 +1,6 @@
 package com.coreos.jetcd;
 
+import static com.coreos.jetcd.ClientUtil.defaultChannelBuilder;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -14,13 +15,17 @@ import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
 import com.coreos.jetcd.api.StatusRequest;
 import com.coreos.jetcd.api.StatusResponse;
+import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
+import com.coreos.jetcd.internal.Pair;
 import com.coreos.jetcd.maintenance.SnapshotReaderResponseWithError;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.ManagedChannel;
+import io.grpc.NameResolver;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -38,10 +43,34 @@ public class MaintenanceImpl implements Maintenance {
 
   private MaintenanceGrpc.MaintenanceFutureStub futureStub;
   private MaintenanceGrpc.MaintenanceStub streamStub;
+  private DialFunction dialFunction;
+  private ExecutorService executorService;
 
-  public MaintenanceImpl(ManagedChannel channel, Optional<String> token) {
-    this.futureStub = ClientUtil.configureStub(MaintenanceGrpc.newFutureStub(channel), token);
-    this.streamStub = ClientUtil.configureStub(MaintenanceGrpc.newStub(channel), token);
+  public MaintenanceImpl(Client c) {
+    dialFunction = (endpoint) -> {
+      NameResolver.Factory nameResolverFactory = ClientUtil
+          .simpleNameResolveFactory(Arrays.asList(endpoint));
+      return c.toChannelAndToken(defaultChannelBuilder(nameResolverFactory));
+    };
+    
+    this.executorService = c.getExecutorService();
+
+    this.futureStub = ClientUtil
+        .configureStub(MaintenanceGrpc.newFutureStub(c.getChannel()), c.getToken());
+    this.streamStub = ClientUtil
+        .configureStub(MaintenanceGrpc.newStub(c.getChannel()), c.getToken());
+  }
+
+  @FunctionalInterface
+  private interface DialFunction {
+
+    /**
+     * dial dials to an endpoint and returns a managed channel its associated token.
+     *
+     * @return a managed channel its associated token.
+     */
+    Pair<ManagedChannel, Optional<String>> dial(String endpoint)
+        throws ConnectException, AuthFailedException;
   }
 
   /**
@@ -92,16 +121,52 @@ public class MaintenanceImpl implements Maintenance {
    * multiple times with different endpoints.
    */
   @Override
-  public ListenableFuture<DefragmentResponse> defragmentMember() {
-    return this.futureStub.defragment(DefragmentRequest.getDefaultInstance());
+  public ListenableFuture<DefragmentResponse> defragmentMember(String endpoint) {
+    Optional<Pair<ManagedChannel, Optional<String>>> pairOptional = Optional.empty();
+    try {
+      pairOptional = Optional.of(this.dialFunction.dial(endpoint));
+      Pair<ManagedChannel, Optional<String>> pair = pairOptional.get();
+      ManagedChannel channel = pair.getKey();
+      Optional<String> token = pair.getValue();
+      MaintenanceGrpc.MaintenanceFutureStub stub = ClientUtil
+          .configureStub(MaintenanceGrpc.newFutureStub(channel), token);
+      ListenableFuture<DefragmentResponse> defragmentResponseListenableFuture = stub
+          .defragment(DefragmentRequest.getDefaultInstance());
+
+      // close channel when defragmentResponseListenableFuture completes.
+      defragmentResponseListenableFuture
+          .addListener(() -> channel.shutdownNow(), this.executorService);
+      return defragmentResponseListenableFuture;
+    } catch (Exception e) {
+      pairOptional.ifPresent((pair) -> pair.getKey().shutdownNow());
+      throw new RuntimeException("defragmentMember encounters error", e.getCause());
+    }
   }
 
   /**
    * get the status of one member.
    */
   @Override
-  public ListenableFuture<StatusResponse> statusMember() {
-    return this.futureStub.status(StatusRequest.getDefaultInstance());
+  public ListenableFuture<StatusResponse> statusMember(String endpoint) {
+    Optional<Pair<ManagedChannel, Optional<String>>> pairOptional = Optional.empty();
+    try {
+      pairOptional = Optional.of(this.dialFunction.dial(endpoint));
+      Pair<ManagedChannel, Optional<String>> pair = pairOptional.get();
+      ManagedChannel channel = pair.getKey();
+      Optional<String> token = pair.getValue();
+      MaintenanceGrpc.MaintenanceFutureStub stub = ClientUtil
+          .configureStub(MaintenanceGrpc.newFutureStub(channel), token);
+      ListenableFuture<StatusResponse> statusResponseListenableFuture = stub
+          .status(StatusRequest.getDefaultInstance());
+
+      // close channel when statusResponseListenableFuture completes.
+      statusResponseListenableFuture
+          .addListener(() -> channel.shutdownNow(), this.executorService);
+      return statusResponseListenableFuture;
+    } catch (Exception e) {
+      pairOptional.ifPresent((pair) -> pair.getKey().shutdownNow());
+      throw new RuntimeException("statusMember encounters error", e.getCause());
+    }
   }
 
   @Override
