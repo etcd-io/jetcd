@@ -17,10 +17,11 @@ import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 
 /**
  * Implementation of etcd kv client.
@@ -38,12 +39,12 @@ class KVImpl implements KV {
   // ***************
 
   @Override
-  public ListenableFuture<PutResponse> put(ByteString key, ByteString value) {
+  public CompletableFuture<PutResponse> put(ByteString key, ByteString value) {
     return put(key, value, PutOption.DEFAULT);
   }
 
   @Override
-  public ListenableFuture<PutResponse> put(ByteString key, ByteString value, PutOption option) {
+  public CompletableFuture<PutResponse> put(ByteString key, ByteString value, PutOption option) {
     checkNotNull(key, "key should not be null");
     checkNotNull(value, "value should not be null");
     checkNotNull(option, "option should not be null");
@@ -55,7 +56,7 @@ class KVImpl implements KV {
         .setPrevKv(option.getPrevKV())
         .build();
 
-    return this.stub.put(request);
+    return FutureConverter.toCompletableFuture(this.stub.put(request));
   }
 
   // ***************
@@ -63,12 +64,12 @@ class KVImpl implements KV {
   // ***************
 
   @Override
-  public ListenableFuture<RangeResponse> get(ByteString key) {
+  public CompletableFuture<RangeResponse> get(ByteString key) {
     return get(key, GetOption.DEFAULT);
   }
 
   @Override
-  public ListenableFuture<RangeResponse> get(ByteString key, GetOption option) {
+  public CompletableFuture<RangeResponse> get(ByteString key, GetOption option) {
     checkNotNull(key, "key should not be null");
     checkNotNull(option, "option should not be null");
 
@@ -86,7 +87,7 @@ class KVImpl implements KV {
       builder.setRangeEnd(option.getEndKey().get());
     }
 
-    return this.stub.range(builder.build());
+    return FutureConverter.toCompletableFuture(this.stub.range(builder.build()));
   }
 
   // ***************
@@ -94,12 +95,12 @@ class KVImpl implements KV {
   // ***************
 
   @Override
-  public ListenableFuture<DeleteRangeResponse> delete(ByteString key) {
+  public CompletableFuture<DeleteRangeResponse> delete(ByteString key) {
     return delete(key, DeleteOption.DEFAULT);
   }
 
   @Override
-  public ListenableFuture<DeleteRangeResponse> delete(ByteString key, DeleteOption option) {
+  public CompletableFuture<DeleteRangeResponse> delete(ByteString key, DeleteOption option) {
     checkNotNull(key, "key should not be null");
     checkNotNull(option, "option should not be null");
 
@@ -110,16 +111,16 @@ class KVImpl implements KV {
     if (option.getEndKey().isPresent()) {
       builder.setRangeEnd(option.getEndKey().get());
     }
-    return this.stub.deleteRange(builder.build());
+    return FutureConverter.toCompletableFuture(this.stub.deleteRange(builder.build()));
   }
 
   @Override
-  public ListenableFuture<CompactionResponse> compact() {
+  public CompletableFuture<CompactionResponse> compact() {
     return compact(CompactOption.DEFAULT);
   }
 
   @Override
-  public ListenableFuture<CompactionResponse> compact(CompactOption option) {
+  public CompletableFuture<CompactionResponse> compact(CompactOption option) {
     checkNotNull(option, "option should not be null");
 
     CompactionRequest request = CompactionRequest.newBuilder()
@@ -127,12 +128,12 @@ class KVImpl implements KV {
         .setPhysical(option.isPhysical())
         .build();
 
-    return this.stub.compact(request);
+    return FutureConverter.toCompletableFuture(this.stub.compact(request));
   }
 
   @Override
-  public ListenableFuture<TxnResponse> commit(Txn txn) {
+  public CompletableFuture<TxnResponse> commit(Txn txn) {
     checkNotNull(txn, "txn should not be null");
-    return this.stub.txn(txn.toTxnRequest());
+    return FutureConverter.toCompletableFuture(this.stub.txn(txn.toTxnRequest()));
   }
 }
