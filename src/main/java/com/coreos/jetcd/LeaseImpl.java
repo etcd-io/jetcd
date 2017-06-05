@@ -218,7 +218,7 @@ public class LeaseImpl implements Lease {
   public CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId) {
 
     /**
-     * to be completed, I will return a ListenableFuture value in the future.
+     * TODO: finish this.
      */
     StreamObserver<LeaseKeepAliveRequest> requestObserver = this.leaseStub
         .leaseKeepAlive(keepAliveResponseStreamObserver);
