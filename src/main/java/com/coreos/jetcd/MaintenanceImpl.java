@@ -187,7 +187,7 @@ public class MaintenanceImpl implements Maintenance {
         new LinkedBlockingQueue<>();
 
     // closeLock protects closed.
-    private Object closeLock = new Object();
+    private final Object closeLock = new Object();
     private boolean closed = false;
 
     private boolean writeOnce = false;
