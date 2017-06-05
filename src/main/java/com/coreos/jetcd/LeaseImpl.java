@@ -9,19 +9,20 @@ import com.coreos.jetcd.api.LeaseRevokeRequest;
 import com.coreos.jetcd.api.LeaseRevokeResponse;
 import com.coreos.jetcd.lease.KeepAlive;
 import com.coreos.jetcd.lease.NoSuchLeaseException;
-import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 
 /**
  * Implementation of lease client.
@@ -149,9 +150,9 @@ public class LeaseImpl implements Lease {
    * @param ttl ttl value, unit seconds
    */
   @Override
-  public ListenableFuture<LeaseGrantResponse> grant(long ttl) {
+  public CompletableFuture<LeaseGrantResponse> grant(long ttl) {
     LeaseGrantRequest leaseGrantRequest = LeaseGrantRequest.newBuilder().setTTL(ttl).build();
-    return this.leaseFutureStub.leaseGrant(leaseGrantRequest);
+    return FutureConverter.toCompletableFuture(this.leaseFutureStub.leaseGrant(leaseGrantRequest));
   }
 
   /**
@@ -160,9 +161,10 @@ public class LeaseImpl implements Lease {
    * @param leaseId id of the lease to revoke
    */
   @Override
-  public ListenableFuture<LeaseRevokeResponse> revoke(long leaseId) {
+  public CompletableFuture<LeaseRevokeResponse> revoke(long leaseId) {
     LeaseRevokeRequest leaseRevokeRequest = LeaseRevokeRequest.newBuilder().setID(leaseId).build();
-    return this.leaseFutureStub.leaseRevoke(leaseRevokeRequest);
+    return FutureConverter
+        .toCompletableFuture(this.leaseFutureStub.leaseRevoke(leaseRevokeRequest));
   }
 
   /**
@@ -213,7 +215,7 @@ public class LeaseImpl implements Lease {
    * @return The keep alive response
    */
   @Override
-  public ListenableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId) {
+  public CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId) {
 
     /**
      * to be completed, I will return a ListenableFuture value in the future.
