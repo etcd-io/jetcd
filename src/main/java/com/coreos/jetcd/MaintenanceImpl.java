@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,6 +36,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 
 /**
  * Implementation of maintenance client.
@@ -79,12 +81,12 @@ public class MaintenanceImpl implements Maintenance {
    * @return alarm list
    */
   @Override
-  public ListenableFuture<AlarmResponse> listAlarms() {
+  public CompletableFuture<AlarmResponse> listAlarms() {
     AlarmRequest alarmRequest = AlarmRequest.newBuilder()
         .setAlarm(AlarmType.NONE)
         .setAction(AlarmRequest.AlarmAction.GET)
         .setMemberID(0).build();
-    return this.futureStub.alarm(alarmRequest);
+    return FutureConverter.toCompletableFuture(this.futureStub.alarm(alarmRequest));
   }
 
   /**
@@ -94,7 +96,7 @@ public class MaintenanceImpl implements Maintenance {
    * @return the response result
    */
   @Override
-  public ListenableFuture<AlarmResponse> alarmDisarm(AlarmMember member) {
+  public CompletableFuture<AlarmResponse> alarmDisarm(AlarmMember member) {
     AlarmRequest alarmRequest = AlarmRequest.newBuilder()
         .setAlarm(AlarmType.NOSPACE)
         .setAction(AlarmRequest.AlarmAction.DEACTIVATE)
@@ -102,7 +104,7 @@ public class MaintenanceImpl implements Maintenance {
         .build();
     checkArgument(member.getMemberID() != 0, "the member id can not be 0");
     checkArgument(member.getAlarm() != AlarmType.NONE, "alarm type can not be NONE");
-    return this.futureStub.alarm(alarmRequest);
+    return FutureConverter.toCompletableFuture(this.futureStub.alarm(alarmRequest));
   }
 
   /**
@@ -121,7 +123,7 @@ public class MaintenanceImpl implements Maintenance {
    * multiple times with different endpoints.
    */
   @Override
-  public ListenableFuture<DefragmentResponse> defragmentMember(String endpoint) {
+  public CompletableFuture<DefragmentResponse> defragmentMember(String endpoint) {
     Optional<Pair<ManagedChannel, Optional<String>>> pairOptional = Optional.empty();
     try {
       pairOptional = Optional.of(this.dialFunction.dial(endpoint));
@@ -136,7 +138,7 @@ public class MaintenanceImpl implements Maintenance {
       // close channel when defragmentResponseListenableFuture completes.
       defragmentResponseListenableFuture
           .addListener(() -> channel.shutdownNow(), this.executorService);
-      return defragmentResponseListenableFuture;
+      return FutureConverter.toCompletableFuture(defragmentResponseListenableFuture);
     } catch (Exception e) {
       pairOptional.ifPresent((pair) -> pair.getKey().shutdownNow());
       throw new RuntimeException("defragmentMember encounters error", e.getCause());
@@ -147,7 +149,7 @@ public class MaintenanceImpl implements Maintenance {
    * get the status of one member.
    */
   @Override
-  public ListenableFuture<StatusResponse> statusMember(String endpoint) {
+  public CompletableFuture<StatusResponse> statusMember(String endpoint) {
     Optional<Pair<ManagedChannel, Optional<String>>> pairOptional = Optional.empty();
     try {
       pairOptional = Optional.of(this.dialFunction.dial(endpoint));
@@ -162,7 +164,7 @@ public class MaintenanceImpl implements Maintenance {
       // close channel when statusResponseListenableFuture completes.
       statusResponseListenableFuture
           .addListener(() -> channel.shutdownNow(), this.executorService);
-      return statusResponseListenableFuture;
+      return FutureConverter.toCompletableFuture(statusResponseListenableFuture);
     } catch (Exception e) {
       pairOptional.ifPresent((pair) -> pair.getKey().shutdownNow());
       throw new RuntimeException("statusMember encounters error", e.getCause());
