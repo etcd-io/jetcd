@@ -12,8 +12,8 @@ import com.coreos.jetcd.op.Txn;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -39,7 +39,7 @@ public class KVTest {
   public void testPut() throws Exception {
     ByteString sampleKey = ByteString.copyFrom("sample_key", "UTF-8");
     ByteString sampleValue = ByteString.copyFrom("sample_value", "UTF-8");
-    ListenableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue);
+    CompletableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue);
     try {
       PutResponse response = feature.get();
       test.assertTrue(response.hasHeader());
@@ -55,7 +55,7 @@ public class KVTest {
     ByteString sampleKey = ByteString.copyFrom("sample_key", "UTF-8");
     ByteString sampleValue = ByteString.copyFrom("sample_value", "UTF-8");
     PutOption option = PutOption.newBuilder().withLeaseId(99999).build();
-    ListenableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue, option);
+    CompletableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue, option);
     try {
       PutResponse response = feature.get();
       test.assertTrue(response.hasHeader());
@@ -68,10 +68,10 @@ public class KVTest {
   public void testGet() throws Exception {
     ByteString sampleKey = ByteString.copyFrom("sample_key2", "UTF-8");
     ByteString sampleValue = ByteString.copyFrom("sample_value2", "UTF-8");
-    ListenableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue);
+    CompletableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue);
     try {
       feature.get();
-      ListenableFuture<RangeResponse> getFeature = kvClient.get(sampleKey);
+      CompletableFuture<RangeResponse> getFeature = kvClient.get(sampleKey);
       RangeResponse response = getFeature.get();
       test.assertEquals(response.getKvsCount(), 1);
       test.assertEquals(response.getKvs(0).getValue().toStringUtf8(), "sample_value2");
@@ -86,13 +86,13 @@ public class KVTest {
     ByteString sampleKey = ByteString.copyFrom("sample_key3", "UTF-8");
     ByteString sampleValue = ByteString.copyFrom("sample_value", "UTF-8");
     ByteString sampleValueTwo = ByteString.copyFrom("sample_value2", "UTF-8");
-    ListenableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue);
+    CompletableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue);
     try {
       PutResponse putResp = feature.get();
       kvClient.put(sampleKey, sampleValueTwo).get();
       GetOption option = GetOption.newBuilder().withRevision(putResp.getHeader().getRevision())
           .build();
-      ListenableFuture<RangeResponse> getFeature = kvClient.get(sampleKey, option);
+      CompletableFuture<RangeResponse> getFeature = kvClient.get(sampleKey, option);
       RangeResponse response = getFeature.get();
       test.assertEquals(response.getKvsCount(), 1);
       test.assertEquals(response.getKvs(0).getValue().toStringUtf8(), "sample_value");
@@ -118,7 +118,7 @@ public class KVTest {
         .withSortOrder(RangeRequest.SortOrder.DESCEND)
         .withRange(endKey).build();
     try {
-      ListenableFuture<RangeResponse> getFeature = kvClient.get(key, option);
+      CompletableFuture<RangeResponse> getFeature = kvClient.get(key, option);
       RangeResponse response = getFeature.get();
       test.assertEquals(response.getKvsCount(), 3);
       test.assertEquals(response.getKvs(0).getKey().toStringUtf8(), "test_key2");
@@ -137,11 +137,11 @@ public class KVTest {
     ByteString keyToDelete = ByteString.copyFrom("sample_key", "UTF-8");
     try {
       // count keys about to delete
-      ListenableFuture<RangeResponse> getFeature = kvClient.get(keyToDelete);
+      CompletableFuture<RangeResponse> getFeature = kvClient.get(keyToDelete);
       RangeResponse resp = getFeature.get();
 
       // delete the keys
-      ListenableFuture<DeleteRangeResponse> deleteFuture = kvClient.delete(keyToDelete);
+      CompletableFuture<DeleteRangeResponse> deleteFuture = kvClient.delete(keyToDelete);
       DeleteRangeResponse delResp = deleteFuture.get();
       test.assertEquals(resp.getKvsList().size(), delResp.getDeleted());
     } catch (Exception e) {
@@ -158,7 +158,7 @@ public class KVTest {
     putKeysWithPrefix(prefix, numPrefixes);
 
     // verify get withPrefix.
-    ListenableFuture<RangeResponse> getFuture = kvClient
+    CompletableFuture<RangeResponse> getFuture = kvClient
         .get(key, GetOption.newBuilder().withPrefix(key).build());
     RangeResponse getResp = getFuture.get();
     test.assertEquals(getResp.getCount(), numPrefixes);
@@ -166,7 +166,7 @@ public class KVTest {
     // verify del withPrefix.
     DeleteOption deleteOpt = DeleteOption.newBuilder()
         .withPrefix(key).build();
-    ListenableFuture<DeleteRangeResponse> delFuture = kvClient.delete(key, deleteOpt);
+    CompletableFuture<DeleteRangeResponse> delFuture = kvClient.delete(key, deleteOpt);
     DeleteRangeResponse delResp = delFuture.get();
     test.assertEquals(delResp.getDeleted(), numPrefixes);
   }
@@ -191,7 +191,7 @@ public class KVTest {
     ByteString cmpValue = ByteString.copyFrom("abc", "UTF-8");
     ByteString putValue = ByteString.copyFrom("XYZ", "UTF-8");
     ByteString putValueNew = ByteString.copyFrom("ABC", "UTF-8");
-    ListenableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue);
+    CompletableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue);
     try {
       // put the original txn key value pair
       PutResponse putResp = feature.get();
@@ -200,7 +200,7 @@ public class KVTest {
       Cmp cmp = new Cmp(sampleKey, Cmp.Op.GREATER, CmpTarget.value(cmpValue));
       Txn txn = Txn.newBuilder().If(cmp).Then(Op.put(sampleKey, putValue, PutOption.DEFAULT))
           .Else(Op.put(sampleKey, putValueNew, PutOption.DEFAULT)).build();
-      ListenableFuture<TxnResponse> txnResp = kvClient.commit(txn);
+      CompletableFuture<TxnResponse> txnResp = kvClient.commit(txn);
       txnResp.get();
 
       // get the value
