@@ -5,8 +5,8 @@ import com.coreos.jetcd.api.MemberAddResponse;
 import com.coreos.jetcd.api.MemberListResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
-import com.google.common.util.concurrent.ListenableFuture;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -45,7 +45,7 @@ public class ClusterClientTest {
     Cluster clusterClient = client.getClusterClient();
     MemberListResponse response = clusterClient.listMember().get();
     assertion.assertEquals(response.getMembersCount(), 3);
-    ListenableFuture<MemberAddResponse> responseListenableFuture = clusterClient
+    CompletableFuture<MemberAddResponse> responseListenableFuture = clusterClient
         .addMember(Arrays.asList(Arrays.copyOfRange(TestConstants.peerUrls, 2, 3)));
     MemberAddResponse addResponse = responseListenableFuture.get(5, TimeUnit.SECONDS);
     addedMember = addResponse.getMember();
@@ -87,6 +87,4 @@ public class ClusterClientTest {
     assertion.assertEquals(newCount, 3,
         "delete added member(" + addedMember.getID() + "), and left " + newCount + " members");
   }
-
-
 }
