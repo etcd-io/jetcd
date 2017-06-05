@@ -44,7 +44,7 @@ public interface Maintenance {
   ListenableFuture<AlarmResponse> alarmDisarm(AlarmMember member);
 
   /**
-   * defragment one member of the cluster.
+   * defragment one member of the cluster by its endpoint.
    *
    * <p>After compacting the keyspace, the backend database may exhibit internal
    * fragmentation. Any internal fragmentation is space that is free to use
@@ -58,12 +58,12 @@ public interface Maintenance {
    * To defragment multiple members in the cluster, user need to call defragment
    * multiple times with different endpoints.
    */
-  ListenableFuture<DefragmentResponse> defragmentMember();
+  ListenableFuture<DefragmentResponse> defragmentMember(String endpoint);
 
   /**
-   * get the status of one member.
+   * get the status of a member by its endpoint.
    */
-  ListenableFuture<StatusResponse> statusMember();
+  ListenableFuture<StatusResponse> statusMember(String endpoint);
 
   /**
    * retrieves backend snapshot.

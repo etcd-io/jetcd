@@ -4,12 +4,12 @@ import com.coreos.jetcd.Maintenance.Snapshot;
 import com.coreos.jetcd.api.StatusResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
-import com.google.protobuf.ByteString;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutionException;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
 
@@ -18,12 +18,12 @@ import org.testng.asserts.Assertion;
  */
 public class MaintenanceTest {
 
-  private final Client client;
-  private final Maintenance maintenance;
+  private Client client;
+  private Maintenance maintenance;
   private final Assertion test = new Assertion();
-  private volatile ByteString snapshotBlob = ByteString.copyFromUtf8("");
 
-  public MaintenanceTest() throws AuthFailedException, ConnectException {
+  @BeforeClass
+  public void setup() throws AuthFailedException, ConnectException {
     this.client = ClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
     this.maintenance = client.getMaintenanceClient();
   }
@@ -34,7 +34,7 @@ public class MaintenanceTest {
    */
   @Test
   public void testStatusMember() throws ExecutionException, InterruptedException {
-    StatusResponse statusResponse = maintenance.statusMember().get();
+    StatusResponse statusResponse = maintenance.statusMember(TestConstants.endpoints[0]).get();
     test.assertTrue(statusResponse.getDbSize() > 0);
   }
 
@@ -69,6 +69,6 @@ public class MaintenanceTest {
    */
   @Test
   void testDefragment() throws ExecutionException, InterruptedException {
-    maintenance.defragmentMember().get();
+    maintenance.defragmentMember(TestConstants.endpoints[0]).get();
   }
 }
