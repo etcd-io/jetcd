@@ -97,11 +97,6 @@ public class Client {
     return new Pair<>(managedChannel, token);
   }
 
-  // ************************
-  // ************************
-  //
-  // ************************
-
   public Auth getAuthClient() {
     return authClient.get();
   }
@@ -130,10 +125,6 @@ public class Client {
     this.executorService.shutdownNow();
     this.channel.shutdownNow();
   }
-
-  // ************************
-  //
-  // ************************
 
   /**
    * get token from etcd with name and password.
