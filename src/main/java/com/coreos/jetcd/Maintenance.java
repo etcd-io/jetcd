@@ -4,10 +4,10 @@ import com.coreos.jetcd.api.AlarmMember;
 import com.coreos.jetcd.api.AlarmResponse;
 import com.coreos.jetcd.api.DefragmentResponse;
 import com.coreos.jetcd.api.StatusResponse;
-import com.google.common.util.concurrent.ListenableFuture;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Interface of maintenance talking to etcd.
@@ -33,7 +33,7 @@ public interface Maintenance {
   /**
    * get all active keyspace alarm.
    */
-  ListenableFuture<AlarmResponse> listAlarms();
+  CompletableFuture<AlarmResponse> listAlarms();
 
   /**
    * disarms a given alarm.
@@ -41,7 +41,7 @@ public interface Maintenance {
    * @param member the alarm
    * @return the response result
    */
-  ListenableFuture<AlarmResponse> alarmDisarm(AlarmMember member);
+  CompletableFuture<AlarmResponse> alarmDisarm(AlarmMember member);
 
   /**
    * defragment one member of the cluster by its endpoint.
@@ -58,12 +58,12 @@ public interface Maintenance {
    * To defragment multiple members in the cluster, user need to call defragment
    * multiple times with different endpoints.
    */
-  ListenableFuture<DefragmentResponse> defragmentMember(String endpoint);
+  CompletableFuture<DefragmentResponse> defragmentMember(String endpoint);
 
   /**
    * get the status of a member by its endpoint.
    */
-  ListenableFuture<StatusResponse> statusMember(String endpoint);
+  CompletableFuture<StatusResponse> statusMember(String endpoint);
 
   /**
    * retrieves backend snapshot.

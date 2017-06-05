@@ -32,10 +32,11 @@ import com.coreos.jetcd.api.AuthUserListResponse;
 import com.coreos.jetcd.api.AuthUserRevokeRoleRequest;
 import com.coreos.jetcd.api.AuthUserRevokeRoleResponse;
 import com.coreos.jetcd.api.Permission;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 
 /**
  * Implementation of etcd auth client.
@@ -53,15 +54,15 @@ public class AuthImpl implements Auth {
   // ***************
 
   @Override
-  public ListenableFuture<AuthEnableResponse> authEnable() {
+  public CompletableFuture<AuthEnableResponse> authEnable() {
     AuthEnableRequest enableRequest = AuthEnableRequest.getDefaultInstance();
-    return this.stub.authEnable(enableRequest);
+    return FutureConverter.toCompletableFuture(this.stub.authEnable(enableRequest));
   }
 
   @Override
-  public ListenableFuture<AuthDisableResponse> authDisable() {
+  public CompletableFuture<AuthDisableResponse> authDisable() {
     AuthDisableRequest disableRequest = AuthDisableRequest.getDefaultInstance();
-    return this.stub.authDisable(disableRequest);
+    return FutureConverter.toCompletableFuture(this.stub.authDisable(disableRequest));
   }
 
   // ***************
@@ -69,44 +70,44 @@ public class AuthImpl implements Auth {
   // ***************
 
   @Override
-  public ListenableFuture<AuthUserAddResponse> userAdd(ByteString name, ByteString password) {
+  public CompletableFuture<AuthUserAddResponse> userAdd(ByteString name, ByteString password) {
     AuthUserAddRequest addRequest = AuthUserAddRequest.newBuilder()
         .setNameBytes(name)
         .setPasswordBytes(password)
         .build();
-    return this.stub.userAdd(addRequest);
+    return FutureConverter.toCompletableFuture(this.stub.userAdd(addRequest));
   }
 
   @Override
-  public ListenableFuture<AuthUserDeleteResponse> userDelete(ByteString name) {
+  public CompletableFuture<AuthUserDeleteResponse> userDelete(ByteString name) {
     AuthUserDeleteRequest deleteRequest = AuthUserDeleteRequest.newBuilder()
         .setNameBytes(name).build();
-    return this.stub.userDelete(deleteRequest);
+    return FutureConverter.toCompletableFuture(this.stub.userDelete(deleteRequest));
   }
 
   @Override
-  public ListenableFuture<AuthUserChangePasswordResponse> userChangePassword(ByteString name,
+  public CompletableFuture<AuthUserChangePasswordResponse> userChangePassword(ByteString name,
       ByteString password) {
     AuthUserChangePasswordRequest changePasswordRequest = AuthUserChangePasswordRequest.newBuilder()
         .setNameBytes(name)
         .setPasswordBytes(password)
         .build();
-    return this.stub.userChangePassword(changePasswordRequest);
+    return FutureConverter.toCompletableFuture(this.stub.userChangePassword(changePasswordRequest));
   }
 
   @Override
-  public ListenableFuture<AuthUserGetResponse> userGet(ByteString name) {
+  public CompletableFuture<AuthUserGetResponse> userGet(ByteString name) {
     AuthUserGetRequest userGetRequest = AuthUserGetRequest.newBuilder()
         .setNameBytes(name)
         .build();
 
-    return this.stub.userGet(userGetRequest);
+    return FutureConverter.toCompletableFuture(this.stub.userGet(userGetRequest));
   }
 
   @Override
-  public ListenableFuture<AuthUserListResponse> userList() {
+  public CompletableFuture<AuthUserListResponse> userList() {
     AuthUserListRequest userListRequest = AuthUserListRequest.getDefaultInstance();
-    return this.stub.userList(userListRequest);
+    return FutureConverter.toCompletableFuture(this.stub.userList(userListRequest));
   }
 
   // ***************
@@ -114,23 +115,23 @@ public class AuthImpl implements Auth {
   // ***************
 
   @Override
-  public ListenableFuture<AuthUserGrantRoleResponse> userGrantRole(ByteString name,
+  public CompletableFuture<AuthUserGrantRoleResponse> userGrantRole(ByteString name,
       ByteString role) {
     AuthUserGrantRoleRequest userGrantRoleRequest = AuthUserGrantRoleRequest.newBuilder()
         .setUserBytes(name)
         .setRoleBytes(role)
         .build();
-    return this.stub.userGrantRole(userGrantRoleRequest);
+    return FutureConverter.toCompletableFuture(this.stub.userGrantRole(userGrantRoleRequest));
   }
 
   @Override
-  public ListenableFuture<AuthUserRevokeRoleResponse> userRevokeRole(ByteString name,
+  public CompletableFuture<AuthUserRevokeRoleResponse> userRevokeRole(ByteString name,
       ByteString role) {
     AuthUserRevokeRoleRequest userRevokeRoleRequest = AuthUserRevokeRoleRequest.newBuilder()
         .setNameBytes(name)
         .setRoleBytes(role)
         .build();
-    return this.stub.userRevokeRole(userRevokeRoleRequest);
+    return FutureConverter.toCompletableFuture(this.stub.userRevokeRole(userRevokeRoleRequest));
   }
 
   // ***************
@@ -138,15 +139,15 @@ public class AuthImpl implements Auth {
   // ***************
 
   @Override
-  public ListenableFuture<AuthRoleAddResponse> roleAdd(ByteString name) {
+  public CompletableFuture<AuthRoleAddResponse> roleAdd(ByteString name) {
     AuthRoleAddRequest roleAddRequest = AuthRoleAddRequest.newBuilder()
         .setNameBytes(name)
         .build();
-    return this.stub.roleAdd(roleAddRequest);
+    return FutureConverter.toCompletableFuture(this.stub.roleAdd(roleAddRequest));
   }
 
   @Override
-  public ListenableFuture<AuthRoleGrantPermissionResponse> roleGrantPermission(ByteString role,
+  public CompletableFuture<AuthRoleGrantPermissionResponse> roleGrantPermission(ByteString role,
       ByteString key, ByteString rangeEnd, Permission.Type permType) {
     Permission perm = Permission.newBuilder()
         .setKey(key)
@@ -159,25 +160,26 @@ public class AuthImpl implements Auth {
         .setPerm(perm)
         .build();
 
-    return this.stub.roleGrantPermission(roleGrantPermissionRequest);
+    return FutureConverter
+        .toCompletableFuture(this.stub.roleGrantPermission(roleGrantPermissionRequest));
   }
 
   @Override
-  public ListenableFuture<AuthRoleGetResponse> roleGet(ByteString role) {
+  public CompletableFuture<AuthRoleGetResponse> roleGet(ByteString role) {
     AuthRoleGetRequest roleGetRequest = AuthRoleGetRequest.newBuilder()
         .setRoleBytes(role)
         .build();
-    return this.stub.roleGet(roleGetRequest);
+    return FutureConverter.toCompletableFuture(this.stub.roleGet(roleGetRequest));
   }
 
   @Override
-  public ListenableFuture<AuthRoleListResponse> roleList() {
+  public CompletableFuture<AuthRoleListResponse> roleList() {
     AuthRoleListRequest roleListRequest = AuthRoleListRequest.getDefaultInstance();
-    return this.stub.roleList(roleListRequest);
+    return FutureConverter.toCompletableFuture(this.stub.roleList(roleListRequest));
   }
 
   @Override
-  public ListenableFuture<AuthRoleRevokePermissionResponse> roleRevokePermission(ByteString role,
+  public CompletableFuture<AuthRoleRevokePermissionResponse> roleRevokePermission(ByteString role,
       ByteString key, ByteString rangeEnd) {
 
     AuthRoleRevokePermissionRequest roleRevokePermissionRequest = AuthRoleRevokePermissionRequest
@@ -186,16 +188,17 @@ public class AuthImpl implements Auth {
         .setKeyBytes(key)
         .setRangeEndBytes(rangeEnd)
         .build();
-    return this.stub.roleRevokePermission(roleRevokePermissionRequest);
+    return FutureConverter
+        .toCompletableFuture(this.stub.roleRevokePermission(roleRevokePermissionRequest));
   }
 
   @Override
-  public ListenableFuture<AuthRoleDeleteResponse> roleDelete(ByteString role) {
+  public CompletableFuture<AuthRoleDeleteResponse> roleDelete(ByteString role) {
 
     AuthRoleDeleteRequest roleDeleteRequest = AuthRoleDeleteRequest.newBuilder()
         .setRoleBytes(role)
         .build();
-    return this.stub.roleDelete(roleDeleteRequest);
+    return FutureConverter.toCompletableFuture(this.stub.roleDelete(roleDeleteRequest));
   }
 
 }

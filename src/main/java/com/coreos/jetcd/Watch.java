@@ -22,7 +22,7 @@ public interface Watch {
    * @param key the key subscribe
    * @param watchOption key option
    * @param callback call back
-   * @return ListenableFuture watcher
+   * @return CompletableFuture watcher
    */
   CompletableFuture<Watcher> watch(ByteSequence key, WatchOption watchOption,
       WatchCallback callback);

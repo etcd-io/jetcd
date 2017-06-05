@@ -16,8 +16,8 @@ import com.coreos.jetcd.api.AuthUserGrantRoleResponse;
 import com.coreos.jetcd.api.AuthUserListResponse;
 import com.coreos.jetcd.api.AuthUserRevokeRoleResponse;
 import com.coreos.jetcd.api.Permission;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Interface of auth talking to etcd.
@@ -28,51 +28,51 @@ public interface Auth {
   // Auth Manage
   // ***************
 
-  ListenableFuture<AuthEnableResponse> authEnable();
+  CompletableFuture<AuthEnableResponse> authEnable();
 
-  ListenableFuture<AuthDisableResponse> authDisable();
+  CompletableFuture<AuthDisableResponse> authDisable();
 
   // ***************
   // User Manage
   // ***************
 
-  ListenableFuture<AuthUserAddResponse> userAdd(ByteString name, ByteString password);
+  CompletableFuture<AuthUserAddResponse> userAdd(ByteString name, ByteString password);
 
-  ListenableFuture<AuthUserDeleteResponse> userDelete(ByteString name);
+  CompletableFuture<AuthUserDeleteResponse> userDelete(ByteString name);
 
-  ListenableFuture<AuthUserChangePasswordResponse> userChangePassword(ByteString name,
+  CompletableFuture<AuthUserChangePasswordResponse> userChangePassword(ByteString name,
       ByteString password);
 
-  ListenableFuture<AuthUserGetResponse> userGet(ByteString name);
+  CompletableFuture<AuthUserGetResponse> userGet(ByteString name);
 
-  ListenableFuture<AuthUserListResponse> userList();
+  CompletableFuture<AuthUserListResponse> userList();
 
   // ***************
   // User Role Manage
   // ***************
 
-  ListenableFuture<AuthUserGrantRoleResponse> userGrantRole(ByteString name, ByteString role);
+  CompletableFuture<AuthUserGrantRoleResponse> userGrantRole(ByteString name, ByteString role);
 
-  ListenableFuture<AuthUserRevokeRoleResponse> userRevokeRole(ByteString name, ByteString role);
+  CompletableFuture<AuthUserRevokeRoleResponse> userRevokeRole(ByteString name, ByteString role);
 
   // ***************
   // Role Manage
   // ***************
 
-  ListenableFuture<AuthRoleAddResponse> roleAdd(ByteString name);
+  CompletableFuture<AuthRoleAddResponse> roleAdd(ByteString name);
 
-  ListenableFuture<AuthRoleGrantPermissionResponse> roleGrantPermission(ByteString role,
+  CompletableFuture<AuthRoleGrantPermissionResponse> roleGrantPermission(ByteString role,
       ByteString key,
       ByteString rangeEnd, Permission.Type permType);
 
-  ListenableFuture<AuthRoleGetResponse> roleGet(ByteString role);
+  CompletableFuture<AuthRoleGetResponse> roleGet(ByteString role);
 
-  ListenableFuture<AuthRoleListResponse> roleList();
+  CompletableFuture<AuthRoleListResponse> roleList();
 
-  ListenableFuture<AuthRoleRevokePermissionResponse> roleRevokePermission(ByteString role,
+  CompletableFuture<AuthRoleRevokePermissionResponse> roleRevokePermission(ByteString role,
       ByteString key,
       ByteString rangeEnd);
 
-  ListenableFuture<AuthRoleDeleteResponse> roleDelete(ByteString role);
+  CompletableFuture<AuthRoleDeleteResponse> roleDelete(ByteString role);
 
 }

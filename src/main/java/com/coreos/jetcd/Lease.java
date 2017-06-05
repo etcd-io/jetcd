@@ -4,7 +4,7 @@ import com.coreos.jetcd.api.LeaseGrantResponse;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 import com.coreos.jetcd.api.LeaseRevokeResponse;
 import com.coreos.jetcd.lease.NoSuchLeaseException;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -17,14 +17,14 @@ public interface Lease {
    *
    * @param ttl ttl value, unit seconds
    */
-  ListenableFuture<LeaseGrantResponse> grant(long ttl);
+  CompletableFuture<LeaseGrantResponse> grant(long ttl);
 
   /**
    * revoke one lease and the key bind to this lease will be removed.
    *
    * @param leaseId id of the lease to revoke
    */
-  ListenableFuture<LeaseRevokeResponse> revoke(long leaseId);
+  CompletableFuture<LeaseRevokeResponse> revoke(long leaseId);
 
   /**
    * keep alive one lease in background.
@@ -47,7 +47,7 @@ public interface Lease {
    * @param leaseId id of lease to keep alive once
    * @return The keep alive response
    */
-  ListenableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId);
+  CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId);
 
   /**
    * set LeaseHandler for lease.
