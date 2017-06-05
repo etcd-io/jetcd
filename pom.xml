@@ -29,6 +29,7 @@
         <!-- dependencies -->
         <grpc.version>1.2.0</grpc.version>
         <slf4j.version>1.7.21</slf4j.version>
+        <future-converter.version>1.1.0</future-converter.version>
 
         <!-- should be in sync with protobuf grpc dependencies -->
         <protobuf.version>3.2.0</protobuf.version>
@@ -64,6 +65,11 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.javacrumbs.future-converter</groupId>
+            <artifactId>future-converter-java8-guava</artifactId>
+            <version>${future-converter.version}</version>
         </dependency>
 
         <dependency>
