@@ -216,16 +216,31 @@ public class LeaseImpl implements Lease {
    */
   @Override
   public CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId) {
+    CompletableFuture<LeaseKeepAliveResponse> lkaFuture = new CompletableFuture<>();
 
-    /**
-     * TODO: finish this.
-     */
     StreamObserver<LeaseKeepAliveRequest> requestObserver = this.leaseStub
-        .leaseKeepAlive(keepAliveResponseStreamObserver);
-    requestObserver.onNext(newKeepAliveRequest(leaseId));
-    requestObserver.onCompleted();
+        .leaseKeepAlive(new StreamObserver<LeaseKeepAliveResponse>() {
+          @Override
+          public void onNext(LeaseKeepAliveResponse leaseKeepAliveResponse) {
+            lkaFuture.complete(leaseKeepAliveResponse);
+          }
 
-    throw new UnsupportedOperationException();
+          @Override
+          public void onError(Throwable throwable) {
+            lkaFuture.completeExceptionally(throwable);
+          }
+
+          @Override
+          public void onCompleted() {
+          }
+        });
+    requestObserver.onNext(newKeepAliveRequest(leaseId));
+
+    // cancel grpc stream when leaseKeepAliveResponseCompletableFuture completes.
+    // TODO: Have a internal executor to manage Async threads?
+    lkaFuture.whenCompleteAsync((val, throwable) -> requestObserver.onCompleted());
+
+    return lkaFuture;
   }
 
   /**
