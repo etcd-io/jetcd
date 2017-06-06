@@ -48,9 +48,6 @@ public final class ClientUtil {
 
   static URI endpointToUri(String endpoint) {
     try {
-      if (!endpoint.startsWith("http://")) {
-        endpoint = "http://" + endpoint;
-      }
       return new URI(endpoint);
     } catch (URISyntaxException e) {
       throw new IllegalArgumentException(e);
