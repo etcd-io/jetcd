@@ -37,7 +37,8 @@
         <!-- test dependencies -->
         <testng.version>6.9.10</testng.version>
         <mockito.version>1.10.19</mockito.version>
-        <assertj.version>3.5.2</assertj.version>
+        <assertj.version>3.8.0</assertj.version>
+        <junit.version>4.12</junit.version>
     </properties>
 
     <dependencies>
@@ -95,6 +96,18 @@
             <artifactId>slf4j-simple</artifactId>
             <version>${slf4j.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>io.grpc</groupId>
+          <artifactId>grpc-testing</artifactId>
+          <version>${grpc.version}</version>
+          <scope>test</scope>
         </dependency>
     </dependencies>
 
