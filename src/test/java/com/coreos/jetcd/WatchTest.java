@@ -75,7 +75,7 @@ public class WatchTest {
   @Test(dependsOnMethods = "testWatch")
   public void testWatchPut() throws InterruptedException {
     kvClient
-        .put(Util.byteStringFromByteSequence(key), Util.byteStringFromByteSequence(value));
+        .put(key, value);
     WatchEvent event = eventsQueue.poll(5, TimeUnit.SECONDS);
     test.assertEquals(event.getKeyValue().getKey(), key);
     test.assertEquals(event.getEventType(), WatchEvent.EventType.PUT);
@@ -87,7 +87,7 @@ public class WatchTest {
    */
   @Test(dependsOnMethods = "testWatchPut")
   public void testWatchDelete() throws InterruptedException {
-    kvClient.delete(Util.byteStringFromByteSequence(key));
+    kvClient.delete(key);
     WatchEvent event = eventsQueue.poll(5, TimeUnit.SECONDS);
     test.assertEquals(event.getKeyValue().getKey(), key);
     test.assertEquals(event.getEventType(), WatchEvent.EventType.DELETE);
