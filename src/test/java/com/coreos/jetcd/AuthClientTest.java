@@ -3,11 +3,10 @@ package com.coreos.jetcd;
 import com.coreos.jetcd.api.AuthRoleGetResponse;
 import com.coreos.jetcd.api.Permission;
 import com.coreos.jetcd.api.RangeResponse;
+import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
-import com.google.protobuf.ByteString;
 import io.grpc.StatusRuntimeException;
-import java.nio.charset.Charset;
 import java.util.concurrent.ExecutionException;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -21,16 +20,16 @@ public class AuthClientTest {
   private Auth authClient;
   private KV kvClient;
 
-  private ByteString roleName = ByteString.copyFromUtf8("root");
+  private ByteSequence roleName = ByteSequence.fromString("root");
 
-  private ByteString keyRangeBegin = ByteString.copyFromUtf8("foo");
-  private ByteString keyRangeEnd = ByteString.copyFromUtf8("zoo");
+  private ByteSequence keyRangeBegin = ByteSequence.fromString("foo");
+  private ByteSequence keyRangeEnd = ByteSequence.fromString("zoo");
 
-  private ByteString testKey = ByteString.copyFromUtf8("foo1");
-  private ByteString testName = ByteString.copyFromUtf8("bar");
+  private ByteSequence testKey = ByteSequence.fromString("foo1");
+  private ByteSequence testName = ByteSequence.fromString("bar1");
 
-  private ByteString userName = ByteString.copyFrom("root", Charset.defaultCharset());
-  private ByteString password = ByteString.copyFrom("123", Charset.defaultCharset());
+  private ByteSequence userName = ByteSequence.fromString("root");
+  private ByteSequence password = ByteSequence.fromString("123");
 
   private Assertion test;
 
@@ -76,7 +75,8 @@ public class AuthClientTest {
   /**
    * grant user role
    */
-  @Test(dependsOnMethods = {"testUserAdd", "testRoleGrantPermission"}, groups = "user", priority = 1)
+  @Test(dependsOnMethods = {"testUserAdd",
+      "testRoleGrantPermission"}, groups = "user", priority = 1)
   public void testUserGrantRole() throws ExecutionException, InterruptedException {
     this.authClient.userGrantRole(userName, roleName).get();
   }
@@ -108,8 +108,8 @@ public class AuthClientTest {
     try {
       this.secureClient.getKVClient().put(testKey, testName).get();
       RangeResponse rangeResponse = this.secureClient.getKVClient().get(testKey).get();
-      this.test.assertTrue(
-          rangeResponse.getCount() != 0 && rangeResponse.getKvs(0).getValue().equals(testName));
+      this.test.assertTrue(rangeResponse.getCount() != 0);
+      this.test.assertEquals(rangeResponse.getKvs(0).getValue().toByteArray(), testName.getBytes());
     } catch (StatusRuntimeException sre) {
       err = sre;
     }

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.coreos.jetcd.Lease.LeaseHandler;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 import com.coreos.jetcd.api.PutResponse;
+import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.options.PutOption;
 import com.google.protobuf.ByteString;
 import java.util.concurrent.ExecutionException;
@@ -23,8 +24,8 @@ public class LeaseTest {
   private Assertion test;
 
 
-  private static final ByteString KEY = ByteString.copyFromUtf8("foo");
-  private static final ByteString VALUE = ByteString.copyFromUtf8("bar");
+  private static final ByteSequence KEY = ByteSequence.fromString("foo");
+  private static final ByteSequence VALUE = ByteSequence.fromString("bar");
 
   @BeforeTest
   public void setUp() throws Exception {

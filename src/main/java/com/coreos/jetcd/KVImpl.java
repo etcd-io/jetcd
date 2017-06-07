@@ -1,5 +1,6 @@
 package com.coreos.jetcd;
 
+import static com.coreos.jetcd.Util.byteStringFromByteSequence;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.api.CompactionRequest;
@@ -12,12 +13,12 @@ import com.coreos.jetcd.api.PutResponse;
 import com.coreos.jetcd.api.RangeRequest;
 import com.coreos.jetcd.api.RangeResponse;
 import com.coreos.jetcd.api.TxnResponse;
+import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.op.Txn;
 import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -39,19 +40,20 @@ class KVImpl implements KV {
   // ***************
 
   @Override
-  public CompletableFuture<PutResponse> put(ByteString key, ByteString value) {
+  public CompletableFuture<PutResponse> put(ByteSequence key, ByteSequence value) {
     return put(key, value, PutOption.DEFAULT);
   }
 
   @Override
-  public CompletableFuture<PutResponse> put(ByteString key, ByteString value, PutOption option) {
+  public CompletableFuture<PutResponse> put(ByteSequence key, ByteSequence value,
+      PutOption option) {
     checkNotNull(key, "key should not be null");
     checkNotNull(value, "value should not be null");
     checkNotNull(option, "option should not be null");
 
     PutRequest request = PutRequest.newBuilder()
-        .setKey(key)
-        .setValue(value)
+        .setKey(byteStringFromByteSequence(key))
+        .setValue(byteStringFromByteSequence(value))
         .setLease(option.getLeaseId())
         .setPrevKv(option.getPrevKV())
         .build();
@@ -64,17 +66,17 @@ class KVImpl implements KV {
   // ***************
 
   @Override
-  public CompletableFuture<RangeResponse> get(ByteString key) {
+  public CompletableFuture<RangeResponse> get(ByteSequence key) {
     return get(key, GetOption.DEFAULT);
   }
 
   @Override
-  public CompletableFuture<RangeResponse> get(ByteString key, GetOption option) {
+  public CompletableFuture<RangeResponse> get(ByteSequence key, GetOption option) {
     checkNotNull(key, "key should not be null");
     checkNotNull(option, "option should not be null");
 
     RangeRequest.Builder builder = RangeRequest.newBuilder()
-        .setKey(key)
+        .setKey(byteStringFromByteSequence(key))
         .setCountOnly(option.isCountOnly())
         .setLimit(option.getLimit())
         .setRevision(option.getRevision())
@@ -83,9 +85,8 @@ class KVImpl implements KV {
         .setSortOrder(option.getSortOrder())
         .setSortTarget(option.getSortField());
 
-    if (option.getEndKey().isPresent()) {
-      builder.setRangeEnd(option.getEndKey().get());
-    }
+    option.getEndKey().ifPresent((endKey) ->
+        builder.setRangeEnd(byteStringFromByteSequence(endKey)));
 
     return FutureConverter.toCompletableFuture(this.stub.range(builder.build()));
   }
@@ -95,22 +96,23 @@ class KVImpl implements KV {
   // ***************
 
   @Override
-  public CompletableFuture<DeleteRangeResponse> delete(ByteString key) {
+  public CompletableFuture<DeleteRangeResponse> delete(ByteSequence key) {
     return delete(key, DeleteOption.DEFAULT);
   }
 
   @Override
-  public CompletableFuture<DeleteRangeResponse> delete(ByteString key, DeleteOption option) {
+  public CompletableFuture<DeleteRangeResponse> delete(ByteSequence key, DeleteOption option) {
     checkNotNull(key, "key should not be null");
     checkNotNull(option, "option should not be null");
 
     DeleteRangeRequest.Builder builder = DeleteRangeRequest.newBuilder()
-        .setKey(key)
+        .setKey(byteStringFromByteSequence(key))
         .setPrevKv(option.isPrevKV());
 
     if (option.getEndKey().isPresent()) {
-      builder.setRangeEnd(option.getEndKey().get());
+      builder.setRangeEnd(byteStringFromByteSequence(option.getEndKey().get()));
     }
+
     return FutureConverter.toCompletableFuture(this.stub.deleteRange(builder.build()));
   }
 

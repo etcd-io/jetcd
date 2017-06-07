@@ -3,8 +3,9 @@ package com.coreos.jetcd.options;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.KV;
+import com.coreos.jetcd.data.ByteSequence;
 import com.google.common.base.Optional;
-import com.google.protobuf.ByteString;
+
 
 public final class DeleteOption {
 
@@ -16,7 +17,7 @@ public final class DeleteOption {
 
   public static class Builder {
 
-    private Optional<ByteString> endKey = Optional.absent();
+    private Optional<ByteSequence> endKey = Optional.absent();
     private boolean prevKV = false;
 
     private Builder() {
@@ -37,7 +38,7 @@ public final class DeleteOption {
      * @param endKey end key
      * @return builder
      */
-    public Builder withRange(ByteString endKey) {
+    public Builder withRange(ByteSequence endKey) {
       this.endKey = Optional.fromNullable(endKey);
       return this;
     }
@@ -46,15 +47,15 @@ public final class DeleteOption {
      * Enables 'Delete' requests to delete all the keys with matching prefix.
      *
      * <p>You should pass the key that is passed into
-     * {@link KV#delete(ByteString) KV.delete} method
+     * {@link KV#delete(ByteSequence) KV.delete} method
      * into this method as the given key.
      *
      * @param prefix the common prefix of all the keys that you want to delete
      * @return builder
      */
-    public Builder withPrefix(ByteString prefix) {
+    public Builder withPrefix(ByteSequence prefix) {
       checkNotNull(prefix, "prefix should not be null");
-      ByteString prefixEnd = OptionsUtil.prefixEndOf(prefix);
+      ByteSequence prefixEnd = OptionsUtil.prefixEndOf(prefix);
       this.withRange(prefixEnd);
       return this;
     }
@@ -76,15 +77,15 @@ public final class DeleteOption {
 
   }
 
-  private final Optional<ByteString> endKey;
+  private final Optional<ByteSequence> endKey;
   private final boolean prevKV;
 
-  private DeleteOption(Optional<ByteString> endKey, boolean prevKV) {
+  private DeleteOption(Optional<ByteSequence> endKey, boolean prevKV) {
     this.endKey = endKey;
     this.prevKV = prevKV;
   }
 
-  public Optional<ByteString> getEndKey() {
+  public Optional<ByteSequence> getEndKey() {
     return endKey;
   }
 

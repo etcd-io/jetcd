@@ -1,5 +1,6 @@
 package com.coreos.jetcd.options;
 
+import com.coreos.jetcd.data.ByteSequence;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 
@@ -18,15 +19,15 @@ public class OptionsUtil {
    * @param prefix the given prefix
    * @return the range end of the given prefix
    */
-  static final ByteString prefixEndOf(ByteString prefix) {
-    byte[] endKey = prefix.toByteArray().clone();
+  static final ByteSequence prefixEndOf(ByteSequence prefix) {
+    byte[] endKey = prefix.getBytes().clone();
     for (int i = endKey.length - 1; i >= 0; i--) {
       if (endKey[i] < 0xff) {
         endKey[i] = (byte) (endKey[i] + 1);
-        return ByteString.copyFrom(Arrays.copyOf(endKey, i + 1));
+        return ByteSequence.fromBytes(Arrays.copyOf(endKey, i + 1));
       }
     }
 
-    return ByteString.copyFrom(NO_PREFIX_END);
+    return ByteSequence.fromBytes(NO_PREFIX_END);
   }
 }

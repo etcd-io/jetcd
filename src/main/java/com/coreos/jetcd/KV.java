@@ -5,13 +5,13 @@ import com.coreos.jetcd.api.DeleteRangeResponse;
 import com.coreos.jetcd.api.PutResponse;
 import com.coreos.jetcd.api.RangeResponse;
 import com.coreos.jetcd.api.TxnResponse;
+import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.op.Txn;
 import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
 import com.google.common.annotations.Beta;
-import com.google.protobuf.ByteString;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -24,25 +24,25 @@ public interface KV {
   // Op.PUT
   // ***************
 
-  CompletableFuture<PutResponse> put(ByteString key, ByteString value);
+  CompletableFuture<PutResponse> put(ByteSequence key, ByteSequence value);
 
-  CompletableFuture<PutResponse> put(ByteString key, ByteString value, PutOption option);
+  CompletableFuture<PutResponse> put(ByteSequence key, ByteSequence value, PutOption option);
 
   // ***************
   // Op.GET
   // ***************
 
-  CompletableFuture<RangeResponse> get(ByteString key);
+  CompletableFuture<RangeResponse> get(ByteSequence key);
 
-  CompletableFuture<RangeResponse> get(ByteString key, GetOption option);
+  CompletableFuture<RangeResponse> get(ByteSequence key, GetOption option);
 
   // ***************
   // Op.DELETE
   // ***************
 
-  CompletableFuture<DeleteRangeResponse> delete(ByteString key);
+  CompletableFuture<DeleteRangeResponse> delete(ByteSequence key);
 
-  CompletableFuture<DeleteRangeResponse> delete(ByteString key, DeleteOption option);
+  CompletableFuture<DeleteRangeResponse> delete(ByteSequence key, DeleteOption option);
 
   // ***************
   // Op.COMPACT

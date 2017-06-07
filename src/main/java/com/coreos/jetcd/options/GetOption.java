@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.api.RangeRequest;
-import com.google.protobuf.ByteString;
+import com.coreos.jetcd.data.ByteSequence;
 import java.util.Optional;
 
 /**
@@ -32,7 +32,7 @@ public final class GetOption {
     private boolean serializable = false;
     private boolean keysOnly = false;
     private boolean countOnly = false;
-    private Optional<ByteString> endKey = Optional.empty();
+    private Optional<ByteSequence> endKey = Optional.empty();
 
     private Builder() {
     }
@@ -137,7 +137,7 @@ public final class GetOption {
      * @param endKey end key
      * @return builder
      */
-    public Builder withRange(ByteString endKey) {
+    public Builder withRange(ByteSequence endKey) {
       this.endKey = Optional.ofNullable(endKey);
       return this;
     }
@@ -146,15 +146,15 @@ public final class GetOption {
      * Enables 'Get' requests to obtain all the keys with matching prefix.
      *
      * <p>You should pass the key that is passed into
-     * {@link KV#get(ByteString) KV.get} method
+     * {@link KV#get(ByteSequence) KV.get} method
      * into this method as the given key.
      *
      * @param prefix the common prefix of all the keys that you want to get
      * @return builder
      */
-    public Builder withPrefix(ByteString prefix) {
+    public Builder withPrefix(ByteSequence prefix) {
       checkNotNull(prefix, "prefix should not be null");
-      ByteString prefixEnd = OptionsUtil.prefixEndOf(prefix);
+      ByteSequence prefixEnd = OptionsUtil.prefixEndOf(prefix);
       this.withRange(prefixEnd);
       return this;
     }
@@ -166,7 +166,7 @@ public final class GetOption {
 
   }
 
-  private final Optional<ByteString> endKey;
+  private final Optional<ByteSequence> endKey;
   private final long limit;
   private final long revision;
   private final RangeRequest.SortOrder sortOrder;
@@ -175,7 +175,7 @@ public final class GetOption {
   private final boolean keysOnly;
   private final boolean countOnly;
 
-  private GetOption(Optional<ByteString> endKey, long limit, long revision,
+  private GetOption(Optional<ByteSequence> endKey, long limit, long revision,
       RangeRequest.SortOrder sortOrder,
       RangeRequest.SortTarget sortTarget, boolean serializable, boolean keysOnly,
       boolean countOnly) {
@@ -198,7 +198,7 @@ public final class GetOption {
     return this.limit;
   }
 
-  public Optional<ByteString> getEndKey() {
+  public Optional<ByteSequence> getEndKey() {
     return this.endKey;
   }
 
