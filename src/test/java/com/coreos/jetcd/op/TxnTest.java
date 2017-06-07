@@ -1,15 +1,15 @@
 package com.coreos.jetcd.op;
 
+import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.options.PutOption;
-import com.google.protobuf.ByteString;
 import org.testng.annotations.Test;
 
 public class TxnTest {
 
-  final Cmp CMP = new Cmp(ByteString.copyFromUtf8("key"), Cmp.Op.GREATER,
-      CmpTarget.value(ByteString.copyFromUtf8("value")));
+  final Cmp CMP = new Cmp(ByteSequence.fromString("key"), Cmp.Op.GREATER,
+      CmpTarget.value(ByteSequence.fromString("value")));
   final Op OP = Op
-      .put(ByteString.copyFromUtf8("key2"), ByteString.copyFromUtf8("value2"), PutOption.DEFAULT);
+      .put(ByteSequence.fromString("key2"), ByteSequence.fromString("value2"), PutOption.DEFAULT);
 
   @Test
   public void testIfs() {
