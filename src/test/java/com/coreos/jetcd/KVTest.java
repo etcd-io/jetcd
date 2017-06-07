@@ -5,6 +5,7 @@ import com.coreos.jetcd.api.PutResponse;
 import com.coreos.jetcd.api.RangeRequest;
 import com.coreos.jetcd.api.RangeResponse;
 import com.coreos.jetcd.api.TxnResponse;
+import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.op.Cmp;
 import com.coreos.jetcd.op.CmpTarget;
 import com.coreos.jetcd.op.Op;
@@ -12,7 +13,6 @@ import com.coreos.jetcd.op.Txn;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
-import com.google.protobuf.ByteString;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.testng.annotations.BeforeTest;
@@ -28,131 +28,101 @@ public class KVTest {
   private KV kvClient;
   private Assertion test;
 
+  private static final ByteSequence SAMPLE_KEY = ByteSequence.fromString("sample_key");
+  private static final ByteSequence SAMPLE_VALUE = ByteSequence.fromString("sample_value");
+  private static final ByteSequence SAMPLE_KEY_2 = ByteSequence.fromString("sample_key2");
+  private static final ByteSequence SAMPLE_VALUE_2 = ByteSequence.fromString("sample_value2");
+  private static final ByteSequence SAMPLE_KEY_3 = ByteSequence.fromString("sample_key3");
+
+
   @BeforeTest
   public void setUp() throws Exception {
     test = new Assertion();
-    Client client = ClientBuilder.newBuilder().endpoints("http://localhost:2379").build();
+    Client client = ClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
     kvClient = client.getKVClient();
   }
 
   @Test
   public void testPut() throws Exception {
-    ByteString sampleKey = ByteString.copyFrom("sample_key", "UTF-8");
-    ByteString sampleValue = ByteString.copyFrom("sample_value", "UTF-8");
-    CompletableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue);
-    try {
-      PutResponse response = feature.get();
-      test.assertTrue(response.hasHeader());
-      test.assertTrue(!response.hasPrevKv());
-    } catch (Exception e) {
-      // empty
-      e.printStackTrace();
-    }
+    CompletableFuture<PutResponse> feature = kvClient.put(SAMPLE_KEY, SAMPLE_VALUE);
+    PutResponse response = feature.get();
+    test.assertTrue(response.hasHeader());
+    test.assertTrue(!response.hasPrevKv());
   }
 
-  @Test
-  public void testPutWithNotExistLease() throws Exception {
-    ByteString sampleKey = ByteString.copyFrom("sample_key", "UTF-8");
-    ByteString sampleValue = ByteString.copyFrom("sample_value", "UTF-8");
+  @Test(expectedExceptions = ExecutionException.class,
+      expectedExceptionsMessageRegExp = ".*etcdserver: requested lease not found")
+  public void testPutWithNotExistLease() throws ExecutionException, InterruptedException {
     PutOption option = PutOption.newBuilder().withLeaseId(99999).build();
-    CompletableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue, option);
-    try {
-      PutResponse response = feature.get();
-      test.assertTrue(response.hasHeader());
-    } catch (Exception e) {
-      // empty
-    }
+    CompletableFuture<PutResponse> feature = kvClient.put(SAMPLE_KEY, SAMPLE_VALUE, option);
+    feature.get();
   }
 
   @Test
   public void testGet() throws Exception {
-    ByteString sampleKey = ByteString.copyFrom("sample_key2", "UTF-8");
-    ByteString sampleValue = ByteString.copyFrom("sample_value2", "UTF-8");
-    CompletableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue);
-    try {
-      feature.get();
-      CompletableFuture<RangeResponse> getFeature = kvClient.get(sampleKey);
-      RangeResponse response = getFeature.get();
-      test.assertEquals(response.getKvsCount(), 1);
-      test.assertEquals(response.getKvs(0).getValue().toStringUtf8(), "sample_value2");
-      test.assertTrue(!response.getMore());
-    } catch (Exception e) {
-      // empty
-    }
+    CompletableFuture<PutResponse> feature = kvClient.put(SAMPLE_KEY_2, SAMPLE_VALUE_2);
+    feature.get();
+    CompletableFuture<RangeResponse> getFeature = kvClient.get(SAMPLE_KEY_2);
+    RangeResponse response = getFeature.get();
+    test.assertEquals(response.getKvsCount(), 1);
+    test.assertEquals(response.getKvs(0).getValue().toStringUtf8(),
+        SAMPLE_VALUE_2.toStringUtf8());
+    test.assertTrue(!response.getMore());
   }
 
   @Test
   public void testGetWithRev() throws Exception {
-    ByteString sampleKey = ByteString.copyFrom("sample_key3", "UTF-8");
-    ByteString sampleValue = ByteString.copyFrom("sample_value", "UTF-8");
-    ByteString sampleValueTwo = ByteString.copyFrom("sample_value2", "UTF-8");
-    CompletableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue);
-    try {
-      PutResponse putResp = feature.get();
-      kvClient.put(sampleKey, sampleValueTwo).get();
-      GetOption option = GetOption.newBuilder().withRevision(putResp.getHeader().getRevision())
-          .build();
-      CompletableFuture<RangeResponse> getFeature = kvClient.get(sampleKey, option);
-      RangeResponse response = getFeature.get();
-      test.assertEquals(response.getKvsCount(), 1);
-      test.assertEquals(response.getKvs(0).getValue().toStringUtf8(), "sample_value");
-    } catch (Exception e) {
-      // empty
-    }
+    CompletableFuture<PutResponse> feature = kvClient.put(SAMPLE_KEY_3, SAMPLE_VALUE);
+    PutResponse putResp = feature.get();
+    kvClient.put(SAMPLE_KEY_3, SAMPLE_VALUE_2).get();
+    GetOption option = GetOption.newBuilder().withRevision(putResp.getHeader().getRevision())
+        .build();
+    CompletableFuture<RangeResponse> getFeature = kvClient.get(SAMPLE_KEY_3, option);
+    RangeResponse response = getFeature.get();
+    test.assertEquals(response.getKvsCount(), 1);
+    test.assertEquals(response.getKvs(0).getValue().toStringUtf8(), SAMPLE_VALUE.toStringUtf8());
   }
 
   @Test
   public void testGetSortedPrefix() throws Exception {
-    ByteString key = ByteString.copyFrom("test_key", "UTF-8");
-    ByteString testValue = ByteString.copyFrom("test_value", "UTF-8");
-    for (int i = 0; i < 3; i++) {
-      ByteString testKey = ByteString.copyFrom("test_key" + i, "UTF-8");
-      try {
-        kvClient.put(testKey, testValue).get();
-      } catch (Exception e) {
-        // empty
-      }
-    }
-    ByteString endKey = ByteString.copyFrom("\0", "UTF-8");
+    String prefix = randomString();
+    int numPrefix = 3;
+    putKeysWithPrefix(prefix, numPrefix);
+
     GetOption option = GetOption.newBuilder().withSortField(RangeRequest.SortTarget.KEY)
         .withSortOrder(RangeRequest.SortOrder.DESCEND)
-        .withRange(endKey).build();
-    try {
-      CompletableFuture<RangeResponse> getFeature = kvClient.get(key, option);
-      RangeResponse response = getFeature.get();
-      test.assertEquals(response.getKvsCount(), 3);
-      test.assertEquals(response.getKvs(0).getKey().toStringUtf8(), "test_key2");
-      test.assertEquals(response.getKvs(0).getValue().toStringUtf8(), "test_value");
-      test.assertEquals(response.getKvs(1).getKey().toStringUtf8(), "test_key1");
-      test.assertEquals(response.getKvs(1).getValue().toStringUtf8(), "test_value");
-      test.assertEquals(response.getKvs(2).getKey().toStringUtf8(), "test_key0");
-      test.assertEquals(response.getKvs(2).getValue().toStringUtf8(), "test_value");
-    } catch (Exception e) {
-      // empty
+        .withPrefix(ByteSequence.fromString(prefix))
+        .build();
+    CompletableFuture<RangeResponse> getFeature = kvClient
+        .get(ByteSequence.fromString(prefix), option);
+    RangeResponse response = getFeature.get();
+
+    test.assertEquals(response.getKvsCount(), numPrefix);
+    for (int i = 0; i < numPrefix; i++) {
+      test.assertEquals(response.getKvs(i).getKey().toStringUtf8(), prefix + (numPrefix - i - 1));
+      test.assertEquals(response.getKvs(i).getValue().toStringUtf8(),
+          String.valueOf(numPrefix - i - 1));
     }
   }
 
   @Test(dependsOnMethods = "testPut")
   public void testDelete() throws Exception {
-    ByteString keyToDelete = ByteString.copyFrom("sample_key", "UTF-8");
-    try {
-      // count keys about to delete
-      CompletableFuture<RangeResponse> getFeature = kvClient.get(keyToDelete);
-      RangeResponse resp = getFeature.get();
+    ByteSequence keyToDelete = SAMPLE_KEY;
 
-      // delete the keys
-      CompletableFuture<DeleteRangeResponse> deleteFuture = kvClient.delete(keyToDelete);
-      DeleteRangeResponse delResp = deleteFuture.get();
-      test.assertEquals(resp.getKvsList().size(), delResp.getDeleted());
-    } catch (Exception e) {
-      // empty
-    }
+    // count keys about to delete
+    CompletableFuture<RangeResponse> getFeature = kvClient.get(keyToDelete);
+    RangeResponse resp = getFeature.get();
+
+    // delete the keys
+    CompletableFuture<DeleteRangeResponse> deleteFuture = kvClient.delete(keyToDelete);
+    DeleteRangeResponse delResp = deleteFuture.get();
+    test.assertEquals(resp.getKvsList().size(), delResp.getDeleted());
   }
 
   @Test
   public void testGetAndDeleteWithPrefix() throws Exception {
     String prefix = randomString();
-    ByteString key = ByteString.copyFromUtf8(prefix);
+    ByteSequence key = ByteSequence.fromString(prefix);
     int numPrefixes = 10;
 
     putKeysWithPrefix(prefix, numPrefixes);
@@ -178,37 +148,33 @@ public class KVTest {
   private void putKeysWithPrefix(String prefix, int numPrefixes)
       throws ExecutionException, InterruptedException {
     for (int i = 0; i < numPrefixes; i++) {
-      ByteString key = ByteString.copyFromUtf8(prefix + i);
-      ByteString value = ByteString.copyFromUtf8(String.valueOf(i));
+      ByteSequence key = ByteSequence.fromString(prefix + i);
+      ByteSequence value = ByteSequence.fromString("" + i);
       kvClient.put(key, value).get();
     }
   }
 
   @Test
   public void testTxn() throws Exception {
-    ByteString sampleKey = ByteString.copyFrom("txn_key", "UTF-8");
-    ByteString sampleValue = ByteString.copyFrom("xyz", "UTF-8");
-    ByteString cmpValue = ByteString.copyFrom("abc", "UTF-8");
-    ByteString putValue = ByteString.copyFrom("XYZ", "UTF-8");
-    ByteString putValueNew = ByteString.copyFrom("ABC", "UTF-8");
+    ByteSequence sampleKey = ByteSequence.fromString("txn_key");
+    ByteSequence sampleValue = ByteSequence.fromString("xyz");
+    ByteSequence cmpValue = ByteSequence.fromString("abc");
+    ByteSequence putValue = ByteSequence.fromString("XYZ");
+    ByteSequence putValueNew = ByteSequence.fromString("ABC");
     CompletableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue);
-    try {
-      // put the original txn key value pair
-      PutResponse putResp = feature.get();
+    // put the original txn key value pair
+    PutResponse putResp = feature.get();
 
-      // construct txn operation
-      Cmp cmp = new Cmp(sampleKey, Cmp.Op.GREATER, CmpTarget.value(cmpValue));
-      Txn txn = Txn.newBuilder().If(cmp).Then(Op.put(sampleKey, putValue, PutOption.DEFAULT))
-          .Else(Op.put(sampleKey, putValueNew, PutOption.DEFAULT)).build();
-      CompletableFuture<TxnResponse> txnResp = kvClient.commit(txn);
-      txnResp.get();
+    // construct txn operation
+    Cmp cmp = new Cmp(sampleKey, Cmp.Op.GREATER, CmpTarget.value(cmpValue));
+    Txn txn = Txn.newBuilder().If(cmp).Then(Op.put(sampleKey, putValue, PutOption.DEFAULT))
+        .Else(Op.put(sampleKey, putValueNew, PutOption.DEFAULT)).build();
+    CompletableFuture<TxnResponse> txnResp = kvClient.commit(txn);
+    txnResp.get();
 
-      // get the value
-      RangeResponse getResp = kvClient.get(sampleKey).get();
-      test.assertEquals(getResp.getKvsList().size(), 1);
-      test.assertEquals(getResp.getKvs(0).getValue().toStringUtf8(), "XYZ");
-    } catch (Exception e) {
-      // empty
-    }
+    // get the value
+    RangeResponse getResp = kvClient.get(sampleKey).get();
+    test.assertEquals(getResp.getKvsList().size(), 1);
+    test.assertEquals(getResp.getKvs(0).getValue().toStringUtf8(), putValue.toStringUtf8());
   }
 }
