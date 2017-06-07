@@ -1,6 +1,6 @@
 package com.coreos.jetcd;
 
-import com.google.protobuf.ByteString;
+import com.coreos.jetcd.data.ByteSequence;
 
 /**
  * Constants of Etcd.
@@ -8,5 +8,5 @@ import com.google.protobuf.ByteString;
 public class Constants {
 
   public static final String TOKEN = "token";
-  public static final ByteString NULL_KEY = ByteString.copyFrom(new byte[]{'\0'});
+  public static final ByteSequence NULL_KEY = ByteSequence.fromBytes(new byte[]{'\0'});
 }
