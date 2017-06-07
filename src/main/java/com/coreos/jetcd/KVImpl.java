@@ -109,9 +109,8 @@ class KVImpl implements KV {
         .setKey(byteStringFromByteSequence(key))
         .setPrevKv(option.isPrevKV());
 
-    if (option.getEndKey().isPresent()) {
-      builder.setRangeEnd(byteStringFromByteSequence(option.getEndKey().get()));
-    }
+    option.getEndKey()
+        .ifPresent((endKey) -> builder.setRangeEnd(byteStringFromByteSequence(endKey)));
 
     return FutureConverter.toCompletableFuture(this.stub.deleteRange(builder.build()));
   }
