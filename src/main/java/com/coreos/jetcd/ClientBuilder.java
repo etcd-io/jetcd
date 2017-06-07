@@ -4,11 +4,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.resolver.AbstractEtcdNameResolverFactory;
 import com.google.common.collect.Lists;
-import com.google.protobuf.ByteString;
 import java.util.List;
 
 /**
@@ -17,8 +17,8 @@ import java.util.List;
 public class ClientBuilder {
 
   private List<String> endpoints = Lists.newArrayList();
-  private ByteString name;
-  private ByteString password;
+  private ByteSequence name;
+  private ByteSequence password;
   private AbstractEtcdNameResolverFactory nameResolverFactory;
 
   private ClientBuilder() {
@@ -60,7 +60,7 @@ public class ClientBuilder {
     return this;
   }
 
-  public ByteString getName() {
+  public ByteSequence getName() {
     return name;
   }
 
@@ -71,13 +71,13 @@ public class ClientBuilder {
    * @return this builder
    * @throws NullPointerException if name is null
    */
-  public ClientBuilder setName(ByteString name) {
+  public ClientBuilder setName(ByteSequence name) {
     checkNotNull(name, "name can't be null");
     this.name = name;
     return this;
   }
 
-  public ByteString getPassword() {
+  public ByteSequence getPassword() {
     return password;
   }
 
@@ -88,7 +88,7 @@ public class ClientBuilder {
    * @return this builder
    * @throws NullPointerException if password is null
    */
-  public ClientBuilder setPassword(ByteString password) {
+  public ClientBuilder setPassword(ByteSequence password) {
     checkNotNull(password, "password can't be null");
     this.password = password;
     return this;

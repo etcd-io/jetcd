@@ -1,6 +1,7 @@
 package com.coreos.jetcd;
 
 import static com.coreos.jetcd.ClientUtil.defaultChannelBuilder;
+import static com.coreos.jetcd.Util.byteStringFromByteSequence;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -72,8 +73,8 @@ public class Client {
       checkNotNull(clientBuilder.endpoints(), "endpoints can't be null");
       this.nameResolverFactory = ClientUtil.simpleNameResolveFactory(clientBuilder.endpoints());
     }
-    this.user = clientBuilder.getName();
-    this.pass = clientBuilder.getPassword();
+    this.user = byteStringFromByteSequence(clientBuilder.getName());
+    this.pass = byteStringFromByteSequence(clientBuilder.getPassword());
 
     Pair<ManagedChannel, Optional<String>> channelToken = this
         .toChannelAndToken(
