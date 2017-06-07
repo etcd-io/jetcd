@@ -1,6 +1,7 @@
 package com.coreos.jetcd.op;
 
 import com.coreos.jetcd.api.Compare;
+import com.coreos.jetcd.data.ByteSequence;
 import com.google.protobuf.ByteString;
 
 /**
@@ -16,8 +17,8 @@ public class Cmp {
   private final Op op;
   private final CmpTarget<?> target;
 
-  public Cmp(ByteString key, Op compareOp, CmpTarget<?> target) {
-    this.key = key;
+  public Cmp(ByteSequence key, Op compareOp, CmpTarget<?> target) {
+    this.key = ByteString.copyFrom(key.getBytes());
     this.op = compareOp;
     this.target = target;
   }

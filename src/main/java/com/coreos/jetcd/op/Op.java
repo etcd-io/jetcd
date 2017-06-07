@@ -4,6 +4,7 @@ import com.coreos.jetcd.api.DeleteRangeRequest;
 import com.coreos.jetcd.api.PutRequest;
 import com.coreos.jetcd.api.RangeRequest;
 import com.coreos.jetcd.api.RequestOp;
+import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
@@ -31,16 +32,17 @@ public abstract class Op {
 
   abstract RequestOp toRequestOp();
 
-  public static PutOp put(ByteString key, ByteString value, PutOption option) {
-    return new PutOp(key, value, option);
+  public static PutOp put(ByteSequence key, ByteSequence value, PutOption option) {
+    return new PutOp(ByteString.copyFrom(key.getBytes()), ByteString.copyFrom(value.getBytes()),
+        option);
   }
 
-  public static GetOp get(ByteString key, GetOption option) {
-    return new GetOp(key, option);
+  public static GetOp get(ByteSequence key, GetOption option) {
+    return new GetOp(ByteString.copyFrom(key.getBytes()), option);
   }
 
-  public static DeleteOp delete(ByteString key, DeleteOption option) {
-    return new DeleteOp(key, option);
+  public static DeleteOp delete(ByteSequence key, DeleteOption option) {
+    return new DeleteOp(ByteString.copyFrom(key.getBytes()), option);
   }
 
   public static final class PutOp extends Op {
@@ -87,7 +89,7 @@ public abstract class Op {
           .setSortTarget(this.option.getSortField());
 
       if (this.option.getEndKey().isPresent()) {
-        range.setRangeEnd(this.option.getEndKey().get());
+        range.setRangeEnd(ByteString.copyFrom(this.option.getEndKey().get().getBytes()));
       }
 
       return RequestOp.newBuilder().setRequestRange(range).build();
@@ -109,7 +111,7 @@ public abstract class Op {
           .setPrevKv(this.option.isPrevKV());
 
       if (this.option.getEndKey().isPresent()) {
-        delete.setRangeEnd(this.option.getEndKey().get());
+        delete.setRangeEnd(ByteString.copyFrom(this.option.getEndKey().get().getBytes()));
       }
 
       return RequestOp.newBuilder().setRequestDeleteRange(delete).build();
