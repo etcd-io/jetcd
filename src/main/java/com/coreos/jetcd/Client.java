@@ -73,8 +73,14 @@ public class Client {
       checkNotNull(clientBuilder.endpoints(), "endpoints can't be null");
       this.nameResolverFactory = ClientUtil.simpleNameResolveFactory(clientBuilder.endpoints());
     }
-    this.user = byteStringFromByteSequence(clientBuilder.getName());
-    this.pass = byteStringFromByteSequence(clientBuilder.getPassword());
+
+    if (clientBuilder.getName() != null && clientBuilder.getPassword() != null) {
+      this.user = byteStringFromByteSequence(clientBuilder.getName());
+      this.pass = byteStringFromByteSequence(clientBuilder.getPassword());
+    } else {
+      this.user = null;
+      this.pass = null;
+    }
 
     Pair<ManagedChannel, Optional<String>> channelToken = this
         .toChannelAndToken(
