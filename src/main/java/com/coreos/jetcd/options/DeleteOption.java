@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.data.ByteSequence;
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 
 public final class DeleteOption {
@@ -17,7 +17,7 @@ public final class DeleteOption {
 
   public static class Builder {
 
-    private Optional<ByteSequence> endKey = Optional.absent();
+    private Optional<ByteSequence> endKey = Optional.empty();
     private boolean prevKV = false;
 
     private Builder() {
@@ -39,7 +39,7 @@ public final class DeleteOption {
      * @return builder
      */
     public Builder withRange(ByteSequence endKey) {
-      this.endKey = Optional.fromNullable(endKey);
+      this.endKey = Optional.ofNullable(endKey);
       return this;
     }
 
