@@ -16,7 +16,7 @@ import com.coreos.jetcd.api.AuthUserGrantRoleResponse;
 import com.coreos.jetcd.api.AuthUserListResponse;
 import com.coreos.jetcd.api.AuthUserRevokeRoleResponse;
 import com.coreos.jetcd.api.Permission;
-import com.google.protobuf.ByteString;
+import com.coreos.jetcd.data.ByteSequence;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -36,14 +36,14 @@ public interface Auth {
   // User Manage
   // ***************
 
-  CompletableFuture<AuthUserAddResponse> userAdd(ByteString name, ByteString password);
+  CompletableFuture<AuthUserAddResponse> userAdd(ByteSequence name, ByteSequence password);
 
-  CompletableFuture<AuthUserDeleteResponse> userDelete(ByteString name);
+  CompletableFuture<AuthUserDeleteResponse> userDelete(ByteSequence name);
 
-  CompletableFuture<AuthUserChangePasswordResponse> userChangePassword(ByteString name,
-      ByteString password);
+  CompletableFuture<AuthUserChangePasswordResponse> userChangePassword(ByteSequence name,
+      ByteSequence password);
 
-  CompletableFuture<AuthUserGetResponse> userGet(ByteString name);
+  CompletableFuture<AuthUserGetResponse> userGet(ByteSequence name);
 
   CompletableFuture<AuthUserListResponse> userList();
 
@@ -51,28 +51,29 @@ public interface Auth {
   // User Role Manage
   // ***************
 
-  CompletableFuture<AuthUserGrantRoleResponse> userGrantRole(ByteString name, ByteString role);
+  CompletableFuture<AuthUserGrantRoleResponse> userGrantRole(ByteSequence name, ByteSequence role);
 
-  CompletableFuture<AuthUserRevokeRoleResponse> userRevokeRole(ByteString name, ByteString role);
+  CompletableFuture<AuthUserRevokeRoleResponse> userRevokeRole(ByteSequence name,
+      ByteSequence role);
 
   // ***************
   // Role Manage
   // ***************
 
-  CompletableFuture<AuthRoleAddResponse> roleAdd(ByteString name);
+  CompletableFuture<AuthRoleAddResponse> roleAdd(ByteSequence name);
 
-  CompletableFuture<AuthRoleGrantPermissionResponse> roleGrantPermission(ByteString role,
-      ByteString key,
-      ByteString rangeEnd, Permission.Type permType);
+  CompletableFuture<AuthRoleGrantPermissionResponse> roleGrantPermission(ByteSequence role,
+      ByteSequence key,
+      ByteSequence rangeEnd, Permission.Type permType);
 
-  CompletableFuture<AuthRoleGetResponse> roleGet(ByteString role);
+  CompletableFuture<AuthRoleGetResponse> roleGet(ByteSequence role);
 
   CompletableFuture<AuthRoleListResponse> roleList();
 
-  CompletableFuture<AuthRoleRevokePermissionResponse> roleRevokePermission(ByteString role,
-      ByteString key,
-      ByteString rangeEnd);
+  CompletableFuture<AuthRoleRevokePermissionResponse> roleRevokePermission(ByteSequence role,
+      ByteSequence key,
+      ByteSequence rangeEnd);
 
-  CompletableFuture<AuthRoleDeleteResponse> roleDelete(ByteString role);
+  CompletableFuture<AuthRoleDeleteResponse> roleDelete(ByteSequence role);
 
 }
