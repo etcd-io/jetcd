@@ -129,6 +129,7 @@ public class Client {
   }
 
   public void close() {
+    this.getLeaseClient().close();
     this.executorService.shutdownNow();
     this.channel.shutdownNow();
   }
