@@ -6,8 +6,9 @@ import com.coreos.jetcd.Lease.LeaseHandler;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 import com.coreos.jetcd.api.PutResponse;
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
+import com.coreos.jetcd.options.LeaseOption;
 import com.coreos.jetcd.options.PutOption;
-import com.google.protobuf.ByteString;
 import java.util.concurrent.ExecutionException;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -25,6 +26,7 @@ public class LeaseTest {
 
 
   private static final ByteSequence KEY = ByteSequence.fromString("foo");
+  private static final ByteSequence KEY_2 = ByteSequence.fromString("foo2");
   private static final ByteSequence VALUE = ByteSequence.fromString("bar");
 
   @BeforeTest
@@ -94,4 +96,27 @@ public class LeaseTest {
     test.assertEquals(kvClient.get(KEY).get().getCount(), 0);
   }
 
+  @Test
+  public void testTimeToLive() throws ExecutionException, InterruptedException {
+    long ttl = 5;
+    long leaseID = leaseClient.grant(ttl).get().getID();
+    LeaseTimeToLiveResponse resp = leaseClient.timeToLive(leaseID, LeaseOption.DEFAULT).get();
+    assertThat(resp.getTTl()).isGreaterThan(0);
+    assertThat(resp.getGrantedTTL()).isEqualTo(ttl);
+  }
+
+  @Test
+  public void testTimeToLiveWithKeys() throws ExecutionException, InterruptedException {
+    long ttl = 5;
+    long leaseID = leaseClient.grant(ttl).get().getID();
+    PutOption putOption = PutOption.newBuilder().withLeaseId(leaseID).build();
+    kvClient.put(KEY_2, VALUE, putOption).get();
+
+    LeaseOption leaseOption = LeaseOption.newBuilder().withAttachedKeys().build();
+    LeaseTimeToLiveResponse resp = leaseClient.timeToLive(leaseID, leaseOption).get();
+    assertThat(resp.getTTl()).isGreaterThan(0);
+    assertThat(resp.getGrantedTTL()).isEqualTo(ttl);
+    assertThat(resp.getKeys().size()).isEqualTo(1);
+    assertThat(resp.getKeys().get(0)).isEqualTo(KEY_2);
+  }
 }

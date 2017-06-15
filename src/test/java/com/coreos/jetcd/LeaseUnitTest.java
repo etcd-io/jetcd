@@ -10,6 +10,8 @@ import com.coreos.jetcd.api.LeaseKeepAliveRequest;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
+import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
+import com.coreos.jetcd.options.LeaseOption;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcServerRule;
@@ -89,6 +91,13 @@ public class LeaseUnitTest {
 
     lrpFuture.get();
     verify(this.requestStreamObserverMock, times(1)).onCompleted();
+  }
+
+  @Test
+  public void testTimeToLiveNullOption() throws ExecutionException, InterruptedException {
+    assertThatThrownBy(() -> this.leaseCli.timeToLive(LEASE_ID, null))
+        .isInstanceOf(NullPointerException.class)
+        .hasMessage("LeaseOption should not be null");
   }
 
   private LeaseImplBase createLeaseImplBase(
