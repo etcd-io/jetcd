@@ -1,5 +1,8 @@
 package com.coreos.jetcd;
 
+import static com.coreos.jetcd.Util.listenableToCompletableFuture;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.coreos.jetcd.api.LeaseGrantRequest;
 import com.coreos.jetcd.api.LeaseGrantResponse;
 import com.coreos.jetcd.api.LeaseGrpc;
@@ -7,8 +10,10 @@ import com.coreos.jetcd.api.LeaseKeepAliveRequest;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 import com.coreos.jetcd.api.LeaseRevokeRequest;
 import com.coreos.jetcd.api.LeaseRevokeResponse;
+import com.coreos.jetcd.api.LeaseTimeToLiveRequest;
 import com.coreos.jetcd.lease.KeepAlive;
 import com.coreos.jetcd.lease.NoSuchLeaseException;
+import com.coreos.jetcd.options.LeaseOption;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
@@ -18,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -62,6 +68,7 @@ public class LeaseImpl implements Lease {
    */
   private StreamObserver<LeaseKeepAliveResponse> keepAliveResponseStreamObserver;
 
+  private ExecutorService executorService = Executors.newCachedThreadPool();
 
   /**
    * Init lease stub.
@@ -238,9 +245,25 @@ public class LeaseImpl implements Lease {
 
     // cancel grpc stream when leaseKeepAliveResponseCompletableFuture completes.
     // TODO: Have a internal executor to manage Async threads?
-    lkaFuture.whenCompleteAsync((val, throwable) -> requestObserver.onCompleted());
+    lkaFuture
+        .whenCompleteAsync((val, throwable) -> requestObserver.onCompleted(), this.executorService);
 
     return lkaFuture;
+  }
+
+  @Override
+  public CompletableFuture<com.coreos.jetcd.lease.LeaseTimeToLiveResponse> timeToLive(long leaseId,
+      LeaseOption option) {
+    checkNotNull(option, "LeaseOption should not be null");
+
+    LeaseTimeToLiveRequest leaseTimeToLiveRequest = LeaseTimeToLiveRequest.newBuilder()
+        .setID(leaseId)
+        .setKeys(option.isAttachedKeys())
+        .build();
+
+    return listenableToCompletableFuture(
+        this.leaseFutureStub.leaseTimeToLive(leaseTimeToLiveRequest),
+        Util::toLeaseTimeToLiveResponse, this.executorService);
   }
 
   /**
