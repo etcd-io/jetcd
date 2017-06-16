@@ -5,6 +5,9 @@ import com.coreos.jetcd.api.ResponseHeader;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.data.Header;
 import com.coreos.jetcd.data.KeyValue;
+import com.coreos.jetcd.lease.LeaseGrantResponse;
+import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
+import com.coreos.jetcd.lease.LeaseRevokeResponse;
 import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
 import com.coreos.jetcd.watch.WatchEvent;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -16,7 +19,7 @@ import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
- * This util is to convert api class to client class.
+ * a util class for jetcd.
  */
 class Util {
 
@@ -26,21 +29,21 @@ class Util {
   /**
    * convert ByteSequence to ByteString.
    */
-  protected static ByteString byteStringFromByteSequence(ByteSequence byteSequence) {
+  static ByteString byteStringFromByteSequence(ByteSequence byteSequence) {
     return ByteString.copyFrom(byteSequence.getBytes());
   }
 
   /**
    * convert ByteString to ByteSequence.
    */
-  protected static ByteSequence byteSequenceFromByteString(ByteString byteString) {
+  static ByteSequence byteSequenceFromByteString(ByteString byteString) {
     return ByteSequence.fromBytes(byteString.toByteArray());
   }
 
   /**
-   * convert API KeyValue to etcd client KeyValue.
+   * convert API KeyValue to client KeyValue.
    */
-  protected static KeyValue apiToClientKV(com.coreos.jetcd.api.KeyValue keyValue) {
+  static KeyValue toKV(com.coreos.jetcd.api.KeyValue keyValue) {
     return new KeyValue(
         byteSequenceFromByteString(keyValue.getKey()),
         byteSequenceFromByteString(keyValue.getValue()),
@@ -51,9 +54,9 @@ class Util {
   }
 
   /**
-   * convert API watch event to etcd client event.
+   * convert API watch event to client event.
    */
-  protected static WatchEvent apiToClientEvent(Event event) {
+  static WatchEvent toEvent(Event event) {
     WatchEvent.EventType eventType;
     switch (event.getType()) {
       case DELETE:
@@ -65,40 +68,69 @@ class Util {
       default:
         eventType = WatchEvent.EventType.UNRECOGNIZED;
     }
-    return new WatchEvent(apiToClientKV(event.getKv()), apiToClientKV(event.getPrevKv()),
+    return new WatchEvent(toKV(event.getKv()), toKV(event.getPrevKv()),
         eventType);
   }
 
-  protected static List<WatchEvent> apiToClientEvents(List<Event> events) {
+  /**
+   * convert API events to client events.
+   */
+  static List<WatchEvent> toEvents(List<Event> events) {
     List<WatchEvent> watchEvents = new ArrayList<>();
     for (Event event : events) {
-      watchEvents.add(apiToClientEvent(event));
+      watchEvents.add(toEvent(event));
     }
     return watchEvents;
   }
 
   /**
-   * convert API response header to self defined header.
+   * convert API response header to client header.
    */
-  protected static Header apiToClientHeader(ResponseHeader header, long compactRevision) {
+  static Header toHeader(ResponseHeader header, long compactRevision) {
     return new Header(header.getClusterId(), header.getMemberId(), header.getRevision(),
         header.getRaftTerm(), compactRevision);
   }
 
   /**
-   * convert API LeaseTimeToLiveResponse to self defined LeaseTimeToLiveResponse.
+   * convert API LeaseTimeToLiveResponse to client LeaseTimeToLiveResponse.
    */
   static LeaseTimeToLiveResponse toLeaseTimeToLiveResponse(
       com.coreos.jetcd.api.LeaseTimeToLiveResponse response) {
     List<ByteSequence> byteSequenceKeys = response.getKeysList().stream()
         .map(byteStringKey -> ByteSequence.fromBytes(byteStringKey.toByteArray()))
         .collect(Collectors.toList());
-    return new LeaseTimeToLiveResponse(apiToClientHeader(response.getHeader(), 0),
+    return new LeaseTimeToLiveResponse(toHeader(response.getHeader(), 0),
         response.getID(), response.getTTL(), response.getGrantedTTL(), byteSequenceKeys);
   }
 
   /**
-   * convert ListenableFuture of Type S to CompletableFuture of Type T. 
+   * convert API LeaseGrantResponse to client LeaseGrantResponse.
+   */
+  static LeaseGrantResponse toLeaseGrantResponse(
+      com.coreos.jetcd.api.LeaseGrantResponse response) {
+    return new LeaseGrantResponse(toHeader(response.getHeader(), 0), response.getID(),
+        response.getTTL());
+  }
+
+  /**
+   * convert API LeaseRevokeResponse to client LeaseRevokeResponse.
+   */
+  static LeaseRevokeResponse toLeaseRevokeResponse(
+      com.coreos.jetcd.api.LeaseRevokeResponse response) {
+    return new LeaseRevokeResponse(toHeader(response.getHeader(), 0));
+  }
+
+  /**
+   * convert API LeaseKeepAliveResponse to client LeaseKeepAliveResponse.
+   */
+  static LeaseKeepAliveResponse toLeaseKeepAliveResponse(
+      com.coreos.jetcd.api.LeaseKeepAliveResponse response) {
+    return new LeaseKeepAliveResponse(toHeader(response.getHeader(), 0), response.getID(),
+        response.getTTL());
+  }
+
+  /**
+   * convert ListenableFuture of Type S to CompletableFuture of Type T.
    */
   static <S, T> CompletableFuture<T> listenableToCompletableFuture(
       final ListenableFuture<S> sourceFuture, final FutureResultConvert<S, T> resultConvert,
