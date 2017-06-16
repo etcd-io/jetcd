@@ -1,7 +1,7 @@
 package com.coreos.jetcd;
 
-import static com.coreos.jetcd.Util.apiToClientEvents;
-import static com.coreos.jetcd.Util.apiToClientHeader;
+import static com.coreos.jetcd.Util.toEvents;
+import static com.coreos.jetcd.Util.toHeader;
 
 import com.coreos.jetcd.api.Event;
 import com.coreos.jetcd.api.WatchCancelRequest;
@@ -173,14 +173,14 @@ public class WatchImpl implements Watch {
         watcher.setCanceled(true);
         requestPair.getValue().completeExceptionally(
             new WatchCreateException("the start revision has been compacted",
-                apiToClientHeader(response.getHeader(), response.getCompactRevision())));
+                toHeader(response.getHeader(), response.getCompactRevision())));
         ;
       }
 
       if (response.getWatchId() == -1 && watcher.callback != null) {
         requestPair.getValue().completeExceptionally(
             new WatchCreateException("create watcher failed",
-                apiToClientHeader(response.getHeader(), response.getCompactRevision())));
+                toHeader(response.getHeader(), response.getCompactRevision())));
       } else {
         this.watchers.put(watcher.getWatchID(), watcher);
         watcher.setWatchID(response.getWatchId());
@@ -224,8 +224,8 @@ public class WatchImpl implements Watch {
 
           if (watcher.callback != null) {
             watcher.callback.onWatch(
-                apiToClientHeader(watchResponse.getHeader(), watchResponse.getCompactRevision()),
-                apiToClientEvents(events));
+                toHeader(watchResponse.getHeader(), watchResponse.getCompactRevision()),
+                toEvents(events));
           }
         } else {
           watcher.setLastRevision(watchResponse.getHeader().getRevision());
