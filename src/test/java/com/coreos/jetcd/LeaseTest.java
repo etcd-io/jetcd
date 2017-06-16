@@ -63,7 +63,7 @@ public class LeaseTest {
     long leaseID = leaseClient.grant(2).get().getID();
     kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
     test.assertEquals(kvClient.get(KEY).get().getCount(), 1);
-    LeaseKeepAliveResponse rp = leaseClient.keepAliveOnce(leaseID).get();
+    com.coreos.jetcd.lease.LeaseKeepAliveResponse rp = leaseClient.keepAliveOnce(leaseID).get();
     assertThat(rp.getTTL()).isGreaterThan(0);
   }
 

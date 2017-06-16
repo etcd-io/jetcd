@@ -1,17 +1,19 @@
 package com.coreos.jetcd;
 
 import static com.coreos.jetcd.Util.listenableToCompletableFuture;
+import static com.coreos.jetcd.Util.toLeaseKeepAliveResponse;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.api.LeaseGrantRequest;
-import com.coreos.jetcd.api.LeaseGrantResponse;
 import com.coreos.jetcd.api.LeaseGrpc;
 import com.coreos.jetcd.api.LeaseKeepAliveRequest;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 import com.coreos.jetcd.api.LeaseRevokeRequest;
-import com.coreos.jetcd.api.LeaseRevokeResponse;
 import com.coreos.jetcd.api.LeaseTimeToLiveRequest;
 import com.coreos.jetcd.lease.KeepAlive;
+import com.coreos.jetcd.lease.LeaseGrantResponse;
+import com.coreos.jetcd.lease.LeaseRevokeResponse;
+import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
 import com.coreos.jetcd.lease.NoSuchLeaseException;
 import com.coreos.jetcd.options.LeaseOption;
 import io.grpc.ManagedChannel;
@@ -28,7 +30,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 
 /**
  * Implementation of lease client.
@@ -159,7 +160,8 @@ public class LeaseImpl implements Lease {
   @Override
   public CompletableFuture<LeaseGrantResponse> grant(long ttl) {
     LeaseGrantRequest leaseGrantRequest = LeaseGrantRequest.newBuilder().setTTL(ttl).build();
-    return FutureConverter.toCompletableFuture(this.leaseFutureStub.leaseGrant(leaseGrantRequest));
+    return listenableToCompletableFuture(this.leaseFutureStub.leaseGrant(leaseGrantRequest),
+        Util::toLeaseGrantResponse, this.executorService);
   }
 
   /**
@@ -170,8 +172,8 @@ public class LeaseImpl implements Lease {
   @Override
   public CompletableFuture<LeaseRevokeResponse> revoke(long leaseId) {
     LeaseRevokeRequest leaseRevokeRequest = LeaseRevokeRequest.newBuilder().setID(leaseId).build();
-    return FutureConverter
-        .toCompletableFuture(this.leaseFutureStub.leaseRevoke(leaseRevokeRequest));
+    return listenableToCompletableFuture(this.leaseFutureStub.leaseRevoke(leaseRevokeRequest),
+        Util::toLeaseRevokeResponse, this.executorService);
   }
 
   /**
@@ -222,14 +224,16 @@ public class LeaseImpl implements Lease {
    * @return The keep alive response
    */
   @Override
-  public CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId) {
-    CompletableFuture<LeaseKeepAliveResponse> lkaFuture = new CompletableFuture<>();
+  public CompletableFuture<com.coreos.jetcd.lease.LeaseKeepAliveResponse> keepAliveOnce(
+      long leaseId) {
+    CompletableFuture<com.coreos.jetcd.lease.LeaseKeepAliveResponse> lkaFuture =
+        new CompletableFuture<>();
 
     StreamObserver<LeaseKeepAliveRequest> requestObserver = this.leaseStub
         .leaseKeepAlive(new StreamObserver<LeaseKeepAliveResponse>() {
           @Override
           public void onNext(LeaseKeepAliveResponse leaseKeepAliveResponse) {
-            lkaFuture.complete(leaseKeepAliveResponse);
+            lkaFuture.complete(toLeaseKeepAliveResponse(leaseKeepAliveResponse));
           }
 
           @Override
@@ -251,7 +255,7 @@ public class LeaseImpl implements Lease {
   }
 
   @Override
-  public CompletableFuture<com.coreos.jetcd.lease.LeaseTimeToLiveResponse> timeToLive(long leaseId,
+  public CompletableFuture<LeaseTimeToLiveResponse> timeToLive(long leaseId,
       LeaseOption option) {
     checkNotNull(option, "LeaseOption should not be null");
 

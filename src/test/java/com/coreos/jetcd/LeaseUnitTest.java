@@ -10,8 +10,6 @@ import com.coreos.jetcd.api.LeaseKeepAliveRequest;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
-import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
-import com.coreos.jetcd.options.LeaseOption;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcServerRule;
@@ -59,30 +57,33 @@ public class LeaseUnitTest {
 
   @Test(timeout = 1000)
   public void testKeepAliveOnce() throws ExecutionException, InterruptedException {
-    CompletableFuture<LeaseKeepAliveResponse> lrpFuture = this.leaseCli.keepAliveOnce(LEASE_ID);
+    CompletableFuture<com.coreos.jetcd.lease.LeaseKeepAliveResponse> lrpFuture = this.leaseCli
+        .keepAliveOnce(LEASE_ID);
     LeaseKeepAliveResponse lrp = LeaseKeepAliveResponse
         .newBuilder()
         .setID(LEASE_ID)
         .build();
     this.responseObserverRef.get().onNext(lrp);
 
-    LeaseKeepAliveResponse lrpActual = lrpFuture.get();
-    assertThat(lrpActual).isEqualTo(lrp);
+    com.coreos.jetcd.lease.LeaseKeepAliveResponse lrpActual = lrpFuture.get();
+    assertThat(lrpActual.getID()).isEqualTo(lrp.getID());
   }
 
   @Test(timeout = 1000)
   public void testKeepAliveOnceConnectError() throws ExecutionException, InterruptedException {
-    CompletableFuture<LeaseKeepAliveResponse> lrpFuture = this.leaseCli.keepAliveOnce(LEASE_ID);
+    CompletableFuture<com.coreos.jetcd.lease.LeaseKeepAliveResponse> lrpFuture = this.leaseCli
+        .keepAliveOnce(LEASE_ID);
     Throwable t = Status.ABORTED.asRuntimeException();
     responseObserverRef.get().onError(t);
-    
+
     assertThatThrownBy(() -> lrpFuture.get()).hasCause(t);
   }
 
   @Test(timeout = 1000)
   public void testKeepAliveOnceStreamCloseOnSuccess()
       throws ExecutionException, InterruptedException {
-    CompletableFuture<LeaseKeepAliveResponse> lrpFuture = this.leaseCli.keepAliveOnce(LEASE_ID);
+    CompletableFuture<com.coreos.jetcd.lease.LeaseKeepAliveResponse> lrpFuture = this.leaseCli
+        .keepAliveOnce(LEASE_ID);
     LeaseKeepAliveResponse lrp = LeaseKeepAliveResponse
         .newBuilder()
         .setID(LEASE_ID)
