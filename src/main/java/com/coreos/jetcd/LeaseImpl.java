@@ -244,7 +244,6 @@ public class LeaseImpl implements Lease {
     requestObserver.onNext(newKeepAliveRequest(leaseId));
 
     // cancel grpc stream when leaseKeepAliveResponseCompletableFuture completes.
-    // TODO: Have a internal executor to manage Async threads?
     lkaFuture
         .whenCompleteAsync((val, throwable) -> requestObserver.onCompleted(), this.executorService);
 
