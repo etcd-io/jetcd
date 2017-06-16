@@ -4,6 +4,7 @@ import com.coreos.jetcd.api.LeaseGrantResponse;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 import com.coreos.jetcd.api.LeaseRevokeResponse;
 import com.coreos.jetcd.lease.NoSuchLeaseException;
+import com.coreos.jetcd.options.LeaseOption;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -48,6 +49,16 @@ public interface Lease {
    * @return The keep alive response
    */
   CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId);
+
+  /**
+   * retrieves the lease information of the given lease ID.
+   *
+   * @param leaseId id of lease
+   * @param leaseOption LeaseOption
+   * @return LeaseTimeToLiveResponse wrapped in CompletableFuture
+   */
+  CompletableFuture<com.coreos.jetcd.lease.LeaseTimeToLiveResponse> timeToLive(long leaseId,
+      LeaseOption leaseOption);
 
   /**
    * set LeaseHandler for lease.
