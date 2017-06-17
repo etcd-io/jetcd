@@ -35,13 +35,9 @@ class KVImpl implements KV {
     this.stub = ClientUtil.configureStub(KVGrpc.newFutureStub(channel), token);
   }
 
-  // ***************
-  // Op.PUT
-  // ***************
-
   @Override
   public CompletableFuture<PutResponse> put(ByteSequence key, ByteSequence value) {
-    return put(key, value, PutOption.DEFAULT);
+    return this.put(key, value, PutOption.DEFAULT);
   }
 
   @Override
@@ -61,13 +57,9 @@ class KVImpl implements KV {
     return FutureConverter.toCompletableFuture(this.stub.put(request));
   }
 
-  // ***************
-  // Op.GET
-  // ***************
-
   @Override
   public CompletableFuture<RangeResponse> get(ByteSequence key) {
-    return get(key, GetOption.DEFAULT);
+    return this.get(key, GetOption.DEFAULT);
   }
 
   @Override
@@ -91,13 +83,9 @@ class KVImpl implements KV {
     return FutureConverter.toCompletableFuture(this.stub.range(builder.build()));
   }
 
-  // ***************
-  // Op.DELETE
-  // ***************
-
   @Override
   public CompletableFuture<DeleteRangeResponse> delete(ByteSequence key) {
-    return delete(key, DeleteOption.DEFAULT);
+    return this.delete(key, DeleteOption.DEFAULT);
   }
 
   @Override
@@ -117,7 +105,7 @@ class KVImpl implements KV {
 
   @Override
   public CompletableFuture<CompactionResponse> compact() {
-    return compact(CompactOption.DEFAULT);
+    return this.compact(CompactOption.DEFAULT);
   }
 
   @Override
