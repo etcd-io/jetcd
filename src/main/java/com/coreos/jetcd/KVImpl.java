@@ -1,19 +1,20 @@
 package com.coreos.jetcd;
 
 import static com.coreos.jetcd.Util.byteStringFromByteSequence;
+import static com.coreos.jetcd.Util.listenableToCompletableFuture;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.api.CompactionRequest;
-import com.coreos.jetcd.api.CompactionResponse;
 import com.coreos.jetcd.api.DeleteRangeRequest;
-import com.coreos.jetcd.api.DeleteRangeResponse;
 import com.coreos.jetcd.api.KVGrpc;
 import com.coreos.jetcd.api.PutRequest;
-import com.coreos.jetcd.api.PutResponse;
 import com.coreos.jetcd.api.RangeRequest;
-import com.coreos.jetcd.api.RangeResponse;
 import com.coreos.jetcd.api.TxnResponse;
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.kv.CompactResponse;
+import com.coreos.jetcd.kv.DeleteResponse;
+import com.coreos.jetcd.kv.GetResponse;
+import com.coreos.jetcd.kv.PutResponse;
 import com.coreos.jetcd.op.Txn;
 import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
@@ -22,6 +23,8 @@ import com.coreos.jetcd.options.PutOption;
 import io.grpc.ManagedChannel;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 
 /**
@@ -30,6 +33,8 @@ import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 class KVImpl implements KV {
 
   private final KVGrpc.KVFutureStub stub;
+
+  private ExecutorService executorService = Executors.newCachedThreadPool();
 
   KVImpl(ManagedChannel channel, Optional<String> token) {
     this.stub = ClientUtil.configureStub(KVGrpc.newFutureStub(channel), token);
@@ -54,16 +59,17 @@ class KVImpl implements KV {
         .setPrevKv(option.getPrevKV())
         .build();
 
-    return FutureConverter.toCompletableFuture(this.stub.put(request));
+    return listenableToCompletableFuture(this.stub.put(request), Util::toPutResponse,
+        this.executorService);
   }
 
   @Override
-  public CompletableFuture<RangeResponse> get(ByteSequence key) {
+  public CompletableFuture<GetResponse> get(ByteSequence key) {
     return this.get(key, GetOption.DEFAULT);
   }
 
   @Override
-  public CompletableFuture<RangeResponse> get(ByteSequence key, GetOption option) {
+  public CompletableFuture<GetResponse> get(ByteSequence key, GetOption option) {
     checkNotNull(key, "key should not be null");
     checkNotNull(option, "option should not be null");
 
@@ -80,16 +86,17 @@ class KVImpl implements KV {
     option.getEndKey().ifPresent((endKey) ->
         builder.setRangeEnd(byteStringFromByteSequence(endKey)));
 
-    return FutureConverter.toCompletableFuture(this.stub.range(builder.build()));
+    return listenableToCompletableFuture(this.stub.range(builder.build()), Util::toGetResponse,
+        this.executorService);
   }
 
   @Override
-  public CompletableFuture<DeleteRangeResponse> delete(ByteSequence key) {
+  public CompletableFuture<DeleteResponse> delete(ByteSequence key) {
     return this.delete(key, DeleteOption.DEFAULT);
   }
 
   @Override
-  public CompletableFuture<DeleteRangeResponse> delete(ByteSequence key, DeleteOption option) {
+  public CompletableFuture<DeleteResponse> delete(ByteSequence key, DeleteOption option) {
     checkNotNull(key, "key should not be null");
     checkNotNull(option, "option should not be null");
 
@@ -100,16 +107,17 @@ class KVImpl implements KV {
     option.getEndKey()
         .ifPresent((endKey) -> builder.setRangeEnd(byteStringFromByteSequence(endKey)));
 
-    return FutureConverter.toCompletableFuture(this.stub.deleteRange(builder.build()));
+    return listenableToCompletableFuture(this.stub.deleteRange(builder.build()),
+        Util::toDeleteResponse, this.executorService);
   }
 
   @Override
-  public CompletableFuture<CompactionResponse> compact(long rev) {
-    return this.compact(rev,CompactOption.DEFAULT);
+  public CompletableFuture<CompactResponse> compact(long rev) {
+    return this.compact(rev, CompactOption.DEFAULT);
   }
 
   @Override
-  public CompletableFuture<CompactionResponse> compact(long rev, CompactOption option) {
+  public CompletableFuture<CompactResponse> compact(long rev, CompactOption option) {
     checkNotNull(option, "option should not be null");
 
     CompactionRequest request = CompactionRequest.newBuilder()
@@ -117,9 +125,11 @@ class KVImpl implements KV {
         .setPhysical(option.isPhysical())
         .build();
 
-    return FutureConverter.toCompletableFuture(this.stub.compact(request));
+    return listenableToCompletableFuture(this.stub.compact(request), Util::toCompactResponse,
+        this.executorService);
   }
 
+  // TODO: remove type dependency api TxnResponse.
   @Override
   public CompletableFuture<TxnResponse> commit(Txn txn) {
     checkNotNull(txn, "txn should not be null");
