@@ -10,51 +10,34 @@ public final class CompactOption {
 
   public static class Builder {
 
-    private long revision = 0L;
     private boolean physical = false;
 
     private Builder() {
     }
 
     /**
-     * Provide the revision to use for the compact request.
-     *
-     * <p>All superseded keys with a revision less than the compaction revision will be removed..
-     *
-     * @param revision the revision to compact.
-     * @return builder
-     */
-    public Builder withRevision(long revision) {
-      this.revision = revision;
-      return this;
-    }
-
-    /**
-     * Set the compact request to wait until the compaction is physically applied.
+     * make compact RPC call wait until
+     * the compaction is physically applied to the local database
+     * such that compacted entries are totally removed from the
+     * backend database.
      *
      * @param physical whether the compact should wait until physically applied
      * @return builder
      */
-    public Builder withPhysical(boolean physical) {
+    public Builder withCompactPhysical(boolean physical) {
       this.physical = physical;
       return this;
     }
 
     public CompactOption build() {
-      return new CompactOption(this.revision, this.physical);
+      return new CompactOption(this.physical);
     }
   }
 
-  private final long revision;
   private final boolean physical;
 
-  private CompactOption(long revision, boolean physical) {
-    this.revision = revision;
+  private CompactOption(boolean physical) {
     this.physical = physical;
-  }
-
-  public long getRevision() {
-    return revision;
   }
 
   public boolean isPhysical() {

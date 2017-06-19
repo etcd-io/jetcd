@@ -104,16 +104,16 @@ class KVImpl implements KV {
   }
 
   @Override
-  public CompletableFuture<CompactionResponse> compact() {
-    return this.compact(CompactOption.DEFAULT);
+  public CompletableFuture<CompactionResponse> compact(long rev) {
+    return this.compact(rev,CompactOption.DEFAULT);
   }
 
   @Override
-  public CompletableFuture<CompactionResponse> compact(CompactOption option) {
+  public CompletableFuture<CompactionResponse> compact(long rev, CompactOption option) {
     checkNotNull(option, "option should not be null");
 
     CompactionRequest request = CompactionRequest.newBuilder()
-        .setRevision(option.getRevision())
+        .setRevision(rev)
         .setPhysical(option.isPhysical())
         .build();
 
