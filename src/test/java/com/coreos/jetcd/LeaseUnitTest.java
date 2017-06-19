@@ -58,7 +58,9 @@ public class LeaseUnitTest {
     this.responseObserverRef = new AtomicReference<>();
     this.grpcServerRule.getServiceRegistry().addService(
         this.createLeaseImplBase(this.responseObserverRef, this.requestStreamObserverMock));
-    this.leaseCli = new LeaseImpl(this.grpcServerRule.getChannel(), Optional.empty());
+
+    this.leaseCli = new LeaseImpl(this.grpcServerRule.getChannel(), Optional.empty(),
+        Executors.newCachedThreadPool());
   }
 
   @After

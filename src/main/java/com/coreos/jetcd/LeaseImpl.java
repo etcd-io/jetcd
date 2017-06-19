@@ -61,15 +61,15 @@ public class LeaseImpl implements Lease {
   /**
    * KeepAlive Request Stream, put request into this stream to keep the lease alive.
    */
-  private StreamObserver<LeaseKeepAliveRequest> keepAliveRequestStreamObserver;
+  private StreamObserver<LeaseKeepAliveRequest> keepAliveRequestObserver;
 
   /**
    * KeepAlive Response Streamer, receive keep alive response from this stream and update the
    * nextKeepAliveTime and deadline of the leases.
    */
-  private StreamObserver<com.coreos.jetcd.api.LeaseKeepAliveResponse> keepAliveResponseStreamObserver;
+  private StreamObserver<com.coreos.jetcd.api.LeaseKeepAliveResponse> keepAliveResponseObserver;
 
-  private ExecutorService executorService = Executors.newCachedThreadPool();
+  private ExecutorService executorService;
 
   /**
    * hasKeepAliveServiceStarted indicates whether the background keep alive service has started.
@@ -79,12 +79,17 @@ public class LeaseImpl implements Lease {
   private boolean closed;
 
   /**
-   * Init lease stub.
+   * Init lease stub with client.
    */
-  public LeaseImpl(final ManagedChannel channel, Optional<String> token) {
+  LeaseImpl(Client c) {
+    this(c.getChannel(), c.getToken(), c.getExecutorService());
+  }
+
+  LeaseImpl(final ManagedChannel channel, Optional<String> token, ExecutorService executor) {
     this.leaseFutureStub = ClientUtil
         .configureStub(LeaseGrpc.newFutureStub(channel), token);
     this.leaseStub = ClientUtil.configureStub(LeaseGrpc.newStub(channel), token);
+    this.executorService = executor;
   }
 
   @Override
@@ -139,8 +144,8 @@ public class LeaseImpl implements Lease {
 
     this.keepAliveFuture.cancel(true);
     this.deadlineFuture.cancel(true);
-    this.keepAliveRequestStreamObserver.onCompleted();
-    this.keepAliveResponseStreamObserver.onCompleted();
+    this.keepAliveRequestObserver.onCompleted();
+    this.keepAliveResponseObserver.onCompleted();
     this.scheduledExecutorService.shutdownNow();
     this.closeKeepAlives();
   }
@@ -166,16 +171,16 @@ public class LeaseImpl implements Lease {
 
   private void reset() {
     this.keepAliveFuture.cancel(true);
-    this.keepAliveRequestStreamObserver.onCompleted();
-    this.keepAliveResponseStreamObserver.onCompleted();
+    this.keepAliveRequestObserver.onCompleted();
+    this.keepAliveResponseObserver.onCompleted();
     this.sendKeepAliveExecutor();
   }
 
   private void sendKeepAliveExecutor() {
-    this.keepAliveResponseStreamObserver = this.createResponseObserver();
+    this.keepAliveResponseObserver = this.createResponseObserver();
     StreamObserver<LeaseKeepAliveRequest> requestStreamObserver = this.leaseStub
-        .leaseKeepAlive(this.keepAliveResponseStreamObserver);
-    this.keepAliveRequestStreamObserver = requestStreamObserver;
+        .leaseKeepAlive(this.keepAliveResponseObserver);
+    this.keepAliveRequestObserver = requestStreamObserver;
     this.keepAliveFuture = scheduledExecutorService
         .scheduleAtFixedRate(() -> {
           long now = System.currentTimeMillis();
