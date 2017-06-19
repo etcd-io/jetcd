@@ -67,10 +67,14 @@ public class LeaseImpl implements Lease {
    * KeepAlive Response Streamer, receive keep alive response from this stream and update the
    * nextKeepAliveTime and deadline of the leases.
    */
-  private StreamObserver<LeaseKeepAliveResponse> keepAliveResponseStreamObserver;
+  private StreamObserver<com.coreos.jetcd.api.LeaseKeepAliveResponse> keepAliveResponseStreamObserver;
 
   private ExecutorService executorService = Executors.newCachedThreadPool();
-  private boolean firstKeepAlive = true;
+
+  /**
+   * hasKeepAliveServiceStarted indicates whether the background keep alive service has started.
+   */
+  private boolean hasKeepAliveServiceStarted = false;
 
   private boolean closed;
 
@@ -114,8 +118,8 @@ public class LeaseImpl implements Lease {
     KeepAliveListenerImpl kal = new KeepAliveListenerImpl(keepAlive);
     keepAlive.addListener(kal);
 
-    if (this.firstKeepAlive) {
-      this.firstKeepAlive = false;
+    if (!this.hasKeepAliveServiceStarted) {
+      this.hasKeepAliveServiceStarted = true;
       this.start();
     }
 
@@ -129,7 +133,7 @@ public class LeaseImpl implements Lease {
     }
     this.closed = true;
 
-    if (this.firstKeepAlive) { // keepAlive is never called.
+    if (!this.hasKeepAliveServiceStarted) { // hasKeepAliveServiceStarted hasn't started.
       return;
     }
 
@@ -168,7 +172,7 @@ public class LeaseImpl implements Lease {
   }
 
   private void sendKeepAliveExecutor() {
-    this.keepAliveResponseStreamObserver = this.createResponseStreamObserver();
+    this.keepAliveResponseStreamObserver = this.createResponseObserver();
     StreamObserver<LeaseKeepAliveRequest> requestStreamObserver = this.leaseStub
         .leaseKeepAlive(this.keepAliveResponseStreamObserver);
     this.keepAliveRequestStreamObserver = requestStreamObserver;
@@ -186,10 +190,10 @@ public class LeaseImpl implements Lease {
         }, 0, 500, TimeUnit.MILLISECONDS);
   }
 
-  private StreamObserver<LeaseKeepAliveResponse> createResponseStreamObserver() {
-    return new StreamObserver<LeaseKeepAliveResponse>() {
+  private StreamObserver<com.coreos.jetcd.api.LeaseKeepAliveResponse> createResponseObserver() {
+    return new StreamObserver<com.coreos.jetcd.api.LeaseKeepAliveResponse>() {
       @Override
-      public void onNext(LeaseKeepAliveResponse leaseKeepAliveResponse) {
+      public void onNext(com.coreos.jetcd.api.LeaseKeepAliveResponse leaseKeepAliveResponse) {
         processKeepAliveResponse(leaseKeepAliveResponse);
       }
 
@@ -213,7 +217,7 @@ public class LeaseImpl implements Lease {
   }
 
   private synchronized void processKeepAliveResponse(
-      LeaseKeepAliveResponse leaseKeepAliveResponse) {
+      com.coreos.jetcd.api.LeaseKeepAliveResponse leaseKeepAliveResponse) {
     if (this.closed) {
       return;
     }
@@ -222,7 +226,7 @@ public class LeaseImpl implements Lease {
     long ttl = leaseKeepAliveResponse.getTTL();
 
     KeepAlive ka = this.keepAlives.get(leaseID);
-    if (ka == null) {
+    if (ka == null) { // return if the corresponding keep alive has closed.
       return;
     }
 
@@ -258,15 +262,15 @@ public class LeaseImpl implements Lease {
   }
 
   @Override
-  public CompletableFuture<com.coreos.jetcd.lease.LeaseKeepAliveResponse> keepAliveOnce(
+  public CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(
       long leaseId) {
-    CompletableFuture<com.coreos.jetcd.lease.LeaseKeepAliveResponse> lkaFuture =
+    CompletableFuture<LeaseKeepAliveResponse> lkaFuture =
         new CompletableFuture<>();
 
     StreamObserver<LeaseKeepAliveRequest> requestObserver = this.leaseStub
-        .leaseKeepAlive(new StreamObserver<LeaseKeepAliveResponse>() {
+        .leaseKeepAlive(new StreamObserver<com.coreos.jetcd.api.LeaseKeepAliveResponse>() {
           @Override
-          public void onNext(LeaseKeepAliveResponse leaseKeepAliveResponse) {
+          public void onNext(com.coreos.jetcd.api.LeaseKeepAliveResponse leaseKeepAliveResponse) {
             lkaFuture.complete(toLeaseKeepAliveResponse(leaseKeepAliveResponse));
           }
 

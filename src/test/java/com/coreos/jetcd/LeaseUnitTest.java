@@ -267,7 +267,7 @@ public class LeaseUnitTest {
       }
     };
   }
-  
+
   private LeaseImplBase createLeaseImplBase(
       AtomicReference<StreamObserver<LeaseKeepAliveResponse>> responseObserverRef,
       StreamObserver<LeaseKeepAliveRequest> requestStreamObserver) {

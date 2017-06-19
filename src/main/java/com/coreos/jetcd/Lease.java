@@ -66,9 +66,9 @@ public interface Lease {
      * @return listen blocks until it receives a LeaseKeepAliveResponse.
      * @throws InterruptedException if listen is interrupted.
      * @throws IllegalStateException if KeepAliveListener has already closed, lease client has
-     * closed, and other un-recoverable issues.
+     *        closed, and other un-recoverable issues.
      */
-    com.coreos.jetcd.lease.LeaseKeepAliveResponse listen() throws InterruptedException;
+    LeaseKeepAliveResponse listen() throws InterruptedException;
 
     /**
      * close KeepAliveListener. When all KeepAliveListeners for a given lease id are closed,
