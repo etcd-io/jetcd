@@ -3,8 +3,8 @@ package com.coreos.jetcd;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.coreos.jetcd.Lease.KeepAliveListener;
-import com.coreos.jetcd.api.PutResponse;
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.kv.PutResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
 import com.coreos.jetcd.options.LeaseOption;
@@ -56,7 +56,7 @@ public class LeaseTest {
   @Test(dependsOnMethods = "testGrant")
   public void testRevoke() throws Exception {
     long leaseID = leaseClient.grant(5).get().getID();
-    PutResponse putRep = kvClient
+    kvClient
         .put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
     test.assertEquals(kvClient.get(KEY).get().getCount(), 1);
     leaseClient.revoke(leaseID).get();

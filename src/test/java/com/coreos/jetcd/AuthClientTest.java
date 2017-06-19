@@ -6,6 +6,7 @@ import com.coreos.jetcd.api.RangeResponse;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
+import com.coreos.jetcd.kv.GetResponse;
 import io.grpc.StatusRuntimeException;
 import java.util.concurrent.ExecutionException;
 import org.testng.annotations.BeforeTest;
@@ -107,9 +108,9 @@ public class AuthClientTest {
     Throwable err = null;
     try {
       this.secureClient.getKVClient().put(testKey, testName).get();
-      RangeResponse rangeResponse = this.secureClient.getKVClient().get(testKey).get();
-      this.test.assertTrue(rangeResponse.getCount() != 0);
-      this.test.assertEquals(rangeResponse.getKvs(0).getValue().toByteArray(), testName.getBytes());
+      GetResponse getResponse = this.secureClient.getKVClient().get(testKey).get();
+      this.test.assertTrue(getResponse.getCount() != 0);
+      this.test.assertEquals(getResponse.getKvs().get(0).getValue().getBytes(), testName.getBytes());
     } catch (StatusRuntimeException sre) {
       err = sre;
     }
