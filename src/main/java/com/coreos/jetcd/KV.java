@@ -20,37 +20,79 @@ import java.util.concurrent.CompletableFuture;
 @Beta
 public interface KV {
 
-  // ***************
-  // Op.PUT
-  // ***************
-
+  /**
+   * put a key-value pair into etcd.
+   *
+   * @param key key in ByteSequence
+   * @param value value in ByteSequence
+   * @return PutResponse
+   */
   CompletableFuture<PutResponse> put(ByteSequence key, ByteSequence value);
 
+  /**
+   * put a key-value pair into etcd with option.
+   *
+   * @param key key in ByteSequence
+   * @param value value in ByteSequence
+   * @param option PutOption
+   * @return PutResponse
+   */
   CompletableFuture<PutResponse> put(ByteSequence key, ByteSequence value, PutOption option);
 
-  // ***************
-  // Op.GET
-  // ***************
-
+  /**
+   * retrieve value for the given key.
+   *
+   * @param key key in ByteSequence
+   * @return RangeResponse
+   */
   CompletableFuture<RangeResponse> get(ByteSequence key);
 
+  /**
+   * retrieve keys with GetOption.
+   *
+   * @param key key in ByteSequence
+   * @param option GetOption
+   * @return RangeResponse
+   */
   CompletableFuture<RangeResponse> get(ByteSequence key, GetOption option);
 
-  // ***************
-  // Op.DELETE
-  // ***************
-
+  /**
+   * delete a key.
+   *
+   * @param key key in ByteSequence
+   * @return DeleteRangeResponse
+   */
   CompletableFuture<DeleteRangeResponse> delete(ByteSequence key);
 
+  /**
+   * delete a key or range with option.
+   *
+   * @param key key in ByteSequence
+   * @param option DeleteOption
+   * @return DeleteRangeResponse
+   */
   CompletableFuture<DeleteRangeResponse> delete(ByteSequence key, DeleteOption option);
 
-  // ***************
-  // Op.COMPACT
-  // ***************
+  /**
+   * compact etcd KV history before the given rev.
+   *
+   *<p>All superseded keys with a revision less than the compaction revision will be removed.
+   *
+   * @param rev the revision to compact.
+   * @return CompactionResponse
+   */
+  CompletableFuture<CompactionResponse> compact(long rev);
 
-  CompletableFuture<CompactionResponse> compact();
-
-  CompletableFuture<CompactionResponse> compact(CompactOption option);
+  /**
+   * compact etcd KV history before the given rev with option.
+   *
+   *<p>All superseded keys with a revision less than the compaction revision will be removed.
+   *
+   * @param rev etcd revision
+   * @param option CompactOption
+   * @return CompactionResponse
+   */
+  CompletableFuture<CompactionResponse> compact(long rev, CompactOption option);
 
   /**
    * Commit a transaction built from {@link com.coreos.jetcd.op.Txn.Builder}.
@@ -59,3 +101,4 @@ public interface KV {
    */
   CompletableFuture<TxnResponse> commit(Txn txn);
 }
+
