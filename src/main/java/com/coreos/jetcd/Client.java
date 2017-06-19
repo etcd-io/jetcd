@@ -88,7 +88,7 @@ public class Client {
     this.channel = channelToken.getKey();
     this.token = channelToken.getValue();
     // TODO: *Impl constructor should take client as agrument to its constructor.
-    this.kvClient = Suppliers.memoize(() -> new KVImpl(channel, token));
+    this.kvClient = Suppliers.memoize(() -> new KVImpl(this));
     this.authClient = Suppliers.memoize(() -> new AuthImpl(channel, token));
     this.maintenanceClient = Suppliers.memoize(() -> new MaintenanceImpl(this));
     this.clusterClient = Suppliers.memoize(() -> new ClusterImpl(channel, token));
@@ -100,7 +100,7 @@ public class Client {
       throws AuthFailedException, ConnectException {
     checkNotNull(channelBuilder, "channelBuilder can't be null");
     ManagedChannel managedChannel = channelBuilder.build();
-    Optional<String> token = this.generateToken(managedChannel, this.user, this.pass);
+    Optional<String> token = generateToken(managedChannel, this.user, this.pass);
     return new Pair<>(managedChannel, token);
   }
 

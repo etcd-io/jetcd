@@ -20,11 +20,8 @@ import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
-import io.grpc.ManagedChannel;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 
 /**
@@ -34,10 +31,11 @@ class KVImpl implements KV {
 
   private final KVGrpc.KVFutureStub stub;
 
-  private ExecutorService executorService = Executors.newCachedThreadPool();
+  private ExecutorService executorService;
 
-  KVImpl(ManagedChannel channel, Optional<String> token) {
-    this.stub = ClientUtil.configureStub(KVGrpc.newFutureStub(channel), token);
+  KVImpl(Client c) {
+    this.stub = ClientUtil.configureStub(KVGrpc.newFutureStub(c.getChannel()), c.getToken());
+    this.executorService = c.getExecutorService();
   }
 
   @Override
