@@ -2,15 +2,16 @@ package com.coreos.jetcd;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.coreos.jetcd.Lease.LeaseHandler;
-import com.coreos.jetcd.api.LeaseKeepAliveResponse;
+import com.coreos.jetcd.Lease.KeepAliveListener;
 import com.coreos.jetcd.api.PutResponse;
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
 import com.coreos.jetcd.options.LeaseOption;
 import com.coreos.jetcd.options.PutOption;
 import java.util.concurrent.ExecutionException;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
 
@@ -24,17 +25,21 @@ public class LeaseTest {
   private Lease leaseClient;
   private Assertion test;
 
-
   private static final ByteSequence KEY = ByteSequence.fromString("foo");
   private static final ByteSequence KEY_2 = ByteSequence.fromString("foo2");
   private static final ByteSequence VALUE = ByteSequence.fromString("bar");
 
-  @BeforeTest
+  @BeforeClass
   public void setUp() throws Exception {
     test = new Assertion();
     client = ClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
     kvClient = client.getKVClient();
     leaseClient = client.getLeaseClient();
+  }
+
+  @AfterClass
+  public void tearDown() {
+    this.client.close();
   }
 
   @Test
@@ -58,42 +63,29 @@ public class LeaseTest {
     test.assertEquals(kvClient.get(KEY).get().getCount(), 0);
   }
 
-  @Test(dependsOnMethods = "testRevoke")
+  @Test
   public void testKeepAliveOnce() throws ExecutionException, InterruptedException {
     long leaseID = leaseClient.grant(2).get().getID();
     kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
     test.assertEquals(kvClient.get(KEY).get().getCount(), 1);
-    com.coreos.jetcd.lease.LeaseKeepAliveResponse rp = leaseClient.keepAliveOnce(leaseID).get();
+    LeaseKeepAliveResponse rp = leaseClient.keepAliveOnce(leaseID).get();
     assertThat(rp.getTTL()).isGreaterThan(0);
   }
 
-  @Test(dependsOnMethods = "testKeepAliveOnce")
-  public void testkeepAlive() throws Exception {
-    long leaseID = leaseClient.grant(5).get().getID();
-    PutResponse putRep = kvClient
-        .put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
-    test.assertEquals(kvClient.get(KEY).get().getCount(), 1);
-    leaseClient.startKeepAliveService();
-    leaseClient.keepAlive(leaseID, new LeaseHandler() {
-      @Override
-      public void onKeepAliveRespond(LeaseKeepAliveResponse keepAliveResponse) {
+  @Test(dependsOnMethods = "testRevoke")
+  public void testKeepAlive() throws ExecutionException, InterruptedException {
+    long leaseID = leaseClient.grant(2).get().getID();
+    kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+    assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
 
-      }
+    KeepAliveListener kal = leaseClient.keepAlive(leaseID);
+    com.coreos.jetcd.lease.LeaseKeepAliveResponse lkarp = kal.listen();
+    assertThat(lkarp.getTTL()).isGreaterThan(0);
 
-      @Override
-      public void onLeaseExpired(long leaseId) {
-
-      }
-
-      @Override
-      public void onError(Throwable throwable) {
-
-      }
-    });
-    Thread.sleep(6000);
-    test.assertEquals(kvClient.get(KEY).get().getCount(), 1);
-    leaseClient.cancelKeepAlive(leaseID);
-    test.assertEquals(kvClient.get(KEY).get().getCount(), 0);
+    // close keep alive listener should stop additional keep alive request on this lease.
+    kal.close();
+    Thread.sleep(3000);
+    assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
   }
 
   @Test

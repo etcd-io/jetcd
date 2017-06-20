@@ -1,13 +1,11 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
+import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseRevokeResponse;
 import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
-import com.coreos.jetcd.lease.NoSuchLeaseException;
 import com.coreos.jetcd.options.LeaseOption;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Interface of KeepAlive talking to etcd.
@@ -29,27 +27,12 @@ public interface Lease {
   CompletableFuture<LeaseRevokeResponse> revoke(long leaseId);
 
   /**
-   * keep alive one lease in background.
-   *
-   * @param leaseId id of lease to set handler
-   * @param leaseHandler the handler for the lease, this value can be null
-   */
-  void keepAlive(long leaseId, LeaseHandler leaseHandler);
-
-  /**
-   * cancel keep alive for lease in background.
-   *
-   * @param leaseId id of lease
-   */
-  void cancelKeepAlive(long leaseId) throws ExecutionException, InterruptedException;
-
-  /**
    * keep alive one lease only once.
    *
    * @param leaseId id of lease to keep alive once
    * @return The keep alive response
    */
-  CompletableFuture<com.coreos.jetcd.lease.LeaseKeepAliveResponse> keepAliveOnce(long leaseId);
+  CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId);
 
   /**
    * retrieves the lease information of the given lease ID.
@@ -62,57 +45,37 @@ public interface Lease {
       LeaseOption leaseOption);
 
   /**
-   * set LeaseHandler for lease.
+   * keep the given lease alive forever.
    *
-   * @param leaseId id of the lease to set handler
-   * @param leaseHandler the handler for the lease
-   * @throws NoSuchLeaseException if lease do not exist
+   * @param leaseId lease to be keep alive forever.
+   * @return a KeepAliveListener that listens for KeepAlive responses.
    */
-  void setLeaseHandler(long leaseId, LeaseHandler leaseHandler)
-      throws NoSuchLeaseException;
+  KeepAliveListener keepAlive(long leaseId);
 
   /**
-   * Init the request stream to etcd.
-   * start schedule to keep heartbeat to keep alive and remove dead leases.
-   *
-   * @throws IllegalStateException if the service is running already
+   * close Lease client and release its resources.
    */
-  void startKeepAliveService() throws IllegalStateException;
+  void close();
 
   /**
-   * end the schedule for keep alive and remove dead leases.
-   *
-   * @throws IllegalStateException if the service is not running yet
+   * KeepAliveListener listens for LeaseKeepAliveResponse of a given leaseID.
    */
-  void closeKeepAliveService() throws IllegalStateException;
-
-  /**
-   * It hints the state of the keep alive service.
-   *
-   * @return whether the keep alive service is running.
-   */
-  boolean isKeepAliveServiceRunning();
-
-  /**
-   * This interface is called by Etcd KeepAlive client to notify user about lease expiration and
-   * exception.
-   */
-  interface LeaseHandler {
+  interface KeepAliveListener {
 
     /**
-     * keepAliveResponse will be called when heartbeat keep alive call respond.
+     * @return listen blocks until it receives a LeaseKeepAliveResponse.
+     * @throws InterruptedException if listen is interrupted.
+     * @throws IllegalStateException if KeepAliveListener has already closed, lease client has
+     *        closed, and other un-recoverable issues.
      */
-    void onKeepAliveRespond(LeaseKeepAliveResponse keepAliveResponse);
+    LeaseKeepAliveResponse listen() throws InterruptedException;
 
     /**
-     * onLeaseExpired will be called when any leases is expired and remove from keep alive task.
+     * close KeepAliveListener. When all KeepAliveListeners for a given lease id are closed,
+     * keep alive for that lease id will be stopped.
+     *
+     * <p>close() must be called to release resources of KeepAliveListener.
      */
-    void onLeaseExpired(long leaseId);
-
-    /**
-     * onError will be called when keep alive encountered exception.
-     */
-    void onError(Throwable throwable);
+    void close();
   }
-
 }

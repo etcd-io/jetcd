@@ -125,7 +125,8 @@ class Util {
    */
   static LeaseKeepAliveResponse toLeaseKeepAliveResponse(
       com.coreos.jetcd.api.LeaseKeepAliveResponse response) {
-    return new LeaseKeepAliveResponse(toHeader(response.getHeader(), 0), response.getID(),
+    return new com.coreos.jetcd.lease.LeaseKeepAliveResponse(toHeader(response.getHeader(), 0),
+        response.getID(),
         response.getTTL());
   }
 

@@ -92,7 +92,7 @@ public class Client {
     this.authClient = Suppliers.memoize(() -> new AuthImpl(channel, token));
     this.maintenanceClient = Suppliers.memoize(() -> new MaintenanceImpl(this));
     this.clusterClient = Suppliers.memoize(() -> new ClusterImpl(channel, token));
-    this.leaseClient = Suppliers.memoize(() -> new LeaseImpl(channel, token));
+    this.leaseClient = Suppliers.memoize(() -> new LeaseImpl(this));
     this.watchClient = Suppliers.memoize(() -> new WatchImpl(channel, token));
   }
 
@@ -129,6 +129,7 @@ public class Client {
   }
 
   public void close() {
+    this.getLeaseClient().close();
     this.executorService.shutdownNow();
     this.channel.shutdownNow();
   }
