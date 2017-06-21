@@ -70,9 +70,11 @@ public final class GetOption {
      * @return builder
      */
     public Builder withSortOrder(RangeRequest.SortOrder order) {
+      // TODO: remove grpc dependency on RangeRequest.SortOrder.
       this.sortOrder = order;
       return this;
     }
+
 
     /**
      * Sort the return key value pairs in the provided <i>field</i>.
@@ -82,6 +84,7 @@ public final class GetOption {
      * @return builder
      */
     public Builder withSortField(RangeRequest.SortTarget field) {
+      // TODO: remove grpc dependency on RangeRequest.SortTarget.
       this.sortTarget = field;
       return this;
     }

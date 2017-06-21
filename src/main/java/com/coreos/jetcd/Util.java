@@ -1,10 +1,17 @@
 package com.coreos.jetcd;
 
+import com.coreos.jetcd.api.CompactionResponse;
+import com.coreos.jetcd.api.DeleteRangeResponse;
 import com.coreos.jetcd.api.Event;
+import com.coreos.jetcd.api.RangeResponse;
 import com.coreos.jetcd.api.ResponseHeader;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.data.Header;
 import com.coreos.jetcd.data.KeyValue;
+import com.coreos.jetcd.kv.CompactResponse;
+import com.coreos.jetcd.kv.DeleteResponse;
+import com.coreos.jetcd.kv.GetResponse;
+import com.coreos.jetcd.kv.PutResponse;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseRevokeResponse;
@@ -128,6 +135,43 @@ class Util {
     return new com.coreos.jetcd.lease.LeaseKeepAliveResponse(toHeader(response.getHeader(), 0),
         response.getID(),
         response.getTTL());
+  }
+
+  /**
+   * convert API rangeResponse to client GetResponse.
+   */
+  static GetResponse toGetResponse(RangeResponse rangeResponse) {
+    return new GetResponse(toHeader(rangeResponse.getHeader(), 0),
+        toKVs(rangeResponse.getKvsList()), rangeResponse.getMore(),
+        rangeResponse.getCount());
+  }
+
+  /**
+   * convert API PutResponse to client PutResponse.
+   */
+  static PutResponse toPutResponse(com.coreos.jetcd.api.PutResponse response) {
+    return new PutResponse(toHeader(response.getHeader(), 0), toKV(response.getPrevKv()),
+        response.hasPrevKv());
+  }
+
+  /**
+   * convert API DeleteRangeResponse to client DeleteResponse.
+   */
+  static DeleteResponse toDeleteResponse(DeleteRangeResponse rangeResponse) {
+    return new DeleteResponse(toHeader(rangeResponse.getHeader(), 0),
+        rangeResponse.getDeleted(),
+        toKVs(rangeResponse.getPrevKvsList()));
+  }
+
+  private static List<KeyValue> toKVs(List<com.coreos.jetcd.api.KeyValue> kvs) {
+    return kvs.stream().map(Util::toKV).collect(Collectors.toList());
+  }
+
+  /**
+   * convert API CompactionResponse to client CompactResponse.
+   */
+  static CompactResponse toCompactResponse(CompactionResponse response) {
+    return new CompactResponse(toHeader(response.getHeader(), 0));
   }
 
   /**

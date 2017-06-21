@@ -1,11 +1,11 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.CompactionResponse;
-import com.coreos.jetcd.api.DeleteRangeResponse;
-import com.coreos.jetcd.api.PutResponse;
-import com.coreos.jetcd.api.RangeResponse;
 import com.coreos.jetcd.api.TxnResponse;
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.kv.CompactResponse;
+import com.coreos.jetcd.kv.DeleteResponse;
+import com.coreos.jetcd.kv.GetResponse;
+import com.coreos.jetcd.kv.PutResponse;
 import com.coreos.jetcd.op.Txn;
 import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
@@ -37,62 +37,63 @@ public interface KV {
    * @param option PutOption
    * @return PutResponse
    */
-  CompletableFuture<PutResponse> put(ByteSequence key, ByteSequence value, PutOption option);
+  CompletableFuture<PutResponse> put(ByteSequence key, ByteSequence value,
+      PutOption option);
 
   /**
    * retrieve value for the given key.
    *
    * @param key key in ByteSequence
-   * @return RangeResponse
+   * @return GetResponse
    */
-  CompletableFuture<RangeResponse> get(ByteSequence key);
+  CompletableFuture<GetResponse> get(ByteSequence key);
 
   /**
    * retrieve keys with GetOption.
    *
    * @param key key in ByteSequence
    * @param option GetOption
-   * @return RangeResponse
+   * @return GetResponse
    */
-  CompletableFuture<RangeResponse> get(ByteSequence key, GetOption option);
+  CompletableFuture<GetResponse> get(ByteSequence key, GetOption option);
 
   /**
    * delete a key.
    *
    * @param key key in ByteSequence
-   * @return DeleteRangeResponse
+   * @return DeleteResponse
    */
-  CompletableFuture<DeleteRangeResponse> delete(ByteSequence key);
+  CompletableFuture<DeleteResponse> delete(ByteSequence key);
 
   /**
    * delete a key or range with option.
    *
    * @param key key in ByteSequence
    * @param option DeleteOption
-   * @return DeleteRangeResponse
+   * @return DeleteResponse
    */
-  CompletableFuture<DeleteRangeResponse> delete(ByteSequence key, DeleteOption option);
+  CompletableFuture<DeleteResponse> delete(ByteSequence key, DeleteOption option);
 
   /**
    * compact etcd KV history before the given rev.
    *
-   *<p>All superseded keys with a revision less than the compaction revision will be removed.
+   * <p>All superseded keys with a revision less than the compaction revision will be removed.
    *
    * @param rev the revision to compact.
-   * @return CompactionResponse
+   * @return CompactResponse
    */
-  CompletableFuture<CompactionResponse> compact(long rev);
+  CompletableFuture<CompactResponse> compact(long rev);
 
   /**
    * compact etcd KV history before the given rev with option.
    *
-   *<p>All superseded keys with a revision less than the compaction revision will be removed.
+   * <p>All superseded keys with a revision less than the compaction revision will be removed.
    *
    * @param rev etcd revision
    * @param option CompactOption
-   * @return CompactionResponse
+   * @return CompactResponse
    */
-  CompletableFuture<CompactionResponse> compact(long rev, CompactOption option);
+  CompletableFuture<CompactResponse> compact(long rev, CompactOption option);
 
   /**
    * Commit a transaction built from {@link com.coreos.jetcd.op.Txn.Builder}.
@@ -100,5 +101,6 @@ public interface KV {
    * @param txn txn to commit
    */
   CompletableFuture<TxnResponse> commit(Txn txn);
+
 }
 
