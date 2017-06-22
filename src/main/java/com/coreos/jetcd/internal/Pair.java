@@ -28,7 +28,7 @@ public class Pair<K, V> {
     if (obj == null || !(obj instanceof Pair)) {
       return false;
     }
-    Pair<K, V> other = (Pair<K, V>) obj;
+    Pair<?, ?> other = (Pair<?, ?>) obj;
     return key.equals(other.key) && value.equals(other.value);
   }
 }
