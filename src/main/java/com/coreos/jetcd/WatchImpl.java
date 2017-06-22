@@ -296,7 +296,7 @@ public class WatchImpl implements Watch {
         .withNoPut(oldOption.isNoPut())
         .withPrevKV(oldOption.isPrevKV())
         .withProgressNotify(oldOption.isProgressNotify())
-        .withRange(oldOption.getEndKey().get())
+        .withRange(oldOption.getEndKey().orElse(null))
         .withRevision(watcher.getLastRevision() + 1)
         .withResuming(true)
         .build();
