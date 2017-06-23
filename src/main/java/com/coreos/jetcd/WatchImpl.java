@@ -62,7 +62,7 @@ public class WatchImpl implements Watch {
     WatchRequest request = optionToWatchCreateRequest(Util.byteStringFromByteSequence(key),
         watchOption);
     WatcherImpl watcher = new WatcherImpl(key, watchOption, callback);
-    CompletableFuture<Watcher> waitFuture = new CompletableFuture();
+    CompletableFuture<Watcher> waitFuture = new CompletableFuture<Watcher>();
     this.pendingCreateWatchers.add(new Pair<>(watcher, waitFuture));
     getRequestStream().onNext(request);
     return waitFuture;

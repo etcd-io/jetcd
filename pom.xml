@@ -184,6 +184,10 @@
                     <source>${jdk.version}</source>
                     <target>${jdk.version}</target>
                     <encoding>UTF-8</encoding>
+                    <compilerArgs>
+                        <arg>-Xlint:all</arg>
+                        <!-- TODO <arg>-Werror</arg> -->
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
