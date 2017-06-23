@@ -1,5 +1,6 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
+import com.coreos.jetcd.Cluster;
 import com.coreos.jetcd.api.ClusterGrpc;
 import com.coreos.jetcd.api.MemberAddRequest;
 import com.coreos.jetcd.api.MemberAddResponse;
@@ -18,11 +19,15 @@ import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 /**
  * Implementation of cluster client.
  */
-public class ClusterImpl implements Cluster {
+class ClusterImpl implements Cluster {
 
   private final ClusterGrpc.ClusterFutureStub stub;
 
-  public ClusterImpl(ManagedChannel channel, Optional<String> token) {
+  ClusterImpl(ClientImpl c) {
+    this(c.getChannel(), c.getToken());
+  }
+
+  ClusterImpl(ManagedChannel channel, Optional<String> token) {
     this.stub = ClientUtil.configureStub(ClusterGrpc.newFutureStub(channel), token);
   }
 

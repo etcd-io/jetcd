@@ -1,5 +1,6 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
+import com.coreos.jetcd.Constants;
 import com.coreos.jetcd.resolver.SimpleEtcdNameResolverFactory;
 import io.grpc.CallCredentials;
 import io.grpc.ManagedChannelBuilder;

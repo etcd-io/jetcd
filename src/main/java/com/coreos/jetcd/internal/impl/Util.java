@@ -1,4 +1,4 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.api.CompactionResponse;
 import com.coreos.jetcd.api.DeleteRangeResponse;
@@ -23,12 +23,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * a util class for jetcd.
  */
-class Util {
+final class Util {
 
   private Util() {
   }
@@ -178,8 +179,7 @@ class Util {
    * convert ListenableFuture of Type S to CompletableFuture of Type T.
    */
   static <S, T> CompletableFuture<T> listenableToCompletableFuture(
-      final ListenableFuture<S> sourceFuture, final FutureResultConvert<S, T> resultConvert,
-      Executor executor) {
+      ListenableFuture<S> sourceFuture, Function<S, T> resultConvert, Executor executor) {
     CompletableFuture<T> targetFuture = new CompletableFuture<T>() {
       // the cancel of targetFuture also cancels the sourceFuture.
       @Override
@@ -191,18 +191,12 @@ class Util {
 
     sourceFuture.addListener(() -> {
       try {
-        targetFuture.complete(resultConvert.convert(sourceFuture.get()));
+        targetFuture.complete(resultConvert.apply(sourceFuture.get()));
       } catch (Exception e) {
         targetFuture.completeExceptionally(e);
       }
     }, executor);
 
     return targetFuture;
-  }
-
-  @FunctionalInterface
-  interface FutureResultConvert<S, T> {
-
-    T convert(S source);
   }
 }

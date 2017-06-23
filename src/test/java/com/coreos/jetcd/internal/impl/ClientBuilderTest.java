@@ -1,5 +1,6 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
+import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import org.testng.annotations.BeforeMethod;

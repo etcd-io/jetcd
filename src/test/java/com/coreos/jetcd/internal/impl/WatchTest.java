@@ -1,5 +1,9 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
+import com.coreos.jetcd.Client;
+import com.coreos.jetcd.ClientBuilder;
+import com.coreos.jetcd.KV;
+import com.coreos.jetcd.Watch;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.data.Header;
 import com.coreos.jetcd.exception.AuthFailedException;

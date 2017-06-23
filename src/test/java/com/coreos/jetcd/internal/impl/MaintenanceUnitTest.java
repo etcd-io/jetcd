@@ -1,17 +1,17 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.coreos.jetcd.ClientBuilder;
+import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.Maintenance.Snapshot;
 import com.coreos.jetcd.api.MaintenanceGrpc.MaintenanceImplBase;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
-import com.coreos.jetcd.api.StatusResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.google.protobuf.ByteString;
-import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Server;
 import io.grpc.Status;
@@ -50,7 +50,7 @@ public class MaintenanceUnitTest {
 
     ManagedChannelBuilder channelBuilder = InProcessChannelBuilder.forName(uniqueServerName).directExecutor();
     ClientBuilder clientBuilder = ClientBuilder.newBuilder().endpoints("test");
-    maintenanceCli = new Client(channelBuilder, clientBuilder).getMaintenanceClient();
+    maintenanceCli = new ClientImpl(channelBuilder, clientBuilder).getMaintenanceClient();
 
     MaintenanceImplBase base = this.defaultBase(responseObserverRef);
     serviceRegistry.addService(base);

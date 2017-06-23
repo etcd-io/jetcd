@@ -1,8 +1,6 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.Util.toEvents;
-import static com.coreos.jetcd.Util.toHeader;
-
+import com.coreos.jetcd.Watch;
 import com.coreos.jetcd.api.Event;
 import com.coreos.jetcd.api.WatchCancelRequest;
 import com.coreos.jetcd.api.WatchCreateRequest;
@@ -30,7 +28,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * etcd watcher Implementation.
  */
-public class WatchImpl implements Watch {
+class WatchImpl implements Watch {
 
   private volatile StreamObserver<WatchRequest> requestStream;
 
@@ -42,7 +40,11 @@ public class WatchImpl implements Watch {
       pendingCreateWatchers = new ConcurrentLinkedQueue<>();
   private Map<Long, CompletableFuture<Boolean>> pendingCancelFutures = new ConcurrentHashMap<>();
 
-  public WatchImpl(ManagedChannel channel, Optional<String> token) {
+  WatchImpl(ClientImpl c) {
+    this(c.getChannel(), c.getToken());
+  }
+
+  WatchImpl(ManagedChannel channel, Optional<String> token) {
     this.watchStub = ClientUtil.configureStub(WatchGrpc.newStub(channel), token);
   }
 
@@ -173,14 +175,14 @@ public class WatchImpl implements Watch {
         watcher.setCanceled(true);
         requestPair.getValue().completeExceptionally(
             new WatchCreateException("the start revision has been compacted",
-                toHeader(response.getHeader(), response.getCompactRevision())));
+                Util.toHeader(response.getHeader(), response.getCompactRevision())));
         ;
       }
 
       if (response.getWatchId() == -1 && watcher.callback != null) {
         requestPair.getValue().completeExceptionally(
             new WatchCreateException("create watcher failed",
-                toHeader(response.getHeader(), response.getCompactRevision())));
+                Util.toHeader(response.getHeader(), response.getCompactRevision())));
       } else {
         this.watchers.put(watcher.getWatchID(), watcher);
         watcher.setWatchID(response.getWatchId());
@@ -224,8 +226,8 @@ public class WatchImpl implements Watch {
 
           if (watcher.callback != null) {
             watcher.callback.onWatch(
-                toHeader(watchResponse.getHeader(), watchResponse.getCompactRevision()),
-                toEvents(events));
+                Util.toHeader(watchResponse.getHeader(), watchResponse.getCompactRevision()),
+                Util.toEvents(events));
           }
         } else {
           watcher.setLastRevision(watchResponse.getHeader().getRevision());
