@@ -182,8 +182,8 @@ public class WatchImpl implements Watch {
             new WatchCreateException("create watcher failed",
                 toHeader(response.getHeader(), response.getCompactRevision())));
       } else {
-        this.watchers.put(watcher.getWatchID(), watcher);
         watcher.setWatchID(response.getWatchId());
+        this.watchers.put(watcher.getWatchID(), watcher);
         requestPair.getValue().complete(watcher);
       }
 
