@@ -1,9 +1,8 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.Util.byteStringFromByteSequence;
-import static com.coreos.jetcd.Util.listenableToCompletableFuture;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.coreos.jetcd.KV;
 import com.coreos.jetcd.api.CompactionRequest;
 import com.coreos.jetcd.api.DeleteRangeRequest;
 import com.coreos.jetcd.api.KVGrpc;
@@ -20,6 +19,8 @@ import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
+import io.grpc.ManagedChannel;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import net.javacrumbs.futureconverter.java8guava.FutureConverter;
@@ -31,11 +32,15 @@ class KVImpl implements KV {
 
   private final KVGrpc.KVFutureStub stub;
 
-  private ExecutorService executorService;
+  private final ExecutorService executorService;
 
-  KVImpl(Client c) {
-    this.stub = ClientUtil.configureStub(KVGrpc.newFutureStub(c.getChannel()), c.getToken());
-    this.executorService = c.getExecutorService();
+  KVImpl(ClientImpl c) {
+    this(c.getChannel(), c.getToken(), c.getExecutorService());
+  }
+
+  KVImpl(ManagedChannel channel, Optional<String> token, ExecutorService executorService) {
+    this.stub = ClientUtil.configureStub(KVGrpc.newFutureStub(channel), token);
+    this.executorService = executorService;
   }
 
   @Override
@@ -51,13 +56,13 @@ class KVImpl implements KV {
     checkNotNull(option, "option should not be null");
 
     PutRequest request = PutRequest.newBuilder()
-        .setKey(byteStringFromByteSequence(key))
-        .setValue(byteStringFromByteSequence(value))
+        .setKey(Util.byteStringFromByteSequence(key))
+        .setValue(Util.byteStringFromByteSequence(value))
         .setLease(option.getLeaseId())
         .setPrevKv(option.getPrevKV())
         .build();
 
-    return listenableToCompletableFuture(this.stub.put(request), Util::toPutResponse,
+    return Util.listenableToCompletableFuture(this.stub.put(request), Util::toPutResponse,
         this.executorService);
   }
 
@@ -72,7 +77,7 @@ class KVImpl implements KV {
     checkNotNull(option, "option should not be null");
 
     RangeRequest.Builder builder = RangeRequest.newBuilder()
-        .setKey(byteStringFromByteSequence(key))
+        .setKey(Util.byteStringFromByteSequence(key))
         .setCountOnly(option.isCountOnly())
         .setLimit(option.getLimit())
         .setRevision(option.getRevision())
@@ -82,9 +87,9 @@ class KVImpl implements KV {
         .setSortTarget(option.getSortField());
 
     option.getEndKey().ifPresent((endKey) ->
-        builder.setRangeEnd(byteStringFromByteSequence(endKey)));
+        builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
 
-    return listenableToCompletableFuture(this.stub.range(builder.build()), Util::toGetResponse,
+    return Util.listenableToCompletableFuture(this.stub.range(builder.build()), Util::toGetResponse,
         this.executorService);
   }
 
@@ -99,13 +104,13 @@ class KVImpl implements KV {
     checkNotNull(option, "option should not be null");
 
     DeleteRangeRequest.Builder builder = DeleteRangeRequest.newBuilder()
-        .setKey(byteStringFromByteSequence(key))
+        .setKey(Util.byteStringFromByteSequence(key))
         .setPrevKv(option.isPrevKV());
 
     option.getEndKey()
-        .ifPresent((endKey) -> builder.setRangeEnd(byteStringFromByteSequence(endKey)));
+        .ifPresent((endKey) -> builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
 
-    return listenableToCompletableFuture(this.stub.deleteRange(builder.build()),
+    return Util.listenableToCompletableFuture(this.stub.deleteRange(builder.build()),
         Util::toDeleteResponse, this.executorService);
   }
 
@@ -123,7 +128,7 @@ class KVImpl implements KV {
         .setPhysical(option.isPhysical())
         .build();
 
-    return listenableToCompletableFuture(this.stub.compact(request), Util::toCompactResponse,
+    return Util.listenableToCompletableFuture(this.stub.compact(request), Util::toCompactResponse,
         this.executorService);
   }
 

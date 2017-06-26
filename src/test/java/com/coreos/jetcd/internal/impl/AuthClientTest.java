@@ -1,5 +1,9 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
+import com.coreos.jetcd.Auth;
+import com.coreos.jetcd.Client;
+import com.coreos.jetcd.ClientBuilder;
+import com.coreos.jetcd.KV;
 import com.coreos.jetcd.api.AuthRoleGetResponse;
 import com.coreos.jetcd.api.Permission;
 import com.coreos.jetcd.api.RangeResponse;

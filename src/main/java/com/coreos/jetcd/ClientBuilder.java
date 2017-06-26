@@ -7,8 +7,10 @@ import static com.google.common.base.Preconditions.checkState;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
+import com.coreos.jetcd.internal.impl.ClientImpl;
 import com.coreos.jetcd.resolver.AbstractEtcdNameResolverFactory;
 import com.google.common.collect.Lists;
+
 import java.util.List;
 
 /**
@@ -127,6 +129,6 @@ public class ClientBuilder {
   public Client build() throws ConnectException, AuthFailedException {
     checkState(!endpoints.isEmpty() || nameResolverFactory != null,
         "please configure etcd server endpoints or nameResolverFactory before build.");
-    return new Client(null, this);
+    return new ClientImpl(null, this);
   }
 }

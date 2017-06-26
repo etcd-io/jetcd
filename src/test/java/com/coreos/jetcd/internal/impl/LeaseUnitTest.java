@@ -1,4 +1,4 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -8,12 +8,14 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import com.coreos.jetcd.Lease;
 import com.coreos.jetcd.Lease.KeepAliveListener;
 import com.coreos.jetcd.api.LeaseGrpc.LeaseImplBase;
 import com.coreos.jetcd.api.LeaseKeepAliveRequest;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
+import com.coreos.jetcd.internal.impl.LeaseImpl;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcServerRule;

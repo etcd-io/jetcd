@@ -1,15 +1,13 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.Util.listenableToCompletableFuture;
-import static com.coreos.jetcd.Util.toLeaseKeepAliveResponse;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.coreos.jetcd.Lease;
 import com.coreos.jetcd.api.LeaseGrantRequest;
 import com.coreos.jetcd.api.LeaseGrpc;
 import com.coreos.jetcd.api.LeaseKeepAliveRequest;
 import com.coreos.jetcd.api.LeaseRevokeRequest;
 import com.coreos.jetcd.api.LeaseTimeToLiveRequest;
-import com.coreos.jetcd.lease.KeepAlive;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponseWithError;
@@ -18,9 +16,11 @@ import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
 import com.coreos.jetcd.options.LeaseOption;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,6 +34,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
 
 /**
  * Implementation of lease client.
@@ -81,11 +82,11 @@ public class LeaseImpl implements Lease {
   /**
    * Init lease stub with client.
    */
-  LeaseImpl(Client c) {
+  LeaseImpl(ClientImpl c) {
     this(c.getChannel(), c.getToken(), c.getExecutorService());
   }
 
-  LeaseImpl(final ManagedChannel channel, Optional<String> token, ExecutorService executor) {
+  LeaseImpl(ManagedChannel channel, Optional<String> token, ExecutorService executor) {
     this.leaseFutureStub = ClientUtil
         .configureStub(LeaseGrpc.newFutureStub(channel), token);
     this.leaseStub = ClientUtil.configureStub(LeaseGrpc.newStub(channel), token);
@@ -95,14 +96,14 @@ public class LeaseImpl implements Lease {
   @Override
   public CompletableFuture<LeaseGrantResponse> grant(long ttl) {
     LeaseGrantRequest leaseGrantRequest = LeaseGrantRequest.newBuilder().setTTL(ttl).build();
-    return listenableToCompletableFuture(this.leaseFutureStub.leaseGrant(leaseGrantRequest),
+    return Util.listenableToCompletableFuture(this.leaseFutureStub.leaseGrant(leaseGrantRequest),
         Util::toLeaseGrantResponse, this.executorService);
   }
 
   @Override
   public CompletableFuture<LeaseRevokeResponse> revoke(long leaseId) {
     LeaseRevokeRequest leaseRevokeRequest = LeaseRevokeRequest.newBuilder().setID(leaseId).build();
-    return listenableToCompletableFuture(this.leaseFutureStub.leaseRevoke(leaseRevokeRequest),
+    return Util.listenableToCompletableFuture(this.leaseFutureStub.leaseRevoke(leaseRevokeRequest),
         Util::toLeaseRevokeResponse, this.executorService);
   }
 
@@ -276,7 +277,7 @@ public class LeaseImpl implements Lease {
         .leaseKeepAlive(new StreamObserver<com.coreos.jetcd.api.LeaseKeepAliveResponse>() {
           @Override
           public void onNext(com.coreos.jetcd.api.LeaseKeepAliveResponse leaseKeepAliveResponse) {
-            lkaFuture.complete(toLeaseKeepAliveResponse(leaseKeepAliveResponse));
+            lkaFuture.complete(Util.toLeaseKeepAliveResponse(leaseKeepAliveResponse));
           }
 
           @Override
@@ -307,7 +308,7 @@ public class LeaseImpl implements Lease {
         .setKeys(option.isAttachedKeys())
         .build();
 
-    return listenableToCompletableFuture(
+    return Util.listenableToCompletableFuture(
         this.leaseFutureStub.leaseTimeToLive(leaseTimeToLiveRequest),
         Util::toLeaseTimeToLiveResponse, this.executorService);
   }
@@ -317,7 +318,7 @@ public class LeaseImpl implements Lease {
   }
 
 
-  public class KeepAliveListenerImpl implements KeepAliveListener {
+  private class KeepAliveListenerImpl implements KeepAliveListener {
 
     private BlockingQueue<LeaseKeepAliveResponseWithError> queue = new LinkedBlockingDeque<>(1);
     private ExecutorService service = Executors.newSingleThreadExecutor();
@@ -361,7 +362,7 @@ public class LeaseImpl implements Lease {
           this.reason = lkae.error;
           throw lkae.error;
         }
-        return toLeaseKeepAliveResponse(lkae.leaseKeepAliveResponse);
+        return Util.toLeaseKeepAliveResponse(lkae.leaseKeepAliveResponse);
       });
 
       try {
@@ -389,6 +390,71 @@ public class LeaseImpl implements Lease {
         this.owner.removeListener(this);
         this.service.shutdownNow();
       }
+    }
+  }
+
+  /**
+   * The KeepAlive hold the keepAlive information for lease.
+   */
+  private class KeepAlive {
+
+    private long deadLine;
+
+    private long nextKeepAlive;
+
+    // ownerLock protects owner map.
+    private final Object ownerLock;
+
+    private Map<Long, KeepAlive> owner;
+
+    private long leaseId;
+
+    private Set<KeepAliveListenerImpl> listenersSet = Collections
+        .newSetFromMap(new ConcurrentHashMap<>());
+
+    public KeepAlive(Map<Long, KeepAlive> owner, Object ownerLock, long leaseId) {
+      this.owner = owner;
+      this.ownerLock = ownerLock;
+      this.leaseId = leaseId;
+    }
+
+    public long getDeadLine() {
+      return deadLine;
+    }
+
+    public void setDeadLine(long deadLine) {
+      this.deadLine = deadLine;
+    }
+
+    public void addListener(KeepAliveListenerImpl listener) {
+      this.listenersSet.add(listener);
+    }
+
+    public long getNextKeepAlive() {
+      return nextKeepAlive;
+    }
+
+    public void setNextKeepAlive(long nextKeepAlive) {
+      this.nextKeepAlive = nextKeepAlive;
+    }
+
+
+    public void sentKeepAliveResp(LeaseKeepAliveResponseWithError lkae) {
+      this.listenersSet.forEach((l) -> l.enqueue(lkae));
+    }
+
+    public void removeListener(KeepAliveListenerImpl l) {
+      this.listenersSet.remove(l);
+      synchronized (this.ownerLock) {
+        if (this.listenersSet.isEmpty()) {
+          this.owner.remove(this.leaseId);
+        }
+      }
+    }
+
+    public void close() {
+      this.listenersSet.forEach((l) -> l.close());
+      this.listenersSet.clear();
     }
   }
 }

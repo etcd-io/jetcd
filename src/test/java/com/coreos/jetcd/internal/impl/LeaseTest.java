@@ -1,7 +1,11 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.coreos.jetcd.Client;
+import com.coreos.jetcd.ClientBuilder;
+import com.coreos.jetcd.KV;
+import com.coreos.jetcd.Lease;
 import com.coreos.jetcd.Lease.KeepAliveListener;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.kv.PutResponse;

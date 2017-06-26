@@ -1,5 +1,8 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
+import com.coreos.jetcd.Client;
+import com.coreos.jetcd.ClientBuilder;
+import com.coreos.jetcd.KV;
 import com.coreos.jetcd.api.RangeRequest;
 import com.coreos.jetcd.api.TxnResponse;
 import com.coreos.jetcd.data.ByteSequence;

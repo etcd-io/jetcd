@@ -1,9 +1,11 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.ClientUtil.defaultChannelBuilder;
+import static com.coreos.jetcd.internal.impl.ClientUtil.defaultChannelBuilder;
+import static com.coreos.jetcd.internal.impl.ClientUtil.simpleNameResolveFactory;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.api.AlarmMember;
 import com.coreos.jetcd.api.AlarmRequest;
 import com.coreos.jetcd.api.AlarmResponse;
@@ -21,6 +23,7 @@ import com.coreos.jetcd.internal.Pair;
 import com.coreos.jetcd.maintenance.SnapshotReaderResponseWithError;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.NameResolver;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
@@ -41,26 +44,32 @@ import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 /**
  * Implementation of maintenance client.
  */
-public class MaintenanceImpl implements Maintenance {
+class MaintenanceImpl implements Maintenance {
 
-  private MaintenanceGrpc.MaintenanceFutureStub futureStub;
-  private MaintenanceGrpc.MaintenanceStub streamStub;
-  private DialFunction dialFunction;
-  private ExecutorService executorService;
+  private final MaintenanceGrpc.MaintenanceFutureStub futureStub;
+  private final MaintenanceGrpc.MaintenanceStub streamStub;
+  private final ExecutorService executorService;
+  private final DialFunction dialFunction;
 
-  public MaintenanceImpl(Client c) {
-    dialFunction = (endpoint) -> {
-      NameResolver.Factory nameResolverFactory = ClientUtil
-          .simpleNameResolveFactory(Arrays.asList(endpoint));
-      return c.toChannelAndToken(defaultChannelBuilder(nameResolverFactory));
-    };
-    
-    this.executorService = c.getExecutorService();
+  MaintenanceImpl(ClientImpl c) {
+    this(
+        c.getChannel(),
+        c.getToken(),
+        c.getExecutorService(),
+        (endpoint) -> {
+          NameResolver.Factory factory = simpleNameResolveFactory(Arrays.asList(endpoint));
+          ManagedChannelBuilder<?> builder = defaultChannelBuilder(factory);
+          return c.toChannelAndToken(builder);
+        }
+    );
+  }
 
-    this.futureStub = ClientUtil
-        .configureStub(MaintenanceGrpc.newFutureStub(c.getChannel()), c.getToken());
-    this.streamStub = ClientUtil
-        .configureStub(MaintenanceGrpc.newStub(c.getChannel()), c.getToken());
+  MaintenanceImpl(ManagedChannel channel, Optional<String> token, ExecutorService executorService,
+      DialFunction dialFunction) {
+    this.executorService = executorService;
+    this.futureStub = ClientUtil.configureStub(MaintenanceGrpc.newFutureStub(channel), token);
+    this.streamStub = ClientUtil.configureStub(MaintenanceGrpc.newStub(channel), token);
+    this.dialFunction = dialFunction;
   }
 
   @FunctionalInterface

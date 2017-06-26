@@ -1,4 +1,4 @@
-package com.coreos.jetcd;
+package com.coreos.jetcd.internal.impl;
 
 /**
  * Test constants, contain the cluster info.
