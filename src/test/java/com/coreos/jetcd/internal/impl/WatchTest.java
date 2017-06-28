@@ -1,25 +1,26 @@
 package com.coreos.jetcd.internal.impl;
 
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Watch;
+import com.coreos.jetcd.Watch.Watcher;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.data.Header;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
-import com.coreos.jetcd.options.WatchOption;
 import com.coreos.jetcd.watch.WatchEvent;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
+import com.coreos.jetcd.watch.WatchEvent.EventType;
+import com.coreos.jetcd.watch.WatchResponse;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.Timeout;
 
 /**
  * watch test case.
@@ -29,81 +30,57 @@ public class WatchTest {
   private Client client;
   private Watch watchClient;
   private KV kvClient;
-  private BlockingQueue<WatchEvent> eventsQueue = new LinkedBlockingDeque<>();
 
-  private ByteSequence key = ByteSequence.fromString("test_key");
-  private ByteSequence value = ByteSequence.fromString("test_val");
-  private WatchImpl.Watcher watcher;
+  @Rule
+  public Timeout timeout = Timeout.seconds(10);
 
-  private Assertion test = new Assertion();
-
-  @BeforeTest
-  public void newEtcdClient() throws AuthFailedException, ConnectException {
-    client = ClientBuilder.newBuilder().endpoints("localhost:2379").build();
+  @Before
+  public void setUp() throws AuthFailedException, ConnectException {
+    client = ClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
     watchClient = client.getWatchClient();
     kvClient = client.getKVClient();
   }
 
+  @After
+  public void tearDown() {
+    client.close();
+  }
+
   @Test
-  public void testWatch() throws ExecutionException, InterruptedException {
-    WatchOption option = WatchOption.DEFAULT;
-    watcher = watchClient.watch(key, option, new Watch.WatchCallback() {
+  public void testWatchOnPut() throws ExecutionException, InterruptedException {
+    ByteSequence key = ByteSequence.fromString(TestUtil.randomString());
+    ByteSequence value = ByteSequence.fromString("value");
+    Watcher watcher = watchClient.watch(key);
+    try {
+      kvClient.put(key, value).get();
 
-      /**
-       * onWatch will be called when watcher receive any events
-       *
-       * @param header
-       * @param events received events
-       */
-      @Override
-      public void onWatch(Header header, List<WatchEvent> events) {
-        WatchTest.this.eventsQueue.addAll(events);
-      }
-
-      /**
-       * onResuming will be called when the watcher is on resuming.
-       */
-      @Override
-      public void onResuming() {
-
-      }
-
-    }).get();
-
+      WatchResponse response = watcher.listen();
+      assertThat(response.getEvents().size()).isEqualTo(1);
+      assertThat(response.getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
+      assertThat(response.getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
+    } finally {
+      watcher.close();
+    }
   }
 
-  /**
-   * watch put operation on key
-   * assert whether receive put event
-   */
-  @Test(dependsOnMethods = "testWatch")
-  public void testWatchPut() throws InterruptedException {
-    kvClient
-        .put(key, value);
-    WatchEvent event = eventsQueue.poll(5, TimeUnit.SECONDS);
-    test.assertEquals(event.getKeyValue().getKey(), key);
-    test.assertEquals(event.getEventType(), WatchEvent.EventType.PUT);
-  }
-
-  /**
-   * watch delete operation on key
-   * assert whether receive delete event
-   */
-  @Test(dependsOnMethods = "testWatchPut")
-  public void testWatchDelete() throws InterruptedException {
-    kvClient.delete(key);
-    WatchEvent event = eventsQueue.poll(5, TimeUnit.SECONDS);
-    test.assertEquals(event.getKeyValue().getKey(), key);
-    test.assertEquals(event.getEventType(), WatchEvent.EventType.DELETE);
-  }
-
-  /**
-   * cancel watch test case
-   * assert whether receive cancel response
-   */
-  @Test(dependsOnMethods = "testWatchDelete")
-  public void testCancelWatch() throws ExecutionException, InterruptedException, TimeoutException {
-    CompletableFuture<Boolean> future = watcher.cancel();
-    test.assertTrue(future.get(5, TimeUnit.SECONDS));
+  @Test
+  public void testWatchOnDelete() throws ExecutionException, InterruptedException {
+    ByteSequence key = ByteSequence.fromString(TestUtil.randomString());
+    ByteSequence value = ByteSequence.fromString("value");
+    kvClient.put(key, value).get();
+    Watcher watcher = watchClient.watch(key);
+    try {
+      kvClient.delete(key);
+      WatchResponse response = watcher.listen();
+      assertThat(response.getEvents().size()).isEqualTo(1);
+      WatchEvent event = response.getEvents().get(0);
+      assertThat(event.getEventType()).isEqualTo(EventType.DELETE);
+      assertThat(Arrays.equals(event.getKeyValue().getKey().getBytes(), key.getBytes())).isTrue();
+    } finally {
+      watcher.close();
+    }
   }
 }
+
+
+
