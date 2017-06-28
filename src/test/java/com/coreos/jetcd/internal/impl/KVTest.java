@@ -89,7 +89,7 @@ public class KVTest {
 
   @Test
   public void testGetSortedPrefix() throws Exception {
-    String prefix = randomString();
+    String prefix = TestUtil.randomString();
     int numPrefix = 3;
     putKeysWithPrefix(prefix, numPrefix);
 
@@ -126,7 +126,7 @@ public class KVTest {
 
   @Test
   public void testGetAndDeleteWithPrefix() throws Exception {
-    String prefix = randomString();
+    String prefix = TestUtil.randomString();
     ByteSequence key = ByteSequence.fromString(prefix);
     int numPrefixes = 10;
 
@@ -144,10 +144,6 @@ public class KVTest {
     CompletableFuture<DeleteResponse> delFuture = kvClient.delete(key, deleteOpt);
     DeleteResponse delResp = delFuture.get();
     test.assertEquals(delResp.getDeleted(), numPrefixes);
-  }
-
-  String randomString() {
-    return java.util.UUID.randomUUID().toString();
   }
 
   private void putKeysWithPrefix(String prefix, int numPrefixes)
