@@ -1,5 +1,7 @@
 package com.coreos.jetcd.options;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.coreos.jetcd.data.ByteSequence;
 import java.util.Optional;
 
@@ -106,6 +108,19 @@ public final class WatchOption {
      */
     public Builder withNoDelete(boolean noDelete) {
       this.noDelete = noDelete;
+      return this;
+    }
+
+    /**
+     * Enables watch all the keys with matching prefix.
+     *
+     * @param prefix the common prefix of all the keys that you want to watch
+     * @return builder
+     */
+    public Builder withPrefix(ByteSequence prefix) {
+      checkNotNull(prefix, "prefix should not be null");
+      ByteSequence prefixEnd = OptionsUtil.prefixEndOf(prefix);
+      this.withRange(prefixEnd);
       return this;
     }
 
