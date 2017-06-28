@@ -176,7 +176,6 @@ class WatchImpl implements Watch {
         requestPair.getValue().completeExceptionally(
             new WatchCreateException("the start revision has been compacted",
                 Util.toHeader(response.getHeader(), response.getCompactRevision())));
-        ;
       }
 
       if (response.getWatchId() == -1 && watcher.callback != null) {
@@ -184,8 +183,8 @@ class WatchImpl implements Watch {
             new WatchCreateException("create watcher failed",
                 Util.toHeader(response.getHeader(), response.getCompactRevision())));
       } else {
-        this.watchers.put(watcher.getWatchID(), watcher);
         watcher.setWatchID(response.getWatchId());
+        this.watchers.put(watcher.getWatchID(), watcher);
         requestPair.getValue().complete(watcher);
       }
 
