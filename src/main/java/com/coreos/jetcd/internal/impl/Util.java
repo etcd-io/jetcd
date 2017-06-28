@@ -17,6 +17,7 @@ import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseRevokeResponse;
 import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
 import com.coreos.jetcd.watch.WatchEvent;
+import com.coreos.jetcd.watch.WatchResponse;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -173,6 +174,14 @@ final class Util {
    */
   static CompactResponse toCompactResponse(CompactionResponse response) {
     return new CompactResponse(toHeader(response.getHeader(), 0));
+  }
+
+  /**
+   * convert API WatchResponse to client WatchResponse.
+   */
+  static WatchResponse toWatchResponse(com.coreos.jetcd.api.WatchResponse response) {
+    return new WatchResponse(toHeader(response.getHeader(), 0),
+        toEvents(response.getEventsList()));
   }
 
   /**
