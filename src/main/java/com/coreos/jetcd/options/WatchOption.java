@@ -29,7 +29,6 @@ public final class WatchOption {
     private boolean progressNotify = false;
     private boolean noPut = false;
     private boolean noDelete = false;
-    private boolean resuming = false;
 
     private Builder() {
     }
@@ -98,11 +97,6 @@ public final class WatchOption {
       return this;
     }
 
-    public Builder withResuming(boolean resuming) {
-      this.resuming = resuming;
-      return this;
-    }
-
     /**
      * filter out delete event in server side.
      */
@@ -131,8 +125,7 @@ public final class WatchOption {
           prevKV,
           progressNotify,
           noPut,
-          noDelete,
-          resuming);
+          noDelete);
     }
 
   }
@@ -143,22 +136,19 @@ public final class WatchOption {
   private final boolean progressNotify;
   private final boolean noPut;
   private final boolean noDelete;
-  private final boolean resuming;
 
   private WatchOption(Optional<ByteSequence> endKey,
       long revision,
       boolean prevKV,
       boolean progressNotify,
       boolean noPut,
-      boolean noDelete,
-      boolean resuming) {
+      boolean noDelete) {
     this.endKey = endKey;
     this.revision = revision;
     this.prevKV = prevKV;
     this.progressNotify = progressNotify;
     this.noPut = noPut;
     this.noDelete = noDelete;
-    this.resuming = resuming;
   }
 
   public Optional<ByteSequence> getEndKey() {
@@ -201,9 +191,5 @@ public final class WatchOption {
    */
   public boolean isNoDelete() {
     return noDelete;
-  }
-
-  public boolean isResuming() {
-    return resuming;
   }
 }

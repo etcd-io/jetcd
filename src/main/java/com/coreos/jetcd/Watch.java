@@ -1,74 +1,54 @@
 package com.coreos.jetcd;
 
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.data.Header;
 import com.coreos.jetcd.options.WatchOption;
-import com.coreos.jetcd.watch.WatchEvent;
-import java.io.Closeable;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import com.coreos.jetcd.watch.WatchResponse;
 
 /**
- * Interface of watch client.
+ * Interface of the watch client.
  */
 public interface Watch {
 
+  /**
+   * watch on a key with option.
+   *
+   * @param key key to be watched on.
+   * @param watchOption see {@link com.coreos.jetcd.options.WatchOption}.
+   */
+  Watcher watch(ByteSequence key, WatchOption watchOption);
+
 
   /**
-   * Watch watches on a key or prefix. The watched events will be called by onWatch.
-   * If the watch is slow or the required rev is compacted, the watch request
-   * might be canceled from the server-side and the onCreateFailed will be called.
+   * watch on a key.
    *
-   * @param key the key subscribe
-   * @param watchOption key option
-   * @param callback call back
-   * @return CompletableFuture watcher
+   * @param key key to be watched on.
+   **/
+  Watcher watch(ByteSequence key);
+
+  /**
+   * releases all watch client resources.
+   * note, this won't close active watchers.
    */
-  CompletableFuture<Watcher> watch(ByteSequence key, WatchOption watchOption,
-      WatchCallback callback);
+  void close();
 
-  interface Watcher extends Closeable {
+  /**
+   * Interface of Watcher.
+   */
+  interface Watcher {
 
     /**
-     * get watcher id.
+     * closes this watcher and all its resources.
+     **/
+    void close();
+
+    /**
+     * Retrieves next watch key, waiting if there are none.
      *
-     * @return id
+     * @throws com.coreos.jetcd.exception.EtcdException when listen encounters connection error,
+     *        watcher closed, watch client closed, etcd server error, and any internal client error.
+     * @throws com.coreos.jetcd.exception.CompactedException when watch a key at a revision that has
+     *        been compacted.
      */
-    long getWatchID();
-
-    long getLastRevision();
-
-    ByteSequence getKey();
-
-    boolean isResuming();
-
-    /**
-     * get the watch option.
-     *
-     * @return watch option
-     */
-    WatchOption getWatchOption();
-
-    /**
-     * cancel the watcher.
-     *
-     * @return cancel result
-     */
-    CompletableFuture<Boolean> cancel();
-  }
-
-  interface WatchCallback {
-
-    /**
-     * onWatch will be called when watcher receive any events.
-     *
-     * @param events received events
-     */
-    void onWatch(Header header, List<WatchEvent> events);
-
-    /**
-     * onResuming will be called when the watcher is on resuming.
-     */
-    void onResuming();
+    WatchResponse listen();
   }
 }
