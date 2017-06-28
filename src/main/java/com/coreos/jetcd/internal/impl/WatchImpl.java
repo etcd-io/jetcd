@@ -1,44 +1,70 @@
 package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.Watch;
-import com.coreos.jetcd.api.Event;
 import com.coreos.jetcd.api.WatchCancelRequest;
 import com.coreos.jetcd.api.WatchCreateRequest;
 import com.coreos.jetcd.api.WatchGrpc;
 import com.coreos.jetcd.api.WatchRequest;
 import com.coreos.jetcd.api.WatchResponse;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.internal.Pair;
+import com.coreos.jetcd.exception.CompactedException;
+import com.coreos.jetcd.exception.EtcdException;
+import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.options.WatchOption;
-import com.coreos.jetcd.watch.WatchCreateException;
+import com.coreos.jetcd.watch.WatchResponseWithError;
+import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 
 /**
- * etcd watcher Implementation.
+ * watch Implementation.
  */
 class WatchImpl implements Watch {
 
-  private volatile StreamObserver<WatchRequest> requestStream;
-
-  private ConcurrentHashMap<Long, WatcherImpl> watchers = new ConcurrentHashMap<>();
+  private static final Logger logger = Logger.getLogger(WatchImpl.class.getName());
 
   private final WatchGrpc.WatchStub watchStub;
 
-  private ConcurrentLinkedQueue<Pair<WatcherImpl, CompletableFuture<Watcher>>>
-      pendingCreateWatchers = new ConcurrentLinkedQueue<>();
-  private Map<Long, CompletableFuture<Boolean>> pendingCancelFutures = new ConcurrentHashMap<>();
+  private volatile StreamObserver<WatchRequest> grpcWatchStreamObserver;
+
+  // watchers stores a mapping between leaseID -> WatchIml.
+  private final ConcurrentHashMap<Long, WatcherImpl> watchers = new ConcurrentHashMap<>();
+  private final ConcurrentLinkedQueue<WatcherImpl>
+      pendingWatchers = new ConcurrentLinkedQueue<>();
+
+  private final Set<Long> cancelSet = ConcurrentHashMap.newKeySet();
+
+  private boolean closed = false;
+
+  private final ExecutorService executor = Executors.newCachedThreadPool();
+
+  private final ScheduledExecutorService scheduledExecutorService = Executors
+      .newScheduledThreadPool(1);
+
+  private boolean isClosed() {
+    return this.closed;
+  }
+
+  private void setClosed() {
+    this.closed = true;
+  }
 
   WatchImpl(ClientImpl c) {
     this(c.getChannel(), c.getToken());
@@ -48,234 +74,279 @@ class WatchImpl implements Watch {
     this.watchStub = ClientUtil.configureStub(WatchGrpc.newStub(channel), token);
   }
 
-  /**
-   * Watch watches on a key or prefix. The watched events will be called by onWatch.
-   * If the watch is slow or the required rev is compacted, the watch request
-   * might be canceled from the server-side and the onCreateFailed will be called.
-   *
-   * @param key the key subscribe
-   * @param watchOption key option
-   * @param callback call back
-   * @return CompletableFuture watcher
-   */
   @Override
-  public CompletableFuture<Watcher> watch(ByteSequence key, WatchOption watchOption,
-      WatchCallback callback) {
-    WatchRequest request = optionToWatchCreateRequest(Util.byteStringFromByteSequence(key),
-        watchOption);
-    WatcherImpl watcher = new WatcherImpl(key, watchOption, callback);
-    CompletableFuture<Watcher> waitFuture = new CompletableFuture<Watcher>();
-    this.pendingCreateWatchers.add(new Pair<>(watcher, waitFuture));
-    getRequestStream().onNext(request);
-    return waitFuture;
+
+  public Watcher watch(ByteSequence key) {
+    return this.watch(key, WatchOption.DEFAULT);
   }
 
-  /**
-   * Cancel the watch task with the watcher, the onCanceled will be called after successfully
-   * canceled.
-   *
-   * @param id the watcher to be canceled
-   */
-  protected CompletableFuture<Boolean> cancelWatch(long id) {
-    WatcherImpl temp = watchers.get(id);
-    CompletableFuture<Boolean> completableFuture = null;
-    if (temp != null) {
-      synchronized (temp) {
-        if (this.watchers.containsKey(temp.getWatchID())) {
-          this.watchers.remove(temp.getWatchID());
-          completableFuture = new CompletableFuture<>();
-          this.pendingCancelFutures.put(id, completableFuture);
-        }
-      }
+  @Override
+  public synchronized Watcher watch(ByteSequence key, WatchOption watchOption) {
+    Preconditions.checkState(!isClosed(), "Watch client has been closed");
+
+    WatcherImpl watcher = new WatcherImpl(key, watchOption);
+    this.pendingWatchers.add(watcher);
+
+    if (this.pendingWatchers.size() == 1) {
+      // head of the queue send watchCreate request.
+      WatchRequest request = this.toWatchCreateRequest(watcher);
+      this.getGrpcWatchStreamObserver().onNext(request);
     }
 
-    WatchCancelRequest cancelRequest = WatchCancelRequest.newBuilder().setWatchId(id).build();
-    WatchRequest request = WatchRequest.newBuilder().setCancelRequest(cancelRequest).build();
-    getRequestStream().onNext(request);
-    return completableFuture;
+    return watcher;
   }
 
-  /**
-   * empty the old request stream, watchers and resume the old watchers empty the
-   * pendingCancelFutures as there is no need to cancel, the old request stream has been dead.
-   */
-  private synchronized void resume() {
-    this.requestStream = null;
-    WatcherImpl[] resumeWatchers = watchers.values().toArray(new WatcherImpl[watchers.size()]);
+  @Override
+  public synchronized void close() {
+    Preconditions.checkState(!isClosed(), "Watch client has been closed");
+
+    this.setClosed();
+    this.notifyWatchers(EtcdExceptionFactory.newEtcdException("Watch client has been closed"));
+    this.closeGrpcWatchStreamObserver();
+    this.executor.shutdownNow();
+    this.scheduledExecutorService.shutdownNow();
+  }
+
+  // notifies all watchers about a exception. it doesn't close watchers.
+  // it is the responsibility of user to close watchers.
+  private void notifyWatchers(EtcdException e) {
+    WatchResponseWithError wre = new WatchResponseWithError(e);
+    this.pendingWatchers.forEach(watcher -> {
+      try {
+        watcher.enqueue(wre);
+      } catch (Exception we) {
+        logger.log(Level.WARNING, "failed to notify watcher", we);
+      }
+    });
+    this.pendingWatchers.clear();
+    this.watchers.values().forEach(watcher -> {
+      try {
+        watcher.enqueue(wre);
+      } catch (Exception we) {
+        logger.log(Level.WARNING, "failed to notify watcher", we);
+      }
+    });
     this.watchers.clear();
-    for (CompletableFuture<Boolean> watcherCompletableFuture : pendingCancelFutures.values()) {
-      watcherCompletableFuture.complete(Boolean.TRUE);
-    }
-    this.pendingCancelFutures.clear();
-    resumeWatchers(resumeWatchers);
   }
 
-  /**
-   * single instance method to get request stream, empty the old requestStream, so we will get a new
-   * requestStream automatically
-   *
-   * <p>the responseStream will distribute the create, cancel, normal
-   * response to processCreate, processCanceled and processEvents
-   *
-   * <p>if error happened, the
-   * requestStream will be closed by server side, so we call resume to resume all ongoing watchers.
-   */
-  private StreamObserver<WatchRequest> getRequestStream() {
-    if (this.requestStream == null) {
-      synchronized (this) {
-        if (this.requestStream == null) {
-          StreamObserver<WatchResponse> watchResponseStreamObserver =
-              new StreamObserver<WatchResponse>() {
-                @Override
-                public void onNext(WatchResponse watchResponse) {
-                  if (watchResponse.getCreated()) {
-                    processCreate(watchResponse);
-                  } else if (watchResponse.getCanceled()) {
-                    processCanceled(watchResponse);
-                  } else {
-                    processEvents(watchResponse);
-                  }
-                }
-
-                @Override
-                public void onError(Throwable throwable) {
-                  resume();
-                }
-
-                @Override
-                public void onCompleted() {
-
-                }
-              };
-          this.requestStream = this.watchStub.watch(watchResponseStreamObserver);
-        }
-      }
+  private synchronized void cancelWatcher(long id) {
+    if (this.isClosed()) {
+      return;
     }
-    return this.requestStream;
+
+    if (this.cancelSet.contains(id)) {
+      return;
+    }
+
+    this.watchers.remove(id);
+    this.cancelSet.add(id);
+
+    WatchCancelRequest watchCancelRequest = WatchCancelRequest.newBuilder().setWatchId(id).build();
+    WatchRequest cancelRequest = WatchRequest.newBuilder().setCancelRequest(watchCancelRequest)
+        .build();
+    this.getGrpcWatchStreamObserver().onNext(cancelRequest);
   }
 
-  /**
-   * Process create response from etcd server
-   *
-   * <p>If there is no pendingWatcher, ignore.
-   *
-   * <p>If cancel flag is true or CompactRevision not equal zero means the start revision
-   * has been compacted out of the store, call onCreateFailed.
-   *
-   * <p>If watchID = -1, complete future with WatchCreateException.
-   *
-   * <p>If everything is Ok, create watcher, complete CompletableFuture task and put the new watcher
-   * to the watchers map.
-   */
-  private void processCreate(WatchResponse response) {
-    Pair<WatcherImpl, CompletableFuture<Watcher>> requestPair = pendingCreateWatchers.poll();
-    WatcherImpl watcher = requestPair.getKey();
-    if (response.getCreated()) {
-      if (response.getCanceled() || response.getCompactRevision() != 0) {
-        watcher.setCanceled(true);
-        requestPair.getValue().completeExceptionally(
-            new WatchCreateException("the start revision has been compacted",
-                Util.toHeader(response.getHeader(), response.getCompactRevision())));
-      }
-
-      if (response.getWatchId() == -1 && watcher.callback != null) {
-        requestPair.getValue().completeExceptionally(
-            new WatchCreateException("create watcher failed",
-                Util.toHeader(response.getHeader(), response.getCompactRevision())));
-      } else {
-        watcher.setWatchID(response.getWatchId());
-        this.watchers.put(watcher.getWatchID(), watcher);
-        requestPair.getValue().complete(watcher);
-      }
-
-      //note the header revision so that put following a current watcher disconnect will arrive
-      //on watcher channel after reconnect
-      synchronized (watcher) {
-        watcher.setLastRevision(response.getHeader().getRevision());
-        if (watcher.isResuming()) {
-          watcher.setResuming(false);
-        }
-      }
+  private synchronized StreamObserver<WatchRequest> getGrpcWatchStreamObserver() {
+    if (this.grpcWatchStreamObserver == null) {
+      this.grpcWatchStreamObserver = this.watchStub.watch(this.createWatchStreamObserver());
     }
+    return this.grpcWatchStreamObserver;
   }
 
-  /**
-   * Process subscribe watch events
-   *
-   * <p>If the watch id is not in the watchers map, scan it in the pendingCancelFutures map
-   * if exist, ignore, otherwise cancel it.
-   *
-   * <p>If the watcher exist, call the onWatch and set the last revision for resume.
-   */
-  private void processEvents(WatchResponse watchResponse) {
-    WatcherImpl watcher = watchers.get(watchResponse.getWatchId());
-    if (watcher != null) {
-      synchronized (watcher) {
-        if (watchResponse.getEventsCount() != 0) {
-          List<Event> events = watchResponse.getEventsList();
-          // if on resume process, filter processed events
-          if (watcher.isResuming()) {
-            long lastRevision = watcher.getLastRevision();
-            events.removeIf((e) -> e.getKv().getModRevision() <= lastRevision);
-          }
-          watcher.setLastRevision(
-              watchResponse
-                  .getEvents(watchResponse.getEventsCount() - 1)
-                  .getKv().getModRevision());
-
-          if (watcher.callback != null) {
-            watcher.callback.onWatch(
-                Util.toHeader(watchResponse.getHeader(), watchResponse.getCompactRevision()),
-                Util.toEvents(events));
-          }
-        } else {
-          watcher.setLastRevision(watchResponse.getHeader().getRevision());
-        }
+  private StreamObserver<WatchResponse> createWatchStreamObserver() {
+    return new StreamObserver<WatchResponse>() {
+      @Override
+      public void onNext(WatchResponse watchResponse) {
+        processWatchResponse(watchResponse);
       }
+
+      @Override
+      public void onError(Throwable t) {
+        processError(t);
+      }
+
+      @Override
+      public void onCompleted() {
+      }
+    };
+  }
+
+  private synchronized void processWatchResponse(WatchResponse watchResponse) {
+    // prevents grpc on sending watchResponse to a closed watch client.
+    if (this.isClosed()) {
+      return;
+    }
+
+    if (watchResponse.getCreated()) {
+      processCreate(watchResponse);
+    } else if (watchResponse.getCanceled()) {
+      processCanceled(watchResponse);
     } else {
-      // if the watcher is not canceling, cancel it.
-      CompletableFuture<Boolean> completableFuture = this.pendingCancelFutures
-          .get(watchResponse.getWatchId());
-      if (this.pendingCancelFutures.putIfAbsent(watcher.getWatchID(), completableFuture) == null) {
-        cancelWatch(watchResponse.getWatchId());
-      }
+      processEvents(watchResponse);
     }
   }
 
-  /**
-   * resume all the watchers.
-   */
-  private void resumeWatchers(WatcherImpl[] watchers) {
-    for (WatcherImpl watcher : watchers) {
-      if (watcher.callback != null) {
-        watcher.callback.onResuming();
-      }
-      watch(watcher.getKey(), getResumeWatchOptionWithWatcher(watcher), watcher.callback);
+  private synchronized void processError(Throwable t) {
+    // prevents grpc on sending error to a closed watch client.
+    if (this.isClosed()) {
+      return;
     }
+
+    Status status = Status.fromThrowable(t);
+    if (this.isHaltError(status) || this.isNoLeaderError(status)) {
+      this.notifyWatchers(EtcdExceptionFactory.newEtcdException(status.getDescription()));
+      this.closeGrpcWatchStreamObserver();
+      this.cancelSet.clear();
+      return;
+    }
+    // resume with a delay; avoiding immediate retry on a long connection downtime.
+    scheduledExecutorService.schedule(this::resume, 500, TimeUnit.MILLISECONDS);
+  }
+
+  private synchronized void resume() {
+    this.closeGrpcWatchStreamObserver();
+    this.cancelSet.clear();
+    this.resumeWatchers();
+  }
+
+  // closeGrpcWatchStreamObserver closes the underlying grpc watch stream.
+  private void closeGrpcWatchStreamObserver() {
+    if (this.grpcWatchStreamObserver == null) {
+      return;
+    }
+    this.grpcWatchStreamObserver.onCompleted();
+    this.grpcWatchStreamObserver = null;
+  }
+
+  private boolean isNoLeaderError(Status status) {
+    if (status.getDescription() == null) {
+      return false;
+    }
+    return status.getDescription().contains("no leader");
+  }
+
+  private boolean isHaltError(Status status) {
+    // Unavailable codes mean the system will be right back.
+    // (e.g., can't connect, lost leader)
+    // Treat Internal codes as if something failed, leaving the
+    // system in an inconsistent state, but retrying could make progress.
+    // (e.g., failed in middle of send, corrupted frame)
+    return status.getCode() != Status.Code.UNAVAILABLE && status.getCode() != Status.Code.INTERNAL;
+  }
+
+  private void processCreate(WatchResponse response) {
+    WatcherImpl watcher = this.pendingWatchers.poll();
+
+    this.sendNextWatchCreateRequest();
+
+    if (watcher == null) {
+      // shouldn't happen
+      // may happen due to duplicate watch create responses.
+      logger.log(Level.WARNING,
+          "Watch client receives watch create response but find no corresponding watcher");
+      return;
+    }
+
+    if (watcher.isClosed()) {
+      return;
+    }
+
+    if (response.getWatchId() == -1) {
+      watcher.enqueue(new WatchResponseWithError(
+          EtcdExceptionFactory.newEtcdException(("etcd server failed to create watch id"))));
+      return;
+    }
+
+    if (watcher.getRevision() == 0) {
+      watcher.setRevision(response.getHeader().getRevision());
+    }
+
+    watcher.setWatchID(response.getWatchId());
+    this.watchers.put(watcher.getWatchID(), watcher);
   }
 
   /**
-   * Process cancel response from etcd server.
+   * chooses the next resuming watcher to register with the grpc stream.
    */
+  private Optional<WatchRequest> nextResume() {
+    WatcherImpl pendingWatcher = this.pendingWatchers.peek();
+    if (pendingWatcher != null) {
+      return Optional.of(this.toWatchCreateRequest(pendingWatcher));
+    }
+    return Optional.empty();
+  }
+
+  private void sendNextWatchCreateRequest() {
+    this.nextResume().ifPresent(
+        (nextWatchRequest -> this.getGrpcWatchStreamObserver().onNext(nextWatchRequest)));
+  }
+
+  private void processEvents(WatchResponse response) {
+    WatcherImpl watcher = this.watchers.get(response.getWatchId());
+    if (watcher == null) {
+      // cancel server side watcher.
+      this.cancelWatcher(response.getWatchId());
+      return;
+    }
+
+    if (response.getCompactRevision() != 0) {
+      watcher.enqueue(new WatchResponseWithError(
+          EtcdExceptionFactory.newCompactedException(response.getCompactRevision())));
+      return;
+    }
+
+    if (response.getEventsCount() == 0) {
+      watcher.setRevision(response.getHeader().getRevision());
+      return;
+    }
+
+    watcher.enqueue(new WatchResponseWithError(response));
+    watcher.setRevision(
+        response
+            .getEvents(response.getEventsCount() - 1)
+            .getKv().getModRevision() + 1);
+  }
+
+  private void resumeWatchers() {
+    this.watchers.values().forEach(watcher -> {
+      if (watcher.isClosed()) {
+        return;
+      }
+      watcher.setWatchID(-1);
+      this.pendingWatchers.add(watcher);
+    });
+
+    this.watchers.clear();
+
+    this.sendNextWatchCreateRequest();
+  }
+
   private void processCanceled(WatchResponse response) {
-    CompletableFuture<Boolean> cancelFuture = this.pendingCancelFutures
-        .remove(response.getWatchId());
-    cancelFuture.complete(Boolean.TRUE);
+    WatcherImpl watcher = this.watchers.get(response.getWatchId());
+    this.cancelSet.remove(response.getWatchId());
+    if (watcher == null) {
+      return;
+    }
+    String reason = response.getCancelReason();
+    if (reason != null && reason.isEmpty() || reason == null) {
+      reason = "required revision is a future revision";
+    }
+    watcher.enqueue(new WatchResponseWithError(
+        EtcdExceptionFactory.newEtcdException(reason)));
   }
 
-  /**
-   * convert WatcherOption to WatchRequest.
-   */
-  private WatchRequest optionToWatchCreateRequest(ByteString key, WatchOption option) {
+  private WatchRequest toWatchCreateRequest(WatcherImpl watcher) {
+    ByteString key = Util.byteStringFromByteSequence(watcher.getKey());
+    WatchOption option = watcher.getWatchOption();
     WatchCreateRequest.Builder builder = WatchCreateRequest.newBuilder()
         .setKey(key)
         .setPrevKv(option.isPrevKV())
         .setProgressNotify(option.isProgressNotify())
-        .setStartRevision(option.getRevision());
+        .setStartRevision(watcher.getRevision());
 
-    if (option.getEndKey().isPresent()) {
-      builder.setRangeEnd(Util.byteStringFromByteSequence(option.getEndKey().get()));
-    }
+    option.getEndKey()
+        .ifPresent(endKey -> builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
 
     if (option.isNoDelete()) {
       builder.addFilters(WatchCreateRequest.FilterType.NODELETE);
@@ -289,70 +360,50 @@ class WatchImpl implements Watch {
   }
 
   /**
-   * build new WatchOption from dead to resume it in new requestStream.
-   */
-  private WatchOption getResumeWatchOptionWithWatcher(Watcher watcher) {
-    WatchOption oldOption = watcher.getWatchOption();
-    return WatchOption.newBuilder().withNoDelete(oldOption.isNoDelete())
-        .withNoPut(oldOption.isNoPut())
-        .withPrevKV(oldOption.isPrevKV())
-        .withProgressNotify(oldOption.isProgressNotify())
-        .withRange(oldOption.getEndKey().orElse(null))
-        .withRevision(watcher.getLastRevision() + 1)
-        .withResuming(true)
-        .build();
-  }
-
-
-  /**
-   * Watcher class hold watcher information.
+   * Watcher class holds watcher information.
    */
   public class WatcherImpl implements Watcher {
 
     private final WatchOption watchOption;
     private final ByteSequence key;
-
-    public final WatchCallback callback;
     private long watchID;
+    // the revision to watch on.
+    private long revision;
+    private final Object closedLock = new Object();
+    private boolean closed = false;
 
-    private long lastRevision = -1;
-    private boolean canceled = false;
+    // watch events buffer.
+    private final BlockingQueue<WatchResponseWithError> eventsQueue = new LinkedBlockingQueue<>();
 
-    private boolean resuming;
+    final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    private WatcherImpl(ByteSequence key, WatchOption watchOption, WatchCallback callback) {
+    private WatcherImpl(ByteSequence key, WatchOption watchOption) {
       this.key = key;
       this.watchOption = watchOption;
-      this.callback = callback;
-      this.resuming = watchOption.isResuming();
+      this.revision = watchOption.getRevision();
     }
 
-    @Override
-    public CompletableFuture<Boolean> cancel() {
-      return cancelWatch(watchID);
+    private long getRevision() {
+      return this.revision;
     }
 
-    /**
-     * set the last revision watcher received, used for resume.
-     *
-     * @param lastRevision the last revision
-     */
-    private void setLastRevision(long lastRevision) {
-      this.lastRevision = lastRevision;
+    private void setRevision(long revision) {
+      this.revision = revision;
     }
 
-    public boolean isCanceled() {
-      return canceled;
+    public boolean isClosed() {
+      synchronized (this.closedLock) {
+        return closed;
+      }
     }
 
-    private void setCanceled(boolean canceled) {
-      this.canceled = canceled;
+    private void setClosed() {
+      synchronized (this.closedLock) {
+        this.closed = true;
+      }
     }
 
-    /**
-     * get the watch id of the watcher.
-     */
-    public long getWatchID() {
+    private long getWatchID() {
       return watchID;
     }
 
@@ -360,70 +411,67 @@ class WatchImpl implements Watch {
       this.watchID = watchID;
     }
 
-    public WatchOption getWatchOption() {
+    private WatchOption getWatchOption() {
       return watchOption;
     }
 
-    /**
-     * get the last revision watcher received.
-     *
-     * @return last revision
-     */
-    public long getLastRevision() {
-      return lastRevision;
-    }
-
-    /**
-     * get the watcher key.
-     *
-     * @return watcher key
-     */
-    public ByteSequence getKey() {
+    private ByteSequence getKey() {
       return key;
     }
 
-    /**
-     * whether the watcher is resuming.
-     */
-    public boolean isResuming() {
-      return resuming;
-    }
 
-    private void setResuming(boolean resuming) {
-      this.resuming = resuming;
-    }
-
-    /**
-     * Closes this stream and releases any system resources associated
-     * with it. If the stream is already closed then invoking this
-     * method has no effect.
-     *
-     * <p>As noted in {@link AutoCloseable#close()}, cases where the
-     * close may fail require careful attention. It is strongly advised
-     * to relinquish the underlying resources and to internally
-     * <em>mark</em> the {@code Closeable} as closed, prior to throwing
-     * the {@code IOException}.
-     *
-     * @throws IOException if an I/O error occurs
-     */
-    @Override
-    public void close() throws IOException {
-      if (!isCanceled()) {
-        try {
-          if (!cancel().get(5, TimeUnit.SECONDS)) {
-            // TODO: handle this case?
-            return;
-          }
-        } catch (InterruptedException e) {
-          throw new IOException("Close was interrupted.", e);
-        } catch (ExecutionException e) {
-          throw new IOException("Exception during execute.", e);
-        } catch (TimeoutException e) {
-          throw new IOException("Close out of time.", e);
-        } finally {
-          setCanceled(true);
-        }
+    private void enqueue(WatchResponseWithError watchResponse) {
+      try {
+        this.eventsQueue.put(watchResponse);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.log(Level.WARNING, "Interrupted", e);
       }
+    }
+
+    @Override
+    public void close() {
+      synchronized (this.closedLock) {
+        Preconditions.checkState(!isClosed(), "Watcher has been closed");
+
+        this.setClosed();
+      }
+
+      cancelWatcher(this.watchID);
+      this.executor.shutdownNow();
+    }
+
+    @Override
+    public synchronized com.coreos.jetcd.watch.WatchResponse listen() {
+      Preconditions.checkState(!isClosed(), "Watcher has been closed");
+
+      try {
+        return this.createWatchResponseFuture().get();
+      } catch (ExecutionException e) {
+        Throwable t = e.getCause();
+        if (t instanceof CompactedException) {
+          throw (CompactedException) t;
+        }
+        if (t instanceof EtcdException) {
+          throw (EtcdException) t;
+        }
+        throw EtcdExceptionFactory.newEtcdException(t);
+      } catch (InterruptedException e) {
+        throw EtcdExceptionFactory.handleInterrupt(e);
+      } catch (Exception e) {
+        throw EtcdExceptionFactory.newEtcdException(e);
+      }
+    }
+
+    private Future<com.coreos.jetcd.watch.WatchResponse> createWatchResponseFuture() {
+      return this.executor.submit(() -> {
+        WatchResponseWithError watchResponse = this.eventsQueue.take();
+        if (watchResponse.getException() != null) {
+          throw watchResponse.getException();
+        }
+        return Util.toWatchResponse(watchResponse.getWatchResponse());
+      });
     }
   }
 }
+
