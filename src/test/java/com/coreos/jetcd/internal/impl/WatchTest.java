@@ -36,7 +36,7 @@ public class WatchTest {
 
   @Before
   public void setUp() throws AuthFailedException, ConnectException {
-    client = ClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
+    client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints).build();
     watchClient = client.getWatchClient();
     kvClient = client.getKVClient();
   }

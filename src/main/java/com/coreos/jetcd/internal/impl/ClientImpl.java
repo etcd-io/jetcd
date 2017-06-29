@@ -78,8 +78,8 @@ public class ClientImpl implements Client {
       this.nameResolverFactory = clientBuilder.getNameResolverFactory();
     } else {
       //If no nameResolverFactory was set, use SimpleEtcdNameResolver
-      checkNotNull(clientBuilder.endpoints(), "endpoints can't be null");
-      this.nameResolverFactory = ClientUtil.simpleNameResolveFactory(clientBuilder.endpoints());
+      checkNotNull(clientBuilder.getEndpoints(), "endpoints can't be null");
+      this.nameResolverFactory = ClientUtil.simpleNameResolveFactory(clientBuilder.getEndpoints());
     }
 
     if (clientBuilder.getName() != null && clientBuilder.getPassword() != null) {

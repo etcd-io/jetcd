@@ -27,7 +27,7 @@ public class MaintenanceTest {
 
   @BeforeClass
   public void setup() throws AuthFailedException, ConnectException {
-    this.client = ClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
+    this.client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints).build();
     this.maintenance = client.getMaintenanceClient();
   }
 

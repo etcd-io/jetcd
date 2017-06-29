@@ -17,22 +17,22 @@ public class ClientBuilderTest {
 
   @Test(expectedExceptions = NullPointerException.class)
   public void testEndPoints_Null() {
-    builder.endpoints(null);
+    builder.setEndpoints(null);
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void testEndPoints_Verify_Empty() {
-    builder.endpoints("");
+    builder.setEndpoints("");
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void testEndPoints_Verify_EmptyAfterTrim() {
-    builder.endpoints(" ");
+    builder.setEndpoints(" ");
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void testEndPoints_Verify_SomeEmpty() {
-    builder.endpoints("127.0.0.1:2379", " ");
+    builder.setEndpoints("127.0.0.1:2379", " ");
   }
 
   @Test(expectedExceptions = IllegalStateException.class)

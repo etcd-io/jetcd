@@ -34,9 +34,8 @@ public class ClientBuilder {
    * gets the endpoints for the builder.
    *
    * @return the list of endpoints configured for the builder
-   * @throws IllegalArgumentException if endpoints is empty
    */
-  public List<String> endpoints() {
+  public List<String> getEndpoints() {
     return this.endpoints;
   }
 
@@ -48,7 +47,7 @@ public class ClientBuilder {
    * @throws NullPointerException if endpoints is null or one of endpoint is null
    * @throws IllegalArgumentException if endpoints is empty or some endpoint is invalid
    */
-  public ClientBuilder endpoints(String... endpoints) {
+  public ClientBuilder setEndpoints(String... endpoints) {
     checkNotNull(endpoints, "endpoints can't be null");
     checkArgument(endpoints.length > 0, "please configure at lease one endpoint ");
 
