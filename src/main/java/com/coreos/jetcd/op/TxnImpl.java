@@ -1,5 +1,6 @@
 package com.coreos.jetcd.op;
 
+import com.coreos.jetcd.Txn;
 import com.coreos.jetcd.api.TxnRequest;
 import com.coreos.jetcd.kv.TxnResponse;
 import com.google.common.collect.ImmutableList;
@@ -11,7 +12,7 @@ import java.util.function.Function;
 /**
  * Build an etcd transaction.
  */
-public class TxnImpl implements com.coreos.jetcd.Txn {
+public class TxnImpl implements Txn {
 
   public static TxnImpl newTxn(Function<TxnRequest, CompletableFuture<TxnResponse>> f) {
     return new TxnImpl(f);
