@@ -1,11 +1,9 @@
 package com.coreos.jetcd.resolver;
 
-import io.grpc.Attributes;
-import io.grpc.ResolvedServerInfo;
+import io.grpc.EquivalentAddressGroup;
 import io.grpc.internal.SharedResourceHolder.Resource;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -15,22 +13,21 @@ import java.util.stream.Collectors;
  */
 public class SimpleEtcdNameResolver extends AbstractEtcdNameResolver {
 
-  private final List<ResolvedServerInfo> servers;
+  private final EquivalentAddressGroup group;
 
   public SimpleEtcdNameResolver(String name, Resource<ExecutorService> executorResource,
       List<URI> uris) {
     super(name, executorResource);
 
-    this.servers = Collections.unmodifiableList(
+    this.group = new EquivalentAddressGroup(
         uris.stream()
-            .map(uri -> new ResolvedServerInfo(new InetSocketAddress(uri.getHost(), uri.getPort()),
-                Attributes.EMPTY))
+            .map(uri -> new InetSocketAddress(uri.getHost(), uri.getPort()))
             .collect(Collectors.toList())
     );
   }
 
   @Override
-  protected List<ResolvedServerInfo> getServers() {
-    return servers;
+  protected EquivalentAddressGroup getAddressGroup() throws Exception {
+    return group;
   }
 }
