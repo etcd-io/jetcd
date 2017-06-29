@@ -41,7 +41,7 @@ public class KVTest {
   @BeforeTest
   public void setUp() throws Exception {
     test = new Assertion();
-    Client client = ClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
+    Client client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints).build();
     kvClient = client.getKVClient();
   }
 

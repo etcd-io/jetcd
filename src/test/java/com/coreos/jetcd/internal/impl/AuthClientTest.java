@@ -6,7 +6,6 @@ import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.api.AuthRoleGetResponse;
 import com.coreos.jetcd.api.Permission;
-import com.coreos.jetcd.api.RangeResponse;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
@@ -47,7 +46,7 @@ public class AuthClientTest {
   @BeforeTest
   public void setupEnv() throws AuthFailedException, ConnectException {
     this.test = new Assertion();
-    this.client = ClientBuilder.newBuilder().endpoints("localhost:2379").build();
+    this.client = ClientBuilder.newBuilder().setEndpoints("localhost:2379").build();
     this.kvClient = this.client.getKVClient();
     this.authClient = this.client.getAuthClient();
   }
@@ -99,7 +98,7 @@ public class AuthClientTest {
    */
   @Test(dependsOnMethods = "testEnableAuth", groups = "authEnable", priority = 1)
   public void setupAuthClient() throws AuthFailedException, ConnectException {
-    this.secureClient = ClientBuilder.newBuilder().endpoints("localhost:2379")
+    this.secureClient = ClientBuilder.newBuilder().setEndpoints("localhost:2379")
         .setName(userName).setPassword(password).build();
 
   }

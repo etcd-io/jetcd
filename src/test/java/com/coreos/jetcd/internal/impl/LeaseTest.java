@@ -36,7 +36,7 @@ public class LeaseTest {
   @BeforeClass
   public void setUp() throws Exception {
     test = new Assertion();
-    client = ClientBuilder.newBuilder().endpoints(TestConstants.endpoints).build();
+    client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints).build();
     kvClient = client.getKVClient();
     leaseClient = client.getLeaseClient();
   }

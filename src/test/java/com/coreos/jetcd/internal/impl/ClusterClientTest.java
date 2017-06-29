@@ -30,7 +30,7 @@ public class ClusterClientTest {
   @Test
   public void testListCluster()
       throws ExecutionException, InterruptedException, AuthFailedException, ConnectException {
-    Client client = ClientBuilder.newBuilder().endpoints(TestConstants.endpoints)
+    Client client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints)
         .build();
     Cluster clusterClient = client.getClusterClient();
     MemberListResponse response = clusterClient.listMember().get();
@@ -44,7 +44,7 @@ public class ClusterClientTest {
   public void testAddMember()
       throws AuthFailedException, ConnectException, ExecutionException, InterruptedException, TimeoutException {
     Client client = ClientBuilder.newBuilder()
-        .endpoints(Arrays.copyOfRange(TestConstants.endpoints, 0, 2)).build();
+        .setEndpoints(Arrays.copyOfRange(TestConstants.endpoints, 0, 2)).build();
     Cluster clusterClient = client.getClusterClient();
     MemberListResponse response = clusterClient.listMember().get();
     assertion.assertEquals(response.getMembersCount(), 3);
@@ -64,7 +64,7 @@ public class ClusterClientTest {
     Throwable throwable = null;
     try {
       Client client = ClientBuilder.newBuilder()
-          .endpoints(Arrays.copyOfRange(TestConstants.endpoints, 1, 3)).build();
+          .setEndpoints(Arrays.copyOfRange(TestConstants.endpoints, 1, 3)).build();
       Cluster clusterClient = client.getClusterClient();
       MemberListResponse response = clusterClient.listMember().get();
       String[] newPeerUrl = new String[]{"http://localhost:12380"};
@@ -83,7 +83,7 @@ public class ClusterClientTest {
   public void testDeleteMember()
       throws ExecutionException, InterruptedException, AuthFailedException, ConnectException {
     Client client = ClientBuilder.newBuilder()
-        .endpoints(Arrays.copyOfRange(TestConstants.endpoints, 0, 2)).build();
+        .setEndpoints(Arrays.copyOfRange(TestConstants.endpoints, 0, 2)).build();
     Cluster clusterClient = client.getClusterClient();
     clusterClient.removeMember(addedMember.getID()).get();
     int newCount = clusterClient.listMember().get().getMembersCount();
