@@ -1,6 +1,7 @@
 package com.coreos.jetcd;
 
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.internal.impl.CloseableClient;
 import com.coreos.jetcd.kv.CompactResponse;
 import com.coreos.jetcd.kv.DeleteResponse;
 import com.coreos.jetcd.kv.GetResponse;
@@ -16,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
  * Interface of kv client talking to etcd.
  */
 @Beta
-public interface KV {
+public interface KV extends CloseableClient {
 
   /**
    * put a key-value pair into etcd.

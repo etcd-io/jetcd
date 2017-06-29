@@ -14,12 +14,10 @@ import com.coreos.jetcd.lease.LeaseKeepAliveResponseWithError;
 import com.coreos.jetcd.lease.LeaseRevokeResponse;
 import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
 import com.coreos.jetcd.options.LeaseOption;
-import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -33,7 +31,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 
 /**
@@ -47,7 +44,8 @@ public class LeaseImpl implements Lease {
    */
   private static final int FIRST_KEEPALIVE_TIMEOUT_MS = 5000;
 
-  private final LeaseGrpc.LeaseFutureStub leaseFutureStub;
+  private final ClientConnectionManager connectionManager;
+  private final LeaseGrpc.LeaseFutureStub stub;
   private final LeaseGrpc.LeaseStub leaseStub;
 
   /**
@@ -70,8 +68,6 @@ public class LeaseImpl implements Lease {
    */
   private StreamObserver<com.coreos.jetcd.api.LeaseKeepAliveResponse> keepAliveResponseObserver;
 
-  private ExecutorService executorService;
-
   /**
    * hasKeepAliveServiceStarted indicates whether the background keep alive service has started.
    */
@@ -79,32 +75,31 @@ public class LeaseImpl implements Lease {
 
   private boolean closed;
 
-  /**
-   * Init lease stub with client.
-   */
-  LeaseImpl(ClientImpl c) {
-    this(c.getChannel(), c.getToken(), c.getExecutorService());
-  }
 
-  LeaseImpl(ManagedChannel channel, Optional<String> token, ExecutorService executor) {
-    this.leaseFutureStub = ClientUtil
-        .configureStub(LeaseGrpc.newFutureStub(channel), token);
-    this.leaseStub = ClientUtil.configureStub(LeaseGrpc.newStub(channel), token);
-    this.executorService = executor;
+  LeaseImpl(ClientConnectionManager connectionManager) {
+    this.connectionManager = connectionManager;
+    this.stub = connectionManager.newStub(LeaseGrpc::newFutureStub);
+    this.leaseStub = connectionManager.newStub(LeaseGrpc::newStub);
   }
 
   @Override
   public CompletableFuture<LeaseGrantResponse> grant(long ttl) {
     LeaseGrantRequest leaseGrantRequest = LeaseGrantRequest.newBuilder().setTTL(ttl).build();
-    return Util.listenableToCompletableFuture(this.leaseFutureStub.leaseGrant(leaseGrantRequest),
-        Util::toLeaseGrantResponse, this.executorService);
+    return Util.listenableToCompletableFuture(
+        this.stub.leaseGrant(leaseGrantRequest),
+        Util::toLeaseGrantResponse, 
+        connectionManager.getExecutorService()
+    );
   }
 
   @Override
   public CompletableFuture<LeaseRevokeResponse> revoke(long leaseId) {
     LeaseRevokeRequest leaseRevokeRequest = LeaseRevokeRequest.newBuilder().setID(leaseId).build();
-    return Util.listenableToCompletableFuture(this.leaseFutureStub.leaseRevoke(leaseRevokeRequest),
-        Util::toLeaseRevokeResponse, this.executorService);
+    return Util.listenableToCompletableFuture(
+        this.stub.leaseRevoke(leaseRevokeRequest),
+        Util::toLeaseRevokeResponse,
+        connectionManager.getExecutorService()
+    );
   }
 
   @Override
@@ -179,9 +174,7 @@ public class LeaseImpl implements Lease {
 
   private void sendKeepAliveExecutor() {
     this.keepAliveResponseObserver = this.createResponseObserver();
-    StreamObserver<LeaseKeepAliveRequest> requestStreamObserver = this.leaseStub
-        .leaseKeepAlive(this.keepAliveResponseObserver);
-    this.keepAliveRequestObserver = requestStreamObserver;
+    this.keepAliveRequestObserver = this.leaseStub.leaseKeepAlive(this.keepAliveResponseObserver);
     this.keepAliveFuture = scheduledExecutorService
         .scheduleAtFixedRate(() -> {
           long now = System.currentTimeMillis();
@@ -189,10 +182,10 @@ public class LeaseImpl implements Lease {
           // send keep alive req to the leases whose next keep alive is before now.
           this.keepAlives.entrySet().stream()
               .filter(entry -> entry.getValue().getNextKeepAlive() < now)
-              .map((Entry::getKey))
-              .collect(Collectors.toList())
-              .forEach(leaseID -> requestStreamObserver
-                  .onNext(this.newKeepAliveRequest(leaseID)));
+              .map(Entry::getKey)
+              .map(this::newKeepAliveRequest)
+              .forEach(keepAliveRequestObserver::onNext);
+
         }, 0, 500, TimeUnit.MILLISECONDS);
   }
 
@@ -292,8 +285,9 @@ public class LeaseImpl implements Lease {
     requestObserver.onNext(this.newKeepAliveRequest(leaseId));
 
     // cancel grpc stream when leaseKeepAliveResponseCompletableFuture completes.
-    lkaFuture
-        .whenCompleteAsync((val, throwable) -> requestObserver.onCompleted(), this.executorService);
+    lkaFuture.whenCompleteAsync(
+        (val, throwable) -> requestObserver.onCompleted(), connectionManager.getExecutorService()
+    );
 
     return lkaFuture;
   }
@@ -309,8 +303,8 @@ public class LeaseImpl implements Lease {
         .build();
 
     return Util.listenableToCompletableFuture(
-        this.leaseFutureStub.leaseTimeToLive(leaseTimeToLiveRequest),
-        Util::toLeaseTimeToLiveResponse, this.executorService);
+        this.stub.leaseTimeToLive(leaseTimeToLiveRequest),
+        Util::toLeaseTimeToLiveResponse, connectionManager.getExecutorService());
   }
 
   private LeaseKeepAliveRequest newKeepAliveRequest(long leaseId) {

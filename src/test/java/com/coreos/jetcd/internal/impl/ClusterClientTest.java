@@ -29,9 +29,8 @@ public class ClusterClientTest {
    */
   @Test
   public void testListCluster()
-      throws ExecutionException, InterruptedException, AuthFailedException, ConnectException {
-    Client client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints)
-        .build();
+      throws ExecutionException, InterruptedException {
+    Client client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints).build();
     Cluster clusterClient = client.getClusterClient();
     MemberListResponse response = clusterClient.listMember().get();
     assertion.assertEquals(response.getMembersCount(), 3, "Members: " + response.getMembersCount());
@@ -81,7 +80,7 @@ public class ClusterClientTest {
    */
   @Test(dependsOnMethods = "testUpdateMember")
   public void testDeleteMember()
-      throws ExecutionException, InterruptedException, AuthFailedException, ConnectException {
+      throws ExecutionException, InterruptedException {
     Client client = ClientBuilder.newBuilder()
         .setEndpoints(Arrays.copyOfRange(TestConstants.endpoints, 0, 2)).build();
     Cluster clusterClient = client.getClusterClient();

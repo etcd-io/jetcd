@@ -1,9 +1,8 @@
 package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.internal.impl.ClientUtil.defaultChannelBuilder;
-import static com.coreos.jetcd.internal.impl.ClientUtil.simpleNameResolveFactory;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static net.javacrumbs.futureconverter.java8guava.FutureConverter.toCompletableFuture;
 
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.api.AlarmMember;
@@ -17,19 +16,12 @@ import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
 import com.coreos.jetcd.api.StatusRequest;
 import com.coreos.jetcd.api.StatusResponse;
-import com.coreos.jetcd.exception.AuthFailedException;
-import com.coreos.jetcd.exception.ConnectException;
-import com.coreos.jetcd.internal.Pair;
+import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.maintenance.SnapshotReaderResponseWithError;
 import com.google.common.util.concurrent.ListenableFuture;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.NameResolver;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -39,49 +31,20 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 
 /**
  * Implementation of maintenance client.
  */
 class MaintenanceImpl implements Maintenance {
 
-  private final MaintenanceGrpc.MaintenanceFutureStub futureStub;
+  private final ClientConnectionManager connectionManager;
+  private final MaintenanceGrpc.MaintenanceFutureStub stub;
   private final MaintenanceGrpc.MaintenanceStub streamStub;
-  private final ExecutorService executorService;
-  private final DialFunction dialFunction;
 
-  MaintenanceImpl(ClientImpl c) {
-    this(
-        c.getChannel(),
-        c.getToken(),
-        c.getExecutorService(),
-        (endpoint) -> {
-          NameResolver.Factory factory = simpleNameResolveFactory(Arrays.asList(endpoint));
-          ManagedChannelBuilder<?> builder = defaultChannelBuilder(factory);
-          return c.toChannelAndToken(builder);
-        }
-    );
-  }
-
-  MaintenanceImpl(ManagedChannel channel, Optional<String> token, ExecutorService executorService,
-      DialFunction dialFunction) {
-    this.executorService = executorService;
-    this.futureStub = ClientUtil.configureStub(MaintenanceGrpc.newFutureStub(channel), token);
-    this.streamStub = ClientUtil.configureStub(MaintenanceGrpc.newStub(channel), token);
-    this.dialFunction = dialFunction;
-  }
-
-  @FunctionalInterface
-  private interface DialFunction {
-
-    /**
-     * dial dials to an endpoint and returns a managed channel and its associated token.
-     *
-     * @return a managed channel and its associated token.
-     */
-    Pair<ManagedChannel, Optional<String>> dial(String endpoint)
-        throws ConnectException, AuthFailedException;
+  MaintenanceImpl(ClientConnectionManager connectionManager) {
+    this.connectionManager = connectionManager;
+    this.stub = connectionManager.newStub(MaintenanceGrpc::newFutureStub);
+    this.streamStub = connectionManager.newStub(MaintenanceGrpc::newStub);
   }
 
   /**
@@ -95,7 +58,7 @@ class MaintenanceImpl implements Maintenance {
         .setAlarm(AlarmType.NONE)
         .setAction(AlarmRequest.AlarmAction.GET)
         .setMemberID(0).build();
-    return FutureConverter.toCompletableFuture(this.futureStub.alarm(alarmRequest));
+    return toCompletableFuture(this.stub.alarm(alarmRequest));
   }
 
   /**
@@ -106,14 +69,16 @@ class MaintenanceImpl implements Maintenance {
    */
   @Override
   public CompletableFuture<AlarmResponse> alarmDisarm(AlarmMember member) {
+    checkArgument(member.getMemberID() != 0, "the member id can not be 0");
+    checkArgument(member.getAlarm() != AlarmType.NONE, "alarm type can not be NONE");
+
     AlarmRequest alarmRequest = AlarmRequest.newBuilder()
         .setAlarm(AlarmType.NOSPACE)
         .setAction(AlarmRequest.AlarmAction.DEACTIVATE)
         .setMemberID(member.getMemberID())
         .build();
-    checkArgument(member.getMemberID() != 0, "the member id can not be 0");
-    checkArgument(member.getAlarm() != AlarmType.NONE, "alarm type can not be NONE");
-    return FutureConverter.toCompletableFuture(this.futureStub.alarm(alarmRequest));
+
+    return toCompletableFuture(this.stub.alarm(alarmRequest));
   }
 
   /**
@@ -133,25 +98,16 @@ class MaintenanceImpl implements Maintenance {
    */
   @Override
   public CompletableFuture<DefragmentResponse> defragmentMember(String endpoint) {
-    Optional<Pair<ManagedChannel, Optional<String>>> pairOptional = Optional.empty();
-    try {
-      pairOptional = Optional.of(this.dialFunction.dial(endpoint));
-      Pair<ManagedChannel, Optional<String>> pair = pairOptional.get();
-      ManagedChannel channel = pair.getKey();
-      Optional<String> token = pair.getValue();
-      MaintenanceGrpc.MaintenanceFutureStub stub = ClientUtil
-          .configureStub(MaintenanceGrpc.newFutureStub(channel), token);
-      ListenableFuture<DefragmentResponse> defragmentResponseListenableFuture = stub
-          .defragment(DefragmentRequest.getDefaultInstance());
+    return this.connectionManager.withNewChannel(
+        endpoint,
+        MaintenanceGrpc::newFutureStub,
+        stub -> {
+          DefragmentRequest request = DefragmentRequest.getDefaultInstance();
+          ListenableFuture<DefragmentResponse> future = stub.defragment(request);
 
-      // close channel when defragmentResponseListenableFuture completes.
-      defragmentResponseListenableFuture
-          .addListener(() -> channel.shutdownNow(), this.executorService);
-      return FutureConverter.toCompletableFuture(defragmentResponseListenableFuture);
-    } catch (Exception e) {
-      pairOptional.ifPresent((pair) -> pair.getKey().shutdownNow());
-      throw new RuntimeException("defragmentMember encounters error", e.getCause());
-    }
+          return toCompletableFuture(future);
+        }
+    );
   }
 
   /**
@@ -159,39 +115,28 @@ class MaintenanceImpl implements Maintenance {
    */
   @Override
   public CompletableFuture<StatusResponse> statusMember(String endpoint) {
-    Optional<Pair<ManagedChannel, Optional<String>>> pairOptional = Optional.empty();
-    try {
-      pairOptional = Optional.of(this.dialFunction.dial(endpoint));
-      Pair<ManagedChannel, Optional<String>> pair = pairOptional.get();
-      ManagedChannel channel = pair.getKey();
-      Optional<String> token = pair.getValue();
-      MaintenanceGrpc.MaintenanceFutureStub stub = ClientUtil
-          .configureStub(MaintenanceGrpc.newFutureStub(channel), token);
-      ListenableFuture<StatusResponse> statusResponseListenableFuture = stub
-          .status(StatusRequest.getDefaultInstance());
+    return this.connectionManager.withNewChannel(
+        endpoint,
+        MaintenanceGrpc::newFutureStub,
+        stub -> {
+          StatusRequest request = StatusRequest.getDefaultInstance();
+          ListenableFuture<StatusResponse> future = stub.status(request);
 
-      // close channel when statusResponseListenableFuture completes.
-      statusResponseListenableFuture
-          .addListener(() -> channel.shutdownNow(), this.executorService);
-      return FutureConverter.toCompletableFuture(statusResponseListenableFuture);
-    } catch (Exception e) {
-      pairOptional.ifPresent((pair) -> pair.getKey().shutdownNow());
-      throw new RuntimeException("statusMember encounters error", e.getCause());
-    }
+          return toCompletableFuture(future);
+        }
+    );
   }
 
   @Override
   public Snapshot snapshot() {
     SnapshotImpl snapshot = new SnapshotImpl();
-    this.streamStub
-        .snapshot(SnapshotRequest.getDefaultInstance(), snapshot.getSnapshotObserver());
+    this.streamStub.snapshot(SnapshotRequest.getDefaultInstance(), snapshot.getSnapshotObserver());
     return snapshot;
   }
 
   class SnapshotImpl implements Snapshot {
-
-    private final SnapshotResponse endOfStreamResponse = SnapshotResponse.newBuilder()
-        .setRemainingBytes(-1).build();
+    private final SnapshotResponse endOfStreamResponse =
+        SnapshotResponse.newBuilder().setRemainingBytes(-1).build();
     private StreamObserver<SnapshotResponse> snapshotObserver;
     private ExecutorService executorService = Executors.newFixedThreadPool(2);
     private BlockingQueue<SnapshotReaderResponseWithError> snapshotResponseBlockingQueue =
@@ -223,7 +168,7 @@ class MaintenanceImpl implements Maintenance {
         public void onError(Throwable throwable) {
           snapshotResponseBlockingQueue.add(
               new SnapshotReaderResponseWithError(
-                  new ConnectException("connection error ", throwable)));
+                  EtcdExceptionFactory.newConnectException("connection error ", throwable)));
         }
 
         @Override

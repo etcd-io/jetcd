@@ -17,12 +17,13 @@ import com.coreos.jetcd.api.AuthUserListResponse;
 import com.coreos.jetcd.api.AuthUserRevokeRoleResponse;
 import com.coreos.jetcd.api.Permission;
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.internal.impl.CloseableClient;
 import java.util.concurrent.CompletableFuture;
 
 /**
  * Interface of auth talking to etcd.
  */
-public interface Auth {
+public interface Auth extends CloseableClient {
 
   // ***************
   // Auth Manage
