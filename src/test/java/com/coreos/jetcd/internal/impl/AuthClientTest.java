@@ -4,8 +4,8 @@ import com.coreos.jetcd.Auth;
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.KV;
-import com.coreos.jetcd.api.AuthRoleGetResponse;
-import com.coreos.jetcd.api.Permission;
+import com.coreos.jetcd.auth.AuthRoleGetResponse;
+import com.coreos.jetcd.auth.Permission;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.kv.GetResponse;
 import io.grpc.StatusRuntimeException;
@@ -78,7 +78,7 @@ public class AuthClientTest {
    * grant user role
    */
   @Test(dependsOnMethods = {"testUserAdd",
-      "testRoleGrantPermission"}, groups = "user", priority = 1)
+      "testRoleGrantPermission" }, groups = "user", priority = 1)
   public void testUserGrantRole() throws ExecutionException, InterruptedException {
     this.authClient.userGrantRole(userName, roleName).get();
   }
@@ -111,7 +111,8 @@ public class AuthClientTest {
       this.secureClient.getKVClient().put(testKey, testName).get();
       GetResponse getResponse = this.secureClient.getKVClient().get(testKey).get();
       this.test.assertTrue(getResponse.getCount() != 0);
-      this.test.assertEquals(getResponse.getKvs().get(0).getValue().getBytes(), testName.getBytes());
+      this.test
+          .assertEquals(getResponse.getKvs().get(0).getValue().getBytes(), testName.getBytes());
     } catch (StatusRuntimeException sre) {
       err = sre;
     }
@@ -141,7 +142,7 @@ public class AuthClientTest {
     AuthRoleGetResponse roleGetResponse = this.secureClient.getAuthClient()
         .roleGet(roleName)
         .get();
-    this.test.assertTrue(roleGetResponse.getPermCount() != 0);
+    this.test.assertTrue(roleGetResponse.getPermissions().size() != 0);
   }
 
   /**
