@@ -15,6 +15,7 @@ public class Permission {
     READ,
     WRITE,
     READWRITE,
+    UNRECOGNIZED,
   }
 
   public Permission(Type permType, ByteSequence key, ByteSequence rangeEnd) {
@@ -24,7 +25,7 @@ public class Permission {
   }
 
   /**
-   * returns the type of Permission: READ, WRITE, or READWRITE.
+   * returns the type of Permission: READ, WRITE, READWRITE, or UNRECOGNIZED.
    */
   public Type getPermType() {
     return permType;

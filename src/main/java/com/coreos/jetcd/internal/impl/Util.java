@@ -5,6 +5,23 @@ import com.coreos.jetcd.api.DeleteRangeResponse;
 import com.coreos.jetcd.api.Event;
 import com.coreos.jetcd.api.RangeResponse;
 import com.coreos.jetcd.api.ResponseHeader;
+import com.coreos.jetcd.auth.AuthDisableResponse;
+import com.coreos.jetcd.auth.AuthEnableResponse;
+import com.coreos.jetcd.auth.AuthRoleAddResponse;
+import com.coreos.jetcd.auth.AuthRoleDeleteResponse;
+import com.coreos.jetcd.auth.AuthRoleGetResponse;
+import com.coreos.jetcd.auth.AuthRoleGrantPermissionResponse;
+import com.coreos.jetcd.auth.AuthRoleListResponse;
+import com.coreos.jetcd.auth.AuthRoleRevokePermissionResponse;
+import com.coreos.jetcd.auth.AuthUserAddResponse;
+import com.coreos.jetcd.auth.AuthUserChangePasswordResponse;
+import com.coreos.jetcd.auth.AuthUserDeleteResponse;
+import com.coreos.jetcd.auth.AuthUserGetResponse;
+import com.coreos.jetcd.auth.AuthUserGrantRoleResponse;
+import com.coreos.jetcd.auth.AuthUserListResponse;
+import com.coreos.jetcd.auth.AuthUserRevokeRoleResponse;
+import com.coreos.jetcd.auth.Permission;
+import com.coreos.jetcd.auth.Permission.Type;
 import com.coreos.jetcd.cluster.Member;
 import com.coreos.jetcd.cluster.MemberAddResponse;
 import com.coreos.jetcd.cluster.MemberListResponse;
@@ -290,6 +307,7 @@ final class Util {
   }
 
   /**
+   * <<<<<<< c21601f11678ca2f9a702addc9fcb04d837acee8
    * convert API MemberAddResponse to MemberAddResponse.
    */
   static MemberAddResponse toMemberAddResponse(com.coreos.jetcd.api.MemberAddResponse response) {
@@ -355,6 +373,155 @@ final class Util {
   }
 
   /**
+   * convert API AuthDisableResponse to client AuthDisableResponse.
+   */
+  static AuthDisableResponse toAuthDisableResponse(
+      com.coreos.jetcd.api.AuthDisableResponse response) {
+    return new AuthDisableResponse(toHeader(response.getHeader(), 0));
+  }
+
+  /**
+   * convert API AuthEnableResponse to client AuthEnableResponse.
+   */
+  static AuthEnableResponse toAuthEnableResponse(
+      com.coreos.jetcd.api.AuthEnableResponse response) {
+    return new AuthEnableResponse(toHeader(response.getHeader(), 0));
+  }
+
+  /**
+   * convert API AuthRoleAddResponse to client AuthRoleAddResponse.
+   */
+  static AuthRoleAddResponse toAuthRoleAddResponse(
+      com.coreos.jetcd.api.AuthRoleAddResponse response) {
+    return new AuthRoleAddResponse(toHeader(response.getHeader(), 0));
+  }
+
+  /**
+   * convert API AuthRoleDeleteResponse to client AuthRoleDeleteResponse.
+   */
+  static AuthRoleDeleteResponse toAuthRoleDeleteResponse(
+      com.coreos.jetcd.api.AuthRoleDeleteResponse response) {
+    return new AuthRoleDeleteResponse(toHeader(response.getHeader(), 0));
+  }
+
+  /**
+   * convert API AuthRoleGetResponse to client AuthRoleGetResponse.
+   */
+  static AuthRoleGetResponse toAuthRoleGetResponse(
+      com.coreos.jetcd.api.AuthRoleGetResponse response) {
+    List<Permission> permissions = response.getPermList()
+        .stream()
+        .map(Util::toPermission)
+        .collect(Collectors.toList());
+    return new AuthRoleGetResponse(toHeader(response.getHeader(), 0), permissions);
+  }
+
+  private static Permission toPermission(com.coreos.jetcd.api.Permission perm) {
+    ByteSequence key = byteSequenceFromByteString(perm.getKey());
+    ByteSequence rangeEnd = byteSequenceFromByteString(perm.getRangeEnd());
+    Permission.Type type;
+    switch (perm.getPermType()) {
+      case READ:
+        type = Type.READ;
+        break;
+      case WRITE:
+        type = Type.WRITE;
+        break;
+      case READWRITE:
+        type = Type.READWRITE;
+        break;
+      default:
+        type = Type.UNRECOGNIZED;
+    }
+    return new Permission(type, key, rangeEnd);
+  }
+
+  /**
+   * convert API AuthRoleGrantPermissionResponse to client AuthRoleGrantPermissionResponse.
+   */
+  static AuthRoleGrantPermissionResponse toAuthRoleGrantPermissionResponse(
+      com.coreos.jetcd.api.AuthRoleGrantPermissionResponse response) {
+    return new AuthRoleGrantPermissionResponse(toHeader(response.getHeader(), 0));
+  }
+
+  /**
+   * convert API AuthRoleListResponse to client AuthRoleListResponse.
+   */
+  static AuthRoleListResponse toAuthRoleListResponse(
+      com.coreos.jetcd.api.AuthRoleListResponse response) {
+    List<String> roles = new ArrayList<>(response.getRolesList());
+    return new AuthRoleListResponse(toHeader(response.getHeader(), 0), roles);
+  }
+
+  /**
+   * convert API AuthRoleRevokePermissionResponse to client AuthRoleRevokePermissionResponse.
+   */
+  static AuthRoleRevokePermissionResponse toAuthRoleRevokePermissionResponse(
+      com.coreos.jetcd.api.AuthRoleRevokePermissionResponse response) {
+    return new AuthRoleRevokePermissionResponse(toHeader(response.getHeader(), 0));
+  }
+
+  /**
+   * convert API AuthUserAddResponse to client AuthUserAddResponse.
+   */
+  static AuthUserAddResponse toAuthUserAddResponse(
+      com.coreos.jetcd.api.AuthUserAddResponse response) {
+    return new AuthUserAddResponse(toHeader(response.getHeader(), 0));
+  }
+
+  /**
+   * convert API AuthUserChangePasswordResponse to client AuthUserChangePasswordResponse.
+   */
+  static AuthUserChangePasswordResponse toAuthUserChangePasswordResponse(
+      com.coreos.jetcd.api.AuthUserChangePasswordResponse response) {
+    return new AuthUserChangePasswordResponse(toHeader(response.getHeader(), 0));
+  }
+
+  /**
+   * convert API AuthUserDeleteResponse to client AuthUserDeleteResponse.
+   */
+  static AuthUserDeleteResponse toAuthUserDeleteResponse(
+      com.coreos.jetcd.api.AuthUserDeleteResponse response) {
+    return new AuthUserDeleteResponse(toHeader(response.getHeader(), 0));
+  }
+
+  /**
+   * convert API AuthUserGetResponse to client AuthUserGetResponse.
+   */
+  static AuthUserGetResponse toAuthUserGetResponse(
+      com.coreos.jetcd.api.AuthUserGetResponse response) {
+    List<String> roles = new ArrayList<>(response.getRolesList());
+    return new AuthUserGetResponse(toHeader(response.getHeader(), 0), roles);
+  }
+
+  /**
+   * convert API AuthUserGrantRoleResponse to client AuthUserGrantRoleResponse.
+   */
+  static AuthUserGrantRoleResponse toAuthUserGrantRoleResponse(
+      com.coreos.jetcd.api.AuthUserGrantRoleResponse response) {
+    return new AuthUserGrantRoleResponse(toHeader(response.getHeader(), 0));
+  }
+
+  /**
+   * convert API AuthUserListResponse to client AuthUserListResponse.
+   */
+  static AuthUserListResponse toAuthUserListResponse(
+      com.coreos.jetcd.api.AuthUserListResponse response) {
+    List<String> users = new ArrayList<>(response.getUsersList());
+    return new AuthUserListResponse(toHeader(response.getHeader(), 0), users);
+  }
+
+  /**
+   * convert API AuthUserRevokeRoleResponse to client AuthUserRevokeRoleResponse.
+   */
+  static AuthUserRevokeRoleResponse toAuthUserRevokeRoleResponse(
+      com.coreos.jetcd.api.AuthUserRevokeRoleResponse response) {
+    return new AuthUserRevokeRoleResponse(toHeader(response.getHeader(), 0));
+  }
+
+
+  /**
+   * >>>>>>> util: add convert methods for Auth responses and add UNRECOGNIZED to Permission
    * convert ListenableFuture of Type S to CompletableFuture of Type T.
    */
   static <S, T> CompletableFuture<T> listenableToCompletableFuture(
