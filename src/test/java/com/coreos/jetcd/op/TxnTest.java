@@ -1,8 +1,10 @@
 package com.coreos.jetcd.op;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.options.PutOption;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 public class TxnTest {
 
@@ -13,31 +15,37 @@ public class TxnTest {
 
   @Test
   public void testIfs() {
-    Txn.newBuilder().If(CMP).If(CMP).build();
+    TxnImpl.newTxn((t) -> null).If(CMP).If(CMP).commit();
   }
 
   @Test
   public void testThens() {
-    Txn.newBuilder().Then(OP).Then(OP).build();
+    TxnImpl.newTxn((t) -> null).Then(OP).Then(OP).commit();
   }
 
   @Test
   public void testElses() {
-    Txn.newBuilder().Else(OP).Else(OP).build();
+    TxnImpl.newTxn((t) -> null).Else(OP).Else(OP).commit();
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "cannot call If after Then!")
+  @Test
   public void testIfAfterThen() {
-    Txn.newBuilder().Then(OP).If(CMP).build();
+    assertThatThrownBy(() -> TxnImpl.newTxn((t) -> null).Then(OP).If(CMP).commit())
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("cannot call If after Then!");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "cannot call If after Else!")
+  @Test
   public void testIfAfterElse() {
-    Txn.newBuilder().Else(OP).If(CMP).build();
+    assertThatThrownBy(() -> TxnImpl.newTxn((t) -> null).Else(OP).If(CMP).commit())
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("cannot call If after Else!");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "cannot call Then after Else!")
+  @Test
   public void testThenAfterElse() {
-    Txn.newBuilder().Else(OP).Then(OP).build();
+    assertThatThrownBy(() -> TxnImpl.newTxn((t) -> null).Else(OP).Then(OP).commit())
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("cannot call Then after Else!");
   }
 }

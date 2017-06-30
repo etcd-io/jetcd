@@ -3,8 +3,8 @@ package com.coreos.jetcd.internal.impl;
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.KV;
+import com.coreos.jetcd.Txn;
 import com.coreos.jetcd.api.RangeRequest;
-import com.coreos.jetcd.api.TxnResponse;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.kv.DeleteResponse;
 import com.coreos.jetcd.kv.GetResponse;
@@ -12,7 +12,6 @@ import com.coreos.jetcd.kv.PutResponse;
 import com.coreos.jetcd.op.Cmp;
 import com.coreos.jetcd.op.CmpTarget;
 import com.coreos.jetcd.op.Op;
-import com.coreos.jetcd.op.Txn;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
@@ -167,12 +166,13 @@ public class KVTest {
     PutResponse putResp = feature.get();
 
     // construct txn operation
+    Txn txn = kvClient.txn();
     Cmp cmp = new Cmp(sampleKey, Cmp.Op.GREATER, CmpTarget.value(cmpValue));
-    Txn txn = Txn.newBuilder().If(cmp).Then(Op.put(sampleKey, putValue, PutOption.DEFAULT))
-        .Else(Op.put(sampleKey, putValueNew, PutOption.DEFAULT)).build();
-    CompletableFuture<TxnResponse> txnResp = kvClient.commit(txn);
+    CompletableFuture<com.coreos.jetcd.kv.TxnResponse> txnResp =
+        txn.If(cmp)
+            .Then(Op.put(sampleKey, putValue, PutOption.DEFAULT))
+            .Else(Op.put(sampleKey, putValueNew, PutOption.DEFAULT)).commit();
     txnResp.get();
-
     // get the value
     GetResponse getResp = kvClient.get(sampleKey).get();
     test.assertEquals(getResp.getKvs().size(), 1);

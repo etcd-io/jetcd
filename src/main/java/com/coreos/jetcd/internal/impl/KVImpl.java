@@ -3,18 +3,18 @@ package com.coreos.jetcd.internal.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.KV;
+import com.coreos.jetcd.Txn;
 import com.coreos.jetcd.api.CompactionRequest;
 import com.coreos.jetcd.api.DeleteRangeRequest;
 import com.coreos.jetcd.api.KVGrpc;
 import com.coreos.jetcd.api.PutRequest;
 import com.coreos.jetcd.api.RangeRequest;
-import com.coreos.jetcd.api.TxnResponse;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.kv.CompactResponse;
 import com.coreos.jetcd.kv.DeleteResponse;
 import com.coreos.jetcd.kv.GetResponse;
 import com.coreos.jetcd.kv.PutResponse;
-import com.coreos.jetcd.op.Txn;
+import com.coreos.jetcd.op.TxnImpl;
 import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
@@ -23,7 +23,6 @@ import io.grpc.ManagedChannel;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 
 /**
  * Implementation of etcd kv client.
@@ -132,10 +131,10 @@ class KVImpl implements KV {
         this.executorService);
   }
 
-  // TODO: remove type dependency api TxnResponse.
-  @Override
-  public CompletableFuture<TxnResponse> commit(Txn txn) {
-    checkNotNull(txn, "txn should not be null");
-    return FutureConverter.toCompletableFuture(this.stub.txn(txn.toTxnRequest()));
+  public Txn txn() {
+    return TxnImpl.newTxn((txnRequest) ->
+        Util.listenableToCompletableFuture(this.stub.txn(txnRequest), Util::toTxnResponse,
+            this.executorService)
+    );
   }
 }

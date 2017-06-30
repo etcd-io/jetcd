@@ -1,12 +1,10 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.TxnResponse;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.kv.CompactResponse;
 import com.coreos.jetcd.kv.DeleteResponse;
 import com.coreos.jetcd.kv.GetResponse;
 import com.coreos.jetcd.kv.PutResponse;
-import com.coreos.jetcd.op.Txn;
 import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
@@ -95,12 +93,12 @@ public interface KV {
    */
   CompletableFuture<CompactResponse> compact(long rev, CompactOption option);
 
-  /**
-   * Commit a transaction built from {@link com.coreos.jetcd.op.Txn.Builder}.
-   *
-   * @param txn txn to commit
-   */
-  CompletableFuture<TxnResponse> commit(Txn txn);
 
+  /**
+   * creates a transaction.
+   *
+   * @return a Txn
+   */
+  Txn txn();
 }
 

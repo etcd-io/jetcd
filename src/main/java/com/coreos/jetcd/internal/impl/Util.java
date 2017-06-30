@@ -12,6 +12,7 @@ import com.coreos.jetcd.kv.CompactResponse;
 import com.coreos.jetcd.kv.DeleteResponse;
 import com.coreos.jetcd.kv.GetResponse;
 import com.coreos.jetcd.kv.PutResponse;
+import com.coreos.jetcd.kv.TxnResponse;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseRevokeResponse;
@@ -25,12 +26,16 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
  * a util class for jetcd.
  */
 final class Util {
+
+  private static final Logger logger = Logger.getLogger(Util.class.getName());
 
   private Util() {
   }
@@ -182,6 +187,38 @@ final class Util {
   static WatchResponse toWatchResponse(com.coreos.jetcd.api.WatchResponse response) {
     return new WatchResponse(toHeader(response.getHeader(), 0),
         toEvents(response.getEventsList()));
+  }
+
+  /**
+   * convert API TxnResponse to client TxnResponse.
+   */
+  static TxnResponse toTxnResponse(com.coreos.jetcd.api.TxnResponse response) {
+    List<PutResponse> putResponses = new ArrayList<>();
+    List<GetResponse> getResponses = new ArrayList<>();
+    List<DeleteResponse> deleteResponses = new ArrayList<>();
+
+    response.getResponsesList().forEach((responseOp) -> {
+      switch (responseOp.getResponseCase()) {
+        case RESPONSE_PUT:
+          putResponses.add(toPutResponse(responseOp.getResponsePut()));
+          break;
+        case RESPONSE_RANGE:
+          getResponses.add(toGetResponse(responseOp.getResponseRange()));
+          break;
+        case RESPONSE_DELETE_RANGE:
+          deleteResponses.add(toDeleteResponse(responseOp.getResponseDeleteRange()));
+          break;
+        default:
+          logger.log(Level.WARNING, "unexpected type " + responseOp.getResponseCase());
+      }
+    });
+
+    return new TxnResponse(
+        toHeader(response.getHeader(), 0),
+        response.getSucceeded(),
+        putResponses,
+        getResponses,
+        deleteResponses);
   }
 
   /**
