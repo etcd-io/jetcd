@@ -12,6 +12,9 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.apache.commons.validator.routines.InetAddressValidator;
+import org.apache.commons.validator.routines.IntegerValidator;
+import org.apache.commons.validator.routines.UrlValidator;
 
 public final class ClientUtil {
 
@@ -62,5 +65,37 @@ public final class ClientUtil {
     return ManagedChannelBuilder.forTarget("etcd")
         .nameResolverFactory(factory)
         .usePlaintext(true);
+  }
+
+  public static boolean isValidEndpointFormat(String endpoint) {
+    if (endpoint.startsWith("http")) {
+      return isValidURL(endpoint);
+    }
+
+    String[] hostAndPort = endpoint.split(":");
+
+    if (hostAndPort.length != 2) {
+      return false;
+    }
+
+    String host = hostAndPort[0];
+    String port = hostAndPort[1];
+
+    return (isValidHost(host) && isValidPort(port));
+  }
+
+  private static boolean isValidURL(String url) {
+    String[] scheme = {"http"};
+    UrlValidator urlValidator = new UrlValidator(scheme, UrlValidator.ALLOW_LOCAL_URLS);
+    return urlValidator.isValid(url);
+  }
+
+  private static boolean isValidHost(String host) {
+    return InetAddressValidator.getInstance().isValid(host) || "localhost".equals(host);
+  }
+
+  private static boolean isValidPort(String port) {
+    IntegerValidator portValidator = IntegerValidator.getInstance();
+    return portValidator.isValid(port) && portValidator.isInRange(Integer.parseInt(port), 0, 65535);
   }
 }

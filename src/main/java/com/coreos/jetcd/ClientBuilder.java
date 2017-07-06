@@ -1,5 +1,6 @@
 package com.coreos.jetcd;
 
+import static com.coreos.jetcd.internal.impl.ClientUtil.isValidEndpointFormat;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -44,18 +45,18 @@ public class ClientBuilder {
    *
    * @param endpoints etcd server endpoints, at least one
    * @return this builder to train
-   * @throws NullPointerException if endpoints is null or one of endpoint is null
+   * @throws NullPointerException     if endpoints is null or one of endpoint is null
    * @throws IllegalArgumentException if endpoints is empty or some endpoint is invalid
    */
   public ClientBuilder setEndpoints(String... endpoints) {
     checkNotNull(endpoints, "endpoints can't be null");
     checkArgument(endpoints.length > 0, "please configure at lease one endpoint ");
 
-    // TODO: check endpoint is in host:port format
     for (String endpoint : endpoints) {
       checkNotNull(endpoint, "endpoint can't be null");
       final String trimmedEndpoint = endpoint.trim();
       checkArgument(trimmedEndpoint.length() > 0, "invalid endpoint: endpoint=" + endpoint);
+      checkArgument(isValidEndpointFormat(trimmedEndpoint), "invalid format: endpoint=" + endpoint);
       this.endpoints.add(trimmedEndpoint);
     }
     return this;
@@ -122,7 +123,7 @@ public class ClientBuilder {
    * build a new Client.
    *
    * @return Client instance.
-   * @throws ConnectException As network reason, wrong address
+   * @throws ConnectException    As network reason, wrong address
    * @throws AuthFailedException This may be caused as wrong username or password
    */
   public Client build() throws ConnectException, AuthFailedException {
