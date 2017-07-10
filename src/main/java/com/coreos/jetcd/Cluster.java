@@ -4,13 +4,14 @@ import com.coreos.jetcd.api.MemberAddResponse;
 import com.coreos.jetcd.api.MemberListResponse;
 import com.coreos.jetcd.api.MemberRemoveResponse;
 import com.coreos.jetcd.api.MemberUpdateResponse;
+import com.coreos.jetcd.internal.impl.CloseableClient;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
  * Interface of cluster client talking to etcd.
  */
-public interface Cluster {
+public interface Cluster extends CloseableClient {
 
   /**
    * lists the current cluster membership.

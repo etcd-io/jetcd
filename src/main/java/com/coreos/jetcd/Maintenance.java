@@ -4,6 +4,7 @@ import com.coreos.jetcd.api.AlarmMember;
 import com.coreos.jetcd.api.AlarmResponse;
 import com.coreos.jetcd.api.DefragmentResponse;
 import com.coreos.jetcd.api.StatusResponse;
+import com.coreos.jetcd.internal.impl.CloseableClient;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,7 +29,7 @@ import java.util.concurrent.CompletableFuture;
  * to recover any unintended logical data loss or corruption caused by
  * operational error.
  */
-public interface Maintenance {
+public interface Maintenance extends CloseableClient {
 
   /**
    * get all active keyspace alarm.

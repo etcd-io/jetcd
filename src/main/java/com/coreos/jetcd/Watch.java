@@ -1,13 +1,14 @@
 package com.coreos.jetcd;
 
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.internal.impl.CloseableClient;
 import com.coreos.jetcd.options.WatchOption;
 import com.coreos.jetcd.watch.WatchResponse;
 
 /**
  * Interface of the watch client.
  */
-public interface Watch {
+public interface Watch extends CloseableClient {
 
   /**
    * watch on a key with option.
@@ -24,12 +25,6 @@ public interface Watch {
    * @param key key to be watched on.
    **/
   Watcher watch(ByteSequence key);
-
-  /**
-   * releases all watch client resources.
-   * note, this won't close active watchers.
-   */
-  void close();
 
   /**
    * Interface of Watcher.

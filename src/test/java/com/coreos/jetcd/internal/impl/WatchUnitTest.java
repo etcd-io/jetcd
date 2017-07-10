@@ -7,6 +7,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.Watch;
 import com.coreos.jetcd.Watch.Watcher;
 import com.coreos.jetcd.api.Event;
@@ -25,7 +26,6 @@ import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcServerRule;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,10 +68,11 @@ public class WatchUnitTest {
     this.responseObserverRef = new AtomicReference<>();
 
     this.grpcServerRule.getServiceRegistry().addService(
-        this.createWatchImpBase(this.responseObserverRef, this.requestStreamObserverMock));
+        createWatchImpBase(responseObserverRef, requestStreamObserverMock));
 
-    this.watchClient = new WatchImpl(this.grpcServerRule.getChannel(),
-        Optional.empty());
+    this.watchClient = new WatchImpl(
+        new ClientConnectionManager(ClientBuilder.newBuilder(), this.grpcServerRule.getChannel())
+    );
   }
 
 
@@ -89,8 +90,9 @@ public class WatchUnitTest {
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Watch client has been closed");
     // hack to avoid double close on watchClient on tearDown.
-    this.watchClient = new WatchImpl(this.grpcServerRule.getChannel(),
-        Optional.empty());
+    this.watchClient = new WatchImpl(
+        new ClientConnectionManager(ClientBuilder.newBuilder(), this.grpcServerRule.getChannel())
+    );
   }
 
   @Test

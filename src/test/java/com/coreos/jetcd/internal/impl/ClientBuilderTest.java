@@ -1,8 +1,6 @@
 package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.ClientBuilder;
-import com.coreos.jetcd.exception.AuthFailedException;
-import com.coreos.jetcd.exception.ConnectException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -36,7 +34,7 @@ public class ClientBuilderTest {
   }
 
   @Test(expectedExceptions = IllegalStateException.class)
-  public void testBuild_WithoutEndpoints() throws AuthFailedException, ConnectException {
+  public void testBuild_WithoutEndpoints() {
     builder.build();
   }
 }

@@ -5,12 +5,10 @@ import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.Maintenance.Snapshot;
 import com.coreos.jetcd.api.StatusResponse;
-import com.coreos.jetcd.exception.AuthFailedException;
-import com.coreos.jetcd.exception.ConnectException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.nio.file.Files;
 import java.util.concurrent.ExecutionException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -26,7 +24,7 @@ public class MaintenanceTest {
   private final Assertion test = new Assertion();
 
   @BeforeClass
-  public void setup() throws AuthFailedException, ConnectException {
+  public void setup() {
     this.client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints).build();
     this.maintenance = client.getMaintenanceClient();
   }
@@ -43,14 +41,13 @@ public class MaintenanceTest {
 
   // TODO: find a better way to test snapshot.
   @Test
-  public void Testsnapshot() throws IOException {
-    // create snapshot.db file current folder.
-    String dir = Paths.get("").toAbsolutePath().toString();
-    File snapfile = new File(dir, "snapshot.db");
+  public void testNnapshot() throws IOException {
+    // create a snapshot file current folder.
+    File snapfile = Files.createTempFile("snapshot-", null).toFile();
 
     // leverage try-with-resources
     try (Snapshot snapshot = maintenance.snapshot();
-        FileOutputStream fop = new FileOutputStream(snapfile)) {
+      FileOutputStream fop = new FileOutputStream(snapfile)) {
       snapshot.write(fop);
     } catch (Exception e) {
       snapfile.delete();

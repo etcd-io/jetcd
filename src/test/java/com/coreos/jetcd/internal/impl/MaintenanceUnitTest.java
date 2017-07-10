@@ -9,8 +9,6 @@ import com.coreos.jetcd.Maintenance.Snapshot;
 import com.coreos.jetcd.api.MaintenanceGrpc.MaintenanceImplBase;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
-import com.coreos.jetcd.exception.AuthFailedException;
-import com.coreos.jetcd.exception.ConnectException;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Server;
@@ -42,15 +40,15 @@ public class MaintenanceUnitTest {
   private final AtomicReference<StreamObserver<SnapshotResponse>> responseObserverRef = new AtomicReference<>();
 
   @BeforeTest
-  public void setUp() throws AuthFailedException, ConnectException, IOException {
+  public void setUp() throws IOException {
     String uniqueServerName = "fake server for " + getClass();
 
     fakeServer = InProcessServerBuilder.forName(uniqueServerName)
         .fallbackHandlerRegistry(serviceRegistry).directExecutor().build().start();
 
     ManagedChannelBuilder channelBuilder = InProcessChannelBuilder.forName(uniqueServerName).directExecutor();
-    ClientBuilder clientBuilder = ClientBuilder.newBuilder().setEndpoints("test");
-    maintenanceCli = new ClientImpl(channelBuilder, clientBuilder).getMaintenanceClient();
+    ClientBuilder clientBuilder = ClientBuilder.newBuilder().setChannelBuilder(channelBuilder).setEndpoints("test");
+    maintenanceCli = new ClientImpl(clientBuilder).getMaintenanceClient();
 
     MaintenanceImplBase base = this.defaultBase(responseObserverRef);
     serviceRegistry.addService(base);

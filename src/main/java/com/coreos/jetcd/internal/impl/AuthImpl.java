@@ -34,8 +34,6 @@ import com.coreos.jetcd.api.AuthUserRevokeRoleRequest;
 import com.coreos.jetcd.api.AuthUserRevokeRoleResponse;
 import com.coreos.jetcd.api.Permission;
 import com.coreos.jetcd.data.ByteSequence;
-import io.grpc.ManagedChannel;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 
@@ -43,15 +41,10 @@ import net.javacrumbs.futureconverter.java8guava.FutureConverter;
  * Implementation of etcd auth client.
  */
 class AuthImpl implements Auth {
-
   private final AuthGrpc.AuthFutureStub stub;
 
-  AuthImpl(ClientImpl c) {
-    this(c.getChannel(), c.getToken());
-  }
-
-  AuthImpl(ManagedChannel channel, Optional<String> token) {
-    this.stub = ClientUtil.configureStub(AuthGrpc.newFutureStub(channel), token);
+  AuthImpl(ClientConnectionManager connectionManager) {
+    this.stub = connectionManager.newStub(AuthGrpc::newFutureStub);
   }
 
   // ***************

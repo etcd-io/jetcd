@@ -7,21 +7,24 @@ import static com.google.common.base.Preconditions.checkState;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
+import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.internal.impl.ClientImpl;
-import com.coreos.jetcd.resolver.AbstractEtcdNameResolverFactory;
 import com.google.common.collect.Lists;
-
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.NameResolver;
 import java.util.List;
 
 /**
  * ClientBuilder knows how to create an Client instance.
  */
-public class ClientBuilder {
+public class ClientBuilder implements Cloneable {
 
   private List<String> endpoints = Lists.newArrayList();
-  private ByteSequence name;
+  private ByteSequence user;
   private ByteSequence password;
-  private AbstractEtcdNameResolverFactory nameResolverFactory;
+  private NameResolver.Factory nameResolverFactory;
+  private ManagedChannelBuilder<?> channelBuilder;
+  private boolean lazyInitialization = false;
 
   private ClientBuilder() {
   }
@@ -61,20 +64,20 @@ public class ClientBuilder {
     return this;
   }
 
-  public ByteSequence getName() {
-    return name;
+  public ByteSequence getUser() {
+    return user;
   }
 
   /**
    * config etcd auth name.
    *
-   * @param name etcd auth name
+   * @param user etcd auth user
    * @return this builder
    * @throws NullPointerException if name is null
    */
-  public ClientBuilder setName(ByteSequence name) {
-    checkNotNull(name, "name can't be null");
-    this.name = name;
+  public ClientBuilder setUser(ByteSequence user) {
+    checkNotNull(user, "user can't be null");
+    this.user = user;
     return this;
   }
 
@@ -102,8 +105,7 @@ public class ClientBuilder {
    * @return this builder
    * @throws NullPointerException if password is null
    */
-  public ClientBuilder setNameResolverFactory(
-      AbstractEtcdNameResolverFactory nameResolverFactory) {
+  public ClientBuilder setNameResolverFactory(NameResolver.Factory nameResolverFactory) {
     checkNotNull(nameResolverFactory);
     this.nameResolverFactory = nameResolverFactory;
     return this;
@@ -114,8 +116,33 @@ public class ClientBuilder {
    *
    * @return nameResolverFactory
    */
-  public AbstractEtcdNameResolverFactory getNameResolverFactory() {
+  public NameResolver.Factory getNameResolverFactory() {
     return nameResolverFactory;
+  }
+
+  public ManagedChannelBuilder<?> getChannelBuilder() {
+    return channelBuilder;
+  }
+
+  public ClientBuilder setChannelBuilder(ManagedChannelBuilder<?> channelBuilder) {
+    this.channelBuilder = channelBuilder;
+    return this;
+  }
+
+  public boolean isLazyInitialization() {
+    return lazyInitialization;
+  }
+
+  /**
+   * Define if the client has to initialize connectivity and authentication on client constructor
+   * or delay it to the first call to a client. Default is false.
+   *
+   * @param lazyInitialization true if the client has to lazily perform connectivity/authentication.
+   * @return this builder
+   */
+  public ClientBuilder setLazyInitialization(boolean lazyInitialization) {
+    this.lazyInitialization = lazyInitialization;
+    return this;
   }
 
   /**
@@ -125,9 +152,17 @@ public class ClientBuilder {
    * @throws ConnectException As network reason, wrong address
    * @throws AuthFailedException This may be caused as wrong username or password
    */
-  public Client build() throws ConnectException, AuthFailedException {
+  public Client build() {
     checkState(!endpoints.isEmpty() || nameResolverFactory != null,
         "please configure etcd server endpoints or nameResolverFactory before build.");
-    return new ClientImpl(null, this);
+    return new ClientImpl(this);
+  }
+
+  public ClientBuilder copy() {
+    try {
+      return (ClientBuilder)super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw EtcdExceptionFactory.newEtcdException(e);
+    }
   }
 }

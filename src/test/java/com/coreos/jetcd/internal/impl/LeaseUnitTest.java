@@ -8,19 +8,16 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.Lease;
 import com.coreos.jetcd.Lease.KeepAliveListener;
 import com.coreos.jetcd.api.LeaseGrpc.LeaseImplBase;
 import com.coreos.jetcd.api.LeaseKeepAliveRequest;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
-import com.coreos.jetcd.exception.AuthFailedException;
-import com.coreos.jetcd.exception.ConnectException;
-import com.coreos.jetcd.internal.impl.LeaseImpl;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcServerRule;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -56,13 +53,14 @@ public class LeaseUnitTest {
   private StreamObserver<LeaseKeepAliveRequest> requestStreamObserverMock;
 
   @Before
-  public void setup() throws IOException, AuthFailedException, ConnectException {
+  public void setup() throws IOException {
     this.responseObserverRef = new AtomicReference<>();
     this.grpcServerRule.getServiceRegistry().addService(
         this.createLeaseImplBase(this.responseObserverRef, this.requestStreamObserverMock));
 
-    this.leaseCli = new LeaseImpl(this.grpcServerRule.getChannel(), Optional.empty(),
-        Executors.newCachedThreadPool());
+    this.leaseCli = new LeaseImpl(
+        new ClientConnectionManager(ClientBuilder.newBuilder(), grpcServerRule.getChannel())
+    );
   }
 
   @After

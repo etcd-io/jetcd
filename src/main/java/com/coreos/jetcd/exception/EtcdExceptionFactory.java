@@ -25,4 +25,12 @@ public final class EtcdExceptionFactory {
     Thread.currentThread().interrupt();
     return newEtcdException("Interrupted", e);
   }
+
+  public static AuthFailedException newAuthFailedException(String cause, Throwable throwable) {
+    return new AuthFailedException(cause, throwable);
+  }
+
+  public static ConnectException newConnectException(String cause, Throwable throwable) {
+    return new ConnectException(cause, throwable);
+  }
 }

@@ -7,8 +7,6 @@ import com.coreos.jetcd.KV;
 import com.coreos.jetcd.api.AuthRoleGetResponse;
 import com.coreos.jetcd.api.Permission;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.exception.AuthFailedException;
-import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.kv.GetResponse;
 import io.grpc.StatusRuntimeException;
 import java.util.concurrent.ExecutionException;
@@ -44,7 +42,7 @@ public class AuthClientTest {
    * Build etcd client to create role, permission
    */
   @BeforeTest
-  public void setupEnv() throws AuthFailedException, ConnectException {
+  public void setupEnv() {
     this.test = new Assertion();
     this.client = ClientBuilder.newBuilder().setEndpoints("localhost:2379").build();
     this.kvClient = this.client.getKVClient();
@@ -97,9 +95,9 @@ public class AuthClientTest {
    * auth client with password and user name
    */
   @Test(dependsOnMethods = "testEnableAuth", groups = "authEnable", priority = 1)
-  public void setupAuthClient() throws AuthFailedException, ConnectException {
+  public void setupAuthClient() {
     this.secureClient = ClientBuilder.newBuilder().setEndpoints("localhost:2379")
-        .setName(userName).setPassword(password).build();
+        .setUser(userName).setPassword(password).build();
 
   }
 
@@ -140,7 +138,8 @@ public class AuthClientTest {
    */
   @Test(groups = "testAuth", dependsOnGroups = "authEnable", priority = 1)
   public void testRoleGet() throws ExecutionException, InterruptedException {
-    AuthRoleGetResponse roleGetResponse = this.secureClient.getAuthClient().roleGet(roleName)
+    AuthRoleGetResponse roleGetResponse = this.secureClient.getAuthClient()
+        .roleGet(roleName)
         .get();
     this.test.assertTrue(roleGetResponse.getPermCount() != 0);
   }
