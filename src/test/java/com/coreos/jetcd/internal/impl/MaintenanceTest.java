@@ -4,7 +4,7 @@ import com.coreos.jetcd.Client;
 import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.Maintenance.Snapshot;
-import com.coreos.jetcd.api.StatusResponse;
+import com.coreos.jetcd.maintenance.StatusResponse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
