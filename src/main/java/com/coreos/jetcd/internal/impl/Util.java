@@ -17,6 +17,10 @@ import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseRevokeResponse;
 import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
+import com.coreos.jetcd.maintenance.AlarmMember;
+import com.coreos.jetcd.maintenance.AlarmResponse;
+import com.coreos.jetcd.maintenance.DefragmentResponse;
+import com.coreos.jetcd.maintenance.StatusResponse;
 import com.coreos.jetcd.watch.WatchEvent;
 import com.coreos.jetcd.watch.WatchResponse;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -219,6 +223,65 @@ final class Util {
         putResponses,
         getResponses,
         deleteResponses);
+  }
+
+  /**
+   * convert API StatusResponse to client StatusResponse.
+   */
+  static StatusResponse toStatusResponse(com.coreos.jetcd.api.StatusResponse response) {
+    return new StatusResponse(
+        toHeader(response.getHeader(), 0),
+        response.getVersion(),
+        response.getDbSize(),
+        response.getLeader(),
+        response.getRaftIndex(),
+        response.getRaftTerm());
+  }
+
+  /**
+   * convert API DefragmentResponse to client DefragmentResponse.
+   */
+  static DefragmentResponse toDefragmentResponse(
+      com.coreos.jetcd.api.DefragmentResponse response) {
+    return new DefragmentResponse(toHeader(response.getHeader(), 0));
+  }
+
+  /**
+   * convert API AlarmResponse to client AlarmResponse.
+   */
+  static AlarmResponse toAlarmResponse(com.coreos.jetcd.api.AlarmResponse response) {
+    return new AlarmResponse(
+        toHeader(response.getHeader(), 0),
+        toAlarmMembers(response.getAlarmsList())
+    );
+  }
+
+  /**
+   * convert a list of API AlarmMember to a list of  client AlarmMember.
+   */
+  private static List<AlarmMember> toAlarmMembers(
+      List<com.coreos.jetcd.api.AlarmMember> alarmMembers) {
+    return alarmMembers.stream()
+        .map(Util::toAlarmMember)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * convert API AlarmMember to a client AlarmMember.
+   */
+  private static AlarmMember toAlarmMember(com.coreos.jetcd.api.AlarmMember alarmMember) {
+    com.coreos.jetcd.maintenance.AlarmType type;
+    switch (alarmMember.getAlarm()) {
+      case NONE:
+        type = com.coreos.jetcd.maintenance.AlarmType.NONE;
+        break;
+      case NOSPACE:
+        type = com.coreos.jetcd.maintenance.AlarmType.NOSPACE;
+        break;
+      default:
+        type = com.coreos.jetcd.maintenance.AlarmType.UNRECOGNIZED;
+    }
+    return new AlarmMember(alarmMember.getMemberID(), type);
   }
 
   /**
