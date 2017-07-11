@@ -2,23 +2,20 @@ package com.coreos.jetcd.internal.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static net.javacrumbs.futureconverter.java8guava.FutureConverter.toCompletableFuture;
 
 import com.coreos.jetcd.Maintenance;
-import com.coreos.jetcd.api.AlarmMember;
 import com.coreos.jetcd.api.AlarmRequest;
-import com.coreos.jetcd.api.AlarmResponse;
 import com.coreos.jetcd.api.AlarmType;
 import com.coreos.jetcd.api.DefragmentRequest;
-import com.coreos.jetcd.api.DefragmentResponse;
 import com.coreos.jetcd.api.MaintenanceGrpc;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
 import com.coreos.jetcd.api.StatusRequest;
-import com.coreos.jetcd.api.StatusResponse;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
+import com.coreos.jetcd.maintenance.AlarmResponse;
+import com.coreos.jetcd.maintenance.DefragmentResponse;
 import com.coreos.jetcd.maintenance.SnapshotReaderResponseWithError;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.coreos.jetcd.maintenance.StatusResponse;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -58,7 +55,12 @@ class MaintenanceImpl implements Maintenance {
         .setAlarm(AlarmType.NONE)
         .setAction(AlarmRequest.AlarmAction.GET)
         .setMemberID(0).build();
-    return toCompletableFuture(this.stub.alarm(alarmRequest));
+
+    return Util.listenableToCompletableFuture(
+        this.stub.alarm(alarmRequest),
+        Util::toAlarmResponse,
+        this.connectionManager.getExecutorService()
+    );
   }
 
   /**
@@ -68,17 +70,23 @@ class MaintenanceImpl implements Maintenance {
    * @return the response result
    */
   @Override
-  public CompletableFuture<AlarmResponse> alarmDisarm(AlarmMember member) {
-    checkArgument(member.getMemberID() != 0, "the member id can not be 0");
-    checkArgument(member.getAlarm() != AlarmType.NONE, "alarm type can not be NONE");
+  public CompletableFuture<AlarmResponse> alarmDisarm(
+      com.coreos.jetcd.maintenance.AlarmMember member) {
+    checkArgument(member.getMemberId() != 0, "the member id can not be 0");
+    checkArgument(member.getAlarmType() != com.coreos.jetcd.maintenance.AlarmType.NONE,
+        "alarm type can not be NONE");
 
     AlarmRequest alarmRequest = AlarmRequest.newBuilder()
         .setAlarm(AlarmType.NOSPACE)
         .setAction(AlarmRequest.AlarmAction.DEACTIVATE)
-        .setMemberID(member.getMemberID())
+        .setMemberID(member.getMemberId())
         .build();
 
-    return toCompletableFuture(this.stub.alarm(alarmRequest));
+    return Util.listenableToCompletableFuture(
+        this.stub.alarm(alarmRequest),
+        Util::toAlarmResponse,
+        this.connectionManager.getExecutorService()
+    );
   }
 
   /**
@@ -97,16 +105,16 @@ class MaintenanceImpl implements Maintenance {
    * multiple times with different endpoints.
    */
   @Override
-  public CompletableFuture<DefragmentResponse> defragmentMember(String endpoint) {
+  public CompletableFuture<DefragmentResponse> defragmentMember(
+      String endpoint) {
     return this.connectionManager.withNewChannel(
         endpoint,
         MaintenanceGrpc::newFutureStub,
-        stub -> {
-          DefragmentRequest request = DefragmentRequest.getDefaultInstance();
-          ListenableFuture<DefragmentResponse> future = stub.defragment(request);
-
-          return toCompletableFuture(future);
-        }
+        stub -> Util.listenableToCompletableFuture(
+            stub.defragment(DefragmentRequest.getDefaultInstance()),
+            Util::toDefragmentResponse,
+            this.connectionManager.getExecutorService()
+        )
     );
   }
 
@@ -114,16 +122,16 @@ class MaintenanceImpl implements Maintenance {
    * get the status of one member.
    */
   @Override
-  public CompletableFuture<StatusResponse> statusMember(String endpoint) {
+  public CompletableFuture<StatusResponse> statusMember(
+      String endpoint) {
     return this.connectionManager.withNewChannel(
         endpoint,
         MaintenanceGrpc::newFutureStub,
-        stub -> {
-          StatusRequest request = StatusRequest.getDefaultInstance();
-          ListenableFuture<StatusResponse> future = stub.status(request);
-
-          return toCompletableFuture(future);
-        }
+        stub -> Util.listenableToCompletableFuture(
+            stub.status(StatusRequest.getDefaultInstance()),
+            Util::toStatusResponse,
+            this.connectionManager.getExecutorService()
+        )
     );
   }
 
@@ -135,6 +143,7 @@ class MaintenanceImpl implements Maintenance {
   }
 
   class SnapshotImpl implements Snapshot {
+
     private final SnapshotResponse endOfStreamResponse =
         SnapshotResponse.newBuilder().setRemainingBytes(-1).build();
     private StreamObserver<SnapshotResponse> snapshotObserver;

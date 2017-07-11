@@ -1,10 +1,10 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.AlarmMember;
-import com.coreos.jetcd.api.AlarmResponse;
-import com.coreos.jetcd.api.DefragmentResponse;
-import com.coreos.jetcd.api.StatusResponse;
 import com.coreos.jetcd.internal.impl.CloseableClient;
+import com.coreos.jetcd.maintenance.AlarmMember;
+import com.coreos.jetcd.maintenance.AlarmResponse;
+import com.coreos.jetcd.maintenance.DefragmentResponse;
+import com.coreos.jetcd.maintenance.StatusResponse;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
