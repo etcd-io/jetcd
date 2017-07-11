@@ -1,25 +1,37 @@
 package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.internal.impl.ClientUtil.configureStub;
-import static com.coreos.jetcd.internal.impl.ClientUtil.defaultChannelBuilder;
-import static com.coreos.jetcd.internal.impl.ClientUtil.generateToken;
-import static com.coreos.jetcd.internal.impl.ClientUtil.simpleNameResolveFactory;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newAuthFailedException;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newConnectException;
+import static com.coreos.jetcd.internal.impl.Util.byteStringFromByteSequence;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import com.coreos.jetcd.ClientBuilder;
+import com.coreos.jetcd.Constants;
+import com.coreos.jetcd.api.AuthGrpc;
+import com.coreos.jetcd.api.AuthenticateRequest;
+import com.coreos.jetcd.api.AuthenticateResponse;
+import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.exception.AuthFailedException;
+import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
+import com.coreos.jetcd.resolver.SimpleNameResolverFactory;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
 import io.grpc.NameResolver;
+import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-class ClientConnectionManager {
+final class ClientConnectionManager {
   private final ClientBuilder builder;
   private final AtomicReference<ManagedChannel> channelRef;
   private final AtomicReference<Optional<String>> tokenRef;
@@ -58,7 +70,7 @@ class ClientConnectionManager {
         if (mc == null) {
           NameResolver.Factory resolverFactory = builder.getNameResolverFactory();
           if (resolverFactory == null) {
-            resolverFactory = simpleNameResolveFactory(builder.getEndpoints());
+            resolverFactory = SimpleNameResolverFactory.forEndpoints(builder.getEndpoints());
           }
 
           ManagedChannelBuilder<?> channelBuilder = builder.getChannelBuilder();
@@ -81,7 +93,7 @@ class ClientConnectionManager {
       synchronized (tokenRef) {
         tk = tokenRef.get();
         if (tk == null) {
-          tk = generateToken(getChannel(), builder.getUser(), builder.getPassword());
+          tk = generateToken(getChannel());
           tokenRef.lazySet(tk);
         }
       }
@@ -119,13 +131,11 @@ class ClientConnectionManager {
       Function<ManagedChannel, T> stubCustomizer,
       Function<T, CompletableFuture<R>> stubConsumer) {
 
-    ManagedChannel channel = ManagedChannelBuilder.forTarget("etcd")
-        .nameResolverFactory(simpleNameResolveFactory(Collections.singletonList(endpoint)))
-        .usePlaintext(true)
-        .build();
+    NameResolver.Factory resolverFactory = SimpleNameResolverFactory.forEndpoints(endpoint);
+    ManagedChannel channel = defaultChannelBuilder(resolverFactory).build();
 
     try {
-      Optional<String> token = generateToken(channel, builder.getUser(), builder.getPassword());
+      Optional<String> token = generateToken(channel);
       T stub = configureStub(stubCustomizer.apply(channel), token);
 
       return stubConsumer.apply(stub).whenComplete(
@@ -135,5 +145,87 @@ class ClientConnectionManager {
       channel.shutdown();
       throw EtcdExceptionFactory.newEtcdException(e);
     }
+  }
+
+  private ManagedChannelBuilder<?> defaultChannelBuilder(NameResolver.Factory factory) {
+    NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget("etcd");
+    channelBuilder.nameResolverFactory(factory);
+
+    if (builder.getSslContext() != null) {
+      channelBuilder.sslContext(builder.getSslContext());
+    } else {
+      channelBuilder.usePlaintext(true);
+    }
+
+    return channelBuilder;
+  }
+
+  /**
+   * get token from etcd with name and password.
+   *
+   * @param channel channel to etcd
+   * @param username auth name
+   * @param password auth password
+   * @return authResp
+   */
+  private ListenableFuture<AuthenticateResponse> authenticate(
+      ManagedChannel channel, ByteSequence username, ByteSequence password) {
+
+    ByteString user = byteStringFromByteSequence(username);
+    ByteString pass = byteStringFromByteSequence(password);
+
+    checkArgument(!user.isEmpty(), "username can not be empty.");
+    checkArgument(!pass.isEmpty(), "password can not be empty.");
+
+    return AuthGrpc.newFutureStub(channel).authenticate(
+        AuthenticateRequest.newBuilder()
+            .setNameBytes(user)
+            .setPasswordBytes(pass)
+            .build()
+    );
+  }
+
+  /**
+   * get token with ClientBuilder.
+   *
+   * @return the auth token
+   * @throws ConnectException This may be caused as network reason, wrong address
+   * @throws AuthFailedException This may be caused as wrong username or password
+   */
+  private Optional<String> generateToken(ManagedChannel channel)
+      throws ConnectException, AuthFailedException {
+
+    if (builder.getUser() != null && builder.getPassword() != null) {
+      try {
+        return Optional.of(
+            authenticate(channel, builder.getUser(), builder.getPassword()).get().getToken()
+        );
+      } catch (InterruptedException ite) {
+        throw newConnectException("connect to etcd failed", ite);
+      } catch (ExecutionException exee) {
+        throw newAuthFailedException("auth failed as wrong username or password", exee);
+      }
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * add token to channel's head.
+   *
+   * @param stub the stub to attach head
+   * @param token the token for auth
+   * @param <T> the type of stub
+   * @return the attached stub
+   */
+  private <T extends AbstractStub<T>> T configureStub(T stub, Optional<String> token) {
+    return token.map(t -> {
+          Metadata metadata = new Metadata();
+          metadata.put(Metadata.Key.of(Constants.TOKEN, Metadata.ASCII_STRING_MARSHALLER), t);
+
+          return stub.withCallCredentials(
+              (methodDescriptor, attributes, executor, applier) -> applier.apply(metadata)
+          );
+        }
+    ).orElse(stub);
   }
 }
