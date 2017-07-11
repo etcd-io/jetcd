@@ -47,6 +47,7 @@ public class ClientBuilderTest {
   @DataProvider
   private Object[][] validEndpoints() {
     return new Object[][] {
+        {"localhost:2379"},
         {"127.0.0.1:2379"},
         {"fe80::6e40:8ff:fe:2380"},
         {"http://[fe80::6e40:8ff:fe]:2380"},

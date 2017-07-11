@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class ClientBuilder implements Cloneable {
 
-  private final static List<String> SCHEMES = Arrays.asList("http", "https", "unix", "unixs");
+  private static final List<String> SCHEMES = Arrays.asList("http", "https", "unix", "unixs");
 
   private List<String> endpoints = Lists.newArrayList();
   private ByteSequence user;
@@ -191,7 +191,7 @@ public class ClientBuilder implements Cloneable {
     }
 
     // endpoint must contain a port.
-    if(u.getPort() == -1){
+    if (u.getPort() == -1) {
       return false;
     }
 
@@ -202,7 +202,8 @@ public class ClientBuilder implements Cloneable {
   private static boolean isValidHostAndPort(String endpoint) {
     try {
       HostAndPort hostAndPort = HostAndPort.fromString(endpoint);
-      return InetAddresses.isInetAddress(hostAndPort.getHostText());
+      return InetAddresses.isInetAddress(hostAndPort.getHostText())
+          || "localhost".equalsIgnoreCase(hostAndPort.getHostText());
     } catch (IllegalArgumentException e) {
       return false;
     }
