@@ -1,5 +1,6 @@
 package com.coreos.jetcd;
 
+import com.coreos.jetcd.internal.impl.CloseableClient;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseRevokeResponse;
@@ -10,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Interface of KeepAlive talking to etcd.
  */
-public interface Lease {
+public interface Lease extends CloseableClient {
 
   /**
    * New a lease with ttl value.
@@ -51,11 +52,6 @@ public interface Lease {
    * @return a KeepAliveListener that listens for KeepAlive responses.
    */
   KeepAliveListener keepAlive(long leaseId);
-
-  /**
-   * close Lease client and release its resources.
-   */
-  void close();
 
   /**
    * KeepAliveListener listens for LeaseKeepAliveResponse of a given leaseID.

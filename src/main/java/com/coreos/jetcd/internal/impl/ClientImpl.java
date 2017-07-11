@@ -1,10 +1,5 @@
 package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.internal.impl.ClientUtil.defaultChannelBuilder;
-import static com.coreos.jetcd.internal.impl.Util.byteStringFromByteSequence;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.coreos.jetcd.Auth;
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.ClientBuilder;
@@ -13,178 +8,112 @@ import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Lease;
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.Watch;
-import com.coreos.jetcd.api.AuthGrpc;
-import com.coreos.jetcd.api.AuthenticateRequest;
-import com.coreos.jetcd.api.AuthenticateResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
-import com.coreos.jetcd.internal.Pair;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ByteString;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.NameResolver;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 /**
  * Etcd Client.
  */
-public class ClientImpl implements Client {
+public final class ClientImpl implements Client {
+  private final AtomicReference<KV> kvClient;
+  private final AtomicReference<Auth> authClient;
+  private final AtomicReference<Maintenance> maintenanceClient;
+  private final AtomicReference<Cluster> clusterClient;
+  private final AtomicReference<Lease> leaseClient;
+  private final AtomicReference<Watch> watchClient;
+  private final ClientBuilder builder;
+  private final ClientConnectionManager connectionManager;
 
-  private final NameResolver.Factory nameResolverFactory;
-  private final Supplier<KV> kvClient;
-  private final Supplier<Auth> authClient;
-  private final Supplier<Maintenance> maintenanceClient;
-  private final Supplier<Cluster> clusterClient;
-  private final Supplier<Lease> leaseClient;
-  private final Supplier<Watch> watchClient;
-  private final ByteString user;
-  private final ByteString pass;
-  private final ManagedChannel channel;
-  private final Optional<String> token;
+  public ClientImpl(ClientBuilder clientBuilder) {
+    // Copy the builder so external modifications won't affect this client impl.
+    this.builder = clientBuilder.copy();
 
-  // shared executorService
-  ExecutorService executorService = Executors.newCachedThreadPool();
+    this.kvClient = new AtomicReference<>();
+    this.authClient = new AtomicReference<>();
+    this.maintenanceClient = new AtomicReference<>();
+    this.clusterClient = new AtomicReference<>();
+    this.leaseClient = new AtomicReference<>();
+    this.watchClient = new AtomicReference<>();
+    this.connectionManager = new ClientConnectionManager(this.builder);
 
-  ExecutorService getExecutorService() {
-    return this.executorService;
-  }
-
-  ManagedChannel getChannel() {
-    return this.channel;
-  }
-
-  Optional<String> getToken() {
-    return this.token;
-  }
-
-  public ClientImpl(ClientBuilder builder) throws ConnectException, AuthFailedException {
-    this(Optional.empty(), builder);
-  }
-
-  public ClientImpl(ManagedChannelBuilder<?> channelBuilder, ClientBuilder clientBuilder)
-      throws ConnectException, AuthFailedException {
-    this(Optional.ofNullable(channelBuilder), clientBuilder);
-  }
-
-  private ClientImpl(Optional<ManagedChannelBuilder<?>> channelBuilderOptional,
-                     ClientBuilder clientBuilder) throws ConnectException, AuthFailedException {
-    if (clientBuilder.getNameResolverFactory() != null) {
-      this.nameResolverFactory = clientBuilder.getNameResolverFactory();
-    } else {
-      //If no nameResolverFactory was set, use SimpleEtcdNameResolver
-      checkNotNull(clientBuilder.getEndpoints(), "endpoints can't be null");
-      this.nameResolverFactory = ClientUtil.simpleNameResolveFactory(clientBuilder.getEndpoints());
+    // If the client is not configured to be lazy, set up the managed connection and perform
+    // authentication
+    if (!clientBuilder.isLazyInitialization()) {
+      this.connectionManager.getChannel();
+      this.connectionManager.getToken();
     }
-
-    if (clientBuilder.getName() != null && clientBuilder.getPassword() != null) {
-      this.user = byteStringFromByteSequence(clientBuilder.getName());
-      this.pass = byteStringFromByteSequence(clientBuilder.getPassword());
-    } else {
-      this.user = null;
-      this.pass = null;
-    }
-
-    Pair<ManagedChannel, Optional<String>> channelToken = this.toChannelAndToken(
-        channelBuilderOptional.orElseGet(() -> defaultChannelBuilder(nameResolverFactory)
-    ));
-
-    this.channel = channelToken.getKey();
-    this.token = channelToken.getValue();
-
-    this.kvClient = Suppliers.memoize(() -> new KVImpl(this));
-    this.authClient = Suppliers.memoize(() -> new AuthImpl(this));
-    this.maintenanceClient = Suppliers.memoize(() -> new MaintenanceImpl(this));
-    this.clusterClient = Suppliers.memoize(() -> new ClusterImpl(this));
-    this.leaseClient = Suppliers.memoize(() -> new LeaseImpl(this));
-    this.watchClient = Suppliers.memoize(() -> new WatchImpl(this));
   }
 
-  Pair<ManagedChannel, Optional<String>> toChannelAndToken(ManagedChannelBuilder<?> channelBuilder)
-      throws AuthFailedException, ConnectException {
-    checkNotNull(channelBuilder, "channelBuilder can't be null");
-    ManagedChannel managedChannel = channelBuilder.build();
-    Optional<String> token = generateToken(managedChannel, this.user, this.pass);
-    return new Pair<>(managedChannel, token);
-  }
-
+  @Override
   public Auth getAuthClient() {
-    return authClient.get();
+    return newClient(authClient, AuthImpl::new);
   }
 
+  @Override
   public KV getKVClient() {
-    return kvClient.get();
+    return newClient(kvClient, KVImpl::new);
   }
 
+  @Override
   public Cluster getClusterClient() {
-    return clusterClient.get();
+    return newClient(clusterClient, ClusterImpl::new);
   }
 
+  @Override
   public Maintenance getMaintenanceClient() {
-    return this.maintenanceClient.get();
+    return newClient(maintenanceClient, MaintenanceImpl::new);
   }
 
+  @Override
   public Lease getLeaseClient() {
-    return this.leaseClient.get();
+    return newClient(leaseClient, LeaseImpl::new);
   }
 
+  @Override
   public Watch getWatchClient() {
-    return this.watchClient.get();
+    return newClient(watchClient, WatchImpl::new);
   }
 
-  public void close() {
-    this.getLeaseClient().close();
-    this.executorService.shutdownNow();
-    this.channel.shutdownNow();
-  }
+  @Override
+  public synchronized void close() {
+    Optional.ofNullable(authClient.get()).ifPresent(CloseableClient::close);
+    Optional.ofNullable(kvClient.get()).ifPresent(CloseableClient::close);
+    Optional.ofNullable(clusterClient.get()).ifPresent(CloseableClient::close);
+    Optional.ofNullable(maintenanceClient.get()).ifPresent(CloseableClient::close);
+    Optional.ofNullable(leaseClient.get()).ifPresent(CloseableClient::close);
+    Optional.ofNullable(watchClient.get()).ifPresent(CloseableClient::close);
 
-  /**
-   * get token from etcd with name and password.
-   *
-   * @param channel channel to etcd
-   * @param name auth name
-   * @param password auth password
-   * @return authResp
-   */
-  private static ListenableFuture<AuthenticateResponse> authenticate(ManagedChannel channel,
-      ByteString name, ByteString password) {
-    return AuthGrpc.newFutureStub(channel).authenticate(
-        AuthenticateRequest.newBuilder()
-            .setNameBytes(name)
-            .setPasswordBytes(password)
-            .build()
-    );
+    connectionManager.close();
   }
 
   /**
-   * get token with ClientBuilder.
+   * Create a new client instance.
    *
-   * @return the auth token
-   * @throws ConnectException This may be caused as network reason, wrong address
-   * @throws AuthFailedException This may be caused as wrong username or password
+   * @param reference the atomic reference holding the instance
+   * @param factory the factory to create the client
+   * @param <T> the type of client
+   * @return the client
+   * @throws AuthFailedException This may be caused as network reason, wrong address
+   * @throws ConnectException This may be caused as wrong username or password
    */
-  private static Optional<String> generateToken(ManagedChannel channel, ByteString user,
-      ByteString pass)
-      throws ConnectException, AuthFailedException {
-    if (user != null && pass != null) {
-      checkArgument(!user.isEmpty(),
-          "username can not be empty.");
-      checkArgument(!pass.isEmpty(),
-          "password can not be empty.");
+  private <T extends CloseableClient> T newClient(
+      AtomicReference<T> reference, Function<ClientConnectionManager, T> factory) {
 
-      try {
-        return Optional.of(authenticate(channel, user, pass).get().getToken());
-      } catch (InterruptedException ite) {
-        throw new ConnectException("connect to etcd failed", ite);
-      } catch (ExecutionException exee) {
-        throw new AuthFailedException("auth failed as wrong username or password", exee);
+    T client = reference.get();
+
+    if (client == null) {
+      synchronized (reference) {
+        client = reference.get();
+        if (client == null) {
+          client = factory.apply(connectionManager);
+          reference.lazySet(client);
+        }
       }
     }
-    return Optional.empty();
+
+    return client;
   }
 }

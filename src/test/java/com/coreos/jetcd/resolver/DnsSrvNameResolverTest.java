@@ -11,11 +11,12 @@ public class DnsSrvNameResolverTest {
   private Assertion test = new Assertion();
 
   @Test
-  public void testResolver() {
-    DnsSrvNameResolver discovery = new DnsSrvNameResolver("_xmpp-server._tcp.gmail.com",
+  public void testResolver() throws Exception {
+    DnsSrvNameResolver discovery = new DnsSrvNameResolver(
+        "_xmpp-server._tcp.gmail.com",
         GrpcUtil.SHARED_CHANNEL_EXECUTOR);
 
-    test.assertFalse(discovery.getServers().isEmpty());
+    test.assertFalse(discovery.getAddressGroup().getAddresses().isEmpty());
   }
 
   @Test

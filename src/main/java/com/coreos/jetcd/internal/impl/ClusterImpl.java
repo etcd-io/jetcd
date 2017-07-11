@@ -10,9 +10,7 @@ import com.coreos.jetcd.api.MemberRemoveRequest;
 import com.coreos.jetcd.api.MemberRemoveResponse;
 import com.coreos.jetcd.api.MemberUpdateRequest;
 import com.coreos.jetcd.api.MemberUpdateResponse;
-import io.grpc.ManagedChannel;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import net.javacrumbs.futureconverter.java8guava.FutureConverter;
 
@@ -20,15 +18,10 @@ import net.javacrumbs.futureconverter.java8guava.FutureConverter;
  * Implementation of cluster client.
  */
 class ClusterImpl implements Cluster {
-
   private final ClusterGrpc.ClusterFutureStub stub;
 
-  ClusterImpl(ClientImpl c) {
-    this(c.getChannel(), c.getToken());
-  }
-
-  ClusterImpl(ManagedChannel channel, Optional<String> token) {
-    this.stub = ClientUtil.configureStub(ClusterGrpc.newFutureStub(channel), token);
+  ClusterImpl(ClientConnectionManager connectionManager) {
+    this.stub = connectionManager.newStub(ClusterGrpc::newFutureStub);
   }
 
   /**
@@ -36,8 +29,9 @@ class ClusterImpl implements Cluster {
    */
   @Override
   public CompletableFuture<MemberListResponse> listMember() {
-    return FutureConverter
-        .toCompletableFuture(stub.memberList(MemberListRequest.getDefaultInstance()));
+    return FutureConverter.toCompletableFuture(
+        this.stub.memberList(MemberListRequest.getDefaultInstance())
+    );
   }
 
   /**
@@ -47,9 +41,10 @@ class ClusterImpl implements Cluster {
    */
   @Override
   public CompletableFuture<MemberAddResponse> addMember(List<String> endpoints) {
-    MemberAddRequest memberAddRequest = MemberAddRequest.newBuilder().addAllPeerURLs(endpoints)
+    MemberAddRequest memberAddRequest = MemberAddRequest.newBuilder()
+        .addAllPeerURLs(endpoints)
         .build();
-    return FutureConverter.toCompletableFuture(stub.memberAdd(memberAddRequest));
+    return FutureConverter.toCompletableFuture(this.stub.memberAdd(memberAddRequest));
   }
 
   /**
@@ -59,9 +54,10 @@ class ClusterImpl implements Cluster {
    */
   @Override
   public CompletableFuture<MemberRemoveResponse> removeMember(long memberID) {
-    MemberRemoveRequest memberRemoveRequest = MemberRemoveRequest.newBuilder().setID(memberID)
+    MemberRemoveRequest memberRemoveRequest = MemberRemoveRequest.newBuilder()
+        .setID(memberID)
         .build();
-    return FutureConverter.toCompletableFuture(stub.memberRemove(memberRemoveRequest));
+    return FutureConverter.toCompletableFuture(this.stub.memberRemove(memberRemoveRequest));
   }
 
   /**
@@ -71,12 +67,12 @@ class ClusterImpl implements Cluster {
    * @param endpoints the new endpoints for the member
    */
   @Override
-  public CompletableFuture<MemberUpdateResponse> updateMember(long memberID,
-      List<String> endpoints) {
+  public CompletableFuture<MemberUpdateResponse> updateMember(
+      long memberID, List<String> endpoints) {
     MemberUpdateRequest memberUpdateRequest = MemberUpdateRequest.newBuilder()
         .addAllPeerURLs(endpoints)
         .setID(memberID)
         .build();
-    return FutureConverter.toCompletableFuture(stub.memberUpdate(memberUpdateRequest));
+    return FutureConverter.toCompletableFuture(this.stub.memberUpdate(memberUpdateRequest));
   }
 }

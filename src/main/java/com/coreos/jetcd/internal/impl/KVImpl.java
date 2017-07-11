@@ -19,27 +19,19 @@ import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
-import io.grpc.ManagedChannel;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 
 /**
  * Implementation of etcd kv client.
  */
 class KVImpl implements KV {
 
+  private final ClientConnectionManager connectionManager;
   private final KVGrpc.KVFutureStub stub;
 
-  private final ExecutorService executorService;
-
-  KVImpl(ClientImpl c) {
-    this(c.getChannel(), c.getToken(), c.getExecutorService());
-  }
-
-  KVImpl(ManagedChannel channel, Optional<String> token, ExecutorService executorService) {
-    this.stub = ClientUtil.configureStub(KVGrpc.newFutureStub(channel), token);
-    this.executorService = executorService;
+  KVImpl(ClientConnectionManager connectionManager) {
+    this.connectionManager = connectionManager;
+    this.stub = connectionManager.newStub(KVGrpc::newFutureStub);
   }
 
   @Override
@@ -61,8 +53,11 @@ class KVImpl implements KV {
         .setPrevKv(option.getPrevKV())
         .build();
 
-    return Util.listenableToCompletableFuture(this.stub.put(request), Util::toPutResponse,
-        this.executorService);
+    return Util.listenableToCompletableFuture(
+        stub.put(request),
+        Util::toPutResponse,
+        connectionManager.getExecutorService()
+    );
   }
 
   @Override
@@ -88,8 +83,11 @@ class KVImpl implements KV {
     option.getEndKey().ifPresent((endKey) ->
         builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
 
-    return Util.listenableToCompletableFuture(this.stub.range(builder.build()), Util::toGetResponse,
-        this.executorService);
+    return Util.listenableToCompletableFuture(
+        stub.range(builder.build()),
+        Util::toGetResponse,
+        connectionManager.getExecutorService()
+    );
   }
 
   @Override
@@ -109,8 +107,11 @@ class KVImpl implements KV {
     option.getEndKey()
         .ifPresent((endKey) -> builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
 
-    return Util.listenableToCompletableFuture(this.stub.deleteRange(builder.build()),
-        Util::toDeleteResponse, this.executorService);
+    return Util.listenableToCompletableFuture(
+        stub.deleteRange(builder.build()),
+        Util::toDeleteResponse,
+        connectionManager.getExecutorService()
+    );
   }
 
   @Override
@@ -127,14 +128,20 @@ class KVImpl implements KV {
         .setPhysical(option.isPhysical())
         .build();
 
-    return Util.listenableToCompletableFuture(this.stub.compact(request), Util::toCompactResponse,
-        this.executorService);
+    return Util.listenableToCompletableFuture(
+        stub.compact(request),
+        Util::toCompactResponse,
+        connectionManager.getExecutorService()
+    );
   }
 
   public Txn txn() {
     return TxnImpl.newTxn((txnRequest) ->
-        Util.listenableToCompletableFuture(this.stub.txn(txnRequest), Util::toTxnResponse,
-            this.executorService)
+        Util.listenableToCompletableFuture(
+            this.stub.txn(txnRequest), 
+            Util::toTxnResponse,
+            connectionManager.getExecutorService()
+        )
     );
   }
 }

@@ -14,7 +14,6 @@ import com.coreos.jetcd.options.WatchOption;
 import com.coreos.jetcd.watch.WatchResponseWithError;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
-import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import java.util.Optional;
@@ -40,8 +39,6 @@ class WatchImpl implements Watch {
 
   private static final Logger logger = Logger.getLogger(WatchImpl.class.getName());
 
-  private final WatchGrpc.WatchStub watchStub;
-
   private volatile StreamObserver<WatchRequest> grpcWatchStreamObserver;
 
   // watchers stores a mapping between leaseID -> WatchIml.
@@ -58,6 +55,9 @@ class WatchImpl implements Watch {
   private final ScheduledExecutorService scheduledExecutorService = Executors
       .newScheduledThreadPool(1);
 
+  private final ClientConnectionManager connectionManager;
+  private final WatchGrpc.WatchStub stub;
+
   private boolean isClosed() {
     return this.closed;
   }
@@ -66,16 +66,12 @@ class WatchImpl implements Watch {
     this.closed = true;
   }
 
-  WatchImpl(ClientImpl c) {
-    this(c.getChannel(), c.getToken());
-  }
-
-  WatchImpl(ManagedChannel channel, Optional<String> token) {
-    this.watchStub = ClientUtil.configureStub(WatchGrpc.newStub(channel), token);
+  WatchImpl(ClientConnectionManager connectionManager) {
+    this.connectionManager = connectionManager;
+    this.stub = connectionManager.newStub(WatchGrpc::newStub);
   }
 
   @Override
-
   public Watcher watch(ByteSequence key) {
     return this.watch(key, WatchOption.DEFAULT);
   }
@@ -149,7 +145,7 @@ class WatchImpl implements Watch {
 
   private synchronized StreamObserver<WatchRequest> getGrpcWatchStreamObserver() {
     if (this.grpcWatchStreamObserver == null) {
-      this.grpcWatchStreamObserver = this.watchStub.watch(this.createWatchStreamObserver());
+      this.grpcWatchStreamObserver = this.stub.watch(this.createWatchStreamObserver());
     }
     return this.grpcWatchStreamObserver;
   }

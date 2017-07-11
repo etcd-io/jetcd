@@ -1,8 +1,22 @@
 package com.coreos.jetcd.internal.impl;
 
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newAuthFailedException;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newConnectException;
+import static com.coreos.jetcd.internal.impl.Util.byteStringFromByteSequence;
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.coreos.jetcd.Constants;
+import com.coreos.jetcd.api.AuthGrpc;
+import com.coreos.jetcd.api.AuthenticateRequest;
+import com.coreos.jetcd.api.AuthenticateResponse;
+import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.exception.AuthFailedException;
+import com.coreos.jetcd.exception.ConnectException;
+import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.resolver.SimpleEtcdNameResolverFactory;
-import io.grpc.CallCredentials;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.ByteString;
+import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.NameResolver;
@@ -11,12 +25,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.commons.validator.routines.IntegerValidator;
 import org.apache.commons.validator.routines.UrlValidator;
 
-public final class ClientUtil {
+final class ClientUtil {
 
   private ClientUtil() {
   }
@@ -32,12 +47,11 @@ public final class ClientUtil {
   static final <T extends AbstractStub<T>> T configureStub(T stub, Optional<String> token) {
     return token.map(t -> {
           Metadata metadata = new Metadata();
-          Metadata.Key<String> tokenKey = Metadata.Key
-              .of(Constants.TOKEN, Metadata.ASCII_STRING_MARSHALLER);
-          metadata.put(tokenKey, t);
-          CallCredentials callCredentials = (methodDescriptor, attributes,
-              executor, metadataApplier) -> metadataApplier.apply(metadata);
-          return stub.withCallCredentials(callCredentials);
+          metadata.put(Metadata.Key.of(Constants.TOKEN, Metadata.ASCII_STRING_MARSHALLER), t);
+
+          return stub.withCallCredentials(
+              (methodDescriptor, attributes, executor, applier) -> applier.apply(metadata)
+          );
         }
     ).orElse(stub);
   }
@@ -67,35 +81,55 @@ public final class ClientUtil {
         .usePlaintext(true);
   }
 
-  public static boolean isValidEndpointFormat(String endpoint) {
-    if (endpoint.startsWith("http")) {
-      return isValidURL(endpoint);
+  /**
+   * get token from etcd with name and password.
+   *
+   * @param channel channel to etcd
+   * @param username auth name
+   * @param password auth password
+   * @return authResp
+   */
+  static ListenableFuture<AuthenticateResponse> authenticate(
+      ManagedChannel channel, ByteSequence username, ByteSequence password) {
+
+    ByteString user = byteStringFromByteSequence(username);
+    ByteString pass = byteStringFromByteSequence(password);
+
+    checkArgument(!user.isEmpty(), "username can not be empty.");
+    checkArgument(!pass.isEmpty(), "password can not be empty.");
+
+    return AuthGrpc.newFutureStub(channel).authenticate(
+        AuthenticateRequest.newBuilder()
+            .setNameBytes(user)
+            .setPasswordBytes(pass)
+            .build()
+    );
+  }
+
+  /**
+   * get token with ClientBuilder.
+   *
+   * @param username auth user name
+   * @param password auth user password
+   * @return the auth token
+   * @throws ConnectException This may be caused as network reason, wrong address
+   * @throws AuthFailedException This may be caused as wrong username or password
+   */
+  static Optional<String> generateToken(
+      ManagedChannel channel, ByteSequence username, ByteSequence password)
+        throws ConnectException, AuthFailedException {
+
+    if (username != null && password != null) {
+      try {
+        return Optional.of(
+            ClientUtil.authenticate(channel, username, password).get().getToken()
+        );
+      } catch (InterruptedException ite) {
+        throw newConnectException("connect to etcd failed", ite);
+      } catch (ExecutionException exee) {
+        throw newAuthFailedException("auth failed as wrong username or password", exee);
+      }
     }
-
-    String[] hostAndPort = endpoint.split(":");
-
-    if (hostAndPort.length != 2) {
-      return false;
-    }
-
-    String host = hostAndPort[0];
-    String port = hostAndPort[1];
-
-    return (isValidHost(host) && isValidPort(port));
-  }
-
-  private static boolean isValidURL(String url) {
-    String[] scheme = {"http"};
-    UrlValidator urlValidator = new UrlValidator(scheme, UrlValidator.ALLOW_LOCAL_URLS);
-    return urlValidator.isValid(url);
-  }
-
-  private static boolean isValidHost(String host) {
-    return InetAddressValidator.getInstance().isValid(host) || "localhost".equals(host);
-  }
-
-  private static boolean isValidPort(String port) {
-    IntegerValidator portValidator = IntegerValidator.getInstance();
-    return portValidator.isValid(port) && portValidator.isInRange(Integer.parseInt(port), 0, 65535);
+    return Optional.empty();
   }
 }

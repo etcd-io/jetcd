@@ -9,8 +9,6 @@ import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Watch;
 import com.coreos.jetcd.Watch.Watcher;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.exception.AuthFailedException;
-import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.watch.WatchEvent;
 import com.coreos.jetcd.watch.WatchEvent.EventType;
 import com.coreos.jetcd.watch.WatchResponse;
@@ -35,7 +33,7 @@ public class WatchTest {
   public Timeout timeout = Timeout.seconds(10);
 
   @Before
-  public void setUp() throws AuthFailedException, ConnectException {
+  public void setUp() {
     client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints).build();
     watchClient = client.getWatchClient();
     kvClient = client.getKVClient();
