@@ -4,7 +4,6 @@ import com.coreos.jetcd.Client;
 import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Txn;
-import com.coreos.jetcd.api.RangeRequest;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.kv.DeleteResponse;
 import com.coreos.jetcd.kv.GetResponse;
@@ -14,6 +13,8 @@ import com.coreos.jetcd.op.CmpTarget;
 import com.coreos.jetcd.op.Op;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
+import com.coreos.jetcd.options.GetOption.SortOrder;
+import com.coreos.jetcd.options.GetOption.SortTarget;
 import com.coreos.jetcd.options.PutOption;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -92,8 +93,9 @@ public class KVTest {
     int numPrefix = 3;
     putKeysWithPrefix(prefix, numPrefix);
 
-    GetOption option = GetOption.newBuilder().withSortField(RangeRequest.SortTarget.KEY)
-        .withSortOrder(RangeRequest.SortOrder.DESCEND)
+    GetOption option = GetOption.newBuilder()
+        .withSortField(SortTarget.KEY)
+        .withSortOrder(SortOrder.DESCEND)
         .withPrefix(ByteSequence.fromString(prefix))
         .build();
     CompletableFuture<GetResponse> getFeature = kvClient
