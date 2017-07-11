@@ -27,9 +27,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import org.apache.commons.validator.routines.InetAddressValidator;
-import org.apache.commons.validator.routines.IntegerValidator;
-import org.apache.commons.validator.routines.UrlValidator;
 
 final class ClientUtil {
 

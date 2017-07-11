@@ -1,24 +1,17 @@
 package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.ClientBuilder;
-
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class ClientBuilderTest {
 
   private ClientBuilder builder;
 
-  private Assertion test;
-
   @BeforeMethod
   public void setup() {
     builder = ClientBuilder.newBuilder();
-    test = new Assertion();
   }
 
   @Test(expectedExceptions = NullPointerException.class)
@@ -46,31 +39,35 @@ public class ClientBuilderTest {
     builder.build();
   }
 
-  @Test
-  public void testBuild_WithValidFormatEndpoints() {
-    builder.setEndpoints("127.0.0.1:2379", "http://localhost:1984", "http://www.foo.com:2300/",
-                         "http://192.168.1.10:8888/");
-
-    test.assertEquals(builder.getEndpoints().size(), 4);
-
-    test.assertTrue(builder.getEndpoints().contains("127.0.0.1:2379"));
-    test.assertTrue(builder.getEndpoints().contains("http://localhost:1984"));
-    test.assertTrue(builder.getEndpoints().contains("http://www.foo.com:2300/"));
-    test.assertTrue(builder.getEndpoints().contains("http://192.168.1.10:8888/"));
+  @Test(dataProvider = "validEndpoints")
+  public void testBuild_WithValidFormatEndpoints(String endpoint) {
+    builder.setEndpoints(endpoint);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
-  public void testBuild_WithInvalidIpEndpoint() {
-      builder.setEndpoints("xxx.yyy.111.222:8999");
+  @DataProvider
+  private Object[][] validEndpoints() {
+    return new Object[][] {
+        {"127.0.0.1:2379"},
+        {"fe80::6e40:8ff:fe:2380"},
+        {"http://[fe80::6e40:8ff:fe]:2380"},
+        {"http://localhost:1984"},
+        {"http://www.foo.com:2300"},
+        {"http://192.168.1.10:8888"}
+    };
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
-  public void testBuild_WithInvalidPortEndpoint() {
-    builder.setEndpoints("222.255.111.222:uyw3");
+  @Test(dataProvider = "invalidEndpoints", expectedExceptions = IllegalArgumentException.class)
+  public void testBuild_WithInValidFormatEndpoints(String endpoint) {
+    builder.setEndpoints(endpoint);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
-  public void testBuild_WithoutPortEndpoint() {
-    builder.setEndpoints("222.255.111.222");
+  @DataProvider
+  private Object[][] invalidEndpoints() {
+    return new Object[][] {
+        {"://127.0.0.1:2379"},
+        {"mailto://127.0.0.1:2379"},
+        {"http://127.0.0.1"},
+        {"http://127.0.0.1:2379/path"}
+    };
   }
 }

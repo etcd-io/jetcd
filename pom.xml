@@ -72,11 +72,6 @@
             <artifactId>future-converter-java8-guava</artifactId>
             <version>${future-converter.version}</version>
         </dependency>
-        <dependency>
-            <groupId>commons-validator</groupId>
-            <artifactId>commons-validator</artifactId>
-            <version>1.6</version>
-        </dependency>
 
         <dependency>
             <groupId>org.testng</groupId>

@@ -1,6 +1,5 @@
 package com.coreos.jetcd;
 
-import static com.coreos.jetcd.internal.impl.ClientUtil.isValidEndpointFormat;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -11,14 +10,22 @@ import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.internal.impl.ClientImpl;
 import com.google.common.collect.Lists;
+import com.google.common.net.HostAndPort;
+import com.google.common.net.InetAddresses;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.NameResolver;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * ClientBuilder knows how to create an Client instance.
  */
 public class ClientBuilder implements Cloneable {
+
+  private final static List<String> SCHEMES = Arrays.asList("http", "https", "unix", "unixs");
 
   private List<String> endpoints = Lists.newArrayList();
   private ByteSequence user;
@@ -48,7 +55,7 @@ public class ClientBuilder implements Cloneable {
    *
    * @param endpoints etcd server endpoints, at least one
    * @return this builder to train
-   * @throws NullPointerException     if endpoints is null or one of endpoint is null
+   * @throws NullPointerException if endpoints is null or one of endpoint is null
    * @throws IllegalArgumentException if endpoints is empty or some endpoint is invalid
    */
   public ClientBuilder setEndpoints(String... endpoints) {
@@ -150,7 +157,7 @@ public class ClientBuilder implements Cloneable {
    * build a new Client.
    *
    * @return Client instance.
-   * @throws ConnectException    As network reason, wrong address
+   * @throws ConnectException As network reason, wrong address
    * @throws AuthFailedException This may be caused as wrong username or password
    */
   public Client build() {
@@ -164,6 +171,40 @@ public class ClientBuilder implements Cloneable {
       return (ClientBuilder)super.clone();
     } catch (CloneNotSupportedException e) {
       throw EtcdExceptionFactory.newEtcdException(e);
+    }
+  }
+
+  private static boolean isValidEndpointFormat(String endpoint) {
+    if (isValidHostAndPort(endpoint)) {
+      return true;
+    }
+
+    URL u = null;
+    try {
+      u = new URL(endpoint);
+    } catch (MalformedURLException e) {
+      return false;
+    }
+
+    if (SCHEMES.stream().noneMatch(u.getProtocol()::equals)) {
+      return false;
+    }
+
+    // endpoint must contain a port.
+    if(u.getPort() == -1){
+      return false;
+    }
+
+    // endpoint must not contain a path.
+    return u.getPath().isEmpty();
+  }
+
+  private static boolean isValidHostAndPort(String endpoint) {
+    try {
+      HostAndPort hostAndPort = HostAndPort.fromString(endpoint);
+      return InetAddresses.isInetAddress(hostAndPort.getHostText());
+    } catch (IllegalArgumentException e) {
+      return false;
     }
   }
 }
