@@ -1,5 +1,7 @@
 package com.coreos.jetcd.internal.impl;
 
+import static com.coreos.jetcd.options.OptionsUtil.toRangeRequestSortOrder;
+import static com.coreos.jetcd.options.OptionsUtil.toRangeRequestSortTarget;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.KV;
@@ -77,8 +79,8 @@ class KVImpl implements KV {
         .setRevision(option.getRevision())
         .setKeysOnly(option.isKeysOnly())
         .setSerializable(option.isSerializable())
-        .setSortOrder(option.getSortOrder())
-        .setSortTarget(option.getSortField());
+        .setSortOrder(toRangeRequestSortOrder(option.getSortOrder()))
+        .setSortTarget(toRangeRequestSortTarget(option.getSortField()));
 
     option.getEndKey().ifPresent((endKey) ->
         builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
@@ -138,7 +140,7 @@ class KVImpl implements KV {
   public Txn txn() {
     return TxnImpl.newTxn((txnRequest) ->
         Util.listenableToCompletableFuture(
-            this.stub.txn(txnRequest), 
+            this.stub.txn(txnRequest),
             Util::toTxnResponse,
             connectionManager.getExecutorService()
         )
