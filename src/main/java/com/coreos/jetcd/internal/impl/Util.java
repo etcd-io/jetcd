@@ -5,6 +5,11 @@ import com.coreos.jetcd.api.DeleteRangeResponse;
 import com.coreos.jetcd.api.Event;
 import com.coreos.jetcd.api.RangeResponse;
 import com.coreos.jetcd.api.ResponseHeader;
+import com.coreos.jetcd.cluster.Member;
+import com.coreos.jetcd.cluster.MemberAddResponse;
+import com.coreos.jetcd.cluster.MemberListResponse;
+import com.coreos.jetcd.cluster.MemberRemoveResponse;
+import com.coreos.jetcd.cluster.MemberUpdateResponse;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.data.Header;
 import com.coreos.jetcd.data.KeyValue;
@@ -282,6 +287,71 @@ final class Util {
         type = com.coreos.jetcd.maintenance.AlarmType.UNRECOGNIZED;
     }
     return new AlarmMember(alarmMember.getMemberID(), type);
+  }
+
+  /**
+   * convert API MemberAddResponse to MemberAddResponse.
+   */
+  static MemberAddResponse toMemberAddResponse(com.coreos.jetcd.api.MemberAddResponse response) {
+    return new MemberAddResponse(
+        toHeader(response.getHeader(), 0),
+        toMember(response.getMember()),
+        toMembers(response.getMembersList())
+    );
+  }
+
+  /**
+   * convert API MemberListResponse to MemberListResponse.
+   */
+  static MemberListResponse toMemberListResponse(
+      com.coreos.jetcd.api.MemberListResponse response) {
+    return new MemberListResponse(
+        toHeader(response.getHeader(), 0),
+        toMembers(response.getMembersList())
+    );
+  }
+
+  /**
+   * convert API MemberRemoveResponse to MemberRemoveResponse.
+   */
+  static MemberRemoveResponse toMemberRemoveResponse(
+      com.coreos.jetcd.api.MemberRemoveResponse response) {
+    return new MemberRemoveResponse(
+        toHeader(response.getHeader(), 0),
+        toMembers(response.getMembersList())
+    );
+  }
+
+  /**
+   * convert API MemberUpdateResponse to MemberUpdateResponse.
+   */
+  static MemberUpdateResponse toMemberUpdateResponse(
+      com.coreos.jetcd.api.MemberUpdateResponse response) {
+    return new MemberUpdateResponse(
+        toHeader(response.getHeader(), 0),
+        toMembers(response.getMembersList())
+    );
+  }
+
+  /**
+   * convert API Members to Members.
+   */
+  private static List<Member> toMembers(List<com.coreos.jetcd.api.Member> members) {
+    return members.stream()
+        .map(Util::toMember)
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * convert API Member to Member.
+   */
+  private static Member toMember(com.coreos.jetcd.api.Member member) {
+    return new Member(
+        member.getID(),
+        member.getName(),
+        member.getPeerURLsList(),
+        member.getClientURLsList()
+    );
   }
 
   /**
