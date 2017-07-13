@@ -47,7 +47,7 @@ public class MaintenanceUnitTest {
         .fallbackHandlerRegistry(serviceRegistry).directExecutor().build().start();
 
     ManagedChannelBuilder channelBuilder = InProcessChannelBuilder.forName(uniqueServerName).directExecutor();
-    ClientBuilder clientBuilder = ClientBuilder.newBuilder().setChannelBuilder(channelBuilder).setEndpoints("127.0.0.1:2379");
+    ClientBuilder clientBuilder = ClientBuilder.newBuilder().setChannelBuilder(channelBuilder).setEndpoints("http://127.0.0.1:2379");
     maintenanceCli = new ClientImpl(clientBuilder).getMaintenanceClient();
 
     MaintenanceImplBase base = this.defaultBase(responseObserverRef);

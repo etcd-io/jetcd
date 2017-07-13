@@ -175,10 +175,6 @@ public class ClientBuilder implements Cloneable {
   }
 
   private static boolean isValidEndpointFormat(String endpoint) {
-    if (isValidHostAndPort(endpoint)) {
-      return true;
-    }
-
     URL u = null;
     try {
       u = new URL(endpoint);
@@ -197,15 +193,5 @@ public class ClientBuilder implements Cloneable {
 
     // endpoint must not contain a path.
     return u.getPath().isEmpty();
-  }
-
-  private static boolean isValidHostAndPort(String endpoint) {
-    try {
-      HostAndPort hostAndPort = HostAndPort.fromString(endpoint);
-      return InetAddresses.isInetAddress(hostAndPort.getHostText())
-          || "localhost".equalsIgnoreCase(hostAndPort.getHostText());
-    } catch (IllegalArgumentException e) {
-      return false;
-    }
   }
 }
