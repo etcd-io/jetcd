@@ -12,6 +12,8 @@ import com.coreos.jetcd.internal.impl.ClientImpl;
 import com.google.common.collect.Lists;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.NameResolver;
+import io.grpc.netty.GrpcSslContexts;
+import io.netty.handler.ssl.SslContext;
 import java.util.List;
 
 /**
@@ -24,6 +26,7 @@ public class ClientBuilder implements Cloneable {
   private ByteSequence password;
   private NameResolver.Factory nameResolverFactory;
   private ManagedChannelBuilder<?> channelBuilder;
+  private SslContext sslContext;
   private boolean lazyInitialization = false;
 
   private ClientBuilder() {
@@ -142,6 +145,22 @@ public class ClientBuilder implements Cloneable {
    */
   public ClientBuilder setLazyInitialization(boolean lazyInitialization) {
     this.lazyInitialization = lazyInitialization;
+    return this;
+  }
+
+  public SslContext getSslContext() {
+    return sslContext;
+  }
+
+  /**
+   * SSL/TLS context to use instead of the system default. It must have been configured with {@link
+   * GrpcSslContexts}, but options could have been overridden.
+   *
+   * @param sslContext the ssl context
+   * @return this builder
+   */
+  public ClientBuilder setSslContext(SslContext sslContext) {
+    this.sslContext = sslContext;
     return this;
   }
 
