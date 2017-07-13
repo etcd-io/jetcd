@@ -1,9 +1,9 @@
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.api.MemberAddResponse;
-import com.coreos.jetcd.api.MemberListResponse;
-import com.coreos.jetcd.api.MemberRemoveResponse;
-import com.coreos.jetcd.api.MemberUpdateResponse;
+import com.coreos.jetcd.cluster.MemberAddResponse;
+import com.coreos.jetcd.cluster.MemberListResponse;
+import com.coreos.jetcd.cluster.MemberRemoveResponse;
+import com.coreos.jetcd.cluster.MemberUpdateResponse;
 import com.coreos.jetcd.internal.impl.CloseableClient;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -21,9 +21,9 @@ public interface Cluster extends CloseableClient {
   /**
    * add a new member into the cluster.
    *
-   * @param endpoints the address of the new member
+   * @param peerAddrs the peer addresses of the new member
    */
-  CompletableFuture<MemberAddResponse> addMember(List<String> endpoints);
+  CompletableFuture<MemberAddResponse> addMember(List<String> peerAddrs);
 
   /**
    * removes an existing member from the cluster.
@@ -33,6 +33,6 @@ public interface Cluster extends CloseableClient {
   /**
    * update peer addresses of the member.
    */
-  CompletableFuture<MemberUpdateResponse> updateMember(long memberID, List<String> endpoints);
+  CompletableFuture<MemberUpdateResponse> updateMember(long memberID, List<String> peerAddrs);
 
 }
