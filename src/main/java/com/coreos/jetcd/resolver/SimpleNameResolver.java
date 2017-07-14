@@ -13,21 +13,21 @@ import java.util.stream.Collectors;
  */
 public class SimpleNameResolver extends AbstractEtcdNameResolver {
 
-  private final EquivalentAddressGroup group;
+  private final List<EquivalentAddressGroup> group;
 
   public SimpleNameResolver(String name, Resource<ExecutorService> executorResource,
                             List<URI> uris) {
     super(name, executorResource);
 
-    this.group = new EquivalentAddressGroup(
-        uris.stream()
-            .map(uri -> new InetSocketAddress(uri.getHost(), uri.getPort()))
-            .collect(Collectors.toList())
-    );
+    this.group = uris.stream()
+      .map(uri -> new InetSocketAddress(uri.getHost(), uri.getPort()))
+      .map(EquivalentAddressGroup::new)
+      .collect(Collectors.toList());
+
   }
 
   @Override
-  protected EquivalentAddressGroup getAddressGroup() throws Exception {
+  protected List<EquivalentAddressGroup> getAddressGroups() throws Exception {
     return group;
   }
 }

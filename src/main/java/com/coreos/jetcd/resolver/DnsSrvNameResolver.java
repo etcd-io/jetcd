@@ -4,7 +4,6 @@ import com.google.common.annotations.VisibleForTesting;
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.internal.SharedResourceHolder;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,25 +33,24 @@ final class DnsSrvNameResolver extends AbstractEtcdNameResolver {
   }
 
   @Override
-  protected EquivalentAddressGroup getAddressGroup() throws Exception {
+  protected List<EquivalentAddressGroup> getAddressGroups() throws Exception {
     DirContext ctx = new InitialDirContext(ENV);
     NamingEnumeration<?> resolved = ctx.getAttributes(name, ATTRIBUTE_IDS).get("srv").getAll();
-    List<SocketAddress> servers = new LinkedList<>();
+    List<EquivalentAddressGroup> groups = new LinkedList<>();
 
     while (resolved.hasMore()) {
-      servers.add(srvRecordToAddress((String) resolved.next()));
+      String[] split = ((String) resolved.next()).split(" ");
+      String host = split[3].trim();
+      int port = Integer.parseInt(split[2].trim());
+
+      groups.add(new EquivalentAddressGroup(new InetSocketAddress(host, port)));
     }
 
-    return new EquivalentAddressGroup(servers);
+    return groups;
   }
 
   @VisibleForTesting
   protected String getName() {
     return name;
-  }
-
-  private SocketAddress srvRecordToAddress(String dnsSrvRecord) {
-    String[] split = dnsSrvRecord.split(" ");
-    return new InetSocketAddress(split[3].trim(), Integer.parseInt(split[2].trim()));
   }
 }

@@ -10,6 +10,7 @@ import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.internal.impl.ClientImpl;
 import com.google.common.collect.Lists;
+import io.grpc.LoadBalancer;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.NameResolver;
 import io.grpc.netty.GrpcSslContexts;
@@ -25,6 +26,7 @@ public class ClientBuilder implements Cloneable {
   private ByteSequence user;
   private ByteSequence password;
   private NameResolver.Factory nameResolverFactory;
+  private LoadBalancer.Factory loadBalancerFactory;
   private ManagedChannelBuilder<?> channelBuilder;
   private SslContext sslContext;
   private boolean lazyInitialization = false;
@@ -72,11 +74,11 @@ public class ClientBuilder implements Cloneable {
   }
 
   /**
-   * config etcd auth name.
+   * config etcd auth user.
    *
    * @param user etcd auth user
    * @return this builder
-   * @throws NullPointerException if name is null
+   * @throws NullPointerException if user is <code>null</code>
    */
   public ClientBuilder setUser(ByteSequence user) {
     checkNotNull(user, "user can't be null");
@@ -93,7 +95,7 @@ public class ClientBuilder implements Cloneable {
    *
    * @param password etcd auth password
    * @return this builder
-   * @throws NullPointerException if password is null
+   * @throws NullPointerException if password is <code>null</code>
    */
   public ClientBuilder setPassword(ByteSequence password) {
     checkNotNull(password, "password can't be null");
@@ -102,25 +104,47 @@ public class ClientBuilder implements Cloneable {
   }
 
   /**
-   * config etcd auth password.
+   * config NameResolver factory.
    *
-   * @param nameResolverFactory etcd nameResolverFactory
+   * @param nameResolverFactory etcd NameResolver.Factory
    * @return this builder
-   * @throws NullPointerException if password is null
+   * @throws NullPointerException if nameResolverFactory is <code>null</code>
    */
   public ClientBuilder setNameResolverFactory(NameResolver.Factory nameResolverFactory) {
-    checkNotNull(nameResolverFactory);
+    checkNotNull(nameResolverFactory, "nameResolverFactory can't be null");
     this.nameResolverFactory = nameResolverFactory;
     return this;
   }
 
   /**
-   * get nameResolverFactory for etcd client.
+   * get NameResolver.Factory for etcd client.
    *
    * @return nameResolverFactory
    */
   public NameResolver.Factory getNameResolverFactory() {
     return nameResolverFactory;
+  }
+
+  /**
+   * config LoadBalancer factory.
+   *
+   * @param loadBalancerFactory etcd LoadBalancer.Factory
+   * @return this builder
+   * @throws NullPointerException if loadBalancerFactory is <code>null</code>
+   */
+  public ClientBuilder setLoadBalancerFactory(LoadBalancer.Factory loadBalancerFactory) {
+    checkNotNull(loadBalancerFactory, "loadBalancerFactory can't be null");
+    this.loadBalancerFactory = loadBalancerFactory;
+    return this;
+  }
+
+  /**
+   * get LoadBalancer.Factory for etcd client.
+   *
+   * @return loadBalancerFactory
+   */
+  public LoadBalancer.Factory getLoadBalancerFactory() {
+    return loadBalancerFactory;
   }
 
   public ManagedChannelBuilder<?> getChannelBuilder() {
