@@ -84,6 +84,7 @@ Tests run: 37, Failures: 0, Errors: 0, Skipped: 0
 ## Contact
 
 * Mailing list: [etcd-dev](https://groups.google.com/forum/?hl=en#!forum/etcd-dev)
+* IRC: #[etcd](irc://irc.freenode.org:6667/#etcd) on freenode.org
 
 ## License
 
