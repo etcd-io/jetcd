@@ -3,7 +3,6 @@ package com.coreos.jetcd.options;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.KV;
-import com.coreos.jetcd.api.RangeRequest;
 import com.coreos.jetcd.data.ByteSequence;
 import java.util.Optional;
 
@@ -27,8 +26,8 @@ public final class GetOption {
 
     private long limit = 0L;
     private long revision = 0L;
-    private RangeRequest.SortOrder sortOrder = RangeRequest.SortOrder.NONE;
-    private RangeRequest.SortTarget sortTarget = RangeRequest.SortTarget.KEY;
+    private SortOrder sortOrder = SortOrder.NONE;
+    private SortTarget sortTarget = SortTarget.KEY;
     private boolean serializable = false;
     private boolean keysOnly = false;
     private boolean countOnly = false;
@@ -69,22 +68,18 @@ public final class GetOption {
      * @param order order to sort the returned key value pairs.
      * @return builder
      */
-    public Builder withSortOrder(RangeRequest.SortOrder order) {
-      // TODO: remove grpc dependency on RangeRequest.SortOrder.
+    public Builder withSortOrder(SortOrder order) {
       this.sortOrder = order;
       return this;
     }
 
-
     /**
      * Sort the return key value pairs in the provided <i>field</i>.
      *
-     * @param field field to sort the key value pairs by the provided {@link
-     * #withSortOrder(RangeRequest.SortOrder)}.
+     * @param field field to sort the key value pairs by the provided
      * @return builder
      */
-    public Builder withSortField(RangeRequest.SortTarget field) {
-      // TODO: remove grpc dependency on RangeRequest.SortTarget.
+    public Builder withSortField(SortTarget field) {
       this.sortTarget = field;
       return this;
     }
@@ -172,15 +167,14 @@ public final class GetOption {
   private final Optional<ByteSequence> endKey;
   private final long limit;
   private final long revision;
-  private final RangeRequest.SortOrder sortOrder;
-  private final RangeRequest.SortTarget sortTarget;
+  private final SortOrder sortOrder;
+  private final SortTarget sortTarget;
   private final boolean serializable;
   private final boolean keysOnly;
   private final boolean countOnly;
 
   private GetOption(Optional<ByteSequence> endKey, long limit, long revision,
-      RangeRequest.SortOrder sortOrder,
-      RangeRequest.SortTarget sortTarget, boolean serializable, boolean keysOnly,
+      SortOrder sortOrder, SortTarget sortTarget, boolean serializable, boolean keysOnly,
       boolean countOnly) {
     this.endKey = endKey;
     this.limit = limit;
@@ -209,11 +203,11 @@ public final class GetOption {
     return revision;
   }
 
-  public RangeRequest.SortOrder getSortOrder() {
+  public SortOrder getSortOrder() {
     return sortOrder;
   }
 
-  public RangeRequest.SortTarget getSortField() {
+  public SortTarget getSortField() {
     return sortTarget;
   }
 
@@ -227,5 +221,19 @@ public final class GetOption {
 
   public boolean isCountOnly() {
     return countOnly;
+  }
+
+  public enum SortOrder {
+    NONE,
+    ASCEND,
+    DESCEND,
+  }
+
+  public enum SortTarget {
+    KEY,
+    VERSION,
+    CREATE,
+    MOD,
+    VALUE,
   }
 }

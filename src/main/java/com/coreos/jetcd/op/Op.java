@@ -1,5 +1,8 @@
 package com.coreos.jetcd.op;
 
+import static com.coreos.jetcd.options.OptionsUtil.toRangeRequestSortOrder;
+import static com.coreos.jetcd.options.OptionsUtil.toRangeRequestSortTarget;
+
 import com.coreos.jetcd.api.DeleteRangeRequest;
 import com.coreos.jetcd.api.PutRequest;
 import com.coreos.jetcd.api.RangeRequest;
@@ -85,12 +88,11 @@ public abstract class Op {
           .setRevision(this.option.getRevision())
           .setKeysOnly(this.option.isKeysOnly())
           .setSerializable(this.option.isSerializable())
-          .setSortOrder(this.option.getSortOrder())
-          .setSortTarget(this.option.getSortField());
+          .setSortOrder(toRangeRequestSortOrder(this.option.getSortOrder()))
+          .setSortTarget(toRangeRequestSortTarget(this.option.getSortField()));
 
-      if (this.option.getEndKey().isPresent()) {
-        range.setRangeEnd(ByteString.copyFrom(this.option.getEndKey().get().getBytes()));
-      }
+      this.option.getEndKey()
+          .ifPresent(endkey -> range.setRangeEnd(ByteString.copyFrom(endkey.getBytes())));
 
       return RequestOp.newBuilder().setRequestRange(range).build();
     }

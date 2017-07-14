@@ -13,7 +13,7 @@ import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
-import com.coreos.jetcd.resolver.SimpleEtcdNameResolverFactory;
+import com.coreos.jetcd.resolver.SimpleNameResolverFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -54,7 +54,7 @@ final class ClientUtil {
   }
 
   static final NameResolver.Factory simpleNameResolveFactory(List<String> endpoints) {
-    return new SimpleEtcdNameResolverFactory(
+    return new SimpleNameResolverFactory(
         endpoints.stream()
             .map(ClientUtil::endpointToUri)
             .collect(Collectors.toList())
