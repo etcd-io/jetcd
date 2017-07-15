@@ -44,7 +44,7 @@ public class AuthClientTest {
   @BeforeTest
   public void setupEnv() {
     this.test = new Assertion();
-    this.client = ClientBuilder.newBuilder().setEndpoints("localhost:2379").build();
+    this.client = ClientBuilder.newBuilder().setEndpoints("http://localhost:2379").build();
     this.kvClient = this.client.getKVClient();
     this.authClient = this.client.getAuthClient();
   }
@@ -96,7 +96,7 @@ public class AuthClientTest {
    */
   @Test(dependsOnMethods = "testEnableAuth", groups = "authEnable", priority = 1)
   public void setupAuthClient() {
-    this.secureClient = ClientBuilder.newBuilder().setEndpoints("localhost:2379")
+    this.secureClient = ClientBuilder.newBuilder().setEndpoints("http://localhost:2379")
         .setUser(userName).setPassword(password).build();
 
   }
