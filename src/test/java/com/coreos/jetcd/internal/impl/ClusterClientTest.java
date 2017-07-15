@@ -3,9 +3,9 @@ package com.coreos.jetcd.internal.impl;
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.Cluster;
-import com.coreos.jetcd.api.Member;
-import com.coreos.jetcd.api.MemberAddResponse;
-import com.coreos.jetcd.api.MemberListResponse;
+import com.coreos.jetcd.cluster.Member;
+import com.coreos.jetcd.cluster.MemberAddResponse;
+import com.coreos.jetcd.cluster.MemberListResponse;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import java.util.Arrays;
@@ -33,7 +33,8 @@ public class ClusterClientTest {
     Client client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints).build();
     Cluster clusterClient = client.getClusterClient();
     MemberListResponse response = clusterClient.listMember().get();
-    assertion.assertEquals(response.getMembersCount(), 3, "Members: " + response.getMembersCount());
+    assertion
+        .assertEquals(response.getMembers().size(), 3, "Members: " + response.getMembers().size());
   }
 
   /**
@@ -46,12 +47,12 @@ public class ClusterClientTest {
         .setEndpoints(Arrays.copyOfRange(TestConstants.endpoints, 0, 2)).build();
     Cluster clusterClient = client.getClusterClient();
     MemberListResponse response = clusterClient.listMember().get();
-    assertion.assertEquals(response.getMembersCount(), 3);
+    assertion.assertEquals(response.getMembers().size(), 3);
     CompletableFuture<MemberAddResponse> responseListenableFuture = clusterClient
         .addMember(Arrays.asList(Arrays.copyOfRange(TestConstants.peerUrls, 2, 3)));
     MemberAddResponse addResponse = responseListenableFuture.get(5, TimeUnit.SECONDS);
     addedMember = addResponse.getMember();
-    assertion.assertNotNull(addedMember, "added member: " + addedMember.getID());
+    assertion.assertNotNull(addedMember, "added member: " + addedMember.getId());
   }
 
   /**
@@ -67,7 +68,8 @@ public class ClusterClientTest {
       Cluster clusterClient = client.getClusterClient();
       MemberListResponse response = clusterClient.listMember().get();
       String[] newPeerUrl = new String[]{"http://localhost:12380"};
-      clusterClient.updateMember(response.getMembers(0).getID(), Arrays.asList(newPeerUrl)).get();
+      clusterClient.updateMember(response.getMembers().get(0).getId(), Arrays.asList(newPeerUrl))
+          .get();
     } catch (Exception e) {
       System.out.println(e);
       throwable = e;
@@ -84,9 +86,9 @@ public class ClusterClientTest {
     Client client = ClientBuilder.newBuilder()
         .setEndpoints(Arrays.copyOfRange(TestConstants.endpoints, 0, 2)).build();
     Cluster clusterClient = client.getClusterClient();
-    clusterClient.removeMember(addedMember.getID()).get();
-    int newCount = clusterClient.listMember().get().getMembersCount();
+    clusterClient.removeMember(addedMember.getId()).get();
+    int newCount = clusterClient.listMember().get().getMembers().size();
     assertion.assertEquals(newCount, 3,
-        "delete added member(" + addedMember.getID() + "), and left " + newCount + " members");
+        "delete added member(" + addedMember.getId() + "), and left " + newCount + " members");
   }
 }
