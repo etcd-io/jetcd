@@ -29,6 +29,7 @@
         <!-- dependencies -->
         <grpc.version>1.4.0</grpc.version>
         <slf4j.version>1.7.21</slf4j.version>
+        <auto-service.version>1.0-rc3</auto-service.version>
 
         <!-- should be in sync with protobuf grpc dependencies -->
         <protobuf.version>3.2.0</protobuf.version>
@@ -66,6 +67,13 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service</artifactId>
+            <version>${auto-service.version}</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>

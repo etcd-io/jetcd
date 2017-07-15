@@ -12,13 +12,8 @@ import com.coreos.jetcd.internal.impl.ClientImpl;
 import com.google.common.collect.Lists;
 import io.grpc.LoadBalancer;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.NameResolver;
 import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -26,11 +21,9 @@ import java.util.List;
  */
 public class ClientBuilder implements Cloneable {
 
-  private static final List<String> SCHEMES = Arrays.asList("http", "https");
   private List<String> endpoints = Lists.newArrayList();
   private ByteSequence user;
   private ByteSequence password;
-  private NameResolver.Factory nameResolverFactory;
   private LoadBalancer.Factory loadBalancerFactory;
   private ManagedChannelBuilder<?> channelBuilder;
   private SslContext sslContext;
@@ -69,7 +62,6 @@ public class ClientBuilder implements Cloneable {
       checkNotNull(endpoint, "endpoint can't be null");
       final String trimmedEndpoint = endpoint.trim();
       checkArgument(trimmedEndpoint.length() > 0, "invalid endpoint: endpoint=" + endpoint);
-      checkArgument(isValidEndpointFormat(trimmedEndpoint), "invalid format: endpoint=" + endpoint);
       this.endpoints.add(trimmedEndpoint);
     }
     return this;
@@ -107,28 +99,6 @@ public class ClientBuilder implements Cloneable {
     checkNotNull(password, "password can't be null");
     this.password = password;
     return this;
-  }
-
-  /**
-   * config NameResolver factory.
-   *
-   * @param nameResolverFactory etcd NameResolver.Factory
-   * @return this builder
-   * @throws NullPointerException if nameResolverFactory is <code>null</code>
-   */
-  public ClientBuilder setNameResolverFactory(NameResolver.Factory nameResolverFactory) {
-    checkNotNull(nameResolverFactory, "nameResolverFactory can't be null");
-    this.nameResolverFactory = nameResolverFactory;
-    return this;
-  }
-
-  /**
-   * get NameResolver.Factory for etcd client.
-   *
-   * @return nameResolverFactory
-   */
-  public NameResolver.Factory getNameResolverFactory() {
-    return nameResolverFactory;
   }
 
   /**
@@ -202,8 +172,10 @@ public class ClientBuilder implements Cloneable {
    * @throws AuthFailedException This may be caused as wrong username or password
    */
   public Client build() {
-    checkState(!endpoints.isEmpty() || nameResolverFactory != null,
-        "please configure etcd server endpoints or nameResolverFactory before build.");
+    checkState(
+        !endpoints.isEmpty(),
+        "please configure etcd server endpoints before build.");
+
     return new ClientImpl(this);
   }
 
@@ -213,26 +185,5 @@ public class ClientBuilder implements Cloneable {
     } catch (CloneNotSupportedException e) {
       throw EtcdExceptionFactory.newEtcdException(e);
     }
-  }
-
-  private static boolean isValidEndpointFormat(String endpoint) {
-    URL u = null;
-    try {
-      u = new URL(endpoint);
-    } catch (MalformedURLException e) {
-      return false;
-    }
-
-    if (SCHEMES.stream().noneMatch(u.getProtocol()::equals)) {
-      return false;
-    }
-
-    // endpoint must contain a port.
-    if (u.getPort() == -1) {
-      return false;
-    }
-
-    // endpoint must not contain a path.
-    return u.getPath().isEmpty();
   }
 }
