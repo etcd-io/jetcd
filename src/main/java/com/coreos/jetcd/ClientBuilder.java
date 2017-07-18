@@ -25,7 +25,7 @@ import java.util.List;
  * ClientBuilder knows how to create an Client instance.
  */
 public class ClientBuilder implements Cloneable {
-  private static final List<String> SCHEMES = Arrays.asList("http", "https", "unix", "unixs");
+  private static final List<String> SCHEMES = Arrays.asList("http", "https");
   private List<String> endpoints = Lists.newArrayList();
   private ByteSequence user;
   private ByteSequence password;
