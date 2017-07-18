@@ -15,6 +15,10 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.NameResolver;
 import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -22,6 +26,7 @@ import java.util.List;
  */
 public class ClientBuilder implements Cloneable {
 
+  private static final List<String> SCHEMES = Arrays.asList("http", "https");
   private List<String> endpoints = Lists.newArrayList();
   private ByteSequence user;
   private ByteSequence password;
@@ -64,6 +69,7 @@ public class ClientBuilder implements Cloneable {
       checkNotNull(endpoint, "endpoint can't be null");
       final String trimmedEndpoint = endpoint.trim();
       checkArgument(trimmedEndpoint.length() > 0, "invalid endpoint: endpoint=" + endpoint);
+      checkArgument(isValidEndpointFormat(trimmedEndpoint), "invalid format: endpoint=" + endpoint);
       this.endpoints.add(trimmedEndpoint);
     }
     return this;
@@ -207,5 +213,26 @@ public class ClientBuilder implements Cloneable {
     } catch (CloneNotSupportedException e) {
       throw EtcdExceptionFactory.newEtcdException(e);
     }
+  }
+
+  private static boolean isValidEndpointFormat(String endpoint) {
+    URL u = null;
+    try {
+      u = new URL(endpoint);
+    } catch (MalformedURLException e) {
+      return false;
+    }
+
+    if (SCHEMES.stream().noneMatch(u.getProtocol()::equals)) {
+      return false;
+    }
+
+    // endpoint must contain a port.
+    if (u.getPort() == -1) {
+      return false;
+    }
+
+    // endpoint must not contain a path.
+    return u.getPath().isEmpty();
   }
 }
