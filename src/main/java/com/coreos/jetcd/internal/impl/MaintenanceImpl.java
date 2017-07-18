@@ -56,9 +56,9 @@ class MaintenanceImpl implements Maintenance {
         .setAction(AlarmRequest.AlarmAction.GET)
         .setMemberID(0).build();
 
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.alarm(alarmRequest),
-        Util::toAlarmResponse,
+        AlarmResponse::new,
         this.connectionManager.getExecutorService()
     );
   }
@@ -82,9 +82,9 @@ class MaintenanceImpl implements Maintenance {
         .setMemberID(member.getMemberId())
         .build();
 
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.alarm(alarmRequest),
-        Util::toAlarmResponse,
+        AlarmResponse::new,
         this.connectionManager.getExecutorService()
     );
   }
@@ -110,9 +110,9 @@ class MaintenanceImpl implements Maintenance {
     return this.connectionManager.withNewChannel(
         endpoint,
         MaintenanceGrpc::newFutureStub,
-        stub -> Util.listenableToCompletableFuture(
+        stub -> Util.toCompletableFuture(
             stub.defragment(DefragmentRequest.getDefaultInstance()),
-            Util::toDefragmentResponse,
+            DefragmentResponse::new,
             this.connectionManager.getExecutorService()
         )
     );
@@ -127,9 +127,9 @@ class MaintenanceImpl implements Maintenance {
     return this.connectionManager.withNewChannel(
         endpoint,
         MaintenanceGrpc::newFutureStub,
-        stub -> Util.listenableToCompletableFuture(
+        stub -> Util.toCompletableFuture(
             stub.status(StatusRequest.getDefaultInstance()),
-            Util::toStatusResponse,
+            StatusResponse::new,
             this.connectionManager.getExecutorService()
         )
     );
@@ -146,13 +146,12 @@ class MaintenanceImpl implements Maintenance {
 
     private final SnapshotResponse endOfStreamResponse =
         SnapshotResponse.newBuilder().setRemainingBytes(-1).build();
+    // closeLock protects closed.
+    private final Object closeLock = new Object();
     private StreamObserver<SnapshotResponse> snapshotObserver;
     private ExecutorService executorService = Executors.newFixedThreadPool(2);
     private BlockingQueue<SnapshotReaderResponseWithError> snapshotResponseBlockingQueue =
         new LinkedBlockingQueue<>();
-
-    // closeLock protects closed.
-    private final Object closeLock = new Object();
     private boolean closed = false;
 
     private boolean writeOnce = false;

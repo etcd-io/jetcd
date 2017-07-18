@@ -38,25 +38,23 @@ import java.util.logging.Logger;
 class WatchImpl implements Watch {
 
   private static final Logger logger = Logger.getLogger(WatchImpl.class.getName());
-
-  private volatile StreamObserver<WatchRequest> grpcWatchStreamObserver;
-
   // watchers stores a mapping between leaseID -> WatchIml.
   private final ConcurrentHashMap<Long, WatcherImpl> watchers = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<WatcherImpl>
       pendingWatchers = new ConcurrentLinkedQueue<>();
-
   private final Set<Long> cancelSet = ConcurrentHashMap.newKeySet();
-
-  private boolean closed = false;
-
   private final ExecutorService executor = Executors.newCachedThreadPool();
-
   private final ScheduledExecutorService scheduledExecutorService = Executors
       .newScheduledThreadPool(1);
-
   private final ClientConnectionManager connectionManager;
   private final WatchGrpc.WatchStub stub;
+  private volatile StreamObserver<WatchRequest> grpcWatchStreamObserver;
+  private boolean closed = false;
+
+  WatchImpl(ClientConnectionManager connectionManager) {
+    this.connectionManager = connectionManager;
+    this.stub = connectionManager.newStub(WatchGrpc::newStub);
+  }
 
   private boolean isClosed() {
     return this.closed;
@@ -64,11 +62,6 @@ class WatchImpl implements Watch {
 
   private void setClosed() {
     this.closed = true;
-  }
-
-  WatchImpl(ClientConnectionManager connectionManager) {
-    this.connectionManager = connectionManager;
-    this.stub = connectionManager.newStub(WatchGrpc::newStub);
   }
 
   @Override
@@ -360,18 +353,16 @@ class WatchImpl implements Watch {
    */
   public class WatcherImpl implements Watcher {
 
+    final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final WatchOption watchOption;
     private final ByteSequence key;
+    private final Object closedLock = new Object();
+    // watch events buffer.
+    private final BlockingQueue<WatchResponseWithError> eventsQueue = new LinkedBlockingQueue<>();
     private long watchID;
     // the revision to watch on.
     private long revision;
-    private final Object closedLock = new Object();
     private boolean closed = false;
-
-    // watch events buffer.
-    private final BlockingQueue<WatchResponseWithError> eventsQueue = new LinkedBlockingQueue<>();
-
-    final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private WatcherImpl(ByteSequence key, WatchOption watchOption) {
       this.key = key;
@@ -465,7 +456,7 @@ class WatchImpl implements Watch {
         if (watchResponse.getException() != null) {
           throw watchResponse.getException();
         }
-        return Util.toWatchResponse(watchResponse.getWatchResponse());
+        return new com.coreos.jetcd.watch.WatchResponse(watchResponse.getWatchResponse());
       });
     }
   }

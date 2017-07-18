@@ -47,16 +47,13 @@ public class LeaseImpl implements Lease {
   private final ClientConnectionManager connectionManager;
   private final LeaseGrpc.LeaseFutureStub stub;
   private final LeaseGrpc.LeaseStub leaseStub;
-
+  private final Map<Long, KeepAlive> keepAlives = new ConcurrentHashMap<>();
   /**
    * Timer schedule to send keep alive request.
    */
   private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2);
   private ScheduledFuture<?> keepAliveFuture;
   private ScheduledFuture<?> deadlineFuture;
-
-  private final Map<Long, KeepAlive> keepAlives = new ConcurrentHashMap<>();
-
   /**
    * KeepAlive Request Stream, put request into this stream to keep the lease alive.
    */
@@ -85,9 +82,9 @@ public class LeaseImpl implements Lease {
   @Override
   public CompletableFuture<LeaseGrantResponse> grant(long ttl) {
     LeaseGrantRequest leaseGrantRequest = LeaseGrantRequest.newBuilder().setTTL(ttl).build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.leaseGrant(leaseGrantRequest),
-        Util::toLeaseGrantResponse, 
+        LeaseGrantResponse::new,
         connectionManager.getExecutorService()
     );
   }
@@ -95,9 +92,9 @@ public class LeaseImpl implements Lease {
   @Override
   public CompletableFuture<LeaseRevokeResponse> revoke(long leaseId) {
     LeaseRevokeRequest leaseRevokeRequest = LeaseRevokeRequest.newBuilder().setID(leaseId).build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.leaseRevoke(leaseRevokeRequest),
-        Util::toLeaseRevokeResponse,
+        LeaseRevokeResponse::new,
         connectionManager.getExecutorService()
     );
   }
@@ -270,7 +267,7 @@ public class LeaseImpl implements Lease {
         .leaseKeepAlive(new StreamObserver<com.coreos.jetcd.api.LeaseKeepAliveResponse>() {
           @Override
           public void onNext(com.coreos.jetcd.api.LeaseKeepAliveResponse leaseKeepAliveResponse) {
-            lkaFuture.complete(Util.toLeaseKeepAliveResponse(leaseKeepAliveResponse));
+            lkaFuture.complete(new LeaseKeepAliveResponse(leaseKeepAliveResponse));
           }
 
           @Override
@@ -302,9 +299,9 @@ public class LeaseImpl implements Lease {
         .setKeys(option.isAttachedKeys())
         .build();
 
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.leaseTimeToLive(leaseTimeToLiveRequest),
-        Util::toLeaseTimeToLiveResponse, connectionManager.getExecutorService());
+        LeaseTimeToLiveResponse::new, connectionManager.getExecutorService());
   }
 
   private LeaseKeepAliveRequest newKeepAliveRequest(long leaseId) {
@@ -314,9 +311,9 @@ public class LeaseImpl implements Lease {
 
   private class KeepAliveListenerImpl implements KeepAliveListener {
 
+    private final Object closedLock = new Object();
     private BlockingQueue<LeaseKeepAliveResponseWithError> queue = new LinkedBlockingDeque<>(1);
     private ExecutorService service = Executors.newSingleThreadExecutor();
-    private final Object closedLock = new Object();
     private boolean closed = false;
     private Exception reason;
     private KeepAlive owner;
@@ -356,7 +353,7 @@ public class LeaseImpl implements Lease {
           this.reason = lkae.error;
           throw lkae.error;
         }
-        return Util.toLeaseKeepAliveResponse(lkae.leaseKeepAliveResponse);
+        return new LeaseKeepAliveResponse(lkae.leaseKeepAliveResponse);
       });
 
       try {
@@ -392,13 +389,10 @@ public class LeaseImpl implements Lease {
    */
   private class KeepAlive {
 
-    private long deadLine;
-
-    private long nextKeepAlive;
-
     // ownerLock protects owner map.
     private final Object ownerLock;
-
+    private long deadLine;
+    private long nextKeepAlive;
     private Map<Long, KeepAlive> owner;
 
     private long leaseId;
