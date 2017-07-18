@@ -16,7 +16,8 @@ public class DnsSrvNameResolverTest {
         "_xmpp-server._tcp.gmail.com",
         GrpcUtil.SHARED_CHANNEL_EXECUTOR);
 
-    test.assertFalse(discovery.getAddressGroup().getAddresses().isEmpty());
+    test.assertFalse(discovery.getAddressGroups().isEmpty());
+    test.assertFalse(discovery.getAddressGroups().get(0).getAddresses().isEmpty());
   }
 
   @Test

@@ -8,7 +8,7 @@ import io.grpc.Status;
 import io.grpc.internal.SharedResourceHolder;
 import io.grpc.internal.SharedResourceHolder.Resource;
 import java.net.URI;
-import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import javax.annotation.concurrent.GuardedBy;
 import org.slf4j.Logger;
@@ -81,7 +81,7 @@ public abstract class AbstractEtcdNameResolver extends NameResolver {
     executor.execute(resolutionRunnable);
   }
 
-  protected abstract EquivalentAddressGroup getAddressGroup() throws Exception;
+  protected abstract List<EquivalentAddressGroup> getAddressGroups() throws Exception;
 
   /**
    * Helper task to resolve servers.
@@ -100,7 +100,7 @@ public abstract class AbstractEtcdNameResolver extends NameResolver {
       }
 
       try {
-        savedListener.onAddresses(Collections.singletonList(getAddressGroup()), Attributes.EMPTY);
+        savedListener.onAddresses(getAddressGroups(), Attributes.EMPTY);
       } catch (Exception e) {
         LOGGER.warn("Error wile getting list of servers", e);
         savedListener.onError(Status.NOT_FOUND);

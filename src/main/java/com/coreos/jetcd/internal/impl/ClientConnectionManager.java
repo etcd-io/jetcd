@@ -63,28 +63,37 @@ final class ClientConnectionManager {
   }
 
   ManagedChannel getChannel() {
-    ManagedChannel mc = channelRef.get();
-    if (mc == null) {
+    ManagedChannel managedChannel = channelRef.get();
+    if (managedChannel == null) {
       synchronized (channelRef) {
-        mc = channelRef.get();
-        if (mc == null) {
-          NameResolver.Factory resolverFactory = builder.getNameResolverFactory();
-          if (resolverFactory == null) {
-            resolverFactory = SimpleNameResolverFactory.forEndpoints(builder.getEndpoints());
-          }
-
+        managedChannel = channelRef.get();
+        if (managedChannel == null) {
           ManagedChannelBuilder<?> channelBuilder = builder.getChannelBuilder();
+
+          // If channel builder is provided, any additional configuration such as SslContext, name
+          // resolver or load balancer is ignored
           if (channelBuilder == null) {
-            channelBuilder = defaultChannelBuilder(resolverFactory);
+
+            NameResolver.Factory resolverFactory = builder.getNameResolverFactory();
+            if (resolverFactory == null) {
+              resolverFactory = SimpleNameResolverFactory.forEndpoints(builder.getEndpoints());
+            }
+
+            channelBuilder = defaultChannelBuilder();
+            channelBuilder.nameResolverFactory(resolverFactory);
+
+            if (builder.getLoadBalancerFactory() != null) {
+              channelBuilder.loadBalancerFactory(builder.getLoadBalancerFactory());
+            }
           }
 
-          mc = channelBuilder.build();
-          channelRef.lazySet(mc);
+          managedChannel = channelBuilder.build();
+          channelRef.lazySet(managedChannel);
         }
       }
     }
 
-    return mc;
+    return managedChannel;
   }
 
   Optional<String> getToken() {
@@ -132,7 +141,7 @@ final class ClientConnectionManager {
       Function<T, CompletableFuture<R>> stubConsumer) {
 
     NameResolver.Factory resolverFactory = SimpleNameResolverFactory.forEndpoints(endpoint);
-    ManagedChannel channel = defaultChannelBuilder(resolverFactory).build();
+    ManagedChannel channel = defaultChannelBuilder().nameResolverFactory(resolverFactory).build();
 
     try {
       Optional<String> token = generateToken(channel);
@@ -147,9 +156,8 @@ final class ClientConnectionManager {
     }
   }
 
-  private ManagedChannelBuilder<?> defaultChannelBuilder(NameResolver.Factory factory) {
+  private ManagedChannelBuilder<?> defaultChannelBuilder() {
     NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget("etcd");
-    channelBuilder.nameResolverFactory(factory);
 
     if (builder.getSslContext() != null) {
       channelBuilder.sslContext(builder.getSslContext());
