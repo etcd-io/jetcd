@@ -1,16 +1,11 @@
 package com.coreos.jetcd.lease;
 
-import com.coreos.jetcd.data.Header;
+import com.coreos.jetcd.data.AbstractResponse;
 
-public class LeaseRevokeResponse {
+public class LeaseRevokeResponse extends
+    AbstractResponse<com.coreos.jetcd.api.LeaseRevokeResponse> {
 
-  private Header header;
-
-  public LeaseRevokeResponse(Header header) {
-    this.header = header;
-  }
-
-  public Header getHeader() {
-    return header;
+  public LeaseRevokeResponse(com.coreos.jetcd.api.LeaseRevokeResponse revokeResponse) {
+    super(revokeResponse, revokeResponse.getHeader());
   }
 }
