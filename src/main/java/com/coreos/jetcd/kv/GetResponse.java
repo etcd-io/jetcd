@@ -1,31 +1,29 @@
 package com.coreos.jetcd.kv;
 
-import com.coreos.jetcd.data.Header;
+import com.coreos.jetcd.api.RangeResponse;
+import com.coreos.jetcd.data.AbstractResponse;
 import com.coreos.jetcd.data.KeyValue;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class GetResponse {
+public class GetResponse extends AbstractResponse<RangeResponse> {
 
-  private Header header;
   private List<KeyValue> kvs;
-  private boolean more;
-  private long count;
 
-  public GetResponse(Header header, List<KeyValue> kvs, boolean more, long count) {
-    this.header = header;
-    this.kvs = kvs;
-    this.more = more;
-    this.count = count;
-  }
-
-  public Header getHeader() {
-    return header;
+  public GetResponse(RangeResponse rangeResponse) {
+    super(rangeResponse, rangeResponse.getHeader());
   }
 
   /**
    * return a list of key-value pairs matched by the range request.
    */
-  public List<KeyValue> getKvs() {
+  public synchronized List<KeyValue> getKvs() {
+    if (kvs == null) {
+      kvs = getResponse().getKvsList().stream()
+          .map(KeyValue::new)
+          .collect(Collectors.toList());
+    }
+
     return kvs;
   }
 
@@ -33,13 +31,13 @@ public class GetResponse {
    * more indicates if there are more keys to return in the requested range.
    */
   public boolean isMore() {
-    return more;
+    return getResponse().getMore();
   }
 
   /**
    * return the number of keys within the range when requested.
    */
   public long getCount() {
-    return count;
+    return getResponse().getCount();
   }
 }

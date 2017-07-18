@@ -1,34 +1,22 @@
 package com.coreos.jetcd.kv;
 
-import com.coreos.jetcd.data.Header;
+import com.coreos.jetcd.data.AbstractResponse;
 import com.coreos.jetcd.data.KeyValue;
 
-public class PutResponse {
+public class PutResponse extends AbstractResponse<com.coreos.jetcd.api.PutResponse> {
 
-  private Header header;
-
-  private KeyValue prevKv;
-
-  private boolean hasPrevKv;
-
-  public PutResponse(Header header, KeyValue keyValue, boolean hasPrevKv) {
-    this.header = header;
-    this.prevKv = keyValue;
-    this.hasPrevKv = hasPrevKv;
-  }
-
-  public Header getHeader() {
-    return header;
+  public PutResponse(com.coreos.jetcd.api.PutResponse putResponse) {
+    super(putResponse, putResponse.getHeader());
   }
 
   /**
    * return previous key-value pair.
    */
   public KeyValue getPrevKv() {
-    return prevKv;
+    return new KeyValue(getResponse().getPrevKv());
   }
 
   public boolean hasPrevKv() {
-    return this.hasPrevKv;
+    return getResponse().hasPrevKv();
   }
 }
