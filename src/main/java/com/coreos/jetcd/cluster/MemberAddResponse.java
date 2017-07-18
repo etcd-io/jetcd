@@ -1,26 +1,20 @@
 package com.coreos.jetcd.cluster;
 
-import com.coreos.jetcd.data.Header;
+import com.coreos.jetcd.data.AbstractResponse;
 import java.util.List;
 
 /**
  * MemberAddResponse returned by {@link com.coreos.jetcd.Cluster#addMember(List)}
  * contains a header, added member, and list of members after adding the new member.
  */
-public class MemberAddResponse {
+public class MemberAddResponse extends AbstractResponse<com.coreos.jetcd.api.MemberAddResponse> {
 
-  private Header header;
-  private Member member;
+  private final Member member;
   private List<Member> members;
 
-  public MemberAddResponse(Header header, Member member, List<Member> members) {
-    this.header = header;
-    this.member = member;
-    this.members = members;
-  }
-
-  public Header getHeader() {
-    return header;
+  public MemberAddResponse(com.coreos.jetcd.api.MemberAddResponse response) {
+    super(response, response.getHeader());
+    member = new Member(response.getMember());
   }
 
   /**
@@ -33,8 +27,11 @@ public class MemberAddResponse {
   /**
    * returns a list of all members after adding the new member.
    */
-  public List<Member> getMembers() {
+  public synchronized List<Member> getMembers() {
+    if (members == null) {
+      members = Util.toMembers(getResponse().getMembersList());
+    }
+
     return members;
   }
-
 }
