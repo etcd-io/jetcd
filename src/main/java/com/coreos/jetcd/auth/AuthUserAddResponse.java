@@ -1,22 +1,17 @@
 package com.coreos.jetcd.auth;
 
 import com.coreos.jetcd.Auth;
+import com.coreos.jetcd.data.AbstractResponse;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.data.Header;
 
 /**
  * AuthUserAddResponse returned by {@link Auth#userAdd(ByteSequence, ByteSequence)} contains a
  * header.
  */
-public class AuthUserAddResponse {
+public class AuthUserAddResponse extends
+    AbstractResponse<com.coreos.jetcd.api.AuthUserAddResponse> {
 
-  private final Header header;
-
-  public AuthUserAddResponse(Header header) {
-    this.header = header;
-  }
-
-  public Header getHeader() {
-    return header;
+  public AuthUserAddResponse(com.coreos.jetcd.api.AuthUserAddResponse response) {
+    super(response, response.getHeader());
   }
 }

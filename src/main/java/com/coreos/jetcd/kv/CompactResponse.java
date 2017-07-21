@@ -1,16 +1,11 @@
 package com.coreos.jetcd.kv;
 
-import com.coreos.jetcd.data.Header;
+import com.coreos.jetcd.api.CompactionResponse;
+import com.coreos.jetcd.data.AbstractResponse;
 
-public class CompactResponse {
+public class CompactResponse extends AbstractResponse<CompactionResponse> {
 
-  private Header header;
-
-  public CompactResponse(Header header) {
-    this.header = header;
-  }
-
-  public Header getHeader() {
-    return header;
+  public CompactResponse(CompactionResponse response) {
+    super(response, response.getHeader());
   }
 }

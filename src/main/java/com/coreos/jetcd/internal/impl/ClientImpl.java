@@ -18,6 +18,7 @@ import java.util.function.Function;
  * Etcd Client.
  */
 public final class ClientImpl implements Client {
+
   private final AtomicReference<KV> kvClient;
   private final AtomicReference<Auth> authClient;
   private final AtomicReference<Maintenance> maintenanceClient;

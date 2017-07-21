@@ -5,44 +5,33 @@ package com.coreos.jetcd.data;
  */
 public class KeyValue {
 
-  private final ByteSequence key;
-  private final ByteSequence value;
-  private long createRevision = 0L;
-  private long modRevision = 0L;
-  private long version = 0L;
-  private long lease = 0L;
+  private com.coreos.jetcd.api.KeyValue kv;
 
-  public KeyValue(ByteSequence key, ByteSequence value, long createRevision, long modRevision,
-      long version, long lease) {
-    this.key = key;
-    this.value = value;
-    this.createRevision = createRevision;
-    this.modRevision = modRevision;
-    this.version = version;
-    this.lease = lease;
+  public KeyValue(com.coreos.jetcd.api.KeyValue kv) {
+    this.kv = kv;
   }
 
   public ByteSequence getKey() {
-    return key;
+    return ByteSequence.fromByteString(kv.getKey());
   }
 
   public ByteSequence getValue() {
-    return value;
+    return ByteSequence.fromByteString(kv.getValue());
   }
 
   public long getCreateRevision() {
-    return createRevision;
+    return kv.getCreateRevision();
   }
 
   public long getModRevision() {
-    return modRevision;
+    return kv.getModRevision();
   }
 
   public long getVersion() {
-    return version;
+    return kv.getVersion();
   }
 
   public long getLease() {
-    return lease;
+    return kv.getLease();
   }
 }

@@ -7,16 +7,8 @@ import com.coreos.jetcd.data.KeyValue;
  */
 public class WatchEvent {
 
-  public enum EventType {
-    PUT,
-    DELETE,
-    UNRECOGNIZED,
-  }
-
   private final KeyValue keyValue;
-
   private final KeyValue prevKV;
-
   private final EventType eventType;
 
   public WatchEvent(KeyValue keyValue, KeyValue prevKV, EventType eventType) {
@@ -35,5 +27,11 @@ public class WatchEvent {
 
   public EventType getEventType() {
     return eventType;
+  }
+
+  public enum EventType {
+    PUT,
+    DELETE,
+    UNRECOGNIZED,
   }
 }

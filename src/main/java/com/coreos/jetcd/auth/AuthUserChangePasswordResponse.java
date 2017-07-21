@@ -1,22 +1,18 @@
 package com.coreos.jetcd.auth;
 
 import com.coreos.jetcd.Auth;
+import com.coreos.jetcd.data.AbstractResponse;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.data.Header;
 
 /**
  * AuthUserChangePasswordResponse returned by {@link Auth#userChangePassword(ByteSequence,
  * ByteSequence)} contains a header.
  */
-public class AuthUserChangePasswordResponse {
+public class AuthUserChangePasswordResponse extends
+    AbstractResponse<com.coreos.jetcd.api.AuthUserChangePasswordResponse> {
 
-  private final Header header;
-
-  public AuthUserChangePasswordResponse(Header header) {
-    this.header = header;
-  }
-
-  public Header getHeader() {
-    return header;
+  public AuthUserChangePasswordResponse(
+      com.coreos.jetcd.api.AuthUserChangePasswordResponse response) {
+    super(response, response.getHeader());
   }
 }

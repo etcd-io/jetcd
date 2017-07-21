@@ -1,20 +1,15 @@
 package com.coreos.jetcd.auth;
 
 import com.coreos.jetcd.Auth;
-import com.coreos.jetcd.data.Header;
+import com.coreos.jetcd.data.AbstractResponse;
 
 /**
  * AuthDisableResponse returned by {@link Auth#authDisable()} contains a header.
  */
-public class AuthDisableResponse {
+public class AuthDisableResponse extends
+    AbstractResponse<com.coreos.jetcd.api.AuthDisableResponse> {
 
-  private final Header header;
-
-  public AuthDisableResponse(Header header) {
-    this.header = header;
-  }
-
-  public Header getHeader() {
-    return header;
+  public AuthDisableResponse(com.coreos.jetcd.api.AuthDisableResponse response) {
+    super(response, response.getHeader());
   }
 }

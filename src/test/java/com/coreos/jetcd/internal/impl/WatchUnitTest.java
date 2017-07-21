@@ -44,21 +44,16 @@ import org.mockito.junit.MockitoRule;
  */
 public class WatchUnitTest {
 
-  private Watch watchClient;
   private final static ByteSequence KEY = ByteSequence.fromString("test_key");
-  private ExecutorService executor = Executors.newFixedThreadPool(2);
-  private AtomicReference<StreamObserver<WatchResponse>> responseObserverRef;
-
-
   @Rule
   public final GrpcServerRule grpcServerRule = new GrpcServerRule().directExecutor();
-
   @Rule
   public MockitoRule mockitoRule = MockitoJUnit.rule();
-
   @Rule
   public Timeout timeout = Timeout.seconds(10);
-
+  private Watch watchClient;
+  private ExecutorService executor = Executors.newFixedThreadPool(2);
+  private AtomicReference<StreamObserver<WatchResponse>> responseObserverRef;
   @Mock
   private StreamObserver<WatchRequest> requestStreamObserverMock;
 
@@ -158,7 +153,8 @@ public class WatchUnitTest {
     responseObserverRef.get().onNext(putResponse);
 
     com.coreos.jetcd.watch.WatchResponse actualResponse = watcher.listen();
-    assertEqualOnWatchResponses(actualResponse, Util.toWatchResponse(putResponse));
+    assertEqualOnWatchResponses(actualResponse,
+        new com.coreos.jetcd.watch.WatchResponse(putResponse));
 
     putResponse = WatchResponse
         .newBuilder()
@@ -173,7 +169,8 @@ public class WatchUnitTest {
     responseObserverRef.get().onNext(putResponse);
 
     actualResponse = watcher.listen();
-    assertEqualOnWatchResponses(actualResponse, Util.toWatchResponse(putResponse));
+    assertEqualOnWatchResponses(actualResponse,
+        new com.coreos.jetcd.watch.WatchResponse(putResponse));
 
     watcher.close();
   }
@@ -201,7 +198,7 @@ public class WatchUnitTest {
 
     com.coreos.jetcd.watch.WatchResponse actualResponse = watcher.listen();
     assertEqualOnWatchResponses(actualResponse,
-        Util.toWatchResponse(deleteResponse));
+        new com.coreos.jetcd.watch.WatchResponse(deleteResponse));
     watcher.close();
   }
 

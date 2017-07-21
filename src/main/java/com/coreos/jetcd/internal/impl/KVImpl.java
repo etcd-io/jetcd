@@ -16,6 +16,7 @@ import com.coreos.jetcd.kv.CompactResponse;
 import com.coreos.jetcd.kv.DeleteResponse;
 import com.coreos.jetcd.kv.GetResponse;
 import com.coreos.jetcd.kv.PutResponse;
+import com.coreos.jetcd.kv.TxnResponse;
 import com.coreos.jetcd.op.TxnImpl;
 import com.coreos.jetcd.options.CompactOption;
 import com.coreos.jetcd.options.DeleteOption;
@@ -55,9 +56,9 @@ class KVImpl implements KV {
         .setPrevKv(option.getPrevKV())
         .build();
 
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         stub.put(request),
-        Util::toPutResponse,
+        PutResponse::new,
         connectionManager.getExecutorService()
     );
   }
@@ -85,9 +86,9 @@ class KVImpl implements KV {
     option.getEndKey().ifPresent((endKey) ->
         builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
 
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         stub.range(builder.build()),
-        Util::toGetResponse,
+        GetResponse::new,
         connectionManager.getExecutorService()
     );
   }
@@ -109,9 +110,9 @@ class KVImpl implements KV {
     option.getEndKey()
         .ifPresent((endKey) -> builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
 
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         stub.deleteRange(builder.build()),
-        Util::toDeleteResponse,
+        DeleteResponse::new,
         connectionManager.getExecutorService()
     );
   }
@@ -130,18 +131,18 @@ class KVImpl implements KV {
         .setPhysical(option.isPhysical())
         .build();
 
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         stub.compact(request),
-        Util::toCompactResponse,
+        CompactResponse::new,
         connectionManager.getExecutorService()
     );
   }
 
   public Txn txn() {
     return TxnImpl.newTxn((txnRequest) ->
-        Util.listenableToCompletableFuture(
+        Util.toCompletableFuture(
             this.stub.txn(txnRequest),
-            Util::toTxnResponse,
+            TxnResponse::new,
             connectionManager.getExecutorService()
         )
     );

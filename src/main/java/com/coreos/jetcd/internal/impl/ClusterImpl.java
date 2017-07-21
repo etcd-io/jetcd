@@ -31,9 +31,9 @@ class ClusterImpl implements Cluster {
    */
   @Override
   public CompletableFuture<MemberListResponse> listMember() {
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.memberList(MemberListRequest.getDefaultInstance()),
-        Util::toMemberListResponse,
+        MemberListResponse::new,
         this.connectionManager.getExecutorService()
     );
   }
@@ -48,9 +48,9 @@ class ClusterImpl implements Cluster {
     MemberAddRequest memberAddRequest = MemberAddRequest.newBuilder()
         .addAllPeerURLs(peerAddrs)
         .build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.memberAdd(memberAddRequest),
-        Util::toMemberAddResponse,
+        MemberAddResponse::new,
         this.connectionManager.getExecutorService()
     );
   }
@@ -65,9 +65,9 @@ class ClusterImpl implements Cluster {
     MemberRemoveRequest memberRemoveRequest = MemberRemoveRequest.newBuilder()
         .setID(memberID)
         .build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.memberRemove(memberRemoveRequest),
-        Util::toMemberRemoveResponse,
+        MemberRemoveResponse::new,
         this.connectionManager.getExecutorService()
     );
   }
@@ -76,7 +76,7 @@ class ClusterImpl implements Cluster {
    * update peer addresses of the member.
    *
    * @param memberID the id of member to update
-   * @param endpoints the new endpoints for the member
+   * @param peerAddrs the new endpoints for the member
    */
   @Override
   public CompletableFuture<MemberUpdateResponse> updateMember(
@@ -85,9 +85,9 @@ class ClusterImpl implements Cluster {
         .addAllPeerURLs(peerAddrs)
         .setID(memberID)
         .build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.memberUpdate(memberUpdateRequest),
-        Util::toMemberUpdateResponse,
+        MemberUpdateResponse::new,
         this.connectionManager.getExecutorService()
     );
   }

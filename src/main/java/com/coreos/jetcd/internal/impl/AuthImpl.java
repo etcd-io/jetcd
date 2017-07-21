@@ -55,18 +55,18 @@ class AuthImpl implements Auth {
   @Override
   public CompletableFuture<AuthEnableResponse> authEnable() {
     AuthEnableRequest enableRequest = AuthEnableRequest.getDefaultInstance();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.authEnable(enableRequest),
-        Util::toAuthEnableResponse,
+        AuthEnableResponse::new,
         this.connectionManager.getExecutorService());
   }
 
   @Override
   public CompletableFuture<AuthDisableResponse> authDisable() {
     AuthDisableRequest disableRequest = AuthDisableRequest.getDefaultInstance();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.authDisable(disableRequest),
-        Util::toAuthDisableResponse,
+        AuthDisableResponse::new,
         this.connectionManager.getExecutorService());
   }
 
@@ -79,9 +79,9 @@ class AuthImpl implements Auth {
         .setNameBytes(Util.byteStringFromByteSequence(user))
         .setPasswordBytes(Util.byteStringFromByteSequence(password))
         .build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.userAdd(addRequest),
-        Util::toAuthUserAddResponse,
+        AuthUserAddResponse::new,
         this.connectionManager.getExecutorService());
   }
 
@@ -92,9 +92,9 @@ class AuthImpl implements Auth {
     AuthUserDeleteRequest deleteRequest = AuthUserDeleteRequest.newBuilder()
         .setNameBytes(Util.byteStringFromByteSequence(user))
         .build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.userDelete(deleteRequest),
-        Util::toAuthUserDeleteResponse,
+        AuthUserDeleteResponse::new,
         this.connectionManager.getExecutorService());
   }
 
@@ -108,9 +108,9 @@ class AuthImpl implements Auth {
         .setNameBytes(Util.byteStringFromByteSequence(user))
         .setPasswordBytes(Util.byteStringFromByteSequence(password))
         .build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.userChangePassword(changePasswordRequest),
-        Util::toAuthUserChangePasswordResponse,
+        AuthUserChangePasswordResponse::new,
         this.connectionManager.getExecutorService());
   }
 
@@ -121,18 +121,18 @@ class AuthImpl implements Auth {
     AuthUserGetRequest userGetRequest = AuthUserGetRequest.newBuilder()
         .setNameBytes(Util.byteStringFromByteSequence(user))
         .build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.userGet(userGetRequest),
-        Util::toAuthUserGetResponse,
+        AuthUserGetResponse::new,
         this.connectionManager.getExecutorService());
   }
 
   @Override
   public CompletableFuture<AuthUserListResponse> userList() {
     AuthUserListRequest userListRequest = AuthUserListRequest.getDefaultInstance();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.userList(userListRequest),
-        Util::toAuthUserListResponse,
+        AuthUserListResponse::new,
         this.connectionManager.getExecutorService());
   }
 
@@ -146,9 +146,9 @@ class AuthImpl implements Auth {
         .setUserBytes(Util.byteStringFromByteSequence(user))
         .setRoleBytes(Util.byteStringFromByteSequence(role))
         .build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.userGrantRole(userGrantRoleRequest),
-        Util::toAuthUserGrantRoleResponse,
+        AuthUserGrantRoleResponse::new,
         this.connectionManager.getExecutorService());
   }
 
@@ -162,9 +162,9 @@ class AuthImpl implements Auth {
         .setNameBytes(Util.byteStringFromByteSequence(user))
         .setRoleBytes(Util.byteStringFromByteSequence(role))
         .build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.userRevokeRole(userRevokeRoleRequest),
-        Util::toAuthUserRevokeRoleResponse,
+        AuthUserRevokeRoleResponse::new,
         this.connectionManager.getExecutorService());
   }
 
@@ -175,9 +175,9 @@ class AuthImpl implements Auth {
     AuthRoleAddRequest roleAddRequest = AuthRoleAddRequest.newBuilder()
         .setNameBytes(Util.byteStringFromByteSequence(user))
         .build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.roleAdd(roleAddRequest),
-        Util::toAuthRoleAddResponse,
+        AuthRoleAddResponse::new,
         this.connectionManager.getExecutorService());
   }
 
@@ -215,9 +215,9 @@ class AuthImpl implements Auth {
         .setNameBytes(Util.byteStringFromByteSequence(role))
         .setPerm(perm)
         .build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.roleGrantPermission(roleGrantPermissionRequest),
-        Util::toAuthRoleGrantPermissionResponse,
+        AuthRoleGrantPermissionResponse::new,
         this.connectionManager.getExecutorService());
   }
 
@@ -228,18 +228,18 @@ class AuthImpl implements Auth {
     AuthRoleGetRequest roleGetRequest = AuthRoleGetRequest.newBuilder()
         .setRoleBytes(Util.byteStringFromByteSequence(role))
         .build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.roleGet(roleGetRequest),
-        Util::toAuthRoleGetResponse,
+        AuthRoleGetResponse::new,
         this.connectionManager.getExecutorService());
   }
 
   @Override
   public CompletableFuture<AuthRoleListResponse> roleList() {
     AuthRoleListRequest roleListRequest = AuthRoleListRequest.getDefaultInstance();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.roleList(roleListRequest),
-        Util::toAuthRoleListResponse,
+        AuthRoleListResponse::new,
         this.connectionManager.getExecutorService());
   }
 
@@ -257,9 +257,9 @@ class AuthImpl implements Auth {
         .setRangeEndBytes(Util.byteStringFromByteSequence(rangeEnd))
         .build();
     return Util
-        .listenableToCompletableFuture(
+        .toCompletableFuture(
             this.stub.roleRevokePermission(roleRevokePermissionRequest),
-            Util::toAuthRoleRevokePermissionResponse,
+            AuthRoleRevokePermissionResponse::new,
             this.connectionManager.getExecutorService());
   }
 
@@ -269,9 +269,9 @@ class AuthImpl implements Auth {
     AuthRoleDeleteRequest roleDeleteRequest = AuthRoleDeleteRequest.newBuilder()
         .setRoleBytes(Util.byteStringFromByteSequence(role))
         .build();
-    return Util.listenableToCompletableFuture(
+    return Util.toCompletableFuture(
         this.stub.roleDelete(roleDeleteRequest),
-        Util::toAuthRoleDeleteResponse,
+        AuthRoleDeleteResponse::new,
         this.connectionManager.getExecutorService());
   }
 }
