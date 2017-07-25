@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 final class ClientConnectionManager {
+
   private final ClientBuilder builder;
   private final AtomicReference<ManagedChannel> channelRef;
   private final AtomicReference<Optional<String>> tokenRef;
@@ -116,7 +117,7 @@ final class ClientConnectionManager {
   }
 
   /**
-   * create and add token to channel's head.
+   * create and add cached token to channel's head.
    *
    * @param supplier the stub supplier
    * @param <T> the type of stub
@@ -124,6 +125,17 @@ final class ClientConnectionManager {
    */
   <T extends AbstractStub<T>> T newStub(Function<ManagedChannel, T> supplier) {
     return configureStub(supplier.apply(getChannel()), getToken());
+  }
+
+  /**
+   * create and add a new token to channel's head.
+   *
+   * @param supplier the stub supplier
+   * @param <T> the type of stub
+   * @return the attached stub
+   */
+  <T extends AbstractStub<T>> T newStubWithNewToken(Function<ManagedChannel, T> supplier) {
+    return configureStub(supplier.apply(getChannel()), generateToken(getChannel()));
   }
 
   synchronized void close() {
