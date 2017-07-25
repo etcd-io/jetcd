@@ -31,6 +31,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.concurrent.GuardedBy;
 
 
 /**
@@ -45,7 +46,8 @@ public class LeaseImpl implements Lease {
   private static final int FIRST_KEEPALIVE_TIMEOUT_MS = 5000;
 
   private final ClientConnectionManager connectionManager;
-  private final LeaseGrpc.LeaseFutureStub stub;
+  @GuardedBy("this")
+  private LeaseGrpc.LeaseFutureStub stub;
   private final LeaseGrpc.LeaseStub leaseStub;
   private final Map<Long, KeepAlive> keepAlives = new ConcurrentHashMap<>();
   /**
@@ -82,9 +84,14 @@ public class LeaseImpl implements Lease {
   @Override
   public CompletableFuture<LeaseGrantResponse> grant(long ttl) {
     LeaseGrantRequest leaseGrantRequest = LeaseGrantRequest.newBuilder().setTTL(ttl).build();
-    return Util.toCompletableFuture(
+    return Util.toCompletableFutureWithRetry(
         this.stub.leaseGrant(leaseGrantRequest),
         LeaseGrantResponse::new,
+        () -> {
+          this.stub = connectionManager.newStubWithNewToken(LeaseGrpc::newFutureStub);
+          return this.stub.leaseGrant(leaseGrantRequest);
+        },
+        Util::retry,
         connectionManager.getExecutorService()
     );
   }
@@ -92,9 +99,14 @@ public class LeaseImpl implements Lease {
   @Override
   public CompletableFuture<LeaseRevokeResponse> revoke(long leaseId) {
     LeaseRevokeRequest leaseRevokeRequest = LeaseRevokeRequest.newBuilder().setID(leaseId).build();
-    return Util.toCompletableFuture(
+    return Util.toCompletableFutureWithRetry(
         this.stub.leaseRevoke(leaseRevokeRequest),
         LeaseRevokeResponse::new,
+        () -> {
+          this.stub = connectionManager.newStubWithNewToken(LeaseGrpc::newFutureStub);
+          return this.stub.leaseRevoke(leaseRevokeRequest);
+        },
+        Util::retry,
         connectionManager.getExecutorService()
     );
   }
@@ -299,9 +311,15 @@ public class LeaseImpl implements Lease {
         .setKeys(option.isAttachedKeys())
         .build();
 
-    return Util.toCompletableFuture(
+    return Util.toCompletableFutureWithRetry(
         this.stub.leaseTimeToLive(leaseTimeToLiveRequest),
-        LeaseTimeToLiveResponse::new, connectionManager.getExecutorService());
+        LeaseTimeToLiveResponse::new,
+        () -> {
+          this.stub = connectionManager.newStubWithNewToken(LeaseGrpc::newFutureStub);
+          return this.stub.leaseTimeToLive(leaseTimeToLiveRequest);
+        },
+        Util::retry,
+        connectionManager.getExecutorService());
   }
 
   private LeaseKeepAliveRequest newKeepAliveRequest(long leaseId) {

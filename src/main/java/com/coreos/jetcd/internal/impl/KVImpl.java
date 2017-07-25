@@ -23,6 +23,7 @@ import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.concurrent.GuardedBy;
 
 /**
  * Implementation of etcd kv client.
@@ -30,7 +31,9 @@ import java.util.concurrent.CompletableFuture;
 class KVImpl implements KV {
 
   private final ClientConnectionManager connectionManager;
-  private final KVGrpc.KVFutureStub stub;
+
+  @GuardedBy("this")
+  private KVGrpc.KVFutureStub stub;
 
   KVImpl(ClientConnectionManager connectionManager) {
     this.connectionManager = connectionManager;
@@ -56,9 +59,14 @@ class KVImpl implements KV {
         .setPrevKv(option.getPrevKV())
         .build();
 
-    return Util.toCompletableFuture(
+    return Util.toCompletableFutureWithRetry(
         stub.put(request),
         PutResponse::new,
+        () -> {
+          stub = connectionManager.newStubWithNewToken(KVGrpc::newFutureStub);
+          return stub.put(request);
+        },
+        Util::retry,
         connectionManager.getExecutorService()
     );
   }
@@ -86,9 +94,16 @@ class KVImpl implements KV {
     option.getEndKey().ifPresent((endKey) ->
         builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
 
-    return Util.toCompletableFuture(
-        stub.range(builder.build()),
+    RangeRequest request = builder.build();
+
+    return Util.toCompletableFutureWithRetry(
+        stub.range(request),
         GetResponse::new,
+        () -> {
+          stub = connectionManager.newStubWithNewToken(KVGrpc::newFutureStub);
+          return stub.range(request);
+        },
+        Util::retry,
         connectionManager.getExecutorService()
     );
   }
@@ -110,9 +125,16 @@ class KVImpl implements KV {
     option.getEndKey()
         .ifPresent((endKey) -> builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
 
-    return Util.toCompletableFuture(
-        stub.deleteRange(builder.build()),
+    DeleteRangeRequest request = builder.build();
+
+    return Util.toCompletableFutureWithRetry(
+        stub.deleteRange(request),
         DeleteResponse::new,
+        () -> {
+          stub = connectionManager.newStubWithNewToken(KVGrpc::newFutureStub);
+          return stub.deleteRange(request);
+        },
+        Util::retry,
         connectionManager.getExecutorService()
     );
   }
@@ -131,18 +153,28 @@ class KVImpl implements KV {
         .setPhysical(option.isPhysical())
         .build();
 
-    return Util.toCompletableFuture(
+    return Util.toCompletableFutureWithRetry(
         stub.compact(request),
         CompactResponse::new,
+        () -> {
+          stub = connectionManager.newStubWithNewToken(KVGrpc::newFutureStub);
+          return stub.compact(request);
+        },
+        Util::retry,
         connectionManager.getExecutorService()
     );
   }
 
   public Txn txn() {
-    return TxnImpl.newTxn((txnRequest) ->
-        Util.toCompletableFuture(
-            this.stub.txn(txnRequest),
+    return TxnImpl.newTxn((request) ->
+        Util.toCompletableFutureWithRetry(
+            stub.txn(request),
             TxnResponse::new,
+            () -> {
+              stub = connectionManager.newStubWithNewToken(KVGrpc::newFutureStub);
+              return stub.txn(request);
+            },
+            Util::retry,
             connectionManager.getExecutorService()
         )
     );
