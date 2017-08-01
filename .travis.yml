@@ -2,6 +2,6 @@ language: java
 sudo: false
 script:
   - scripts/run_etcd.sh 
-  - mvn clean verify
+  - ./mvnw clean verify
 jdk:
   - oraclejdk8
