@@ -49,19 +49,4 @@ public class ClientBuilderTest {
         {"http://192.168.1.10:8888"}
     };
   }
-
-  @Test(dataProvider = "invalidEndpoints", expectedExceptions = IllegalArgumentException.class)
-  public void testBuild_WithInValidFormatEndpoints(String endpoint) {
-    builder.setEndpoints(endpoint);
-  }
-
-  @DataProvider
-  private Object[][] invalidEndpoints() {
-    return new Object[][] {
-        {"://127.0.0.1:2379"},
-        {"mailto://127.0.0.1:2379"},
-        {"http://127.0.0.1"},
-        {"http://127.0.0.1:2379/path"}
-    };
-  }
 }
