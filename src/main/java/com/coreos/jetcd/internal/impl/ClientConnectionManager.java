@@ -3,6 +3,7 @@ package com.coreos.jetcd.internal.impl;
 import static com.coreos.jetcd.exception.EtcdExceptionFactory.newAuthFailedException;
 import static com.coreos.jetcd.exception.EtcdExceptionFactory.newConnectException;
 import static com.coreos.jetcd.internal.impl.Util.byteStringFromByteSequence;
+import static com.coreos.jetcd.resolver.SmartNameResolverFactory.forEndpoints;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.coreos.jetcd.ClientBuilder;
@@ -14,13 +15,11 @@ import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
-import com.coreos.jetcd.resolver.SimpleNameResolverFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
-import io.grpc.NameResolver;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
 import java.util.Optional;
@@ -74,14 +73,8 @@ final class ClientConnectionManager {
           // If channel builder is provided, any additional configuration such as SslContext, name
           // resolver or load balancer is ignored
           if (channelBuilder == null) {
-
-            NameResolver.Factory resolverFactory = builder.getNameResolverFactory();
-            if (resolverFactory == null) {
-              resolverFactory = SimpleNameResolverFactory.forEndpoints(builder.getEndpoints());
-            }
-
             channelBuilder = defaultChannelBuilder();
-            channelBuilder.nameResolverFactory(resolverFactory);
+            channelBuilder.nameResolverFactory(forEndpoints(builder.getEndpoints()));
 
             if (builder.getLoadBalancerFactory() != null) {
               channelBuilder.loadBalancerFactory(builder.getLoadBalancerFactory());
@@ -152,8 +145,10 @@ final class ClientConnectionManager {
       Function<ManagedChannel, T> stubCustomizer,
       Function<T, CompletableFuture<R>> stubConsumer) {
 
-    NameResolver.Factory resolverFactory = SimpleNameResolverFactory.forEndpoints(endpoint);
-    ManagedChannel channel = defaultChannelBuilder().nameResolverFactory(resolverFactory).build();
+    ManagedChannelBuilder<?> channelBuilder = defaultChannelBuilder();
+    channelBuilder.nameResolverFactory(forEndpoints(endpoint));
+
+    ManagedChannel channel = channelBuilder.build();
 
     try {
       Optional<String> token = generateToken(channel);
