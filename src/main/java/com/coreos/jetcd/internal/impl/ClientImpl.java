@@ -44,7 +44,6 @@ public final class ClientImpl implements Client {
     // authentication
     if (!clientBuilder.isLazyInitialization()) {
       this.connectionManager.getChannel();
-      this.connectionManager.getToken();
     }
   }
 
