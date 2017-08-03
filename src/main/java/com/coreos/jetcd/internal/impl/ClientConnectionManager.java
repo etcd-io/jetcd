@@ -249,8 +249,8 @@ final class ClientConnectionManager {
           super.start(new SimpleForwardingClientCallListener<RespT>(responseListener) {
             @Override
             public void onClose(Status status, Metadata trailers) {
-              if (status.getCode() == Code.UNAUTHENTICATED &&
-                  "etcdserver: invalid auth token".equals(status.getDescription())) {
+              if (status.getCode() == Code.UNAUTHENTICATED
+                  && "etcdserver: invalid auth token".equals(status.getDescription())) {
                 try {
                   refreshToken(next);
                 } catch (Exception e) {
