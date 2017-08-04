@@ -87,7 +87,9 @@ class WatchImpl implements Watch {
 
   @Override
   public synchronized void close() {
-    Preconditions.checkState(!isClosed(), "Watch client has been closed");
+    if (isClosed()) {
+      return;
+    }
 
     this.setClosed();
     this.notifyWatchers(EtcdExceptionFactory.newEtcdException("Watch client has been closed"));
@@ -419,7 +421,9 @@ class WatchImpl implements Watch {
     @Override
     public void close() {
       synchronized (this.closedLock) {
-        Preconditions.checkState(!isClosed(), "Watcher has been closed");
+        if (isClosed()) {
+          return;
+        }
 
         this.setClosed();
       }
@@ -435,6 +439,12 @@ class WatchImpl implements Watch {
       try {
         return this.createWatchResponseFuture().get();
       } catch (ExecutionException e) {
+        synchronized (this.closedLock) {
+          if (isClosed()) {
+            // returns EtcdException indicates watcher has been closed.
+            throw EtcdExceptionFactory.newEtcdException("Watcher has been closed");
+          }
+        }
         Throwable t = e.getCause();
         if (t instanceof CompactedException) {
           throw (CompactedException) t;
