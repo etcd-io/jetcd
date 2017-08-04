@@ -1,8 +1,9 @@
 package com.coreos.jetcd.internal.impl;
 
-import static io.grpc.Status.UNKNOWN;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newEtcdException;
 
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.Status;
@@ -104,7 +105,9 @@ final class Util {
     };
 
     executor.execute(() -> {
-      while (true) {
+      // only retry 3 times.
+      int retryLimit = 3;
+      while (retryLimit-- > 0) {
         try {
           ListenableFuture<S> f = sourceFutureRef.get();
           targetFuture.complete(resultConvert.apply(f.get()));
@@ -118,12 +121,23 @@ final class Util {
               }
               sourceFutureRef.set(newSourceFuture.get());
             }
+
+            try {
+              Thread.sleep(500);
+            } catch (InterruptedException e1) {
+              Thread.currentThread().interrupt();
+              // raise interrupted exception to caller.
+              targetFuture.completeExceptionally(newEtcdException(e1));
+              return;
+            }
             continue;
           }
           targetFuture.completeExceptionally(e);
           return;
         }
       }
+      // notify user that retry has failed.
+      targetFuture.completeExceptionally(newEtcdException("request auto retry failed"));
     });
 
     return targetFuture;
