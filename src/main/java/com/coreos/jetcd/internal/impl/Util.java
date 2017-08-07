@@ -1,11 +1,20 @@
 package com.coreos.jetcd.internal.impl;
 
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newEtcdException;
+
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+import io.grpc.Status;
+import io.grpc.Status.Code;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 /**
@@ -14,6 +23,10 @@ import java.util.logging.Logger;
 final class Util {
 
   private static final Logger logger = Logger.getLogger(Util.class.getName());
+
+  // RETRIABLE_ERRORS are etcd errors that can be retried.
+  private static final List<String> RETRIABLE_ERRORS = Arrays
+      .asList("etcdserver: invalid auth token");
 
   private Util() {
   }
@@ -55,5 +68,87 @@ final class Util {
     }, executor);
 
     return targetFuture;
+  }
+
+  /**
+   * converts a ListenableFuture of Type S to a CompletableFuture of Type T with retry on
+   * ListenableFuture error.
+   *
+   * @param newSourceFuture a function that returns a new SourceFuture.
+   * @param resultConvert a function that converts Type S to Type T.
+   * @param doRetry a function that determines the retry condition base on SourceFuture error.
+   * @param executor a executor.
+   * @param <S> Source type
+   * @param <T> Converted Type.
+   * @return a CompletableFuture with type T.
+   */
+  static <S, T> CompletableFuture<T> toCompletableFutureWithRetry(
+      Supplier<ListenableFuture<S>> newSourceFuture,
+      Function<S, T> resultConvert,
+      Function<Exception, Boolean> doRetry,
+      Executor executor) {
+
+    AtomicReference<ListenableFuture<S>> sourceFutureRef = new AtomicReference<>();
+    sourceFutureRef.lazySet(newSourceFuture.get());
+
+    CompletableFuture<T> targetFuture = new CompletableFuture<T>() {
+      // the cancel of targetFuture also cancels the sourceFuture.
+      @Override
+      public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+        boolean cancelled = super.cancel(mayInterruptIfRunning);
+        ListenableFuture<S> sourceFuture = sourceFutureRef.get();
+        if (sourceFuture != null) {
+          cancelled = sourceFuture.cancel(true);
+        }
+        return cancelled;
+      }
+    };
+
+    executor.execute(() -> {
+      // only retry 3 times.
+      int retryLimit = 3;
+      while (retryLimit-- > 0) {
+        try {
+          ListenableFuture<S> f = sourceFutureRef.get();
+          targetFuture.complete(resultConvert.apply(f.get()));
+          return;
+        } catch (Exception e) {
+          if (doRetry.apply(e)) {
+            synchronized (targetFuture) {
+              if (targetFuture.isCancelled()) {
+                // don't retry if targetFuture has cancelled.
+                return;
+              }
+              sourceFutureRef.set(newSourceFuture.get());
+            }
+
+            try {
+              Thread.sleep(500);
+            } catch (InterruptedException e1) {
+              Thread.currentThread().interrupt();
+              // raise interrupted exception to caller.
+              targetFuture.completeExceptionally(newEtcdException(e1));
+              return;
+            }
+            continue;
+          }
+          targetFuture.completeExceptionally(e);
+          return;
+        }
+      }
+      // notify user that retry has failed.
+      targetFuture.completeExceptionally(newEtcdException("request auto retry failed"));
+    });
+
+    return targetFuture;
+  }
+
+  static boolean isRetriable(Exception e) {
+    Status status = Status.fromThrowable(e);
+    if (status.getCode() == Code.UNKNOWN) {
+      return false;
+    }
+
+    return RETRIABLE_ERRORS.contains(status.getDescription());
   }
 }

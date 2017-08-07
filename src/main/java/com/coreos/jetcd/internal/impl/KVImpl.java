@@ -30,6 +30,7 @@ import java.util.concurrent.CompletableFuture;
 class KVImpl implements KV {
 
   private final ClientConnectionManager connectionManager;
+
   private final KVGrpc.KVFutureStub stub;
 
   KVImpl(ClientConnectionManager connectionManager) {
@@ -56,9 +57,10 @@ class KVImpl implements KV {
         .setPrevKv(option.getPrevKV())
         .build();
 
-    return Util.toCompletableFuture(
-        stub.put(request),
+    return Util.toCompletableFutureWithRetry(
+        () -> stub.put(request),
         PutResponse::new,
+        Util::isRetriable,
         connectionManager.getExecutorService()
     );
   }
@@ -86,9 +88,12 @@ class KVImpl implements KV {
     option.getEndKey().ifPresent((endKey) ->
         builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
 
-    return Util.toCompletableFuture(
-        stub.range(builder.build()),
+    RangeRequest request = builder.build();
+
+    return Util.toCompletableFutureWithRetry(
+        () -> stub.range(request),
         GetResponse::new,
+        Util::isRetriable,
         connectionManager.getExecutorService()
     );
   }
@@ -110,9 +115,12 @@ class KVImpl implements KV {
     option.getEndKey()
         .ifPresent((endKey) -> builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
 
-    return Util.toCompletableFuture(
-        stub.deleteRange(builder.build()),
+    DeleteRangeRequest request = builder.build();
+
+    return Util.toCompletableFutureWithRetry(
+        () -> stub.deleteRange(request),
         DeleteResponse::new,
+        Util::isRetriable,
         connectionManager.getExecutorService()
     );
   }
@@ -131,18 +139,20 @@ class KVImpl implements KV {
         .setPhysical(option.isPhysical())
         .build();
 
-    return Util.toCompletableFuture(
-        stub.compact(request),
+    return Util.toCompletableFutureWithRetry(
+        () -> stub.compact(request),
         CompactResponse::new,
+        Util::isRetriable,
         connectionManager.getExecutorService()
     );
   }
 
   public Txn txn() {
-    return TxnImpl.newTxn((txnRequest) ->
-        Util.toCompletableFuture(
-            this.stub.txn(txnRequest),
+    return TxnImpl.newTxn((request) ->
+        Util.toCompletableFutureWithRetry(
+            () -> stub.txn(request),
             TxnResponse::new,
+            Util::isRetriable,
             connectionManager.getExecutorService()
         )
     );

@@ -82,9 +82,10 @@ public class LeaseImpl implements Lease {
   @Override
   public CompletableFuture<LeaseGrantResponse> grant(long ttl) {
     LeaseGrantRequest leaseGrantRequest = LeaseGrantRequest.newBuilder().setTTL(ttl).build();
-    return Util.toCompletableFuture(
-        this.stub.leaseGrant(leaseGrantRequest),
+    return Util.toCompletableFutureWithRetry(
+        () -> this.stub.leaseGrant(leaseGrantRequest),
         LeaseGrantResponse::new,
+        Util::isRetriable,
         connectionManager.getExecutorService()
     );
   }
@@ -92,9 +93,10 @@ public class LeaseImpl implements Lease {
   @Override
   public CompletableFuture<LeaseRevokeResponse> revoke(long leaseId) {
     LeaseRevokeRequest leaseRevokeRequest = LeaseRevokeRequest.newBuilder().setID(leaseId).build();
-    return Util.toCompletableFuture(
-        this.stub.leaseRevoke(leaseRevokeRequest),
+    return Util.toCompletableFutureWithRetry(
+        () -> this.stub.leaseRevoke(leaseRevokeRequest),
         LeaseRevokeResponse::new,
+        Util::isRetriable,
         connectionManager.getExecutorService()
     );
   }
@@ -299,9 +301,11 @@ public class LeaseImpl implements Lease {
         .setKeys(option.isAttachedKeys())
         .build();
 
-    return Util.toCompletableFuture(
-        this.stub.leaseTimeToLive(leaseTimeToLiveRequest),
-        LeaseTimeToLiveResponse::new, connectionManager.getExecutorService());
+    return Util.toCompletableFutureWithRetry(
+        () -> this.stub.leaseTimeToLive(leaseTimeToLiveRequest),
+        LeaseTimeToLiveResponse::new,
+        Util::isRetriable,
+        connectionManager.getExecutorService());
   }
 
   private LeaseKeepAliveRequest newKeepAliveRequest(long leaseId) {

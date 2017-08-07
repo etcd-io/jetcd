@@ -7,7 +7,6 @@ import static com.coreos.jetcd.resolver.SmartNameResolverFactory.forEndpoints;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.coreos.jetcd.ClientBuilder;
-import com.coreos.jetcd.Constants;
 import com.coreos.jetcd.api.AuthGrpc;
 import com.coreos.jetcd.api.AuthenticateRequest;
 import com.coreos.jetcd.api.AuthenticateResponse;
@@ -17,9 +16,18 @@ import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
+import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
+import io.grpc.Status;
+import io.grpc.Status.Code;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
 import java.util.Optional;
@@ -31,10 +39,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 final class ClientConnectionManager {
+
   private final ClientBuilder builder;
   private final AtomicReference<ManagedChannel> channelRef;
   private final AtomicReference<Optional<String>> tokenRef;
   private final ExecutorService executorService;
+  private static final Metadata.Key<String> TOKEN = Metadata.Key
+      .of("token", Metadata.ASCII_STRING_MARSHALLER);
 
   ClientConnectionManager(ClientBuilder builder) {
     this(builder, Executors.newCachedThreadPool(), null);
@@ -73,11 +84,6 @@ final class ClientConnectionManager {
           // resolver or load balancer is ignored
           if (channelBuilder == null) {
             channelBuilder = defaultChannelBuilder();
-            channelBuilder.nameResolverFactory(forEndpoints(builder.getEndpoints()));
-
-            if (builder.getLoadBalancerFactory() != null) {
-              channelBuilder.loadBalancerFactory(builder.getLoadBalancerFactory());
-            }
           }
 
           managedChannel = channelBuilder.build();
@@ -89,13 +95,13 @@ final class ClientConnectionManager {
     return managedChannel;
   }
 
-  Optional<String> getToken() {
+  private Optional<String> getToken(Channel channel) {
     Optional<String> tk = tokenRef.get();
     if (tk == null) {
       synchronized (tokenRef) {
         tk = tokenRef.get();
         if (tk == null) {
-          tk = generateToken(getChannel());
+          tk = generateToken(channel);
           tokenRef.lazySet(tk);
         }
       }
@@ -104,19 +110,27 @@ final class ClientConnectionManager {
     return tk;
   }
 
+  private void refreshToken(Channel channel) {
+    synchronized (tokenRef) {
+      Optional<String> tk = generateToken(channel);
+      tokenRef.lazySet(tk);
+    }
+  }
+
+
   ExecutorService getExecutorService() {
     return executorService;
   }
 
   /**
-   * create and add token to channel's head.
+   * create stub with saved channel.
    *
    * @param supplier the stub supplier
    * @param <T> the type of stub
    * @return the attached stub
    */
   <T extends AbstractStub<T>> T newStub(Function<ManagedChannel, T> supplier) {
-    return configureStub(supplier.apply(getChannel()), getToken());
+    return supplier.apply(getChannel());
   }
 
   synchronized void close() {
@@ -139,8 +153,7 @@ final class ClientConnectionManager {
     ManagedChannel channel = channelBuilder.build();
 
     try {
-      Optional<String> token = generateToken(channel);
-      T stub = configureStub(stubCustomizer.apply(channel), token);
+      T stub = stubCustomizer.apply(channel);
 
       return stubConsumer.apply(stub).whenComplete(
           (r, t) -> channel.shutdown()
@@ -160,6 +173,14 @@ final class ClientConnectionManager {
       channelBuilder.usePlaintext(true);
     }
 
+    channelBuilder.nameResolverFactory(forEndpoints(builder.getEndpoints()));
+
+    if (builder.getLoadBalancerFactory() != null) {
+      channelBuilder.loadBalancerFactory(builder.getLoadBalancerFactory());
+    }
+
+    channelBuilder.intercept(new AuthTokenInterceptor());
+
     return channelBuilder;
   }
 
@@ -172,7 +193,7 @@ final class ClientConnectionManager {
    * @return authResp
    */
   private ListenableFuture<AuthenticateResponse> authenticate(
-      ManagedChannel channel, ByteSequence username, ByteSequence password) {
+      Channel channel, ByteSequence username, ByteSequence password) {
 
     ByteString user = byteStringFromByteSequence(username);
     ByteString pass = byteStringFromByteSequence(password);
@@ -195,7 +216,7 @@ final class ClientConnectionManager {
    * @throws ConnectException This may be caused as network reason, wrong address
    * @throws AuthFailedException This may be caused as wrong username or password
    */
-  private Optional<String> generateToken(ManagedChannel channel)
+  private Optional<String> generateToken(Channel channel)
       throws ConnectException, AuthFailedException {
 
     if (builder.getUser() != null && builder.getPassword() != null) {
@@ -213,22 +234,35 @@ final class ClientConnectionManager {
   }
 
   /**
-   * add token to channel's head.
-   *
-   * @param stub the stub to attach head
-   * @param token the token for auth
-   * @param <T> the type of stub
-   * @return the attached stub
+   * AuthTokenInterceptor fills header with Auth token of any rpc calls and
+   * refreshes token if the rpc results an invalid Auth token error.
    */
-  private <T extends AbstractStub<T>> T configureStub(T stub, Optional<String> token) {
-    return token.map(t -> {
-          Metadata metadata = new Metadata();
-          metadata.put(Metadata.Key.of(Constants.TOKEN, Metadata.ASCII_STRING_MARSHALLER), t);
+  private class AuthTokenInterceptor implements ClientInterceptor {
 
-          return stub.withCallCredentials(
-              (methodDescriptor, attributes, executor, applier) -> applier.apply(metadata)
-          );
+    @Override
+    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+        MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+      return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+        @Override
+        public void start(Listener<RespT> responseListener, Metadata headers) {
+          getToken(next).ifPresent(t -> headers.put(TOKEN, t));
+          super.start(new SimpleForwardingClientCallListener<RespT>(responseListener) {
+            @Override
+            public void onClose(Status status, Metadata trailers) {
+              if (status.getCode() == Code.UNAUTHENTICATED
+                  && "etcdserver: invalid auth token".equals(status.getDescription())) {
+                try {
+                  refreshToken(next);
+                } catch (Exception e) {
+                  // don't throw any error here.
+                  // rpc will retry on expired auth token.
+                }
+              }
+              super.onClose(status, trailers);
+            }
+          }, headers);
         }
-    ).orElse(stub);
+      };
+    }
   }
 }
