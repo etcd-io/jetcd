@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ETCD_VERSION="v3.2.1"
+ETCD_VERSION="v3.2.5"
 OS=`uname`
 
 if [[ $OS =~ ^Darwin ]]; then
