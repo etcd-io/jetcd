@@ -10,7 +10,7 @@ jetcd requires JDK 8 to work correctly.
 
 ```java
 // create client
-Client client = ClientBuilder.newBuilder().endpoints("http://localhost:2379").build();
+Client client = Client.builder().endpoints("http://localhost:2379").build();
 KV kvClient = client.getKVClient();
 
 ByteSequence key = ByteSequence.fromString("test_key");

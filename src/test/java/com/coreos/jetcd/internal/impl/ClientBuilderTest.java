@@ -1,5 +1,6 @@
 package com.coreos.jetcd.internal.impl;
 
+import com.coreos.jetcd.Client;
 import com.coreos.jetcd.ClientBuilder;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -11,27 +12,27 @@ public class ClientBuilderTest {
 
   @BeforeMethod
   public void setup() {
-    builder = ClientBuilder.newBuilder();
+    builder = Client.builder();
   }
 
   @Test(expectedExceptions = NullPointerException.class)
   public void testEndPoints_Null() {
-    builder.setEndpoints(null);
+    builder.endpoints((String)null);
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void testEndPoints_Verify_Empty() {
-    builder.setEndpoints("");
+    builder.endpoints("");
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void testEndPoints_Verify_EmptyAfterTrim() {
-    builder.setEndpoints(" ");
+    builder.endpoints(" ");
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void testEndPoints_Verify_SomeEmpty() {
-    builder.setEndpoints("127.0.0.1:2379", " ");
+    builder.endpoints("127.0.0.1:2379", " ");
   }
 
   @Test(expectedExceptions = IllegalStateException.class)

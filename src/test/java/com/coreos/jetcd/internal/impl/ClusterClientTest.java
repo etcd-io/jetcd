@@ -1,7 +1,6 @@
 package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.Client;
-import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.Cluster;
 import com.coreos.jetcd.cluster.Member;
 import com.coreos.jetcd.cluster.MemberAddResponse;
@@ -30,7 +29,7 @@ public class ClusterClientTest {
   @Test
   public void testListCluster()
       throws ExecutionException, InterruptedException {
-    Client client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints).build();
+    Client client = Client.builder().endpoints(TestConstants.endpoints).build();
     Cluster clusterClient = client.getClusterClient();
     MemberListResponse response = clusterClient.listMember().get();
     assertion
@@ -43,8 +42,10 @@ public class ClusterClientTest {
   @Test(dependsOnMethods = "testListCluster")
   public void testAddMember()
       throws AuthFailedException, ConnectException, ExecutionException, InterruptedException, TimeoutException {
-    Client client = ClientBuilder.newBuilder()
-        .setEndpoints(Arrays.copyOfRange(TestConstants.endpoints, 0, 2)).build();
+    Client client = Client.builder()
+        .endpoints(Arrays.copyOfRange(TestConstants.endpoints, 0, 2))
+        .build();
+
     Cluster clusterClient = client.getClusterClient();
     MemberListResponse response = clusterClient.listMember().get();
     assertion.assertEquals(response.getMembers().size(), 3);
@@ -63,8 +64,10 @@ public class ClusterClientTest {
 
     Throwable throwable = null;
     try {
-      Client client = ClientBuilder.newBuilder()
-          .setEndpoints(Arrays.copyOfRange(TestConstants.endpoints, 1, 3)).build();
+      Client client = Client.builder()
+          .endpoints(Arrays.copyOfRange(TestConstants.endpoints, 1, 3))
+          .build();
+
       Cluster clusterClient = client.getClusterClient();
       MemberListResponse response = clusterClient.listMember().get();
       String[] newPeerUrl = new String[]{"http://localhost:12380"};
@@ -83,8 +86,10 @@ public class ClusterClientTest {
   @Test(dependsOnMethods = "testUpdateMember")
   public void testDeleteMember()
       throws ExecutionException, InterruptedException {
-    Client client = ClientBuilder.newBuilder()
-        .setEndpoints(Arrays.copyOfRange(TestConstants.endpoints, 0, 2)).build();
+    Client client = Client.builder()
+        .endpoints(Arrays.copyOfRange(TestConstants.endpoints, 0, 2))
+        .build();
+
     Cluster clusterClient = client.getClusterClient();
     clusterClient.removeMember(addedMember.getId()).get();
     int newCount = clusterClient.listMember().get().getMembers().size();

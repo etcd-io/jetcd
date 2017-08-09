@@ -40,12 +40,13 @@ import java.util.function.Function;
 
 final class ClientConnectionManager {
 
+  private static final Metadata.Key<String> TOKEN = Metadata.Key
+      .of("token", Metadata.ASCII_STRING_MARSHALLER);
+
   private final ClientBuilder builder;
   private final AtomicReference<ManagedChannel> channelRef;
   private final AtomicReference<Optional<String>> tokenRef;
   private final ExecutorService executorService;
-  private static final Metadata.Key<String> TOKEN = Metadata.Key
-      .of("token", Metadata.ASCII_STRING_MARSHALLER);
 
   ClientConnectionManager(ClientBuilder builder) {
     this(builder, Executors.newCachedThreadPool(), null);
@@ -78,15 +79,7 @@ final class ClientConnectionManager {
       synchronized (channelRef) {
         managedChannel = channelRef.get();
         if (managedChannel == null) {
-          ManagedChannelBuilder<?> channelBuilder = builder.getChannelBuilder();
-
-          // If channel builder is provided, any additional configuration such as SslContext, name
-          // resolver or load balancer is ignored
-          if (channelBuilder == null) {
-            channelBuilder = defaultChannelBuilder();
-          }
-
-          managedChannel = channelBuilder.build();
+          managedChannel = defaultChannelBuilder().build();
           channelRef.lazySet(managedChannel);
         }
       }
@@ -167,16 +160,16 @@ final class ClientConnectionManager {
   private ManagedChannelBuilder<?> defaultChannelBuilder() {
     NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget("etcd");
 
-    if (builder.getSslContext() != null) {
-      channelBuilder.sslContext(builder.getSslContext());
+    if (builder.sslContext() != null) {
+      channelBuilder.sslContext(builder.sslContext());
     } else {
       channelBuilder.usePlaintext(true);
     }
 
-    channelBuilder.nameResolverFactory(forEndpoints(builder.getEndpoints()));
+    channelBuilder.nameResolverFactory(forEndpoints(builder.endpoints()));
 
-    if (builder.getLoadBalancerFactory() != null) {
-      channelBuilder.loadBalancerFactory(builder.getLoadBalancerFactory());
+    if (builder.loadBalancerFactory() != null) {
+      channelBuilder.loadBalancerFactory(builder.loadBalancerFactory());
     }
 
     channelBuilder.intercept(new AuthTokenInterceptor());
@@ -219,10 +212,10 @@ final class ClientConnectionManager {
   private Optional<String> generateToken(Channel channel)
       throws ConnectException, AuthFailedException {
 
-    if (builder.getUser() != null && builder.getPassword() != null) {
+    if (builder.user() != null && builder.password() != null) {
       try {
         return Optional.of(
-            authenticate(channel, builder.getUser(), builder.getPassword()).get().getToken()
+            authenticate(channel, builder.user(), builder.password()).get().getToken()
         );
       } catch (InterruptedException ite) {
         throw newConnectException("connect to etcd failed", ite);

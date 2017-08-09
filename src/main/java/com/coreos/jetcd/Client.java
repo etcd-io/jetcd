@@ -21,4 +21,8 @@ public interface Client {
   Watch getWatchClient();
 
   void close();
+
+  static ClientBuilder builder() {
+    return new ClientBuilder();
+  }
 }

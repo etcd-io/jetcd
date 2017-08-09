@@ -5,7 +5,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import com.coreos.jetcd.Auth;
 import com.coreos.jetcd.Client;
-import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.auth.AuthRoleGetResponse;
 import com.coreos.jetcd.auth.AuthRoleListResponse;
@@ -57,8 +56,10 @@ public class AuthClientTest {
    */
   @BeforeTest
   public void setupEnv() {
-    Client client = ClientBuilder.newBuilder().setEndpoints("http://localhost:2379")
+    Client client = Client.builder()
+        .endpoints("http://localhost:2379")
         .build();
+
     this.authDisabledKVClient = client.getKVClient();
     this.authDisabledAuthClient = client.getAuthClient();
   }
@@ -148,14 +149,14 @@ public class AuthClientTest {
    */
   @Test(dependsOnMethods = "testEnableAuth", groups = "authEnable", priority = 1)
   public void setupAuthClient() {
-    this.userClient = ClientBuilder.newBuilder()
-        .setEndpoints("http://localhost:2379")
-        .setUser(user)
-        .setPassword(userNewPass).build();
-    this.rootClient = ClientBuilder.newBuilder()
-        .setEndpoints("http://localhost:2379")
-        .setUser(root)
-        .setPassword(rootPass).build();
+    this.userClient = Client.builder()
+        .endpoints("http://localhost:2379")
+        .user(user)
+        .password(userNewPass).build();
+    this.rootClient = Client.builder()
+        .endpoints("http://localhost:2379")
+        .user(root)
+        .password(rootPass).build();
   }
 
   /**

@@ -1,7 +1,6 @@
 package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.Client;
-import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.Maintenance.Snapshot;
 import com.coreos.jetcd.maintenance.StatusResponse;
@@ -25,7 +24,7 @@ public class MaintenanceTest {
 
   @BeforeClass
   public void setup() {
-    this.client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints).build();
+    this.client = Client.builder().endpoints(TestConstants.endpoints).build();
     this.maintenance = client.getMaintenanceClient();
   }
 

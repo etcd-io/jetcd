@@ -3,7 +3,6 @@ package com.coreos.jetcd.internal.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.coreos.jetcd.Client;
-import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.kv.PutResponse;
 import io.grpc.PickFirstBalancerFactory;
@@ -21,9 +20,9 @@ public class LoadBalancerTest {
 
   @Test
   public void testPickFirstBalancerFactory() throws Exception {
-    Client client = ClientBuilder.newBuilder()
-        .setEndpoints(TestConstants.endpoints)
-        .setLoadBalancerFactory(PickFirstBalancerFactory.getInstance())
+    Client client = Client.builder()
+        .endpoints(TestConstants.endpoints)
+        .loadBalancerFactory(PickFirstBalancerFactory.getInstance())
         .build();
 
     KV kv = client.getKVClient();
@@ -49,9 +48,9 @@ public class LoadBalancerTest {
 
   @Test
   public void testRoundRobinLoadBalancerFactory() throws Exception {
-    Client client = ClientBuilder.newBuilder()
-        .setEndpoints(TestConstants.endpoints)
-        .setLoadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
+    Client client = Client.builder()
+        .endpoints(TestConstants.endpoints)
+        .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
         .build();
 
     KV kv = client.getKVClient();

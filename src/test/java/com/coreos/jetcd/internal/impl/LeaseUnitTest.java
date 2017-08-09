@@ -8,7 +8,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import com.coreos.jetcd.ClientBuilder;
+import com.coreos.jetcd.Client;
 import com.coreos.jetcd.Lease;
 import com.coreos.jetcd.Lease.KeepAliveListener;
 import com.coreos.jetcd.api.LeaseGrpc.LeaseImplBase;
@@ -59,7 +59,7 @@ public class LeaseUnitTest {
         this.createLeaseImplBase(this.responseObserverRef, this.requestStreamObserverMock));
 
     this.leaseCli = new LeaseImpl(
-        new ClientConnectionManager(ClientBuilder.newBuilder(), grpcServerRule.getChannel())
+        new ClientConnectionManager(Client.builder(), grpcServerRule.getChannel())
     );
   }
 

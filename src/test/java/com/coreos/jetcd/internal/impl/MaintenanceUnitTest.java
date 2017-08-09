@@ -3,71 +3,82 @@ package com.coreos.jetcd.internal.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.coreos.jetcd.ClientBuilder;
+import com.coreos.jetcd.Client;
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.Maintenance.Snapshot;
 import com.coreos.jetcd.api.MaintenanceGrpc.MaintenanceImplBase;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
 import com.google.protobuf.ByteString;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.Server;
 import io.grpc.Status;
-import io.grpc.inprocess.InProcessChannelBuilder;
-import io.grpc.inprocess.InProcessServerBuilder;
+import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import io.grpc.util.MutableHandlerRegistry;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.LinkedBlockingQueue;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
 
 // TODO: have separate folders to unit and integration tests.
 public class MaintenanceUnitTest {
 
   private final MutableHandlerRegistry serviceRegistry = new MutableHandlerRegistry();
+  private final BlockingQueue<StreamObserver<SnapshotResponse>> observerQueue = new LinkedBlockingQueue<>();
   private Server fakeServer;
   private ExecutorService executor = Executors.newFixedThreadPool(2);
-  private Maintenance maintenanceCli;
-  private final AtomicReference<StreamObserver<SnapshotResponse>> responseObserverRef = new AtomicReference<>();
+  private Client client;
+  private Maintenance maintenance;
 
-  @BeforeTest
+  @Before
   public void setUp() throws IOException {
-    String uniqueServerName = "fake server for " + getClass();
+    serviceRegistry.addService(new MaintenanceImplBase() {
+        @Override
+        public void snapshot(SnapshotRequest request, StreamObserver<SnapshotResponse> observer) {
+          try {
+            observerQueue.put(observer);
+          } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    );
 
-    fakeServer = InProcessServerBuilder.forName(uniqueServerName)
-        .fallbackHandlerRegistry(serviceRegistry).directExecutor().build().start();
+    fakeServer = NettyServerBuilder.forPort(TestUtil.findNextAvailablePort())
+        .fallbackHandlerRegistry(serviceRegistry)
+        .directExecutor()
+        .build()
+        .start();
 
-    ManagedChannelBuilder channelBuilder = InProcessChannelBuilder.forName(uniqueServerName).directExecutor();
-    ClientBuilder clientBuilder = ClientBuilder.newBuilder().setChannelBuilder(channelBuilder).setEndpoints("http://127.0.0.1:2379");
-    maintenanceCli = new ClientImpl(clientBuilder).getMaintenanceClient();
-
-    MaintenanceImplBase base = this.defaultBase(responseObserverRef);
-    serviceRegistry.addService(base);
+    client = Client.builder().endpoints("http://127.0.0.1:" + fakeServer.getPort()).build();
+    maintenance = client.getMaintenanceClient();
   }
 
-  @AfterTest
+  @After
   public void tearDown() {
+    maintenance.close();
+    client.close();
     fakeServer.shutdownNow();
   }
 
-  @Test(timeOut = 1000)
-  public void testConnectionError() throws IOException {
-    Snapshot snapshot = maintenanceCli.snapshot();
-    OutputStream out = new ByteArrayOutputStream();
+  @Test(timeout = 1000)
+  public void testConnectionError() throws Exception {
+    final Snapshot snapshot = maintenance.snapshot();
+    final OutputStream out = new ByteArrayOutputStream();
+
     executor.execute(() -> {
       try {
         Thread.sleep(50);
-        responseObserverRef.get()
-            .onError(Status.ABORTED.asRuntimeException());
+        observerQueue.take().onError(Status.ABORTED.asRuntimeException());
       } catch (InterruptedException e) {
         Assert.fail("expect no exception, but got InterruptedException", e);
       }
@@ -78,9 +89,9 @@ public class MaintenanceUnitTest {
         .hasMessageContaining("connection error");
   }
 
-  @Test(timeOut = 1000)
-  public void testWriteAfterClosed() throws IOException {
-    Snapshot snapshot = maintenanceCli.snapshot();
+  @Test(timeout = 1000)
+  public void testWriteAfterClosed() throws Exception {
+    Snapshot snapshot = maintenance.snapshot();
     snapshot.close();
     OutputStream out = new ByteArrayOutputStream();
     assertThatThrownBy(() -> snapshot.write(out))
@@ -88,10 +99,10 @@ public class MaintenanceUnitTest {
         .hasMessageContaining("Snapshot has closed");
   }
 
-  @Test(timeOut = 1000)
-  public void testWriteTwice() throws IOException {
-    Snapshot snapshot = maintenanceCli.snapshot();
-    responseObserverRef.get().onCompleted();
+  @Test(timeout = 1000)
+  public void testWriteTwice() throws Exception {
+    Snapshot snapshot = maintenance.snapshot();
+    observerQueue.take().onCompleted();
     OutputStream out = new ByteArrayOutputStream();
     snapshot.write(out);
     assertThatThrownBy(() -> snapshot.write(out))
@@ -99,10 +110,11 @@ public class MaintenanceUnitTest {
         .hasMessageContaining("write is called more than once");
   }
 
-  @Test(timeOut = 1000)
-  public void testCloseWhenWrite() throws IOException {
-    Snapshot snapshot = maintenanceCli.snapshot();
-    OutputStream out = new ByteArrayOutputStream();
+  @Test(timeout = 1000)
+  public void testCloseWhenWrite() throws Exception {
+    final Snapshot snapshot = maintenance.snapshot();
+    final OutputStream out = new ByteArrayOutputStream();
+
     executor.execute(() -> {
       try {
         Thread.sleep(50);
@@ -115,10 +127,11 @@ public class MaintenanceUnitTest {
         .isInstanceOf(IOException.class);
   }
 
-  @Test(timeOut = 1000)
+  @Test(timeout = 1000)
   public void testInterruptWrite() throws ExecutionException, InterruptedException {
-    Snapshot snapshot = maintenanceCli.snapshot();
-    OutputStream out = new ByteArrayOutputStream();
+    final Snapshot snapshot = maintenance.snapshot();
+    final OutputStream out = new ByteArrayOutputStream();
+
     Future<?> done = executor.submit(() ->
         assertThatThrownBy(() -> snapshot.write(out))
             .isInstanceOf(IOException.class)
@@ -128,31 +141,23 @@ public class MaintenanceUnitTest {
     done.get();
   }
 
-  @Test(timeOut = 1000)
-  public void testWrite() throws IOException {
-    Snapshot snapshot = maintenanceCli.snapshot();
+  @Test(timeout = 1000)
+  public void testWrite() throws Exception {
+    Snapshot snapshot = maintenance.snapshot();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     ByteString blob = ByteString.copyFromUtf8("blob");
 
-    responseObserverRef.get().onNext(SnapshotResponse.newBuilder()
+    StreamObserver<SnapshotResponse> observer = observerQueue.take();
+
+    observer.onNext(SnapshotResponse.newBuilder()
         .setBlob(blob)
         .setRemainingBytes(0)
         .build());
-    responseObserverRef.get().onCompleted();
-    snapshot.write(out);
-    assertThat(out.toByteArray()).isEqualTo(blob.toByteArray());
-  }
+    observer.onCompleted();
 
-  public MaintenanceImplBase defaultBase(
-      AtomicReference<StreamObserver<SnapshotResponse>> responseObserverRef) {
-    return new MaintenanceImplBase() {
-      @Override
-      public void snapshot(SnapshotRequest request,
-          StreamObserver<SnapshotResponse> responseObserver) {
-        responseObserverRef.set(responseObserver);
-        // do nothing.
-      }
-    };
+    snapshot.write(out);
+
+    assertThat(out.toByteArray()).isEqualTo(blob.toByteArray());
   }
 }
 
