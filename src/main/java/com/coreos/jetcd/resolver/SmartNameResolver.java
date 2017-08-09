@@ -22,20 +22,21 @@ import org.slf4j.LoggerFactory;
 public class SmartNameResolver extends NameResolver {
   private static final Logger LOGGER = LoggerFactory.getLogger(SmartNameResolver.class);
 
+  private final Object lock;
   private final String authority;
   private final List<URI> uris;
   private final List<URIResolver> resolvers;
 
-  @GuardedBy("this")
-  private boolean shutdown;
-  @GuardedBy("this")
-  private boolean resolving;
-  @GuardedBy("this")
-  private Listener listener;
-  @GuardedBy("this")
+  private volatile boolean shutdown;
+  private volatile boolean resolving;
+
+  @GuardedBy("lock")
   private ExecutorService executor;
+  @GuardedBy("lock")
+  private Listener listener;
 
   public SmartNameResolver(List<URI> uris) {
+    this.lock = new Object();
     this.authority = "etcd";
     this.uris = uris;
     this.resolvers = new ArrayList<>();
@@ -55,15 +56,16 @@ public class SmartNameResolver extends NameResolver {
 
   @Override
   public void start(Listener listener) {
-    Preconditions.checkState(this.listener == null, "already started");
-    this.executor = SharedResourceHolder.get(GrpcUtil.SHARED_CHANNEL_EXECUTOR);
-    this.listener = Preconditions.checkNotNull(listener, "listener");
-    resolve();
+    synchronized (lock) {
+      Preconditions.checkState(this.listener == null, "already started");
+      this.executor = SharedResourceHolder.get(GrpcUtil.SHARED_CHANNEL_EXECUTOR);
+      this.listener = Preconditions.checkNotNull(listener, "listener");
+      resolve();
+    }
   }
 
   @Override
   public final synchronized void refresh() {
-    Preconditions.checkState(listener != null, "not started");
     resolve();
   }
 
@@ -73,22 +75,26 @@ public class SmartNameResolver extends NameResolver {
       return;
     }
     shutdown = true;
-    if (executor != null) {
-      executor = SharedResourceHolder.release(GrpcUtil.SHARED_CHANNEL_EXECUTOR, executor);
+
+    synchronized (lock) {
+      if (executor != null) {
+        executor = SharedResourceHolder.release(GrpcUtil.SHARED_CHANNEL_EXECUTOR, executor);
+      }
     }
   }
 
-  @GuardedBy("this")
   private void resolve() {
     if (resolving || shutdown) {
       return;
     }
-    executor.execute(this::doResolve);
+    synchronized (lock) {
+      executor.execute(this::doResolve);
+    }
   }
 
   private void doResolve() {
     Listener savedListener;
-    synchronized (SmartNameResolver.this) {
+    synchronized (lock) {
       if (shutdown) {
         return;
       }
@@ -113,14 +119,12 @@ public class SmartNameResolver extends NameResolver {
         );
       }
 
-      listener.onAddresses(groups, Attributes.EMPTY);
+      savedListener.onAddresses(groups, Attributes.EMPTY);
     } catch (Exception e) {
       LOGGER.warn("Error wile getting list of servers", e);
       savedListener.onError(Status.NOT_FOUND);
     } finally {
-      synchronized (SmartNameResolver.this) {
-        resolving = false;
-      }
+      resolving = false;
     }
   }
 }

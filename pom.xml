@@ -30,6 +30,8 @@
         <grpc.version>1.5.0</grpc.version>
         <slf4j.version>1.7.21</slf4j.version>
         <auto-service.version>1.0-rc3</auto-service.version>
+        <plexus-compiler-javac-errorprone.version>2.8.2</plexus-compiler-javac-errorprone.version>
+        <error-prone-core.version>2.0.21</error-prone-core.version>
 
         <!-- should be in sync with protobuf grpc dependencies -->
         <protobuf.version>3.3.0</protobuf.version>
@@ -202,11 +204,29 @@
                     <source>${jdk.version}</source>
                     <target>${jdk.version}</target>
                     <encoding>UTF-8</encoding>
+                    <compilerId>javac-with-errorprone</compilerId>
+                    <forceJavacCompilerUse>true</forceJavacCompilerUse>
                     <compilerArgs>
                         <arg>-Xlint:all</arg>
                         <!-- TODO <arg>-Werror</arg> -->
                     </compilerArgs>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                      <groupId>org.codehaus.plexus</groupId>
+                      <artifactId>plexus-compiler-javac-errorprone</artifactId>
+                      <version>${plexus-compiler-javac-errorprone.version}</version>
+                    </dependency>
+                    <!-- 
+                        override plexus-compiler-javac-errorprone's dependency on
+                        Error Prone with the latest version 
+                    -->
+                    <dependency>
+                      <groupId>com.google.errorprone</groupId>
+                      <artifactId>error_prone_core</artifactId>
+                      <version>${error-prone-core.version}</version>
+                    </dependency>
+              </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
