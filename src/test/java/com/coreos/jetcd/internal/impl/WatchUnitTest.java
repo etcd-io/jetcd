@@ -7,7 +7,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import com.coreos.jetcd.ClientBuilder;
+import com.coreos.jetcd.Client;
 import com.coreos.jetcd.Watch;
 import com.coreos.jetcd.Watch.Watcher;
 import com.coreos.jetcd.api.Event;
@@ -66,7 +66,7 @@ public class WatchUnitTest {
         createWatchImpBase(responseObserverRef, requestStreamObserverMock));
 
     this.watchClient = new WatchImpl(
-        new ClientConnectionManager(ClientBuilder.newBuilder(), this.grpcServerRule.getChannel())
+        new ClientConnectionManager(Client.builder(), this.grpcServerRule.getChannel())
     );
   }
 
@@ -86,7 +86,7 @@ public class WatchUnitTest {
         .hasMessage("Watch client has been closed");
     // hack to avoid double close on watchClient on tearDown.
     this.watchClient = new WatchImpl(
-        new ClientConnectionManager(ClientBuilder.newBuilder(), this.grpcServerRule.getChannel())
+        new ClientConnectionManager(Client.builder(), this.grpcServerRule.getChannel())
     );
   }
 

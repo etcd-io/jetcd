@@ -9,31 +9,28 @@ import com.coreos.jetcd.exception.AuthFailedException;
 import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.internal.impl.ClientImpl;
-import com.google.common.collect.Lists;
 import io.grpc.LoadBalancer;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * ClientBuilder knows how to create an Client instance.
  */
-public class ClientBuilder implements Cloneable {
+public final class ClientBuilder implements Cloneable {
 
-  private List<String> endpoints = Lists.newArrayList();
+  private Set<String> endpoints = new HashSet<>();
   private ByteSequence user;
   private ByteSequence password;
   private LoadBalancer.Factory loadBalancerFactory;
-  private ManagedChannelBuilder<?> channelBuilder;
   private SslContext sslContext;
   private boolean lazyInitialization = false;
 
-  private ClientBuilder() {
-  }
-
-  public static ClientBuilder newBuilder() {
-    return new ClientBuilder();
+  ClientBuilder() {
   }
 
   /**
@@ -41,8 +38,8 @@ public class ClientBuilder implements Cloneable {
    *
    * @return the list of endpoints configured for the builder
    */
-  public List<String> getEndpoints() {
-    return this.endpoints;
+  public Collection<String> endpoints() {
+    return Collections.unmodifiableCollection(this.endpoints);
   }
 
   /**
@@ -51,23 +48,36 @@ public class ClientBuilder implements Cloneable {
    * @param endpoints etcd server endpoints, at least one
    * @return this builder to train
    * @throws NullPointerException if endpoints is null or one of endpoint is null
-   * @throws IllegalArgumentException if endpoints is empty or some endpoint is invalid
+   * @throws IllegalArgumentException if some endpoint is invalid
    */
-  public ClientBuilder setEndpoints(String... endpoints) {
+  public ClientBuilder endpoints(Collection<String> endpoints) {
     checkNotNull(endpoints, "endpoints can't be null");
-    checkArgument(endpoints.length > 0, "please configure at lease one endpoint ");
 
-    // TODO: check endpoint is in host:port format
     for (String endpoint : endpoints) {
       checkNotNull(endpoint, "endpoint can't be null");
       final String trimmedEndpoint = endpoint.trim();
       checkArgument(trimmedEndpoint.length() > 0, "invalid endpoint: endpoint=" + endpoint);
       this.endpoints.add(trimmedEndpoint);
     }
+
     return this;
   }
 
-  public ByteSequence getUser() {
+  /**
+   * configure etcd server endpoints.
+   *
+   * @param endpoints etcd server endpoints, at least one
+   * @return this builder to train
+   * @throws NullPointerException if endpoints is null or one of endpoint is null
+   * @throws IllegalArgumentException if some endpoint is invalid
+   */
+  public ClientBuilder endpoints(String... endpoints) {
+    checkNotNull(endpoints, "endpoints can't be null");
+
+    return endpoints(Arrays.asList(endpoints));
+  }
+
+  public ByteSequence user() {
     return user;
   }
 
@@ -78,13 +88,13 @@ public class ClientBuilder implements Cloneable {
    * @return this builder
    * @throws NullPointerException if user is <code>null</code>
    */
-  public ClientBuilder setUser(ByteSequence user) {
+  public ClientBuilder user(ByteSequence user) {
     checkNotNull(user, "user can't be null");
     this.user = user;
     return this;
   }
 
-  public ByteSequence getPassword() {
+  public ByteSequence password() {
     return password;
   }
 
@@ -95,7 +105,7 @@ public class ClientBuilder implements Cloneable {
    * @return this builder
    * @throws NullPointerException if password is <code>null</code>
    */
-  public ClientBuilder setPassword(ByteSequence password) {
+  public ClientBuilder password(ByteSequence password) {
     checkNotNull(password, "password can't be null");
     this.password = password;
     return this;
@@ -108,7 +118,7 @@ public class ClientBuilder implements Cloneable {
    * @return this builder
    * @throws NullPointerException if loadBalancerFactory is <code>null</code>
    */
-  public ClientBuilder setLoadBalancerFactory(LoadBalancer.Factory loadBalancerFactory) {
+  public ClientBuilder loadBalancerFactory(LoadBalancer.Factory loadBalancerFactory) {
     checkNotNull(loadBalancerFactory, "loadBalancerFactory can't be null");
     this.loadBalancerFactory = loadBalancerFactory;
     return this;
@@ -119,20 +129,11 @@ public class ClientBuilder implements Cloneable {
    *
    * @return loadBalancerFactory
    */
-  public LoadBalancer.Factory getLoadBalancerFactory() {
+  public LoadBalancer.Factory loadBalancerFactory() {
     return loadBalancerFactory;
   }
 
-  public ManagedChannelBuilder<?> getChannelBuilder() {
-    return channelBuilder;
-  }
-
-  public ClientBuilder setChannelBuilder(ManagedChannelBuilder<?> channelBuilder) {
-    this.channelBuilder = channelBuilder;
-    return this;
-  }
-
-  public boolean isLazyInitialization() {
+  public boolean lazyInitialization() {
     return lazyInitialization;
   }
 
@@ -143,12 +144,12 @@ public class ClientBuilder implements Cloneable {
    * @param lazyInitialization true if the client has to lazily perform connectivity/authentication.
    * @return this builder
    */
-  public ClientBuilder setLazyInitialization(boolean lazyInitialization) {
+  public ClientBuilder lazyInitialization(boolean lazyInitialization) {
     this.lazyInitialization = lazyInitialization;
     return this;
   }
 
-  public SslContext getSslContext() {
+  public SslContext sslContext() {
     return sslContext;
   }
 
@@ -159,7 +160,7 @@ public class ClientBuilder implements Cloneable {
    * @param sslContext the ssl context
    * @return this builder
    */
-  public ClientBuilder setSslContext(SslContext sslContext) {
+  public ClientBuilder sslContext(SslContext sslContext) {
     this.sslContext = sslContext;
     return this;
   }

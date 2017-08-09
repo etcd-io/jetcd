@@ -42,7 +42,7 @@ public final class ClientImpl implements Client {
 
     // If the client is not configured to be lazy, set up the managed connection and perform
     // authentication
-    if (!clientBuilder.isLazyInitialization()) {
+    if (!clientBuilder.lazyInitialization()) {
       this.connectionManager.getChannel();
     }
   }

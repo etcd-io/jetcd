@@ -4,7 +4,6 @@ package com.coreos.jetcd.internal.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.coreos.jetcd.Client;
-import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Watch;
 import com.coreos.jetcd.Watch.Watcher;
@@ -34,7 +33,7 @@ public class WatchTest {
 
   @Before
   public void setUp() {
-    client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints).build();
+    client = Client.builder().endpoints(TestConstants.endpoints).build();
     watchClient = client.getWatchClient();
     kvClient = client.getKVClient();
   }

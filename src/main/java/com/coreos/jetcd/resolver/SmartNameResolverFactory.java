@@ -5,6 +5,7 @@ import io.grpc.NameResolver;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -36,7 +37,7 @@ public class SmartNameResolverFactory extends NameResolver.Factory {
     return forEndpoints(Arrays.asList(endpoints));
   }
 
-  public static SmartNameResolverFactory forEndpoints(List<String> endpoints) {
+  public static SmartNameResolverFactory forEndpoints(Collection<String> endpoints) {
     List<URI> uris = endpoints.stream().map(endpoint -> {
       try {
         return new URI(endpoint);

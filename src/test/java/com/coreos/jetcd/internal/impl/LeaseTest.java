@@ -3,7 +3,6 @@ package com.coreos.jetcd.internal.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.coreos.jetcd.Client;
-import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Lease;
 import com.coreos.jetcd.Lease.KeepAliveListener;
@@ -36,7 +35,7 @@ public class LeaseTest {
   @BeforeClass
   public void setUp() throws Exception {
     test = new Assertion();
-    client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints).build();
+    client = Client.builder().endpoints(TestConstants.endpoints).build();
     kvClient = client.getKVClient();
     leaseClient = client.getLeaseClient();
   }

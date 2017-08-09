@@ -1,7 +1,6 @@
 package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.Client;
-import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Txn;
 import com.coreos.jetcd.data.ByteSequence;
@@ -41,7 +40,7 @@ public class KVTest {
   @BeforeTest
   public void setUp() throws Exception {
     test = new Assertion();
-    Client client = ClientBuilder.newBuilder().setEndpoints(TestConstants.endpoints).build();
+    Client client = Client.builder().endpoints(TestConstants.endpoints).build();
     kvClient = client.getKVClient();
   }
 
