@@ -1,5 +1,10 @@
 package com.coreos.jetcd.internal.impl;
 
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newClosedWatchClientException;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newClosedWatcherException;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newEtcdException;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.toEtcdException;
+
 import com.coreos.jetcd.Watch;
 import com.coreos.jetcd.api.WatchCancelRequest;
 import com.coreos.jetcd.api.WatchCreateRequest;
@@ -7,14 +12,15 @@ import com.coreos.jetcd.api.WatchGrpc;
 import com.coreos.jetcd.api.WatchRequest;
 import com.coreos.jetcd.api.WatchResponse;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.exception.CompactedException;
+import com.coreos.jetcd.exception.ErrorCode;
 import com.coreos.jetcd.exception.EtcdException;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.options.WatchOption;
 import com.coreos.jetcd.watch.WatchResponseWithError;
-import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
 import io.grpc.Status;
+import io.grpc.Status.Code;
 import io.grpc.stub.StreamObserver;
 import java.util.Optional;
 import java.util.Set;
@@ -26,6 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -71,9 +78,11 @@ class WatchImpl implements Watch {
 
   @Override
   public synchronized Watcher watch(ByteSequence key, WatchOption watchOption) {
-    Preconditions.checkState(!isClosed(), "Watch client has been closed");
+    if (isClosed()) {
+      throw newClosedWatchClientException();
+    }
 
-    WatcherImpl watcher = new WatcherImpl(key, watchOption);
+    WatcherImpl watcher = new WatcherImpl(key, watchOption, this);
     this.pendingWatchers.add(watcher);
 
     if (this.pendingWatchers.size() == 1) {
@@ -92,7 +101,7 @@ class WatchImpl implements Watch {
     }
 
     this.setClosed();
-    this.notifyWatchers(EtcdExceptionFactory.newEtcdException("Watch client has been closed"));
+    this.notifyWatchers(newClosedWatchClientException());
     this.closeGrpcWatchStreamObserver();
     this.executor.shutdownNow();
     this.scheduledExecutorService.shutdownNow();
@@ -186,7 +195,7 @@ class WatchImpl implements Watch {
 
     Status status = Status.fromThrowable(t);
     if (this.isHaltError(status) || this.isNoLeaderError(status)) {
-      this.notifyWatchers(EtcdExceptionFactory.newEtcdException(status.getDescription()));
+      this.notifyWatchers(toEtcdException(status));
       this.closeGrpcWatchStreamObserver();
       this.cancelSet.clear();
       return;
@@ -211,10 +220,8 @@ class WatchImpl implements Watch {
   }
 
   private boolean isNoLeaderError(Status status) {
-    if (status.getDescription() == null) {
-      return false;
-    }
-    return status.getDescription().contains("no leader");
+    return status.getCode() == Code.UNAVAILABLE
+        && "etcdserver: no leader".equals(status.getDescription());
   }
 
   private boolean isHaltError(Status status) {
@@ -223,7 +230,7 @@ class WatchImpl implements Watch {
     // Treat Internal codes as if something failed, leaving the
     // system in an inconsistent state, but retrying could make progress.
     // (e.g., failed in middle of send, corrupted frame)
-    return status.getCode() != Status.Code.UNAVAILABLE && status.getCode() != Status.Code.INTERNAL;
+    return status.getCode() != Code.UNAVAILABLE && status.getCode() != Code.INTERNAL;
   }
 
   private void processCreate(WatchResponse response) {
@@ -245,7 +252,7 @@ class WatchImpl implements Watch {
 
     if (response.getWatchId() == -1) {
       watcher.enqueue(new WatchResponseWithError(
-          EtcdExceptionFactory.newEtcdException(("etcd server failed to create watch id"))));
+          newEtcdException(ErrorCode.INTERNAL, "etcd server failed to create watch id")));
       return;
     }
 
@@ -283,7 +290,8 @@ class WatchImpl implements Watch {
 
     if (response.getCompactRevision() != 0) {
       watcher.enqueue(new WatchResponseWithError(
-          EtcdExceptionFactory.newCompactedException(response.getCompactRevision())));
+          EtcdExceptionFactory
+              .newCompactedException(response.getCompactRevision())));
       return;
     }
 
@@ -320,11 +328,16 @@ class WatchImpl implements Watch {
       return;
     }
     String reason = response.getCancelReason();
-    if (reason != null && reason.isEmpty() || reason == null) {
-      reason = "required revision is a future revision";
+    if (Strings.isNullOrEmpty(reason)) {
+      watcher.enqueue(new WatchResponseWithError(newEtcdException(
+          ErrorCode.OUT_OF_RANGE,
+          "etcdserver: mvcc: required revision is a future revision"))
+      );
+
+    } else {
+      watcher.enqueue(
+          new WatchResponseWithError(newEtcdException(ErrorCode.FAILED_PRECONDITION, reason)));
     }
-    watcher.enqueue(new WatchResponseWithError(
-        EtcdExceptionFactory.newEtcdException(reason)));
   }
 
   private WatchRequest toWatchCreateRequest(WatcherImpl watcher) {
@@ -353,7 +366,7 @@ class WatchImpl implements Watch {
   /**
    * Watcher class holds watcher information.
    */
-  public class WatcherImpl implements Watcher {
+  public static class WatcherImpl implements Watcher {
 
     final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final WatchOption watchOption;
@@ -365,11 +378,13 @@ class WatchImpl implements Watch {
     // the revision to watch on.
     private long revision;
     private boolean closed = false;
+    private final WatchImpl owner;
 
-    private WatcherImpl(ByteSequence key, WatchOption watchOption) {
+    private WatcherImpl(ByteSequence key, WatchOption watchOption, WatchImpl owner) {
       this.key = key;
       this.watchOption = watchOption;
       this.revision = watchOption.getRevision();
+      this.owner = owner;
     }
 
     private long getRevision() {
@@ -408,7 +423,6 @@ class WatchImpl implements Watch {
       return key;
     }
 
-
     private void enqueue(WatchResponseWithError watchResponse) {
       try {
         this.eventsQueue.put(watchResponse);
@@ -424,39 +438,37 @@ class WatchImpl implements Watch {
         if (isClosed()) {
           return;
         }
-
         this.setClosed();
       }
 
-      cancelWatcher(this.watchID);
+      this.owner.cancelWatcher(this.watchID);
       this.executor.shutdownNow();
     }
 
     @Override
-    public synchronized com.coreos.jetcd.watch.WatchResponse listen() {
-      Preconditions.checkState(!isClosed(), "Watcher has been closed");
+    public synchronized com.coreos.jetcd.watch.WatchResponse listen() throws InterruptedException {
+      if (isClosed()) {
+        throw newClosedWatcherException();
+      }
 
       try {
         return this.createWatchResponseFuture().get();
       } catch (ExecutionException e) {
         synchronized (this.closedLock) {
           if (isClosed()) {
-            // returns EtcdException indicates watcher has been closed.
-            throw EtcdExceptionFactory.newEtcdException("Watcher has been closed");
+            throw newClosedWatcherException();
           }
         }
         Throwable t = e.getCause();
-        if (t instanceof CompactedException) {
-          throw (CompactedException) t;
-        }
         if (t instanceof EtcdException) {
           throw (EtcdException) t;
         }
-        throw EtcdExceptionFactory.newEtcdException(t);
+        throw toEtcdException(e);
       } catch (InterruptedException e) {
-        throw EtcdExceptionFactory.handleInterrupt(e);
-      } catch (Exception e) {
-        throw EtcdExceptionFactory.newEtcdException(e);
+        Thread.currentThread().interrupt();
+        throw e;
+      } catch (RejectedExecutionException e) {
+        throw newClosedWatcherException();
       }
     }
 

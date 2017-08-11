@@ -1,15 +1,15 @@
 package com.coreos.jetcd.internal.impl;
 
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.handleInterrupt;
 import static com.coreos.jetcd.exception.EtcdExceptionFactory.newEtcdException;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.toEtcdException;
 
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.exception.EtcdExceptionFactory;
+import com.coreos.jetcd.exception.ErrorCode;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.Status;
 import io.grpc.Status.Code;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
@@ -23,10 +23,6 @@ import java.util.logging.Logger;
 final class Util {
 
   private static final Logger logger = Logger.getLogger(Util.class.getName());
-
-  // RETRIABLE_ERRORS are etcd errors that can be retried.
-  private static final List<String> RETRIABLE_ERRORS = Arrays
-      .asList("etcdserver: invalid auth token");
 
   private Util() {
   }
@@ -63,7 +59,7 @@ final class Util {
       try {
         targetFuture.complete(resultConvert.apply(sourceFuture.get()));
       } catch (Exception e) {
-        targetFuture.completeExceptionally(e);
+        targetFuture.completeExceptionally(toEtcdException(e));
       }
     }, executor);
 
@@ -121,13 +117,11 @@ final class Util {
               }
               sourceFutureRef.set(newSourceFuture.get());
             }
-
             try {
               Thread.sleep(500);
             } catch (InterruptedException e1) {
-              Thread.currentThread().interrupt();
               // raise interrupted exception to caller.
-              targetFuture.completeExceptionally(newEtcdException(e1));
+              targetFuture.completeExceptionally(handleInterrupt(e1));
               return;
             }
             continue;
@@ -137,18 +131,23 @@ final class Util {
         }
       }
       // notify user that retry has failed.
-      targetFuture.completeExceptionally(newEtcdException("request auto retry failed"));
+      targetFuture.completeExceptionally(
+          newEtcdException(
+              ErrorCode.ABORTED,
+              "maximum number of auto retries reached"
+          )
+      );
     });
 
     return targetFuture;
   }
 
   static boolean isRetriable(Exception e) {
-    Status status = Status.fromThrowable(e);
-    if (status.getCode() == Code.UNKNOWN) {
-      return false;
-    }
+    return isInvalidTokenError(Status.fromThrowable(e));
+  }
 
-    return RETRIABLE_ERRORS.contains(status.getDescription());
+  static boolean isInvalidTokenError(Status status) {
+    return status.getCode() == Code.UNAUTHENTICATED
+        && "etcdserver: invalid auth token".equals(status.getDescription());
   }
 }

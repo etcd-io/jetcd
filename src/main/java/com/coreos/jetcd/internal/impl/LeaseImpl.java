@@ -1,5 +1,9 @@
 package com.coreos.jetcd.internal.impl;
 
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newClosedKeepAliveListenerException;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newClosedLeaseClientException;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newEtcdException;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.toEtcdException;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.Lease;
@@ -8,6 +12,8 @@ import com.coreos.jetcd.api.LeaseGrpc;
 import com.coreos.jetcd.api.LeaseKeepAliveRequest;
 import com.coreos.jetcd.api.LeaseRevokeRequest;
 import com.coreos.jetcd.api.LeaseTimeToLiveRequest;
+import com.coreos.jetcd.exception.ErrorCode;
+import com.coreos.jetcd.exception.EtcdException;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponseWithError;
@@ -72,7 +78,6 @@ public class LeaseImpl implements Lease {
 
   private boolean closed;
 
-
   LeaseImpl(ClientConnectionManager connectionManager) {
     this.connectionManager = connectionManager;
     this.stub = connectionManager.newStub(LeaseGrpc::newFutureStub);
@@ -104,7 +109,7 @@ public class LeaseImpl implements Lease {
   @Override
   public synchronized KeepAliveListener keepAlive(long leaseId) {
     if (this.closed) {
-      throw new IllegalStateException("Lease client has closed");
+      throw newClosedLeaseClientException();
     }
 
     KeepAlive keepAlive = this.keepAlives.computeIfAbsent(leaseId, (key) -> {
@@ -151,10 +156,9 @@ public class LeaseImpl implements Lease {
 
   private void closeKeepAlives() {
     final LeaseKeepAliveResponseWithError errResp = new LeaseKeepAliveResponseWithError(
-        new IllegalStateException("Lease client has closed"));
+        newClosedLeaseClientException());
     this.keepAlives.values().forEach(ka -> {
       ka.sentKeepAliveResp(errResp);
-      ka.close();
     });
     this.keepAlives.clear();
   }
@@ -232,7 +236,12 @@ public class LeaseImpl implements Lease {
       // lease expired; close all keep alive
       this.removeKeepAlive(leaseID);
       ka.sentKeepAliveResp(new LeaseKeepAliveResponseWithError(
-          new IllegalStateException("Lease " + leaseID + " expired")));
+              newEtcdException(
+                  ErrorCode.NOT_FOUND,
+                  "etcdserver: requested lease not found"
+              )
+          )
+      );
       return;
     }
 
@@ -274,7 +283,7 @@ public class LeaseImpl implements Lease {
 
           @Override
           public void onError(Throwable throwable) {
-            lkaFuture.completeExceptionally(throwable);
+            lkaFuture.completeExceptionally(toEtcdException(throwable));
           }
 
           @Override
@@ -313,13 +322,12 @@ public class LeaseImpl implements Lease {
   }
 
 
-  private class KeepAliveListenerImpl implements KeepAliveListener {
+  private static class KeepAliveListenerImpl implements KeepAliveListener {
 
     private final Object closedLock = new Object();
     private BlockingQueue<LeaseKeepAliveResponseWithError> queue = new LinkedBlockingDeque<>(1);
     private ExecutorService service = Executors.newSingleThreadExecutor();
     private boolean closed = false;
-    private Exception reason;
     private KeepAlive owner;
 
     public KeepAliveListenerImpl(KeepAlive owner) {
@@ -344,17 +352,12 @@ public class LeaseImpl implements Lease {
     public synchronized LeaseKeepAliveResponse listen()
         throws InterruptedException {
       if (this.isClosed()) {
-        throw new IllegalStateException("KeepAliveListener has closed");
-      }
-
-      if (this.reason != null) {
-        throw new IllegalStateException(this.reason);
+        throw newClosedKeepAliveListenerException();
       }
 
       Future<LeaseKeepAliveResponse> future = service.submit(() -> {
         LeaseKeepAliveResponseWithError lkae = this.queue.take();
         if (lkae.error != null) {
-          this.reason = lkae.error;
           throw lkae.error;
         }
         return new LeaseKeepAliveResponse(lkae.leaseKeepAliveResponse);
@@ -363,12 +366,21 @@ public class LeaseImpl implements Lease {
       try {
         return future.get();
       } catch (ExecutionException e) {
-        if (e.getCause() instanceof RejectedExecutionException) {
-          throw new IllegalStateException("KeepAliveListener has closed");
+        synchronized (this.closedLock) {
+          if (isClosed()) {
+            throw newClosedKeepAliveListenerException();
+          }
         }
-
-        throw new IllegalStateException("KeepAliveListener encounters error on listen",
-            e.getCause());
+        Throwable t = e.getCause();
+        if (t instanceof EtcdException) {
+          throw (EtcdException) t;
+        }
+        throw toEtcdException(e);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw e;
+      } catch (RejectedExecutionException e) {
+        throw newClosedKeepAliveListenerException();
       }
     }
 
@@ -391,7 +403,7 @@ public class LeaseImpl implements Lease {
   /**
    * The KeepAlive hold the keepAlive information for lease.
    */
-  private class KeepAlive {
+  private static class KeepAlive {
 
     // ownerLock protects owner map.
     private final Object ownerLock;
