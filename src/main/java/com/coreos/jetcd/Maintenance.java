@@ -101,9 +101,11 @@ public interface Maintenance extends CloseableClient {
      * <p>this method blocks until farther snapshot data are available,
      * end of stream is detected, or an exception is thrown.
      *
-     * @throws IOException if connection issue, Snapshot closed, and any I/O issues.
+     * @throws com.coreos.jetcd.exception.ClosedSnapshotException if snapshot has been closed.
+     * @throws IOException if write experiences any I/O issues.
+     * @throws InterruptedException if the write thread is interrupted.
      */
-    void write(OutputStream os) throws IOException;
+    void write(OutputStream os) throws IOException, InterruptedException;
   }
 
 }

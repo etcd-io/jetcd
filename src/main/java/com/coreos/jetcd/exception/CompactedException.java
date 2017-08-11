@@ -8,8 +8,8 @@ public class CompactedException extends EtcdException {
 
   private long compactedRevision;
 
-  CompactedException(long compactedRev, String message, Throwable cause) {
-    super(message, cause);
+  CompactedException(ErrorCode code, String message, long compactedRev) {
+    super(code, message, null);
     this.compactedRevision = compactedRev;
   }
 

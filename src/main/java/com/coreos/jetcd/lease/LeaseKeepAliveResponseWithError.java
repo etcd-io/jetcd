@@ -1,6 +1,7 @@
 package com.coreos.jetcd.lease;
 
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
+import com.coreos.jetcd.exception.EtcdException;
 
 /**
  * Created by fanminshi on 6/8/17.
@@ -8,13 +9,13 @@ import com.coreos.jetcd.api.LeaseKeepAliveResponse;
 public class LeaseKeepAliveResponseWithError {
 
   public LeaseKeepAliveResponse leaseKeepAliveResponse;
-  public Exception error;
+  public EtcdException error;
 
   public LeaseKeepAliveResponseWithError(LeaseKeepAliveResponse leaseKeepAliveResponse) {
     this.leaseKeepAliveResponse = leaseKeepAliveResponse;
   }
 
-  public LeaseKeepAliveResponseWithError(Exception e) {
+  public LeaseKeepAliveResponseWithError(EtcdException e) {
     this.error = e;
   }
 }

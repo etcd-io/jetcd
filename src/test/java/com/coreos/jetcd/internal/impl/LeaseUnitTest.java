@@ -1,6 +1,8 @@
 package com.coreos.jetcd.internal.impl;
 
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.toEtcdException;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.after;
@@ -14,6 +16,8 @@ import com.coreos.jetcd.Lease.KeepAliveListener;
 import com.coreos.jetcd.api.LeaseGrpc.LeaseImplBase;
 import com.coreos.jetcd.api.LeaseKeepAliveRequest;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
+import com.coreos.jetcd.exception.ClosedClientException;
+import com.coreos.jetcd.exception.ClosedKeepAliveListenerException;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcServerRule;
@@ -90,7 +94,8 @@ public class LeaseUnitTest {
     Throwable t = Status.ABORTED.asRuntimeException();
     responseObserverRef.get().onError(t);
 
-    assertThatThrownBy(() -> lrpFuture.get()).hasCause(t);
+    assertThatThrownBy(() -> lrpFuture.get())
+        .hasCause(toEtcdException(t));
   }
 
   // TODO: sometime this.responseObserverRef.get().onNext(lrp) blocks even though client has received msg;
@@ -132,9 +137,8 @@ public class LeaseUnitTest {
   public void testKeepAliveListenAfterListenerClose() {
     KeepAliveListener listener = this.leaseCli.keepAlive(LEASE_ID);
     listener.close();
-    assertThatThrownBy(() -> listener.listen())
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("KeepAliveListener has closed");
+    assertThatExceptionOfType(ClosedKeepAliveListenerException.class)
+        .isThrownBy(listener::listen);
   }
 
   @Test
@@ -146,8 +150,10 @@ public class LeaseUnitTest {
       listener.close();
       return 1;
     });
-    assertThatThrownBy(() -> listener.listen()).isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("KeepAliveListener encounters error on listen");
+
+    assertThatExceptionOfType(ClosedKeepAliveListenerException.class)
+        .isThrownBy(listener::listen);
+
     donef.get();
   }
 
@@ -161,8 +167,10 @@ public class LeaseUnitTest {
       return 1;
     });
 
-    assertThatThrownBy(() -> listener.listen())
-        .hasCause(new IllegalStateException("Lease client has closed"));
+    assertThatExceptionOfType(ClosedClientException.class)
+        .isThrownBy(listener::listen)
+        .withMessageContaining("Lease Client has been closed");
+
     donef.get();
   }
 

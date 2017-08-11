@@ -1,8 +1,9 @@
 package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.newAuthFailedException;
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.newConnectException;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.handleInterrupt;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.toEtcdException;
 import static com.coreos.jetcd.internal.impl.Util.byteStringFromByteSequence;
+import static com.coreos.jetcd.internal.impl.Util.isInvalidTokenError;
 import static com.coreos.jetcd.resolver.SmartNameResolverFactory.forEndpoints;
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -11,8 +12,6 @@ import com.coreos.jetcd.api.AuthGrpc;
 import com.coreos.jetcd.api.AuthenticateRequest;
 import com.coreos.jetcd.api.AuthenticateResponse;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.exception.AuthFailedException;
-import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -153,7 +152,7 @@ final class ClientConnectionManager {
       );
     } catch (Exception e) {
       channel.shutdown();
-      throw EtcdExceptionFactory.newEtcdException(e);
+      throw EtcdExceptionFactory.toEtcdException(e);
     }
   }
 
@@ -206,11 +205,9 @@ final class ClientConnectionManager {
    * get token with ClientBuilder.
    *
    * @return the auth token
-   * @throws ConnectException This may be caused as network reason, wrong address
-   * @throws AuthFailedException This may be caused as wrong username or password
+   * @throws com.coreos.jetcd.exception.EtcdException a exception indicates failure reason.
    */
-  private Optional<String> generateToken(Channel channel)
-      throws ConnectException, AuthFailedException {
+  private Optional<String> generateToken(Channel channel) {
 
     if (builder.user() != null && builder.password() != null) {
       try {
@@ -218,13 +215,14 @@ final class ClientConnectionManager {
             authenticate(channel, builder.user(), builder.password()).get().getToken()
         );
       } catch (InterruptedException ite) {
-        throw newConnectException("connect to etcd failed", ite);
+        throw handleInterrupt(ite);
       } catch (ExecutionException exee) {
-        throw newAuthFailedException("auth failed as wrong username or password", exee);
+        throw toEtcdException(exee);
       }
     }
     return Optional.empty();
   }
+
 
   /**
    * AuthTokenInterceptor fills header with Auth token of any rpc calls and
@@ -242,8 +240,7 @@ final class ClientConnectionManager {
           super.start(new SimpleForwardingClientCallListener<RespT>(responseListener) {
             @Override
             public void onClose(Status status, Metadata trailers) {
-              if (status.getCode() == Code.UNAUTHENTICATED
-                  && "etcdserver: invalid auth token".equals(status.getDescription())) {
+              if (isInvalidTokenError(status)) {
                 try {
                   refreshToken(next);
                 } catch (Exception e) {

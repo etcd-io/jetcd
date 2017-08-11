@@ -1,5 +1,8 @@
 package com.coreos.jetcd.internal.impl;
 
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newClosedSnapshotException;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.newEtcdException;
+import static com.coreos.jetcd.exception.EtcdExceptionFactory.toEtcdException;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -11,7 +14,7 @@ import com.coreos.jetcd.api.MaintenanceGrpc;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
 import com.coreos.jetcd.api.StatusRequest;
-import com.coreos.jetcd.exception.EtcdExceptionFactory;
+import com.coreos.jetcd.exception.ErrorCode;
 import com.coreos.jetcd.maintenance.AlarmResponse;
 import com.coreos.jetcd.maintenance.DefragmentResponse;
 import com.coreos.jetcd.maintenance.SnapshotReaderResponseWithError;
@@ -142,7 +145,7 @@ class MaintenanceImpl implements Maintenance {
     return snapshot;
   }
 
-  class SnapshotImpl implements Snapshot {
+  static class SnapshotImpl implements Snapshot {
 
     private final SnapshotResponse endOfStreamResponse =
         SnapshotResponse.newBuilder().setRemainingBytes(-1).build();
@@ -153,8 +156,8 @@ class MaintenanceImpl implements Maintenance {
     private BlockingQueue<SnapshotReaderResponseWithError> snapshotResponseBlockingQueue =
         new LinkedBlockingQueue<>();
     private boolean closed = false;
-
     private boolean writeOnce = false;
+
 
     SnapshotImpl() {
       this.snapshotObserver = this.createSnapshotObserver();
@@ -176,7 +179,7 @@ class MaintenanceImpl implements Maintenance {
         public void onError(Throwable throwable) {
           snapshotResponseBlockingQueue.add(
               new SnapshotReaderResponseWithError(
-                  EtcdExceptionFactory.newConnectException("connection error ", throwable)));
+                  toEtcdException(throwable)));
         }
 
         @Override
@@ -214,13 +217,18 @@ class MaintenanceImpl implements Maintenance {
     }
 
     @Override
-    public synchronized void write(OutputStream os) throws IOException {
+    public synchronized void write(OutputStream os) throws IOException, InterruptedException {
       checkNotNull(os);
       if (this.isClosed()) {
-        throw new IOException("Snapshot has closed");
+        throw newClosedSnapshotException();
       }
       if (this.writeOnce) {
-        throw new IOException("write is called more than once");
+        throw new IOException(
+            newEtcdException(
+                ErrorCode.INTERNAL,
+                "write is called more than once"
+            )
+        );
       }
       this.writeOnce = true;
 
@@ -244,11 +252,17 @@ class MaintenanceImpl implements Maintenance {
       try {
         done.get();
       } catch (InterruptedException e) {
-        throw new IOException("write is interrupted", e);
+        Thread.currentThread().interrupt();
+        throw e;
       } catch (ExecutionException e) {
-        throw new IOException(e.getCause());
+        synchronized (this.closeLock) {
+          if (isClosed()) {
+            throw newClosedSnapshotException();
+          }
+        }
+        throw new IOException(toEtcdException(e));
       } catch (RejectedExecutionException e) {
-        throw new IOException("Snapshot has closed");
+        throw newClosedSnapshotException();
       }
     }
   }

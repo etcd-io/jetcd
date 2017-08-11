@@ -1,5 +1,6 @@
 package com.coreos.jetcd.resolver;
 
+import com.coreos.jetcd.exception.ErrorCode;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Strings;
@@ -25,6 +26,7 @@ public final class URIResolvers {
 
   @AutoService(URIResolver.class)
   public static final class Direct implements URIResolver {
+
     private static final List<String> SCHEMES = Arrays.asList("http", "https");
 
     private ConcurrentMap<URI, List<EquivalentAddressGroup>> cache;
@@ -56,7 +58,8 @@ public final class URIResolvers {
       if (!supports(uri)) {
         // Wrap as etcd exception but set a proper cause
         throw EtcdExceptionFactory.newEtcdException(
-            new IllegalArgumentException("Unsupported URI " + uri)
+            ErrorCode.INVALID_ARGUMENT,
+            "Unsupported URI " + uri
         );
       }
 
@@ -74,6 +77,7 @@ public final class URIResolvers {
 
   @AutoService(URIResolver.class)
   public static final class DnsSrv implements URIResolver {
+
     private static final List<String> SCHEMES = Arrays.asList("dns+srv", "dnssrv", "srv");
 
     private static final String[] ATTRIBUTE_IDS;
@@ -112,7 +116,8 @@ public final class URIResolvers {
       if (!supports(uri)) {
         // Wrap as etcd exception but set a proper cause
         throw EtcdExceptionFactory.newEtcdException(
-            new IllegalArgumentException("Unsupported URI " + uri)
+            ErrorCode.INVALID_ARGUMENT,
+            "Unsupported URI " + uri
         );
       }
 
@@ -140,7 +145,7 @@ public final class URIResolvers {
           }
         }
       } catch (Exception e) {
-        throw EtcdExceptionFactory.newEtcdException(e);
+        throw EtcdExceptionFactory.toEtcdException(e);
       }
 
       return groups;

@@ -60,9 +60,12 @@ public interface Lease extends CloseableClient {
 
     /**
      * @return listen blocks until it receives a LeaseKeepAliveResponse.
+     * @throws com.coreos.jetcd.exception.ClosedClientException if Lease client has been closed.
+     * @throws com.coreos.jetcd.exception.ClosedKeepAliveListenerException if listener has been
+     *        closed.
      * @throws InterruptedException if listen is interrupted.
-     * @throws IllegalStateException if KeepAliveListener has already closed, lease client has
-     *        closed, and other un-recoverable issues.
+     * @throws com.coreos.jetcd.exception.EtcdException if KeepAliveListener encounters client side
+     *        and server side errors.
      */
     LeaseKeepAliveResponse listen() throws InterruptedException;
 

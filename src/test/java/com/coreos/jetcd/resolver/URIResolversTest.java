@@ -31,7 +31,7 @@ public class URIResolversTest {
     assertThat(discovery.supports(uri)).isFalse();
     assertThatExceptionOfType(EtcdException.class)
         .isThrownBy(() -> discovery.resolve(uri))
-        .withCauseExactlyInstanceOf(IllegalArgumentException.class);
+        .withMessageContaining("Unsupported URI " + uri);
   }
 
   @Test

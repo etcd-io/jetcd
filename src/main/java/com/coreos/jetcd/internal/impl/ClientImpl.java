@@ -8,8 +8,6 @@ import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Lease;
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.Watch;
-import com.coreos.jetcd.exception.AuthFailedException;
-import com.coreos.jetcd.exception.ConnectException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -96,8 +94,6 @@ public final class ClientImpl implements Client {
    * @param factory the factory to create the client
    * @param <T> the type of client
    * @return the client
-   * @throws AuthFailedException This may be caused as network reason, wrong address
-   * @throws ConnectException This may be caused as wrong username or password
    */
   private <T extends CloseableClient> T newClient(
       AtomicReference<T> reference, Function<ClientConnectionManager, T> factory) {

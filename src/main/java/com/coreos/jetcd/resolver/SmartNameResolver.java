@@ -1,5 +1,6 @@
 package com.coreos.jetcd.resolver;
 
+import com.coreos.jetcd.exception.ErrorCode;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.google.common.base.Preconditions;
 import io.grpc.Attributes;
@@ -20,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SmartNameResolver extends NameResolver {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(SmartNameResolver.class);
 
   private final Object lock;
@@ -115,7 +117,8 @@ public class SmartNameResolver extends NameResolver {
 
       if (groups.isEmpty()) {
         throw EtcdExceptionFactory.newEtcdException(
-            new IllegalStateException("Unable to resolve endpoints " + uris)
+            ErrorCode.INVALID_ARGUMENT,
+            ("Unable to resolve endpoints " + uris)
         );
       }
 
