@@ -5,8 +5,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.exception.AuthFailedException;
-import com.coreos.jetcd.exception.ConnectException;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.internal.impl.ClientImpl;
 import io.grpc.LoadBalancer;
@@ -141,7 +139,8 @@ public final class ClientBuilder implements Cloneable {
    * Define if the client has to initialize connectivity and authentication on client constructor
    * or delay it to the first call to a client. Default is false.
    *
-   * @param lazyInitialization true if the client has to lazily perform connectivity/authentication.
+   * @param lazyInitialization true if the client has to lazily perform
+   *        connectivity/authentication.
    * @return this builder
    */
   public ClientBuilder lazyInitialization(boolean lazyInitialization) {
@@ -169,8 +168,7 @@ public final class ClientBuilder implements Cloneable {
    * build a new Client.
    *
    * @return Client instance.
-   * @throws ConnectException As network reason, wrong address
-   * @throws AuthFailedException This may be caused as wrong username or password
+   * @throws com.coreos.jetcd.exception.EtcdException if client experiences build error.
    */
   public Client build() {
     checkState(
@@ -182,9 +180,9 @@ public final class ClientBuilder implements Cloneable {
 
   public ClientBuilder copy() {
     try {
-      return (ClientBuilder)super.clone();
+      return (ClientBuilder) super.clone();
     } catch (CloneNotSupportedException e) {
-      throw EtcdExceptionFactory.newEtcdException(e);
+      throw EtcdExceptionFactory.toEtcdException(e);
     }
   }
 }
