@@ -26,6 +26,7 @@
         <os-maven-plugin.version>1.5.0.Final</os-maven-plugin.version>
         <protobuf-maven-plugin.version>0.5.0</protobuf-maven-plugin.version>
         <jacoco-maven-plugin.version>0.7.9</jacoco-maven-plugin.version>
+        <maven-shade-plugin.version>3.0.0</maven-shade-plugin.version>
 
         <!-- dependencies -->
         <grpc.version>1.5.0</grpc.version>
@@ -71,6 +72,11 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>com.google.auto.service</groupId>
@@ -95,12 +101,6 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -381,6 +381,22 @@
                     <outputFile>${project.build.directory}/test/checkstyle-errors.xml</outputFile>
                     <linkXRef>false</linkXRef>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>${maven-shade-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <minimizeJar>true</minimizeJar>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
