@@ -1,6 +1,7 @@
 package com.coreos.jetcd.internal.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.reset;
@@ -17,6 +18,8 @@ import com.coreos.jetcd.api.WatchGrpc.WatchImplBase;
 import com.coreos.jetcd.api.WatchRequest;
 import com.coreos.jetcd.api.WatchResponse;
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.exception.ClosedClientException;
+import com.coreos.jetcd.exception.ClosedWatcherException;
 import com.coreos.jetcd.exception.CompactedException;
 import com.coreos.jetcd.exception.EtcdException;
 import com.coreos.jetcd.options.WatchOption;
@@ -81,13 +84,8 @@ public class WatchUnitTest {
   @Test
   public void testCreateWatcherAfterClientClosed() {
     watchClient.close();
-    assertThatThrownBy(() -> watchClient.watch(KEY))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage("Watch client has been closed");
-    // hack to avoid double close on watchClient on tearDown.
-    this.watchClient = new WatchImpl(
-        new ClientConnectionManager(Client.builder(), this.grpcServerRule.getChannel())
-    );
+    assertThatExceptionOfType(ClosedClientException.class)
+        .isThrownBy(() -> watchClient.watch(KEY));
   }
 
   @Test
@@ -100,7 +98,7 @@ public class WatchUnitTest {
   }
 
   @Test
-  public void testWatcherListenOnResponse() {
+  public void testWatcherListenOnResponse() throws InterruptedException {
     Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT);
     WatchResponse createdResponse = WatchResponse.newBuilder()
         .setCreated(true)
@@ -126,13 +124,47 @@ public class WatchUnitTest {
   public void testWatcherListenAfterWatcherClose() {
     Watcher watcher = watchClient.watch(KEY);
     watcher.close();
-    assertThatThrownBy(watcher::listen)
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage("Watcher has been closed");
+
+    assertThatExceptionOfType(ClosedWatcherException.class)
+        .isThrownBy(watcher::listen);
   }
 
   @Test
-  public void testWatcherListenForMultiplePuts() {
+  public void testWatcherListenOnWatcherClose() {
+    Watcher watcher = watchClient.watch(KEY);
+
+    executor.execute(() -> {
+      try {
+        Thread.sleep(20);
+        watcher.close();
+      } catch (InterruptedException e) {
+        // do nothing
+      }
+    });
+
+    assertThatExceptionOfType(ClosedWatcherException.class)
+        .isThrownBy(watcher::listen);
+  }
+
+  @Test
+  public void testWatcherListenOnWatchClientClose() throws InterruptedException {
+    Watcher watcher = watchClient.watch(KEY);
+
+    executor.execute(() -> {
+      try {
+        Thread.sleep(20);
+        watchClient.close();
+      } catch (InterruptedException e) {
+        // do nothing
+      }
+    });
+
+    assertThatExceptionOfType(ClosedClientException.class)
+        .isThrownBy(watcher::listen);
+  }
+
+  @Test
+  public void testWatcherListenForMultiplePuts() throws InterruptedException {
     Watcher watcher = watchClient.watch(KEY);
     WatchResponse createdResponse = WatchResponse.newBuilder()
         .setCreated(true)
@@ -176,7 +208,7 @@ public class WatchUnitTest {
   }
 
   @Test
-  public void testWatcherDelete() {
+  public void testWatcherDelete() throws InterruptedException {
     Watcher watcher = watchClient.watch(KEY);
 
     WatchResponse createdResponse = WatchResponse
@@ -214,9 +246,10 @@ public class WatchUnitTest {
     responseObserverRef.get()
         .onError(Status.ABORTED.withDescription("connection error").asRuntimeException());
     // expects connection error to propagate to active listener.
-    assertThatThrownBy(watcher::listen)
-        .isInstanceOf(EtcdException.class)
-        .hasMessageContaining("connection error");
+
+    assertThatExceptionOfType(EtcdException.class)
+        .isThrownBy(watcher::listen)
+        .withMessageContaining("connection error");
 
     watcher.close();
   }
@@ -288,9 +321,10 @@ public class WatchUnitTest {
         .build();
     responseObserverRef.get().onNext(canceledReponse);
 
-    assertThatThrownBy(watcher::listen)
-        .isInstanceOf(EtcdException.class)
-        .hasMessageContaining("required revision is a future revision");
+    assertThatExceptionOfType(EtcdException.class)
+        .isThrownBy(watcher::listen)
+        .withMessageContaining("etcdserver: mvcc: required revision is a future revision");
+
     watcher.close();
   }
 
@@ -312,9 +346,9 @@ public class WatchUnitTest {
         .build();
     responseObserverRef.get().onNext(canceledResponse);
 
-    assertThatThrownBy(watcher::listen)
-        .isInstanceOf(EtcdException.class)
-        .hasMessageContaining(canceledResponse.getCancelReason());
+    assertThatExceptionOfType(EtcdException.class)
+        .isThrownBy(watcher::listen)
+        .withMessageContaining(canceledResponse.getCancelReason());
 
     watcher.close();
   }
@@ -330,9 +364,9 @@ public class WatchUnitTest {
         .build();
     responseObserverRef.get().onNext(createdResponse);
 
-    assertThatThrownBy(watcher::listen)
-        .isInstanceOf(EtcdException.class)
-        .hasMessageContaining("etcd server failed to create watch id");
+    assertThatExceptionOfType(EtcdException.class)
+        .isThrownBy(watcher::listen)
+        .withMessageContaining("etcd server failed to create watch id");
 
     watcher.close();
   }

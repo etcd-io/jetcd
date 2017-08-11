@@ -1,6 +1,7 @@
 package com.coreos.jetcd.internal.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.coreos.jetcd.Client;
@@ -9,6 +10,8 @@ import com.coreos.jetcd.Maintenance.Snapshot;
 import com.coreos.jetcd.api.MaintenanceGrpc.MaintenanceImplBase;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
+import com.coreos.jetcd.exception.ClosedSnapshotException;
+import com.coreos.jetcd.exception.EtcdException;
 import com.google.protobuf.ByteString;
 import io.grpc.Server;
 import io.grpc.Status;
@@ -26,7 +29,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.testng.Assert;
 
 // TODO: have separate folders to unit and integration tests.
@@ -34,6 +39,8 @@ public class MaintenanceUnitTest {
 
   private final MutableHandlerRegistry serviceRegistry = new MutableHandlerRegistry();
   private final BlockingQueue<StreamObserver<SnapshotResponse>> observerQueue = new LinkedBlockingQueue<>();
+  @Rule
+  public Timeout timeout = Timeout.seconds(10);
   private Server fakeServer;
   private ExecutorService executor = Executors.newFixedThreadPool(2);
   private Client client;
@@ -42,15 +49,15 @@ public class MaintenanceUnitTest {
   @Before
   public void setUp() throws IOException {
     serviceRegistry.addService(new MaintenanceImplBase() {
-        @Override
-        public void snapshot(SnapshotRequest request, StreamObserver<SnapshotResponse> observer) {
-          try {
-            observerQueue.put(observer);
-          } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      }
+       @Override
+       public void snapshot(SnapshotRequest request, StreamObserver<SnapshotResponse> observer) {
+         try {
+           observerQueue.put(observer);
+         } catch (InterruptedException e) {
+           throw new RuntimeException(e);
+         }
+       }
+     }
     );
 
     fakeServer = NettyServerBuilder.forPort(TestUtil.findNextAvailablePort())
@@ -70,7 +77,7 @@ public class MaintenanceUnitTest {
     fakeServer.shutdownNow();
   }
 
-  @Test(timeout = 1000)
+  @Test
   public void testConnectionError() throws Exception {
     final Snapshot snapshot = maintenance.snapshot();
     final OutputStream out = new ByteArrayOutputStream();
@@ -86,31 +93,30 @@ public class MaintenanceUnitTest {
 
     assertThatThrownBy(() -> snapshot.write(out))
         .isInstanceOf(IOException.class)
-        .hasMessageContaining("connection error");
+        .hasCauseInstanceOf(EtcdException.class);
   }
 
-  @Test(timeout = 1000)
+  @Test
   public void testWriteAfterClosed() throws Exception {
     Snapshot snapshot = maintenance.snapshot();
     snapshot.close();
     OutputStream out = new ByteArrayOutputStream();
-    assertThatThrownBy(() -> snapshot.write(out))
-        .isInstanceOf(IOException.class)
-        .hasMessageContaining("Snapshot has closed");
+    assertThatExceptionOfType(ClosedSnapshotException.class)
+        .isThrownBy(() -> snapshot.write(out));
   }
 
-  @Test(timeout = 1000)
+  @Test
   public void testWriteTwice() throws Exception {
     Snapshot snapshot = maintenance.snapshot();
     observerQueue.take().onCompleted();
     OutputStream out = new ByteArrayOutputStream();
     snapshot.write(out);
-    assertThatThrownBy(() -> snapshot.write(out))
-        .isInstanceOf(IOException.class)
-        .hasMessageContaining("write is called more than once");
+    assertThatExceptionOfType(IOException.class)
+        .isThrownBy(() -> snapshot.write(out))
+        .withMessageContaining("write is called more than once");
   }
 
-  @Test(timeout = 1000)
+  @Test
   public void testCloseWhenWrite() throws Exception {
     final Snapshot snapshot = maintenance.snapshot();
     final OutputStream out = new ByteArrayOutputStream();
@@ -123,27 +129,27 @@ public class MaintenanceUnitTest {
         Assert.fail("don't expect any exception, but got", e);
       }
     });
-    assertThatThrownBy(() -> snapshot.write(out))
-        .isInstanceOf(IOException.class);
+    assertThatExceptionOfType(ClosedSnapshotException.class)
+        .isThrownBy(() -> snapshot.write(out));
   }
 
-  @Test(timeout = 1000)
+  @Test
   public void testInterruptWrite() throws ExecutionException, InterruptedException {
     final Snapshot snapshot = maintenance.snapshot();
     final OutputStream out = new ByteArrayOutputStream();
-
-    Future<?> done = executor.submit(() ->
-        assertThatThrownBy(() -> snapshot.write(out))
-            .isInstanceOf(IOException.class)
-            .hasMessageContaining("write is interrupted"));
+    Future<?> done = executor.submit(
+        () ->
+            assertThatExceptionOfType(InterruptedException.class)
+                .isThrownBy(() -> snapshot.write(out))
+    );
     Thread.sleep(50);
     executor.shutdownNow();
     done.get();
   }
 
-  @Test(timeout = 1000)
+  @Test
   public void testWrite() throws Exception {
-    Snapshot snapshot = maintenance.snapshot();
+    final Snapshot snapshot = maintenance.snapshot();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     ByteString blob = ByteString.copyFromUtf8("blob");
 

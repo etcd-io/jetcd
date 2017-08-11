@@ -5,8 +5,6 @@ import com.coreos.jetcd.Cluster;
 import com.coreos.jetcd.cluster.Member;
 import com.coreos.jetcd.cluster.MemberAddResponse;
 import com.coreos.jetcd.cluster.MemberListResponse;
-import com.coreos.jetcd.exception.AuthFailedException;
-import com.coreos.jetcd.exception.ConnectException;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -41,7 +39,7 @@ public class ClusterClientTest {
    */
   @Test(dependsOnMethods = "testListCluster")
   public void testAddMember()
-      throws AuthFailedException, ConnectException, ExecutionException, InterruptedException, TimeoutException {
+      throws ExecutionException, InterruptedException, TimeoutException {
     Client client = Client.builder()
         .endpoints(Arrays.copyOfRange(TestConstants.endpoints, 0, 2))
         .build();
