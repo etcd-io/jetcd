@@ -1,13 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.coreos</groupId>
     <artifactId>jetcd</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
-    <name>Java Client for etcd V3</name>
+    <version>0.0.1</version>
     <packaging>bundle</packaging>
+
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Java Client for etcd V3</description>
+    <url>https://github.com/coreos/jetcd</url>
+
+
+  <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Fanmin Shi</name>
+            <email>fanmin.shi@coreos.com</email>
+            <organization>coreos</organization>
+            <organizationUrl>http://coreos.com/</organizationUrl>
+        </developer>
+        <developer>
+            <name>Luca Burgazzoli</name>
+            <email>lburgazzoli@gmail.com</email>
+        </developer>
+        <developer>
+            <name>Xiang Li</name>
+            <email>xiang.li@coreos.com</email>
+            <organization>coreos</organization>
+            <organizationUrl>http://coreos.com/</organizationUrl>
+        </developer>
+        <developer>
+            <name>Anthony Romano</name>
+            <email>anthony.romano@coreos.com</email>
+            <organization>coreos</organization>
+            <organizationUrl>http://coreos.com/</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/coreos/jetcd.git</connection>
+        <developerConnection>scm:git:https://github.com/coreos/jetcd.git</developerConnection>
+        <url>https://github.com/coreos/jetcd.git</url>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -26,6 +66,9 @@
         <os-maven-plugin.version>1.5.0.Final</os-maven-plugin.version>
         <protobuf-maven-plugin.version>0.5.0</protobuf-maven-plugin.version>
         <jacoco-maven-plugin.version>0.7.9</jacoco-maven-plugin.version>
+        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+        <nexus-staging-maven-plugin.version>1.6.7</nexus-staging-maven-plugin.version>
+        <maven-shade-plugin.version>3.0.0</maven-shade-plugin.version>
 
         <!-- dependencies -->
         <grpc.version>1.5.0</grpc.version>
@@ -184,20 +227,6 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>${maven-source-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <extensions>true</extensions>
@@ -218,9 +247,9 @@
                       <artifactId>plexus-compiler-javac-errorprone</artifactId>
                       <version>${plexus-compiler-javac-errorprone.version}</version>
                     </dependency>
-                    <!-- 
+                    <!--
                         override plexus-compiler-javac-errorprone's dependency on
-                        Error Prone with the latest version 
+                        Error Prone with the latest version
                     -->
                     <dependency>
                       <groupId>com.google.errorprone</groupId>
@@ -277,24 +306,6 @@
                 <configuration>
                     <encoding>UTF-8</encoding>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${maven-javadoc-plugin.version}</version>
-                <configuration>
-                    <aggregate>true</aggregate>
-                    <encoding>UTF-8</encoding>
-                    <excludePackageNames>*.protobuf.*</excludePackageNames>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <!--
                 generate maven dependencies versions file that can be used later
@@ -395,6 +406,95 @@
                 <additionalparam>-Xdoclint:none</additionalparam>
             </properties>
         </profile>
+
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${maven-source-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${maven-javadoc-plugin.version}</version>
+                        <configuration>
+                            <aggregate>true</aggregate>
+                            <encoding>UTF-8</encoding>
+                            <excludePackageNames>*.protobuf.*</excludePackageNames>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven-gpg-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                  <plugin>
+                    <groupId>org.sonatype.plugins</groupId>
+                    <artifactId>nexus-staging-maven-plugin</artifactId>
+                    <version>${nexus-staging-maven-plugin.version}</version>
+                    <extensions>true</extensions>
+                    <configuration>
+                        <serverId>ossrh</serverId>
+                        <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                        <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                    </configuration>
+                  </plugin>
+                  <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>${maven-shade-plugin.version}</version>
+                    <executions>
+                      <execution>
+                        <phase>package</phase>
+                        <goals>
+                          <goal>shade</goal>
+                        </goals>
+                      </execution>
+                    </executions>
+                  </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
 </project>
