@@ -2,7 +2,7 @@
 
 jetcd requires JDK 8 to work correctly.
 
-[![Build Status](https://travis-ci.org/coreos/jetcd.svg?branch=master)](https://travis-ci.org/coreos/jetcd)
+[![Build Status](https://img.shields.io/travis/coreos/jetcd.svg?style=flat-square)](https://travis-ci.org/coreos/jetcd) [![Maven Central](https://img.shields.io/maven-central/v/org.coreos/jetcd.svg)](https://maven-badges.herokuapp.com/maven-central/org.coreos/jetcd) [![License](http://img.shields.io/:license-apache-brightgreen.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
 ## Getting started
 
