@@ -1,7 +1,21 @@
+sudo: required
+install: true
 language: java
-sudo: false
+
+services:
+  - docker
+
+before_install:
+  - curl -s "https://get.sdkman.io" | bash
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk version
+  - mkdir -p "$HOME/.sdkman/etc"
+  - echo "sdkman_auto_answer=true" > "$HOME/.sdkman/etc/config"
+  - echo "sdkman_auto_selfupdate=true" >> "$HOME/.sdkman/etc/config"
+  - sdk install java 8u144-zulu
+
 script:
-  - scripts/run_etcd.sh 
-  - ./mvnw clean verify
-jdk:
-  - oraclejdk8
+  - ./etc/scripts/run_etcd_docker.sh
+  - sdk use java 8u144-zulu
+  - java -version
+  - ./mvnw clean install

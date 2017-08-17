@@ -2,7 +2,7 @@
 
 jetcd requires JDK 8 to work correctly.
 
-[![Build Status](https://travis-ci.org/coreos/jetcd.svg?branch=master)](https://travis-ci.org/coreos/jetcd)
+[![Build Status](https://img.shields.io/travis/coreos/jetcd/master.svg?style=flat-square)](https://travis-ci.org/coreos/jetcd) [![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg?style=flat-square)](http://www.apache.org/licenses/LICENSE-2.0.html) [![Maven Central](https://img.shields.io/maven-central/v/coreos/jetcd.svg?style=flat-square)](http://http://search.maven.org/#search%7Cga%7C1%7Ccom.coreos) [![GitHub release](https://img.shields.io/github/release/coreos/jetcd.svg?style=flat-square)](https://github.com/coreos/jetcd/releases)
 
 ## Getting started
 
@@ -33,7 +33,7 @@ For full etcd v3 API, plesase refer to [API_Reference](https://github.com/coreos
 The project is to be tested against a three node `etcd` setup, launched by the [scripts/run_etcd.sh](scripts/run_etcd.sh) shell script:
 
 ```
-./scripts/run_etcd.sh
+./etc/scripts/run_etcd.sh
 ```
 
 It should work on either macOS or Linux.
