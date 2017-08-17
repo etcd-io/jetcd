@@ -17,17 +17,18 @@
 package com.coreos.jetcd.maintenance;
 
 import com.coreos.jetcd.api.SnapshotResponse;
+import com.coreos.jetcd.exception.EtcdException;
 
 public class SnapshotReaderResponseWithError {
 
   public SnapshotResponse snapshotResponse;
-  public Exception error;
+  public EtcdException error;
 
   public SnapshotReaderResponseWithError(SnapshotResponse snapshotResponse) {
     this.snapshotResponse = snapshotResponse;
   }
 
-  public SnapshotReaderResponseWithError(Exception e) {
+  public SnapshotReaderResponseWithError(EtcdException e) {
     this.error = e;
   }
 }

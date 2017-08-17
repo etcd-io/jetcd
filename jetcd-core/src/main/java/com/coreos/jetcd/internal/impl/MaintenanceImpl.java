@@ -30,6 +30,7 @@ import com.coreos.jetcd.api.MaintenanceGrpc;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
 import com.coreos.jetcd.api.StatusRequest;
+import com.coreos.jetcd.exception.ClosedSnapshotException;
 import com.coreos.jetcd.exception.ErrorCode;
 import com.coreos.jetcd.maintenance.AlarmResponse;
 import com.coreos.jetcd.maintenance.DefragmentResponse;
@@ -40,13 +41,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of maintenance client.
@@ -168,7 +163,6 @@ class MaintenanceImpl implements Maintenance {
     // closeLock protects closed.
     private final Object closeLock = new Object();
     private StreamObserver<SnapshotResponse> snapshotObserver;
-    private ExecutorService executorService = Executors.newFixedThreadPool(2);
     private BlockingQueue<SnapshotReaderResponseWithError> snapshotResponseBlockingQueue =
         new LinkedBlockingQueue<>();
     private boolean closed = false;
@@ -220,16 +214,15 @@ class MaintenanceImpl implements Maintenance {
         }
         this.closed = true;
       }
-
-      this.snapshotObserver.onCompleted();
-      this.snapshotObserver = null;
-      this.snapshotResponseBlockingQueue.clear();
-      this.executorService.shutdownNow();
       try {
-        this.executorService.awaitTermination(1, TimeUnit.SECONDS);
+        this.snapshotResponseBlockingQueue.put(
+            new SnapshotReaderResponseWithError(newClosedSnapshotException())
+        );
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
+      this.snapshotObserver.onCompleted();
+      this.snapshotObserver = null;
     }
 
     @Override
@@ -248,37 +241,22 @@ class MaintenanceImpl implements Maintenance {
       }
       this.writeOnce = true;
 
-      Future<Integer> done = this.executorService.submit(() -> {
-        while (true) {
-          SnapshotReaderResponseWithError snapshotReaderResponseWithError =
-              this.snapshotResponseBlockingQueue.take();
-          if (snapshotReaderResponseWithError.error != null) {
+      while (true) {
+        SnapshotReaderResponseWithError snapshotReaderResponseWithError =
+            this.snapshotResponseBlockingQueue.take();
+        if (snapshotReaderResponseWithError.error != null) {
+          if (snapshotReaderResponseWithError.error instanceof ClosedSnapshotException) {
             throw snapshotReaderResponseWithError.error;
           }
-
-          SnapshotResponse snapshotResponse =
-              snapshotReaderResponseWithError.snapshotResponse;
-          if (snapshotResponse.getRemainingBytes() == -1) {
-            return -1;
-          }
-          os.write(snapshotResponse.getBlob().toByteArray());
+          throw new IOException(snapshotReaderResponseWithError.error);
         }
-      });
 
-      try {
-        done.get();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw e;
-      } catch (ExecutionException e) {
-        synchronized (this.closeLock) {
-          if (isClosed()) {
-            throw newClosedSnapshotException();
-          }
+        SnapshotResponse snapshotResponse =
+            snapshotReaderResponseWithError.snapshotResponse;
+        if (snapshotResponse.getRemainingBytes() == -1) {
+          return;
         }
-        throw new IOException(toEtcdException(e));
-      } catch (RejectedExecutionException e) {
-        throw newClosedSnapshotException();
+        os.write(snapshotResponse.getBlob().toByteArray());
       }
     }
   }
