@@ -1,10 +1,44 @@
-# jetcd - A Java client for etcd
-
-jetcd requires JDK 8 to work correctly.
-
+# jetcd - A Java Client for etcd
 [![Build Status](https://img.shields.io/travis/coreos/jetcd/master.svg?style=flat-square)](https://travis-ci.org/coreos/jetcd) [![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg?style=flat-square)](http://www.apache.org/licenses/LICENSE-2.0.html) [![Maven Central](https://img.shields.io/maven-central/v/coreos/jetcd.svg?style=flat-square)](http://http://search.maven.org/#search%7Cga%7C1%7Ccom.coreos) [![GitHub release](https://img.shields.io/github/release/coreos/jetcd.svg?style=flat-square)](https://github.com/coreos/jetcd/releases)
 
-## Getting started
+jetcd is the official java client for [etcd](https://github.com/coreos/etcd)v3.
+
+> Note: jetcd is work-in-progress and may break backward compatibility.
+
+## Java Versions
+
+Java 8 or above is required.
+
+## Download
+
+### Maven
+```xml
+<dependency>
+  <groupId>com.coreos</groupId>
+  <artifactId>jetcd-core</artifactId>
+  <version>0.0.1</version>
+</dependency>
+```
+
+Development snapshots are available in [Sonatypes's snapshot repository](https://oss.sonatype.org/content/repositories/snapshots/).
+
+### Gradle
+
+```
+dependencies {
+    compile 'com.coreos:jetcd-core:0.0.1'
+}
+``` 
+
+### Manual
+
+Download latest jetcd jar from [releases](https://github.com/coreos/jetcd/releases) and all its dependent jars:
+
+[grpc-core-1.5.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-core/1.5.0/)
+[grpc-netty-1.5.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-netty/1.5.0/)
+[grpc-protobuf-1.5.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-protobuf/1.5.0/)
+[grpc-stub-1.5.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-stub/1.5.0/)
+[slf4j-api-1.7.2.jar](http://repo1.maven.org/maven2/org/apache/directory/studio/org.slf4j.api/1.7.2/)
 
 ### Usage
 
@@ -27,6 +61,16 @@ DeleteRangeResponse deleteRangeResponse = kvClient.delete(key).get();
 ```
 
 For full etcd v3 API, plesase refer to [API_Reference](https://github.com/coreos/etcd/blob/master/Documentation/dev-guide/api_reference_v3.md).
+
+### Examples
+
+The [examples](https://github.com/coreos/jetcd/tree/master/jetcd-examples) are standalone projects that show usage of jetcd.
+
+## Versioning
+
+The project follows [Semantic Versioning](http://semver.org/).
+
+The current major version is zero (0.y.z). Anything may change at any time. The public API should not be considered stable.
 
 ## Running tests
 
@@ -85,6 +129,14 @@ Tests run: 37, Failures: 0, Errors: 0, Skipped: 0
 
 * Mailing list: [etcd-dev](https://groups.google.com/forum/?hl=en#!forum/etcd-dev)
 * IRC: #[etcd](irc://irc.freenode.org:6667/#etcd) on freenode.org
+
+## Contributing
+
+See [CONTRIBUTING](https://github.com/coreos/jetcd/blob/master/CONTRIBUTING.md) for details on submitting patches and the contribution workflow.
+
+## Reporting bugs
+
+See [reporting bugs](https://github.com/coreos/etcd/blob/master/Documentation/reporting_bugs.md) for details about reporting any issues.
 
 ## License
 
