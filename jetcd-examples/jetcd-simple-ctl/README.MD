@@ -1,8 +1,8 @@
 ### jetcd-watch-example
 
-Start an etcd cluster .
+Download and start an etcd node from [instruction](https://github.com/coreos/etcd/blob/master/Documentation/dl_build.md)
 
-`./etc/scritps/run_etcd_docker.sh`
+> Note: For windows machine, run `.\mvnw.cmd` instead of `./mvnw`
 
 Build the example jar.
 
