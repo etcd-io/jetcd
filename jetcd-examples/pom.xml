@@ -32,6 +32,7 @@
 
     <modules>
         <module>jetcd-watch-example</module>
+        <module>jetcd-simple-ctl</module>
     </modules>
 
 </project>
