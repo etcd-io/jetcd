@@ -1,5 +1,8 @@
 # jetcd - A Java Client for etcd
-[![Build Status](https://img.shields.io/travis/coreos/jetcd/master.svg?style=flat-square)](https://travis-ci.org/coreos/jetcd) [![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg?style=flat-square)](http://www.apache.org/licenses/LICENSE-2.0.html) [![Maven Central](https://img.shields.io/maven-central/v/coreos/jetcd.svg?style=flat-square)](http://http://search.maven.org/#search%7Cga%7C1%7Ccom.coreos) [![GitHub release](https://img.shields.io/github/release/coreos/jetcd.svg?style=flat-square)](https://github.com/coreos/jetcd/releases)
+[![Build Status](https://img.shields.io/travis/coreos/jetcd/master.svg?style=flat-square)](https://travis-ci.org/coreos/jetcd)
+[![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg?style=flat-square)](http://www.apache.org/licenses/LICENSE-2.0.html)
+[![Maven Central](https://img.shields.io/maven-central/v/com/coreos/jetcd-core.svg?style=flat-square)](https://search.maven.org/#search%7Cga%7C1%7Ccoreos)
+[![GitHub release](https://img.shields.io/github/release/coreos/jetcd.svg?style=flat-square)](https://github.com/coreos/jetcd/releases)
 
 jetcd is the official java client for [etcd](https://github.com/coreos/etcd)v3.
 
@@ -32,7 +35,7 @@ dependencies {
 
 ### Manual
 
-Download latest jetcd jar from [releases](https://github.com/coreos/jetcd/releases) and all its dependent jars:
+Download latest jetcd-core jar from [Maven](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.coreos%22%20AND%20v%3A%220.0.1%22) and all its dependent jars:
 
 [grpc-core-1.5.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-core/1.5.0/)
 [grpc-netty-1.5.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-netty/1.5.0/)
@@ -74,7 +77,7 @@ The current major version is zero (0.y.z). Anything may change at any time. The 
 
 ## Running tests
 
-The project is to be tested against a three node `etcd` setup, launched by the [scripts/run_etcd.sh](scripts/run_etcd.sh) shell script:
+The project is to be tested against a three node `etcd` setup, launched by the [scripts/run_etcd.sh](etc/scripts/run_etcd.sh) shell script:
 
 ```
 ./etc/scripts/run_etcd.sh
