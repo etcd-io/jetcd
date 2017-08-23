@@ -1,4 +1,4 @@
-### jetcd-watch-example
+### jetcd-simple-ctl
 
 Download and start an etcd node from [instruction](https://github.com/coreos/etcd/blob/master/Documentation/dl_build.md)
 
