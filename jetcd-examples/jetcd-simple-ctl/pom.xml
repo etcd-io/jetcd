@@ -23,7 +23,7 @@
   <parent>
     <groupId>com.coreos</groupId>
     <artifactId>jetcd-examples</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.0.1</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -63,17 +63,30 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <configuration>
+          <finalName>jetcdctl</finalName>
+        </configuration>
         <executions>
           <execution>
+            <phase>package</phase>
             <goals>
-              <goal>java</goal>
+              <goal>shade</goal>
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.0.2</version>
         <configuration>
-          <mainClass>com.coreos.jetcd.examples.jetcdctl.Main</mainClass>
+          <archive>
+            <manifest>
+              <mainClass>com.coreos.jetcd.examples.jetcdctl.Main</mainClass>
+            </manifest>
+          </archive>
         </configuration>
       </plugin>
     </plugins>
