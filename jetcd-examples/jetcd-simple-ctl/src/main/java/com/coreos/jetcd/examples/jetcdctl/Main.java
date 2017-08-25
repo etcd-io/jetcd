@@ -46,7 +46,8 @@ public class Main {
 
     jc.parse(args);
 
-    if (main.help) {
+    String parsedCmd = jc.getParsedCommand();
+    if (parsedCmd == null || main.help) {
       jc.usage();
       return;
     }
@@ -54,21 +55,21 @@ public class Main {
     Client client = Client.builder()
         .endpoints(main.endpoints.split(","))
         .build();
-
-    if (jc.getParsedCommand() == null) {
-      return;
-    }
-
-    switch (jc.getParsedCommand()) {
-      case "get":
-        getCmd.get(client);
-        break;
-      case "put":
-        putCmd.put(client);
-        break;
-      case "watch":
-        watchCmd.watch(client);
-        break;
+    try {
+      switch (parsedCmd) {
+        case "get":
+          getCmd.get(client);
+          break;
+        case "put":
+          putCmd.put(client);
+          break;
+        case "watch":
+          watchCmd.watch(client);
+          break;
+      }
+    } catch (Exception e) {
+      LOGGER.error(parsedCmd + " Error {}", e);
+      System.exit(1);
     }
     client.close();
   }

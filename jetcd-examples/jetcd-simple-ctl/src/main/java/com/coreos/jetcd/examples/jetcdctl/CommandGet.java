@@ -37,16 +37,12 @@ class CommandGet {
   private Long rev = 0L;
 
   // do executes the "get" command.
-  void get(Client client) {
-    try {
-      GetResponse getResponse = client.getKVClient().get(
-          ByteSequence.fromString(key),
-          GetOption.newBuilder().withRevision(rev).build()
-      ).get();
-      LOGGER.info(key);
-      LOGGER.info(getResponse.getKvs().get(0).getValue().toStringUtf8());
-    } catch (Exception e) {
-      LOGGER.error("Put Error {}", e);
-    }
+  void get(Client client) throws Exception {
+    GetResponse getResponse = client.getKVClient().get(
+        ByteSequence.fromString(key),
+        GetOption.newBuilder().withRevision(rev).build()
+    ).get();
+    LOGGER.info(key);
+    LOGGER.info(getResponse.getKvs().get(0).getValue().toStringUtf8());
   }
 }

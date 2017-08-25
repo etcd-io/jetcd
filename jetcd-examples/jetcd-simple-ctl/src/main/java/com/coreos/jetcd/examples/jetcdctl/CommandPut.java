@@ -33,15 +33,11 @@ class CommandPut {
   List<String> keyValue;
 
   // put executes the "put" command.
-  void put(Client client) {
-    try {
-      client.getKVClient().put(
-          ByteSequence.fromString(keyValue.get(0)),
-          ByteSequence.fromString(keyValue.get(1))
-      ).get();
-      LOGGER.info("OK");
-    } catch (Exception e) {
-      LOGGER.error("Put Error {}", e);
-    }
+  void put(Client client) throws Exception {
+    client.getKVClient().put(
+        ByteSequence.fromString(keyValue.get(0)),
+        ByteSequence.fromString(keyValue.get(1))
+    ).get();
+    LOGGER.info("OK");
   }
 }
