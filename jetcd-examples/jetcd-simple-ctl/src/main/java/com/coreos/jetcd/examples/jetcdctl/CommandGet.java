@@ -36,12 +36,16 @@ class CommandGet {
   @Parameter(names = "--rev", description = "Specify the kv revision")
   private Long rev = 0L;
 
-  // do executes the "get" command.
+  // get executes the "get" command.
   void get(Client client) throws Exception {
     GetResponse getResponse = client.getKVClient().get(
         ByteSequence.fromString(key),
         GetOption.newBuilder().withRevision(rev).build()
     ).get();
+    if (getResponse.getKvs().isEmpty()) {
+      // key does not exist
+      return;
+    }
     LOGGER.info(key);
     LOGGER.info(getResponse.getKvs().get(0).getValue().toStringUtf8());
   }
