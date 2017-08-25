@@ -39,7 +39,7 @@ class CommandWatch {
   Long rev = 0L;
 
   // watch executes the "watch" command.
-  void watch(Client client) {
+  void watch(Client client) throws Exception {
     Watcher watcher = null;
     try {
       watcher = client.getWatchClient().watch(
@@ -60,7 +60,7 @@ class CommandWatch {
       if (watcher != null) {
         watcher.close();
       }
-      LOGGER.error("Watch Error {}", e);
+      throw e;
     }
   }
 }
