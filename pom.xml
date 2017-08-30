@@ -459,6 +459,7 @@
                     <configuration>
                         <header>etc/license.txt</header>
                         <excludes>
+                            <exclude>**/ErrorCode.java</exclude>
                             <exclude>LICENSE</exclude>
                             <exclude>MAINTAINERS</exclude>
                             <exclude>CONTRIBUTING.md</exclude>
