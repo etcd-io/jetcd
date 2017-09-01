@@ -72,7 +72,7 @@ public class AuthClientTest {
   @BeforeTest
   public void setupEnv() {
     Client client = Client.builder()
-        .endpoints("http://localhost:2379")
+        .endpoints("http://localhost:12379")
         .build();
 
     this.authDisabledKVClient = client.getKVClient();
@@ -165,11 +165,11 @@ public class AuthClientTest {
   @Test(dependsOnMethods = "testEnableAuth", groups = "authEnable", priority = 1)
   public void setupAuthClient() {
     this.userClient = Client.builder()
-        .endpoints("http://localhost:2379")
+        .endpoints("http://localhost:12379")
         .user(user)
         .password(userNewPass).build();
     this.rootClient = Client.builder()
-        .endpoints("http://localhost:2379")
+        .endpoints("http://localhost:12379")
         .user(root)
         .password(rootPass).build();
   }
