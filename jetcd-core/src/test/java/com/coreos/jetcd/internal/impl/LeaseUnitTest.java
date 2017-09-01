@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.mockito.ArgumentMatcher;
@@ -115,6 +116,8 @@ public class LeaseUnitTest {
 
   // TODO: sometime this.responseObserverRef.get().onNext(lrp) blocks even though client has received msg;
   // seems like a bug in grpc test framework.
+  @Ignore
+  @Test
   public void testKeepAliveOnceStreamCloseOnSuccess()
       throws ExecutionException, InterruptedException {
     CompletableFuture<com.coreos.jetcd.lease.LeaseKeepAliveResponse> lrpFuture = this.leaseCli
@@ -131,6 +134,8 @@ public class LeaseUnitTest {
 
   // TODO: sometime this.responseObserverRef.get().onNext(lrp) blocks even though client has received msg;
   // seems like a bug in grpc test framework.
+  @Ignore
+  @Test
   public void testKeepAliveListenOnOneResponse() throws InterruptedException {
     KeepAliveListener listener = this.leaseCli.keepAlive(LEASE_ID);
     LeaseKeepAliveResponse lrp = LeaseKeepAliveResponse
@@ -245,6 +250,8 @@ public class LeaseUnitTest {
 
   // TODO: sometime this.responseObserverRef.get().onNext(lrp) blocks even though client has received msg;
   // seems like a bug in grpc test framework.
+  @Ignore
+  @Test
   public void testKeepAliveReceivesExpiredLease() {
     KeepAliveListener listener = this.leaseCli.keepAlive(LEASE_ID);
     LeaseKeepAliveResponse lrp = LeaseKeepAliveResponse
