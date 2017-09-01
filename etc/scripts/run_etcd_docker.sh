@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-ETCD_VERSION="v3.2.5"
+ETCD_VERSION="v3.2"
 
 docker network ls | grep etcd 2>&1 > /dev/null
 if [ $? -ne 0 ]; then
@@ -23,7 +23,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Pull docker
-docker pull quay.io/coreos/etcd:${ETCD_VERSION}
+docker pull gcr.io/etcd-development/etcd:${ETCD_VERSION}
 
 docker run \
     --detach \
@@ -31,7 +31,7 @@ docker run \
     --name etcd1 \
     --network etcd \
     --publish 12379:2379 \
-    quay.io/coreos/etcd:${ETCD_VERSION} \
+    gcr.io/etcd-development/etcd:${ETCD_VERSION} \
     etcd \
         -name etcd1 \
         -advertise-client-urls "http://127.0.0.1:2379" \
@@ -48,7 +48,7 @@ docker run \
     --name etcd2 \
     --network etcd \
     --publish 22379:2379 \
-    quay.io/coreos/etcd:${ETCD_VERSION} \
+    gcr.io/etcd-development/etcd:${ETCD_VERSION} \
     etcd \
         -name etcd2 \
         -advertise-client-urls "http://127.0.0.1:2379" \
@@ -66,7 +66,7 @@ docker run \
     --name etcd3 \
     --network etcd \
     --publish 32379:2379 \
-    quay.io/coreos/etcd:${ETCD_VERSION} \
+    gcr.io/etcd-development/etcd:${ETCD_VERSION} \
     etcd \
         -name etcd3 \
         -advertise-client-urls "http://127.0.0.1:2379" \
@@ -83,7 +83,7 @@ docker run \
     --name etcd-proxy \
     --network etcd \
     --publish 2379:2379 \
-    quay.io/coreos/etcd:${ETCD_VERSION} \
+    gcr.io/etcd-development/etcd:${ETCD_VERSION} \
     etcd \
         grpc-proxy \
         start \
