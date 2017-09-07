@@ -111,6 +111,9 @@ service Maintenance {
 
   // Snapshot sends a snapshot of the entire backend from a member over a stream to a client.
   rpc Snapshot(SnapshotRequest) returns (stream SnapshotResponse) {}
+
+  // MoveLeader requests current leader node to transfer its leadership to transferee.
+  rpc MoveLeader(MoveLeaderRequest) returns (MoveLeaderResponse) {}
 }
 
 service Auth {
@@ -624,6 +627,15 @@ message DefragmentRequest {
 }
 
 message DefragmentResponse {
+  ResponseHeader header = 1;
+}
+
+message MoveLeaderRequest {
+  // targetID is the node ID for the new leader.
+  uint64 targetID = 1;
+}
+
+message MoveLeaderResponse {
   ResponseHeader header = 1;
 }
 
