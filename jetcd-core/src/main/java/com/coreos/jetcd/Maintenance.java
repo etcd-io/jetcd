@@ -20,6 +20,7 @@ import com.coreos.jetcd.internal.impl.CloseableClient;
 import com.coreos.jetcd.maintenance.AlarmMember;
 import com.coreos.jetcd.maintenance.AlarmResponse;
 import com.coreos.jetcd.maintenance.DefragmentResponse;
+import com.coreos.jetcd.maintenance.HashKVResponse;
 import com.coreos.jetcd.maintenance.MoveLeaderResponse;
 import com.coreos.jetcd.maintenance.StatusResponse;
 import java.io.Closeable;
@@ -82,6 +83,14 @@ public interface Maintenance extends CloseableClient {
    * get the status of a member by its endpoint.
    */
   CompletableFuture<StatusResponse> statusMember(String endpoint);
+
+
+  /**
+   * returns a hash of the KV state at the time of the RPC.
+   * If revision is zero, the hash is computed on all keys. If the revision
+   * is non-zero, the hash is computed on all keys at or below the given revision.
+   */
+  CompletableFuture<HashKVResponse> hashKV(String endpoint, long rev);
 
   /**
    * retrieves backend snapshot.

@@ -73,6 +73,11 @@ public class MaintenanceTest {
     }
   }
 
+  @Test
+  public void testHashKV() throws ExecutionException, InterruptedException {
+    maintenance.hashKV(TestConstants.endpoints[0], 0).get();
+  }
+
   /**
    * test alarm list function
    * TODO trigger alarm, valid whether listAlarms will work.

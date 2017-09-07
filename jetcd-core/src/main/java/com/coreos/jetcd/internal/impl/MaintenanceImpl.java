@@ -26,6 +26,7 @@ import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.api.AlarmRequest;
 import com.coreos.jetcd.api.AlarmType;
 import com.coreos.jetcd.api.DefragmentRequest;
+import com.coreos.jetcd.api.HashKVRequest;
 import com.coreos.jetcd.api.MaintenanceGrpc;
 import com.coreos.jetcd.api.MoveLeaderRequest;
 import com.coreos.jetcd.api.SnapshotRequest;
@@ -34,6 +35,7 @@ import com.coreos.jetcd.api.StatusRequest;
 import com.coreos.jetcd.exception.ErrorCode;
 import com.coreos.jetcd.maintenance.AlarmResponse;
 import com.coreos.jetcd.maintenance.DefragmentResponse;
+import com.coreos.jetcd.maintenance.HashKVResponse;
 import com.coreos.jetcd.maintenance.MoveLeaderResponse;
 import com.coreos.jetcd.maintenance.SnapshotReaderResponseWithError;
 import com.coreos.jetcd.maintenance.StatusResponse;
@@ -151,6 +153,19 @@ class MaintenanceImpl implements Maintenance {
         stub -> Util.toCompletableFuture(
             stub.status(StatusRequest.getDefaultInstance()),
             StatusResponse::new,
+            this.connectionManager.getExecutorService()
+        )
+    );
+  }
+
+  @Override
+  public CompletableFuture<HashKVResponse> hashKV(String endpoint, long rev) {
+    return this.connectionManager.withNewChannel(
+        endpoint,
+        MaintenanceGrpc::newFutureStub,
+        stub -> Util.toCompletableFuture(
+            stub.hashKV(HashKVRequest.newBuilder().setRevision(rev).build()),
+            HashKVResponse::new,
             this.connectionManager.getExecutorService()
         )
     );
