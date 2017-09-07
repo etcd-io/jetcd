@@ -85,4 +85,6 @@ public class MaintenanceTest {
   void testDefragment() throws ExecutionException, InterruptedException {
     maintenance.defragmentMember(TestConstants.endpoints[0]).get();
   }
+
+  // TODO: add test for MoveLeader when etcd cluster can be spawned per test case.
 }

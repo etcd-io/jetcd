@@ -27,12 +27,14 @@ import com.coreos.jetcd.api.AlarmRequest;
 import com.coreos.jetcd.api.AlarmType;
 import com.coreos.jetcd.api.DefragmentRequest;
 import com.coreos.jetcd.api.MaintenanceGrpc;
+import com.coreos.jetcd.api.MoveLeaderRequest;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
 import com.coreos.jetcd.api.StatusRequest;
 import com.coreos.jetcd.exception.ErrorCode;
 import com.coreos.jetcd.maintenance.AlarmResponse;
 import com.coreos.jetcd.maintenance.DefragmentResponse;
+import com.coreos.jetcd.maintenance.MoveLeaderResponse;
 import com.coreos.jetcd.maintenance.SnapshotReaderResponseWithError;
 import com.coreos.jetcd.maintenance.StatusResponse;
 import io.grpc.stub.StreamObserver;
@@ -159,6 +161,19 @@ class MaintenanceImpl implements Maintenance {
     SnapshotImpl snapshot = new SnapshotImpl();
     this.streamStub.snapshot(SnapshotRequest.getDefaultInstance(), snapshot.getSnapshotObserver());
     return snapshot;
+  }
+
+  @Override
+  public CompletableFuture<MoveLeaderResponse> moveLeader(long transfereeID) {
+    return Util.toCompletableFuture(
+        this.stub.moveLeader(
+            MoveLeaderRequest.newBuilder()
+            .setTargetID(transfereeID)
+            .build()
+        ),
+        MoveLeaderResponse::new,
+        this.connectionManager.getExecutorService()
+    );
   }
 
   static class SnapshotImpl implements Snapshot {

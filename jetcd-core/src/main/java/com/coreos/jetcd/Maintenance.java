@@ -20,6 +20,7 @@ import com.coreos.jetcd.internal.impl.CloseableClient;
 import com.coreos.jetcd.maintenance.AlarmMember;
 import com.coreos.jetcd.maintenance.AlarmResponse;
 import com.coreos.jetcd.maintenance.DefragmentResponse;
+import com.coreos.jetcd.maintenance.MoveLeaderResponse;
 import com.coreos.jetcd.maintenance.StatusResponse;
 import java.io.Closeable;
 import java.io.IOException;
@@ -124,4 +125,9 @@ public interface Maintenance extends CloseableClient {
     void write(OutputStream os) throws IOException, InterruptedException;
   }
 
+  /**
+   * MoveLeader requests current leader to transfer its leadership to the transferee.
+   * Request must be made to the leader.
+   */
+  CompletableFuture<MoveLeaderResponse> moveLeader(long transfereeID);
 }
