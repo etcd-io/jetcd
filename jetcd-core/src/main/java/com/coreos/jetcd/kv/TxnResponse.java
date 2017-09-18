@@ -53,7 +53,7 @@ public class TxnResponse extends AbstractResponse<com.coreos.jetcd.api.TxnRespon
   public synchronized List<DeleteResponse> getDeleteResponses() {
     if (deleteResponses == null) {
       deleteResponses = getResponse().getResponsesList().stream()
-          .filter((responseOp) -> responseOp.getResponseCase() != RESPONSE_DELETE_RANGE)
+          .filter((responseOp) -> responseOp.getResponseCase() == RESPONSE_DELETE_RANGE)
           .map(responseOp -> new DeleteResponse(responseOp.getResponseDeleteRange()))
           .collect(Collectors.toList());
     }
@@ -67,7 +67,7 @@ public class TxnResponse extends AbstractResponse<com.coreos.jetcd.api.TxnRespon
   public synchronized List<GetResponse> getGetResponses() {
     if (getResponses == null) {
       getResponses = getResponse().getResponsesList().stream()
-          .filter((responseOp) -> responseOp.getResponseCase() != RESPONSE_RANGE)
+          .filter((responseOp) -> responseOp.getResponseCase() == RESPONSE_RANGE)
           .map(responseOp -> new GetResponse(responseOp.getResponseRange()))
           .collect(Collectors.toList());
     }
@@ -81,7 +81,7 @@ public class TxnResponse extends AbstractResponse<com.coreos.jetcd.api.TxnRespon
   public synchronized List<PutResponse> getPutResponses() {
     if (putResponses == null) {
       putResponses = getResponse().getResponsesList().stream()
-          .filter((responseOp) -> responseOp.getResponseCase() != RESPONSE_PUT)
+          .filter((responseOp) -> responseOp.getResponseCase() == RESPONSE_PUT)
           .map(responseOp -> new PutResponse(responseOp.getResponsePut()))
           .collect(Collectors.toList());
     }
