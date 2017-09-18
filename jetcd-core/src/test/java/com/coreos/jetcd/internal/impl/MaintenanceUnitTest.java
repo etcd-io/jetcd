@@ -20,11 +20,13 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.coreos.jetcd.Client;
+import com.coreos.jetcd.Cluster;
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.Maintenance.Snapshot;
 import com.coreos.jetcd.api.MaintenanceGrpc.MaintenanceImplBase;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
+import com.coreos.jetcd.cluster.MemberListResponse;
 import com.coreos.jetcd.exception.ClosedSnapshotException;
 import com.coreos.jetcd.exception.EtcdException;
 import com.google.protobuf.ByteString;

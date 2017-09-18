@@ -126,7 +126,7 @@ public interface Maintenance extends CloseableClient {
   }
 
   /**
-   * MoveLeader requests current leader to transfer its leadership to the transferee.
+   * moveLeader requests current leader to transfer its leadership to the transferee.
    * Request must be made to the leader.
    */
   CompletableFuture<MoveLeaderResponse> moveLeader(long transfereeID);
