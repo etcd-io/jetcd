@@ -16,13 +16,18 @@
 package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.Client;
+import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.Maintenance.Snapshot;
+import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.maintenance.StatusResponse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -82,9 +87,29 @@ public class MaintenanceTest {
    * test defragmentMember function
    */
   @Test
-  void testDefragment() throws ExecutionException, InterruptedException {
+  public void testDefragment() throws ExecutionException, InterruptedException {
     maintenance.defragmentMember(TestConstants.endpoints[0]).get();
   }
 
-  // TODO: add test for MoveLeader when etcd cluster can be spawned per test case.
+  @Test
+  public void testMoveLeader() throws ExecutionException, InterruptedException {
+    String leaderEndpoint = null;
+    List<Long> followers = new ArrayList<>();
+    for(String ep : TestConstants.endpoints){
+      StatusResponse statusResponse = maintenance.statusMember(ep).get();
+      long memberId = statusResponse.getHeader().getMemberId();
+      if (memberId == statusResponse.getLeader()) {
+        leaderEndpoint = ep;
+        continue;
+      }
+      followers.add(memberId);
+    }
+    if (leaderEndpoint == null) {
+      test.fail("leader not found");
+    }
+
+    try(Client client = Client.builder().endpoints(leaderEndpoint).build()) {
+      client.getMaintenanceClient().moveLeader(followers.get(0)).get();
+    }
+  }
 }

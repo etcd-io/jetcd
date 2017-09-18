@@ -168,8 +168,8 @@ class MaintenanceImpl implements Maintenance {
     return Util.toCompletableFuture(
         this.stub.moveLeader(
             MoveLeaderRequest.newBuilder()
-            .setTargetID(transfereeID)
-            .build()
+                .setTargetID(transfereeID)
+                .build()
         ),
         MoveLeaderResponse::new,
         this.connectionManager.getExecutorService()
