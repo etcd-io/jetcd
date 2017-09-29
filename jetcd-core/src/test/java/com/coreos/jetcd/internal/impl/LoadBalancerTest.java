@@ -35,17 +35,15 @@ public class LoadBalancerTest {
 
   @Test
   public void testPickFirstBalancerFactory() throws Exception {
-    Client client = Client.builder()
-        .endpoints(TestConstants.endpoints)
-        .loadBalancerFactory(PickFirstBalancerFactory.getInstance())
-        .build();
+    try (Client client = Client.builder()
+            .endpoints(TestConstants.endpoints)
+            .loadBalancerFactory(PickFirstBalancerFactory.getInstance())
+            .build();
 
-    KV kv = client.getKVClient();
+         KV kv = client.getKVClient()) {
+      PutResponse response;
+      long lastMemberId = 0;
 
-    PutResponse response;
-    long lastMemberId = 0;
-
-    try {
       for (int i = 0; i < TestConstants.endpoints.length * 2; i++) {
         response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
 
@@ -55,26 +53,21 @@ public class LoadBalancerTest {
 
         assertThat(response.getHeader().getMemberId()).isEqualTo(lastMemberId);
       }
-    } finally {
-      kv.close();
-      client.close();
     }
   }
 
   @Test
   public void testRoundRobinLoadBalancerFactory() throws Exception {
-    Client client = Client.builder()
-        .endpoints(TestConstants.endpoints)
-        .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
-        .build();
 
-    KV kv = client.getKVClient();
+    try (Client client = Client.builder()
+            .endpoints(TestConstants.endpoints)
+            .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
+            .build();
+         KV kv = client.getKVClient()) {
+      PutResponse response;
+      long lastMemberId = 0;
+      long differences = 0;
 
-    PutResponse response;
-    long lastMemberId = 0;
-    long differences = 0;
-
-    try {
       for (int i = 0; i < TestConstants.endpoints.length; i++) {
         response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
 
@@ -86,9 +79,6 @@ public class LoadBalancerTest {
       }
 
       assertThat(differences).isNotEqualTo(lastMemberId);
-    } finally {
-      kv.close();
-      client.close();
     }
   }
 }

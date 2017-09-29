@@ -105,34 +105,33 @@ public class WatchUnitTest {
 
   @Test
   public void testWatchOnSendingWatchCreateRequest() {
-    Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT);
-    // expects a WatchCreateRequest is created.
-    verify(this.requestStreamObserverMock, timeout(100).times(1))
-        .onNext(argThat(hasCreateKey(KEY)));
-    watcher.close();
+    try (Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT)) {
+      // expects a WatchCreateRequest is created.
+      verify(this.requestStreamObserverMock, timeout(100).times(1))
+              .onNext(argThat(hasCreateKey(KEY)));
+    }
   }
 
   @Test
   public void testWatcherListenOnResponse() throws InterruptedException {
-    Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT);
-    WatchResponse createdResponse = WatchResponse.newBuilder()
-        .setCreated(true)
-        .setWatchId(0)
-        .build();
-    responseObserverRef.get().onNext(createdResponse);
+    try (Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT)) {
+      WatchResponse createdResponse = WatchResponse.newBuilder()
+              .setCreated(true)
+              .setWatchId(0)
+              .build();
+      responseObserverRef.get().onNext(createdResponse);
 
-    WatchResponse putResponse = WatchResponse
-        .newBuilder()
-        .setWatchId(0)
-        .addEvents(Event.newBuilder().setType(EventType.PUT).build()).build();
-    responseObserverRef.get().onNext(putResponse);
+      WatchResponse putResponse = WatchResponse
+              .newBuilder()
+              .setWatchId(0)
+              .addEvents(Event.newBuilder().setType(EventType.PUT).build()).build();
+      responseObserverRef.get().onNext(putResponse);
 
-    com.coreos.jetcd.watch.WatchResponse actualResponse = watcher.listen();
-    assertThat(actualResponse.getEvents().size()).isEqualTo(1);
-    assertThat(actualResponse.getEvents().get(0).getEventType())
-        .isEqualTo(WatchEvent.EventType.PUT);
-
-    watcher.close();
+      com.coreos.jetcd.watch.WatchResponse actualResponse = watcher.listen();
+      assertThat(actualResponse.getEvents().size()).isEqualTo(1);
+      assertThat(actualResponse.getEvents().get(0).getEventType())
+              .isEqualTo(WatchEvent.EventType.PUT);
+    }
   }
 
   @Test
@@ -180,210 +179,198 @@ public class WatchUnitTest {
 
   @Test
   public void testWatcherListenForMultiplePuts() throws InterruptedException {
-    Watcher watcher = watchClient.watch(KEY);
-    WatchResponse createdResponse = WatchResponse.newBuilder()
-        .setCreated(true)
-        .setWatchId(0)
-        .build();
-    responseObserverRef.get().onNext(createdResponse);
+    try (Watcher watcher = watchClient.watch(KEY)) {
+      WatchResponse createdResponse = WatchResponse.newBuilder()
+              .setCreated(true)
+              .setWatchId(0)
+              .build();
+      responseObserverRef.get().onNext(createdResponse);
 
-    WatchResponse putResponse = WatchResponse
-        .newBuilder()
-        .setWatchId(0)
-        .addEvents(Event.newBuilder()
-            .setType(EventType.PUT)
-            .setKv(KeyValue.newBuilder()
-                .setModRevision(2)
-                .build())
-            .build())
-        .build();
-    responseObserverRef.get().onNext(putResponse);
+      WatchResponse putResponse = WatchResponse
+              .newBuilder()
+              .setWatchId(0)
+              .addEvents(Event.newBuilder()
+                      .setType(EventType.PUT)
+                      .setKv(KeyValue.newBuilder()
+                              .setModRevision(2)
+                              .build())
+                      .build())
+              .build();
+      responseObserverRef.get().onNext(putResponse);
 
-    com.coreos.jetcd.watch.WatchResponse actualResponse = watcher.listen();
-    assertEqualOnWatchResponses(actualResponse,
-        new com.coreos.jetcd.watch.WatchResponse(putResponse));
+      com.coreos.jetcd.watch.WatchResponse actualResponse = watcher.listen();
+      assertEqualOnWatchResponses(actualResponse,
+              new com.coreos.jetcd.watch.WatchResponse(putResponse));
 
-    putResponse = WatchResponse
-        .newBuilder()
-        .setWatchId(0)
-        .addEvents(Event.newBuilder()
-            .setType(EventType.PUT)
-            .setKv(KeyValue.newBuilder()
-                .setModRevision(3)
-                .build())
-            .build())
-        .build();
-    responseObserverRef.get().onNext(putResponse);
+      putResponse = WatchResponse
+              .newBuilder()
+              .setWatchId(0)
+              .addEvents(Event.newBuilder()
+                      .setType(EventType.PUT)
+                      .setKv(KeyValue.newBuilder()
+                              .setModRevision(3)
+                              .build())
+                      .build())
+              .build();
+      responseObserverRef.get().onNext(putResponse);
 
-    actualResponse = watcher.listen();
-    assertEqualOnWatchResponses(actualResponse,
-        new com.coreos.jetcd.watch.WatchResponse(putResponse));
+      actualResponse = watcher.listen();
+      assertEqualOnWatchResponses(actualResponse,
+              new com.coreos.jetcd.watch.WatchResponse(putResponse));
 
-    watcher.close();
+    }
   }
 
   @Test
   public void testWatcherDelete() throws InterruptedException {
-    Watcher watcher = watchClient.watch(KEY);
+    try (Watcher watcher = watchClient.watch(KEY)) {
+      WatchResponse createdResponse = WatchResponse
+              .newBuilder()
+              .setCreated(true)
+              .setWatchId(0)
+              .build();
+      responseObserverRef.get().onNext(createdResponse);
 
-    WatchResponse createdResponse = WatchResponse
-        .newBuilder()
-        .setCreated(true)
-        .setWatchId(0)
-        .build();
-    responseObserverRef.get().onNext(createdResponse);
+      WatchResponse deleteResponse = WatchResponse
+              .newBuilder()
+              .setWatchId(0)
+              .addEvents(Event
+                      .newBuilder()
+                      .setType(EventType.DELETE)
+                      .build())
+              .build();
+      responseObserverRef.get().onNext(deleteResponse);
 
-    WatchResponse deleteResponse = WatchResponse
-        .newBuilder()
-        .setWatchId(0)
-        .addEvents(Event
-            .newBuilder()
-            .setType(EventType.DELETE)
-            .build())
-        .build();
-    responseObserverRef.get().onNext(deleteResponse);
-
-    com.coreos.jetcd.watch.WatchResponse actualResponse = watcher.listen();
-    assertEqualOnWatchResponses(actualResponse,
-        new com.coreos.jetcd.watch.WatchResponse(deleteResponse));
-    watcher.close();
+      com.coreos.jetcd.watch.WatchResponse actualResponse = watcher.listen();
+      assertEqualOnWatchResponses(actualResponse,
+              new com.coreos.jetcd.watch.WatchResponse(deleteResponse));
+    }
   }
 
   @Test
   public void testWatchOnUnrecoverableConnectionIssue() {
-    Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT);
+    try (Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT)) {
+      WatchResponse createdResponse = WatchResponse.newBuilder().setCreated(true).setWatchId(0)
+              .build();
+      responseObserverRef.get().onNext(createdResponse);
 
-    WatchResponse createdResponse = WatchResponse.newBuilder().setCreated(true).setWatchId(0)
-        .build();
-    responseObserverRef.get().onNext(createdResponse);
+      // connection error causes client to release all resources including all watchers.
+      responseObserverRef.get()
+              .onError(Status.ABORTED.withDescription("connection error").asRuntimeException());
+      // expects connection error to propagate to active listener.
 
-    // connection error causes client to release all resources including all watchers.
-    responseObserverRef.get()
-        .onError(Status.ABORTED.withDescription("connection error").asRuntimeException());
-    // expects connection error to propagate to active listener.
-
-    assertThatExceptionOfType(EtcdException.class)
-        .isThrownBy(watcher::listen)
-        .withMessageContaining("connection error");
-
-    watcher.close();
+      assertThatExceptionOfType(EtcdException.class)
+              .isThrownBy(watcher::listen)
+              .withMessageContaining("connection error");
+    }
   }
 
   @Test
   public void testWatchOnRecoverableConnectionIssue() {
-    Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT);
+    try (Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT)) {
+      WatchResponse createdResponse = WatchResponse.newBuilder()
+              .setCreated(true)
+              .setWatchId(0)
+              .build();
+      responseObserverRef.get().onNext(createdResponse);
+      // expects a WatchCreateRequest is created.
+      verify(this.requestStreamObserverMock, timeout(100).times(1))
+              .onNext(argThat(hasCreateKey(KEY)));
 
-    WatchResponse createdResponse = WatchResponse.newBuilder()
-        .setCreated(true)
-        .setWatchId(0)
-        .build();
-    responseObserverRef.get().onNext(createdResponse);
-    // expects a WatchCreateRequest is created.
-    verify(this.requestStreamObserverMock, timeout(100).times(1))
-        .onNext(argThat(hasCreateKey(KEY)));
+      // connection error causes client to release all resources including all watchers.
+      responseObserverRef.get()
+              .onError(
+                      Status.UNAVAILABLE.withDescription("Temporary connection issue").asRuntimeException());
+      // resets mock call counter.
+      Mockito.<StreamObserver>reset(this.requestStreamObserverMock);
 
-    // connection error causes client to release all resources including all watchers.
-    responseObserverRef.get()
-        .onError(
-            Status.UNAVAILABLE.withDescription("Temporary connection issue").asRuntimeException());
-    // resets mock call counter.
-    Mockito.<StreamObserver>reset(this.requestStreamObserverMock);
-
-    // expects re-send WatchCreateRequest.
-    verify(this.requestStreamObserverMock, timeout(1000).times(1))
-        .onNext(argThat(hasCreateKey(KEY)));
-    watcher.close();
+      // expects re-send WatchCreateRequest.
+      verify(this.requestStreamObserverMock, timeout(1000).times(1))
+              .onNext(argThat(hasCreateKey(KEY)));
+    }
   }
 
   @Test
   public void testWatcherCreateOnCompactionError() {
-    Watcher watcher = watchClient.watch(KEY);
+    try (Watcher watcher = watchClient.watch(KEY)) {
+      WatchResponse createdResponse = WatchResponse
+              .newBuilder()
+              .setCreated(true)
+              .setWatchId(0)
+              .build();
+      responseObserverRef.get().onNext(createdResponse);
 
-    WatchResponse createdResponse = WatchResponse
-        .newBuilder()
-        .setCreated(true)
-        .setWatchId(0)
-        .build();
-    responseObserverRef.get().onNext(createdResponse);
+      WatchResponse compactedResponse = WatchResponse
+              .newBuilder()
+              .setCompactRevision(2)
+              .build();
+      responseObserverRef.get().onNext(compactedResponse);
 
-    WatchResponse compactedResponse = WatchResponse
-        .newBuilder()
-        .setCompactRevision(2)
-        .build();
-    responseObserverRef.get().onNext(compactedResponse);
-
-    assertThatThrownBy(watcher::listen)
-        .isInstanceOf(CompactedException.class)
-        .hasFieldOrPropertyWithValue("compactedRevision", 2L);
-
-    watcher.close();
+      assertThatThrownBy(watcher::listen)
+              .isInstanceOf(CompactedException.class)
+              .hasFieldOrPropertyWithValue("compactedRevision", 2L);
+    }
   }
 
   @Test
   public void testWatcherCreateOnCancellationWithNoReason() {
-    Watcher watcher = watchClient.watch(KEY);
+    try (Watcher watcher = watchClient.watch(KEY)) {
+      WatchResponse createdResponse = WatchResponse
+              .newBuilder()
+              .setCreated(true)
+              .setWatchId(0)
+              .build();
+      responseObserverRef.get().onNext(createdResponse);
 
-    WatchResponse createdResponse = WatchResponse
-        .newBuilder()
-        .setCreated(true)
-        .setWatchId(0)
-        .build();
-    responseObserverRef.get().onNext(createdResponse);
+      WatchResponse canceledReponse = WatchResponse
+              .newBuilder()
+              .setCanceled(true)
+              .build();
+      responseObserverRef.get().onNext(canceledReponse);
 
-    WatchResponse canceledReponse = WatchResponse
-        .newBuilder()
-        .setCanceled(true)
-        .build();
-    responseObserverRef.get().onNext(canceledReponse);
-
-    assertThatExceptionOfType(EtcdException.class)
-        .isThrownBy(watcher::listen)
-        .withMessageContaining("etcdserver: mvcc: required revision is a future revision");
-
-    watcher.close();
+      assertThatExceptionOfType(EtcdException.class)
+              .isThrownBy(watcher::listen)
+              .withMessageContaining("etcdserver: mvcc: required revision is a future revision");
+    }
   }
 
   @Test
   public void testWatcherCreateOnCancellationWithReason() {
-    Watcher watcher = watchClient.watch(KEY);
+    try (Watcher watcher = watchClient.watch(KEY)) {
+      WatchResponse createdResponse = WatchResponse
+              .newBuilder()
+              .setCreated(true)
+              .setWatchId(0)
+              .build();
+      responseObserverRef.get().onNext(createdResponse);
 
-    WatchResponse createdResponse = WatchResponse
-        .newBuilder()
-        .setCreated(true)
-        .setWatchId(0)
-        .build();
-    responseObserverRef.get().onNext(createdResponse);
+      WatchResponse canceledResponse = WatchResponse
+              .newBuilder()
+              .setCanceled(true)
+              .setCancelReason("bad reason")
+              .build();
+      responseObserverRef.get().onNext(canceledResponse);
 
-    WatchResponse canceledResponse = WatchResponse
-        .newBuilder()
-        .setCanceled(true)
-        .setCancelReason("bad reason")
-        .build();
-    responseObserverRef.get().onNext(canceledResponse);
-
-    assertThatExceptionOfType(EtcdException.class)
-        .isThrownBy(watcher::listen)
-        .withMessageContaining(canceledResponse.getCancelReason());
-
-    watcher.close();
+      assertThatExceptionOfType(EtcdException.class)
+              .isThrownBy(watcher::listen)
+              .withMessageContaining(canceledResponse.getCancelReason());
+    }
   }
 
   @Test
   public void testWatcherCreateOnInvalidWatchID() {
-    Watcher watcher = watchClient.watch(KEY);
+    try (Watcher watcher = watchClient.watch(KEY)) {
+      WatchResponse createdResponse = WatchResponse
+              .newBuilder()
+              .setCreated(true)
+              .setWatchId(-1)
+              .build();
+      responseObserverRef.get().onNext(createdResponse);
 
-    WatchResponse createdResponse = WatchResponse
-        .newBuilder()
-        .setCreated(true)
-        .setWatchId(-1)
-        .build();
-    responseObserverRef.get().onNext(createdResponse);
-
-    assertThatExceptionOfType(EtcdException.class)
-        .isThrownBy(watcher::listen)
-        .withMessageContaining("etcd server failed to create watch id");
-
-    watcher.close();
+      assertThatExceptionOfType(EtcdException.class)
+              .isThrownBy(watcher::listen)
+              .withMessageContaining("etcd server failed to create watch id");
+    }
   }
 
   // return a ArgumentMatcher that checks if the captured WatchRequest has same key.

@@ -22,7 +22,7 @@ package com.coreos.jetcd;
  * <p>The implementation may throw unchecked ConnectException or AuthFailedException on
  *    initialization (or when invoking *Client methods if configured to initialize lazily).
  */
-public interface Client {
+public interface Client extends AutoCloseable {
 
   Auth getAuthClient();
 
@@ -36,6 +36,7 @@ public interface Client {
 
   Watch getWatchClient();
 
+  @Override
   void close();
 
   static ClientBuilder builder() {
