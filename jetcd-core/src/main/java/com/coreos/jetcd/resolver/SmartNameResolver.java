@@ -53,9 +53,9 @@ public class SmartNameResolver extends NameResolver {
   @GuardedBy("lock")
   private Listener listener;
 
-  public SmartNameResolver(List<URI> uris) {
+  public SmartNameResolver(String authority, List<URI> uris) {
     this.lock = new Object();
-    this.authority = "etcd";
+    this.authority = authority;
     this.uris = uris;
     this.resolvers = new ArrayList<>();
 

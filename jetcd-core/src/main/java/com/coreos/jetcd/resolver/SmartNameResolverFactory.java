@@ -20,16 +20,17 @@ import io.grpc.Attributes;
 import io.grpc.NameResolver;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public class SmartNameResolverFactory extends NameResolver.Factory {
+  private final String authority;
   private final List<URI> uris;
 
-  private SmartNameResolverFactory(List<URI> uris) {
+  private SmartNameResolverFactory(String authority, List<URI> uris) {
+    this.authority = authority;
     this.uris = uris;
   }
 
@@ -37,7 +38,7 @@ public class SmartNameResolverFactory extends NameResolver.Factory {
   @Override
   public NameResolver newNameResolver(URI targetUri, Attributes params) {
     if ("etcd".equals(targetUri.getScheme())) {
-      return new SmartNameResolver(this.uris);
+      return new SmartNameResolver(this.authority , this.uris);
     } else {
       return null;
     }
@@ -48,12 +49,7 @@ public class SmartNameResolverFactory extends NameResolver.Factory {
     return "etcd";
   }
 
-
-  public static SmartNameResolverFactory forEndpoints(String... endpoints) {
-    return forEndpoints(Arrays.asList(endpoints));
-  }
-
-  public static SmartNameResolverFactory forEndpoints(Collection<String> endpoints) {
+  public static NameResolver.Factory forEndpoints(String authority, Collection<String> endpoints) {
     List<URI> uris = endpoints.stream().map(endpoint -> {
       try {
         return new URI(endpoint);
@@ -62,6 +58,6 @@ public class SmartNameResolverFactory extends NameResolver.Factory {
       }
     }).collect(Collectors.toList());
 
-    return new SmartNameResolverFactory(uris);
+    return new SmartNameResolverFactory(authority, uris);
   }
 }

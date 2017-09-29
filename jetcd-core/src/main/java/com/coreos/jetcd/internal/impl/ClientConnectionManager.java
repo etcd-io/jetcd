@@ -42,9 +42,9 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import io.grpc.Status.Code;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -155,10 +155,13 @@ final class ClientConnectionManager {
       Function<ManagedChannel, T> stubCustomizer,
       Function<T, CompletableFuture<R>> stubConsumer) {
 
-    ManagedChannelBuilder<?> channelBuilder = defaultChannelBuilder();
-    channelBuilder.nameResolverFactory(forEndpoints(endpoint));
-
-    ManagedChannel channel = channelBuilder.build();
+    final ManagedChannel channel = defaultChannelBuilder()
+        .nameResolverFactory(
+            forEndpoints(
+                Optional.ofNullable(builder.authority()).orElse("etcd"),
+                Collections.singleton(endpoint)
+            )
+        ).build();
 
     try {
       T stub = stubCustomizer.apply(channel);
@@ -181,7 +184,12 @@ final class ClientConnectionManager {
       channelBuilder.usePlaintext(true);
     }
 
-    channelBuilder.nameResolverFactory(forEndpoints(builder.endpoints()));
+    channelBuilder.nameResolverFactory(
+        forEndpoints(
+          Optional.ofNullable(builder.authority()).orElse("etcd"),
+          builder.endpoints()
+        )
+    );
 
     if (builder.loadBalancerFactory() != null) {
       channelBuilder.loadBalancerFactory(builder.loadBalancerFactory());

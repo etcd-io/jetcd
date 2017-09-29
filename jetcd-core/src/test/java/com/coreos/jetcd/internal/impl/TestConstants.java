@@ -27,4 +27,10 @@ public class TestConstants {
   public static final String[] peerUrls =  System.getProperty(
       "etcd.peerurls",
       "http://localhost:12380,http://localhost:22380,http://localhost:32380").split(",");
+
+  public static final String DEFAULT_SSL_AUTHORITY = "etcd-ssl";
+
+  public static final String DEFAULT_SSL_ENDPOINTS = "https://127.0.0.1:42379";
+
+  public static final String DEFAULT_SSL_CA_PATH = "/ssl/cert/ca.pem";
 }

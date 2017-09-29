@@ -43,6 +43,7 @@ public final class ClientBuilder implements Cloneable {
   private LoadBalancer.Factory loadBalancerFactory;
   private SslContext sslContext;
   private boolean lazyInitialization = false;
+  private String authority;
 
   ClientBuilder() {
   }
@@ -177,6 +178,18 @@ public final class ClientBuilder implements Cloneable {
    */
   public ClientBuilder sslContext(SslContext sslContext) {
     this.sslContext = sslContext;
+    return this;
+  }
+
+  public String authority() {
+    return authority;
+  }
+
+  /**
+   * The authority used to authenticate connections to servers.
+   */
+  public ClientBuilder authority(String authority) {
+    this.authority = authority;
     return this;
   }
 
