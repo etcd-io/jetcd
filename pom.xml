@@ -504,6 +504,7 @@
                             <exclude>mvnw*</exclude>
                             <exclude>etc/license.txt</exclude>
                             <exclude>etc/checkstyle-header-java.txt</exclude>
+                            <exclude>etc/cert/*</exclude>
                             <exclude>external/**</exclude>
                         </excludes>
                         <mapping>

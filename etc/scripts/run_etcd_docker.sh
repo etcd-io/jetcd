@@ -17,6 +17,10 @@
 
 ETCD_VERSION="v3.2"
 
+export SCRIPT_PATH=$(dirname "$(readlink -f "$0")")
+export ROOT=$SCRIPT_PATH/../../
+export CERT_HOME=$ROOT/jetcd-core/src/test/resources/ssl/cert
+
 docker network ls | grep etcd 2>&1 > /dev/null
 if [ $? -ne 0 ]; then
     docker network create etcd
@@ -76,6 +80,22 @@ docker run \
         -initial-cluster-token etcd-cluster \
         -initial-cluster etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380 \
         -initial-cluster-state new
+
+docker run \
+    --detach \
+    --rm \
+    --name etcd-ssl \
+    --hostname etcd-ssl \
+    --network etcd \
+    --volume $CERT_HOME:/etc/ssl/etcd \
+    --publish 42379:2379 \
+    gcr.io/etcd-development/etcd:${ETCD_VERSION} \
+    etcd \
+        --name etcd-ssl \
+        --cert-file=/etc/ssl/etcd/server.pem \
+        --key-file=/etc/ssl/etcd/server-key.pem \
+        --advertise-client-urls "https://127.0.0.1:2379" \
+        --listen-client-urls "https://0.0.0.0:2379"
 
 docker run \
     --detach \
