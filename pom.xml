@@ -76,7 +76,7 @@
         <!-- plugins -->
         <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
-        <maven-compiler-plugin.version>3.6.2</maven-compiler-plugin.version>
+        <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
         <maven-resources-plugin.version>3.0.2</maven-resources-plugin.version>
         <maven-javadoc-plugin.version>2.10.4</maven-javadoc-plugin.version>
         <maven-bundle-plugin.version>3.3.0</maven-bundle-plugin.version>
@@ -93,6 +93,11 @@
         <license-maven-plugin.version>3.0</license-maven-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
+        <maven-clean-plugin.version>3.0.0</maven-clean-plugin.version>
+        <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
+        <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
+        <maven-site-plugin.version>3.6</maven-site-plugin.version>
+        <maven-surefire-plugin.version>2.20.1</maven-surefire-plugin.version>
 
         <!-- dependencies -->
         <grpc.version>1.6.1</grpc.version>
@@ -100,14 +105,14 @@
         <auto-service.version>1.0-rc3</auto-service.version>
         <plexus-compiler-javac-errorprone.version>2.8.2</plexus-compiler-javac-errorprone.version>
         <error-prone-core.version>2.1.1</error-prone-core.version>
-        <log4j2.version>2.9.0</log4j2.version>
+        <log4j2.version>2.9.1</log4j2.version>
         <jcommander.version>1.72</jcommander.version>
         <!-- should be in sync with protobuf grpc dependencies -->
         <protobuf.version>3.3.0</protobuf.version>
 
         <!-- test dependencies -->
         <testng.version>6.11</testng.version>
-        <mockito.version>2.8.47</mockito.version>
+        <mockito.version>2.10.0</mockito.version>
         <assertj.version>3.8.0</assertj.version>
         <junit.version>4.12</junit.version>
         <netty-tcnative.version>2.0.6.Final</netty-tcnative.version>
@@ -228,6 +233,36 @@
     <build>
         <pluginManagement>
             <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>${maven-clean-plugin.version}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>${maven-deploy-plugin.version}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>${maven-install-plugin.version}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>${maven-site-plugin.version}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven-surefire-plugin.version}</version>
+                </plugin>
+
                 <plugin>
                     <groupId>org.xolstice.maven.plugins</groupId>
                     <artifactId>protobuf-maven-plugin</artifactId>
