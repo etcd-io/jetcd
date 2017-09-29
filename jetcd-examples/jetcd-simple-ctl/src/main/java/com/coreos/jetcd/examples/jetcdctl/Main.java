@@ -52,10 +52,9 @@ public class Main {
       return;
     }
 
-    Client client = Client.builder()
-        .endpoints(main.endpoints.split(","))
-        .build();
-    try {
+    try (Client client = Client.builder()
+            .endpoints(main.endpoints.split(","))
+            .build()) {
       switch (parsedCmd) {
         case "get":
           getCmd.get(client);
@@ -71,6 +70,5 @@ public class Main {
       LOGGER.error(parsedCmd + " Error {}", e);
       System.exit(1);
     }
-    client.close();
   }
 }

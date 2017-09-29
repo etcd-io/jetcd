@@ -40,15 +40,9 @@ public class Main {
         .build()
         .parse(args);
 
-    Client client = null;
-    Watch watch = null;
-    Watch.Watcher watcher = null;
-
-    try {
-      client = Client.builder().endpoints(cmd.endpoints).build();
-      watch = client.getWatchClient();
-      watcher = watch.watch(ByteSequence.fromString(cmd.key));
-
+    try (Client client = Client.builder().endpoints(cmd.endpoints).build();
+         Watch watch = client.getWatchClient();
+         Watch.Watcher watcher = watch.watch(ByteSequence.fromString(cmd.key))) {
       for (int i = 0; i < cmd.maxEvents; i++) {
         LOGGER.info("Watching for key={}", cmd.key);
         WatchResponse response = watcher.listen();
@@ -66,17 +60,8 @@ public class Main {
         }
       }
     } catch (Exception e) {
-      if (watcher != null) {
-        watcher.close();
-      }
-
-      if (watch != null) {
-        watch.close();
-      }
-
-      if (client != null) {
-        client.close();
-      }
+      LOGGER.error("Watching Error {}", e);
+      System.exit(1);
     }
   }
 

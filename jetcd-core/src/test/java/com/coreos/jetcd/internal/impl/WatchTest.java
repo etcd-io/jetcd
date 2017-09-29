@@ -62,16 +62,13 @@ public class WatchTest {
   public void testWatchOnPut() throws ExecutionException, InterruptedException {
     ByteSequence key = ByteSequence.fromString(TestUtil.randomString());
     ByteSequence value = ByteSequence.fromString("value");
-    Watcher watcher = watchClient.watch(key);
-    try {
+    try (Watcher watcher = watchClient.watch(key)) {
       kvClient.put(key, value).get();
 
       WatchResponse response = watcher.listen();
       assertThat(response.getEvents().size()).isEqualTo(1);
       assertThat(response.getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
       assertThat(response.getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
-    } finally {
-      watcher.close();
     }
   }
 
@@ -80,16 +77,13 @@ public class WatchTest {
     ByteSequence key = ByteSequence.fromString(TestUtil.randomString());
     ByteSequence value = ByteSequence.fromString("value");
     kvClient.put(key, value).get();
-    Watcher watcher = watchClient.watch(key);
-    try {
+    try (Watcher watcher = watchClient.watch(key)) {
       kvClient.delete(key);
       WatchResponse response = watcher.listen();
       assertThat(response.getEvents().size()).isEqualTo(1);
       WatchEvent event = response.getEvents().get(0);
       assertThat(event.getEventType()).isEqualTo(EventType.DELETE);
       assertThat(Arrays.equals(event.getKeyValue().getKey().getBytes(), key.getBytes())).isTrue();
-    } finally {
-      watcher.close();
     }
   }
 }

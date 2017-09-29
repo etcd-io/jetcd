@@ -48,11 +48,12 @@ public interface Watch extends CloseableClient {
   /**
    * Interface of Watcher.
    */
-  interface Watcher {
+  interface Watcher extends AutoCloseable {
 
     /**
      * closes this watcher and all its resources.
      **/
+    @Override
     void close();
 
     /**

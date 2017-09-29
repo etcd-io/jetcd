@@ -16,10 +16,12 @@
 
 package com.coreos.jetcd.internal.impl;
 
-public interface CloseableClient {
+public interface CloseableClient extends AutoCloseable {
+
   /**
    * close the client and release its resources.
    */
+  @Override
   default void close() {
     // noop
   }
