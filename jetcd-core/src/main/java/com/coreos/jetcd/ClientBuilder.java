@@ -23,6 +23,7 @@ import static com.google.common.base.Preconditions.checkState;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.internal.impl.ClientImpl;
+import com.coreos.jetcd.resolver.URIResolverLoader;
 import io.grpc.LoadBalancer;
 import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
@@ -44,6 +45,7 @@ public final class ClientBuilder implements Cloneable {
   private SslContext sslContext;
   private boolean lazyInitialization = false;
   private String authority;
+  private URIResolverLoader uriResolverLoader;
 
   ClientBuilder() {
   }
@@ -190,6 +192,15 @@ public final class ClientBuilder implements Cloneable {
    */
   public ClientBuilder authority(String authority) {
     this.authority = authority;
+    return this;
+  }
+
+  public URIResolverLoader uriResolverLoader() {
+    return uriResolverLoader;
+  }
+
+  public ClientBuilder uriResolverLoader(URIResolverLoader loader) {
+    this.uriResolverLoader = loader;
     return this;
   }
 

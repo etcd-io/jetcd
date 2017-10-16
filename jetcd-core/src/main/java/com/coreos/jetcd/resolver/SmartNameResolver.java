@@ -18,6 +18,7 @@ package com.coreos.jetcd.resolver;
 
 import com.coreos.jetcd.exception.ErrorCode;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.grpc.Attributes;
 import io.grpc.EquivalentAddressGroup;
@@ -27,10 +28,10 @@ import io.grpc.internal.GrpcUtil;
 import io.grpc.internal.SharedResourceHolder;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ServiceLoader;
 import java.util.concurrent.ExecutorService;
 import javax.annotation.concurrent.GuardedBy;
 import org.slf4j.Logger;
@@ -42,7 +43,7 @@ public class SmartNameResolver extends NameResolver {
 
   private final Object lock;
   private final String authority;
-  private final List<URI> uris;
+  private final Collection<URI> uris;
   private final List<URIResolver> resolvers;
 
   private volatile boolean shutdown;
@@ -53,18 +54,20 @@ public class SmartNameResolver extends NameResolver {
   @GuardedBy("lock")
   private Listener listener;
 
-  public SmartNameResolver(String authority, List<URI> uris) {
+  public SmartNameResolver(String authority, Collection<URI> uris, URIResolverLoader loader) {
     this.lock = new Object();
     this.authority = authority;
     this.uris = uris;
+
     this.resolvers = new ArrayList<>();
-
-    Iterator<URIResolver> it = ServiceLoader.load(URIResolver.class).iterator();
-    while (it.hasNext()) {
-      this.resolvers.add(it.next());
-    }
-
+    this.resolvers.add(new DirectUriResolver());
+    this.resolvers.addAll(loader.load());
     this.resolvers.sort(Comparator.comparingInt(r -> r.priority()));
+  }
+
+  @VisibleForTesting
+  public List<URIResolver> getResolvers() {
+    return Collections.unmodifiableList(resolvers);
   }
 
   @Override

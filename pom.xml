@@ -120,6 +120,7 @@
 
     <modules>
         <module>jetcd-core</module>
+        <module>jetcd-discovery-dns-srv</module>
         <module>jetcd-examples</module>
     </modules>
 

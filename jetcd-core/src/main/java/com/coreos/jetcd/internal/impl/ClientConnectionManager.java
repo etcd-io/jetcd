@@ -29,6 +29,7 @@ import com.coreos.jetcd.api.AuthenticateRequest;
 import com.coreos.jetcd.api.AuthenticateResponse;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.exception.EtcdExceptionFactory;
+import com.coreos.jetcd.resolver.URIResolverLoader;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
@@ -159,7 +160,9 @@ final class ClientConnectionManager {
         .nameResolverFactory(
             forEndpoints(
                 Optional.ofNullable(builder.authority()).orElse("etcd"),
-                Collections.singleton(endpoint)
+                Collections.singleton(endpoint),
+                Optional.ofNullable(builder.uriResolverLoader())
+                    .orElseGet(URIResolverLoader::defaultLoader)
             )
         ).build();
 
@@ -187,7 +190,9 @@ final class ClientConnectionManager {
     channelBuilder.nameResolverFactory(
         forEndpoints(
           Optional.ofNullable(builder.authority()).orElse("etcd"),
-          builder.endpoints()
+          builder.endpoints(),
+          Optional.ofNullable(builder.uriResolverLoader())
+              .orElseGet(URIResolverLoader::defaultLoader)
         )
     );
 

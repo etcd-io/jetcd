@@ -36,6 +36,11 @@
             <artifactId>jetcd-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.coreos</groupId>
+            <artifactId>jetcd-discovery-dns-srv</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
