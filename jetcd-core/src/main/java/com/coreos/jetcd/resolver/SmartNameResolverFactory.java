@@ -16,6 +16,7 @@
 
 package com.coreos.jetcd.resolver;
 
+import com.google.common.base.Preconditions;
 import io.grpc.Attributes;
 import io.grpc.NameResolver;
 import java.net.URI;
@@ -27,18 +28,25 @@ import javax.annotation.Nullable;
 
 public class SmartNameResolverFactory extends NameResolver.Factory {
   private final String authority;
-  private final List<URI> uris;
+  private final Collection<URI> uris;
+  private final URIResolverLoader loader;
 
-  private SmartNameResolverFactory(String authority, List<URI> uris) {
+  private SmartNameResolverFactory(
+      String authority, Collection<URI> uris, URIResolverLoader loader) {
+
+    Preconditions.checkNotNull(loader, "URIResolverLoader should not be null");
+    Preconditions.checkNotNull(authority, "Authority should not be null");
+
     this.authority = authority;
     this.uris = uris;
+    this.loader = loader;
   }
 
   @Nullable
   @Override
   public NameResolver newNameResolver(URI targetUri, Attributes params) {
     if ("etcd".equals(targetUri.getScheme())) {
-      return new SmartNameResolver(this.authority , this.uris);
+      return new SmartNameResolver(this.authority , this.uris, this.loader);
     } else {
       return null;
     }
@@ -49,7 +57,9 @@ public class SmartNameResolverFactory extends NameResolver.Factory {
     return "etcd";
   }
 
-  public static NameResolver.Factory forEndpoints(String authority, Collection<String> endpoints) {
+  public static NameResolver.Factory forEndpoints(
+      String authority, Collection<String> endpoints, URIResolverLoader loader) {
+
     List<URI> uris = endpoints.stream().map(endpoint -> {
       try {
         return new URI(endpoint);
@@ -58,6 +68,6 @@ public class SmartNameResolverFactory extends NameResolver.Factory {
       }
     }).collect(Collectors.toList());
 
-    return new SmartNameResolverFactory(authority, uris);
+    return new SmartNameResolverFactory(authority, uris, loader);
   }
 }

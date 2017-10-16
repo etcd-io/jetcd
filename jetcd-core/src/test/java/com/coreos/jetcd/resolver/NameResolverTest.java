@@ -20,15 +20,23 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import com.coreos.jetcd.exception.EtcdException;
 import java.net.URI;
+import java.util.Collections;
 import org.junit.Test;
 
-public class URIResolversTest {
+public class NameResolverTest {
   private static final String[] DIRECT_SCHEMES = new String[] { "http", "https" };
-  private static final String[] DNSSRV_SCHEMES = new String[] { "dns+srv", "dnssrv", "srv" };
+
+  @Test
+  public void testDefaults() throws Exception {
+    final URIResolverLoader loader = URIResolverLoader.defaultLoader();
+    final SmartNameResolver resolver = new SmartNameResolver("etcd", Collections.emptyList(), loader);
+
+    assertThat(resolver.getResolvers().stream().anyMatch(DirectUriResolver.class::isInstance)).isTrue();
+  }
 
   @Test
   public void testDirectResolver() throws Exception {
-    final URIResolvers.Direct discovery = new URIResolvers.Direct();
+    final DirectUriResolver discovery = new DirectUriResolver();
 
     for (String scheme : DIRECT_SCHEMES) {
       URI uri = URI.create(scheme + "://127.0.0.1:2379");
@@ -40,24 +48,12 @@ public class URIResolversTest {
 
   @Test
   public void testUnsupportedDirectSchema() throws Exception {
-    final URIResolvers.Direct discovery = new URIResolvers.Direct();
+    final DirectUriResolver discovery = new DirectUriResolver();
     final URI uri = URI.create("mailto://127.0.0.1:2379");
 
     assertThat(discovery.supports(uri)).isFalse();
     assertThatExceptionOfType(EtcdException.class)
         .isThrownBy(() -> discovery.resolve(uri))
         .withMessageContaining("Unsupported URI " + uri);
-  }
-
-  @Test
-  public void testDnsSrvResolver() throws Exception {
-    final URIResolvers.DnsSrv discovery = new URIResolvers.DnsSrv();
-
-    for (String scheme : DNSSRV_SCHEMES) {
-      URI uri = URI.create(scheme + "://_xmpp-server._tcp.gmail.com");
-
-      assertThat(discovery.supports(uri)).isTrue();
-      assertThat(discovery.resolve(uri).size()).isGreaterThan(0);
-    }
   }
 }
