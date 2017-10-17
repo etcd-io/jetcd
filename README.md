@@ -56,11 +56,11 @@ ByteSequence value = ByteSequence.fromString("test_value");
 // put the key-value
 kvClient.put(key, value).get();
 // get the CompletableFuture
-CompletableFuture<RangeResponse> getFuture = kvClient.get(key);
+CompletableFuture<GetResponse> getFuture = kvClient.get(key);
 // get the value from CompletableFuture
-RangeResponse response = getFuture.get();
+GetResponse response = getFuture.get();
 // delete the key
-DeleteRangeResponse deleteRangeResponse = kvClient.delete(key).get();
+DeleteResponse deleteRangeResponse = kvClient.delete(key).get();
 ```
 
 For full etcd v3 API, plesase refer to [API_Reference](https://github.com/coreos/etcd/blob/master/Documentation/dev-guide/api_reference_v3.md).
