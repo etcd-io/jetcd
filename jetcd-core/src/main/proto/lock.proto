@@ -1,0 +1,70 @@
+//
+// Copyright 2017 The jetcd authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+syntax = "proto3";
+
+import "rpc.proto";
+
+package v3lockpb;
+
+option java_multiple_files = true;
+option java_package = "com.coreos.jetcd.api.lock";
+option java_outer_classname = "JetcdProto";
+option objc_class_prefix = "Jetcd";
+
+// The lock service exposes client-side locking facilities as a gRPC interface.
+service Lock {
+    // Lock acquires a distributed shared lock on a given named lock.
+    // On success, it will return a unique key that exists so long as the
+    // lock is held by the caller. This key can be used in conjunction with
+    // transactions to safely ensure updates to etcd only occur while holding
+    // lock ownership. The lock is held until Unlock is called on the key or the
+    // lease associate with the owner expires.
+    rpc Lock(LockRequest) returns (LockResponse) {}
+
+    // Unlock takes a key returned by Lock and releases the hold on lock. The
+    // next Lock caller waiting for the lock will then be woken up and given
+    // ownership of the lock.
+    rpc Unlock(UnlockRequest) returns (UnlockResponse) {}
+}
+
+message LockRequest {
+    // name is the identifier for the distributed shared lock to be acquired.
+    bytes name = 1;
+    // lease is the ID of the lease that will be attached to ownership of the
+    // lock. If the lease expires or is revoked and currently holds the lock,
+    // the lock is automatically released. Calls to Lock with the same lease will
+    // be treated as a single acquistion; locking twice with the same lease is a
+    // no-op.
+    int64 lease = 2;
+}
+
+message LockResponse {
+    etcdserverpb.ResponseHeader header = 1;
+    // key is a key that will exist on etcd for the duration that the Lock caller
+    // owns the lock. Users should not modify this key or the lock may exhibit
+    // undefined behavior.
+    bytes key = 2;
+}
+
+message UnlockRequest {
+    // key is the lock ownership key granted by Lock.
+    bytes key = 1;
+}
+
+message UnlockResponse {
+    etcdserverpb.ResponseHeader header = 1;
+}

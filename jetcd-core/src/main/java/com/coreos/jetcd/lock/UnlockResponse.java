@@ -14,34 +14,14 @@
  * limitations under the License.
  */
 
-package com.coreos.jetcd;
+package com.coreos.jetcd.lock;
 
-/**
- * Etcd Client.
- *
- * <p>The implementation may throw unchecked ConnectException or AuthFailedException on
- *    initialization (or when invoking *Client methods if configured to initialize lazily).
- */
-public interface Client extends AutoCloseable {
+import com.coreos.jetcd.data.AbstractResponse;
 
-  Auth getAuthClient();
+public class UnlockResponse extends AbstractResponse<com.coreos.jetcd.api.lock.UnlockResponse> {
 
-  KV getKVClient();
-
-  Cluster getClusterClient();
-
-  Maintenance getMaintenanceClient();
-
-  Lease getLeaseClient();
-
-  Watch getWatchClient();
-
-  Lock getLockClient();
-
-  @Override
-  void close();
-
-  static ClientBuilder builder() {
-    return new ClientBuilder();
+  public UnlockResponse(com.coreos.jetcd.api.lock.UnlockResponse response) {
+    super(response, response.getHeader());
   }
+
 }
