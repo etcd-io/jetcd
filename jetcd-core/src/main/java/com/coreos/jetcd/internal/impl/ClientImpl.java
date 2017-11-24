@@ -22,6 +22,7 @@ import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.Cluster;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Lease;
+import com.coreos.jetcd.Lock;
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.Watch;
 import java.util.Optional;
@@ -39,6 +40,7 @@ public final class ClientImpl implements Client {
   private final AtomicReference<Cluster> clusterClient;
   private final AtomicReference<Lease> leaseClient;
   private final AtomicReference<Watch> watchClient;
+  private final AtomicReference<Lock> lockClient;
   private final ClientBuilder builder;
   private final ClientConnectionManager connectionManager;
 
@@ -52,6 +54,7 @@ public final class ClientImpl implements Client {
     this.clusterClient = new AtomicReference<>();
     this.leaseClient = new AtomicReference<>();
     this.watchClient = new AtomicReference<>();
+    this.lockClient = new AtomicReference<>();
     this.connectionManager = new ClientConnectionManager(this.builder);
 
     // If the client is not configured to be lazy, set up the managed connection and perform
@@ -92,6 +95,11 @@ public final class ClientImpl implements Client {
   }
 
   @Override
+  public Lock getLockClient() {
+    return newClient(lockClient, LockImpl::new);
+  }
+
+  @Override
   public synchronized void close() {
     Optional.ofNullable(authClient.get()).ifPresent(CloseableClient::close);
     Optional.ofNullable(kvClient.get()).ifPresent(CloseableClient::close);
@@ -99,6 +107,7 @@ public final class ClientImpl implements Client {
     Optional.ofNullable(maintenanceClient.get()).ifPresent(CloseableClient::close);
     Optional.ofNullable(leaseClient.get()).ifPresent(CloseableClient::close);
     Optional.ofNullable(watchClient.get()).ifPresent(CloseableClient::close);
+    Optional.ofNullable(lockClient.get()).ifPresent(CloseableClient::close);
 
     connectionManager.close();
   }

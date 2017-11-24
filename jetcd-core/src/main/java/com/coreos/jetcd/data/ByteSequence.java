@@ -67,7 +67,7 @@ public class ByteSequence {
     }
   }
 
-  protected ByteString getByteString() {
+  public ByteString getByteString() {
     return this.byteString;
   }
 
@@ -116,7 +116,7 @@ public class ByteSequence {
     return new ByteSequence(charBuffer);
   }
 
-  protected static ByteSequence fromByteString(ByteString byteString) {
+  public static ByteSequence fromByteString(ByteString byteString) {
     return new ByteSequence(byteString);
   }
 
