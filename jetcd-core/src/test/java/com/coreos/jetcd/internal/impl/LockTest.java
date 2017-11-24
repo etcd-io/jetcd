@@ -45,6 +45,10 @@ public class LockTest {
     Client client = Client.builder().endpoints(TestConstants.endpoints).build();
     lockClient = client.getLockClient();
     leaseClient = client.getLeaseClient();
+  }
+
+  @BeforeMethod
+  public void setUpEach() throws Exception {
     locksToRelease = new HashSet<>();
   }
 
@@ -53,7 +57,6 @@ public class LockTest {
     for (ByteSequence lockKey : locksToRelease) {
       lockClient.unlock(lockKey).get();
     }
-    locksToRelease.clear();
   }
 
   @Test
@@ -61,12 +64,13 @@ public class LockTest {
     CompletableFuture<LockResponse> feature = lockClient.lock(SAMPLE_NAME, 0);
     LockResponse response = feature.get();
     locksToRelease.add(response.getKey());
+
     test.assertTrue(response.getHeader() != null);
     test.assertTrue(response.getKey() != null);
   }
 
   @Test(expectedExceptions = ExecutionException.class,
-          expectedExceptionsMessageRegExp = ".*etcdserver: requested lease not found")
+      expectedExceptionsMessageRegExp = ".*etcdserver: requested lease not found")
   public void testLockWithNotExistingLease() throws Exception {
     CompletableFuture<LockResponse> feature = lockClient.lock(SAMPLE_NAME, 123456);
     LockResponse response = feature.get();
@@ -75,48 +79,45 @@ public class LockTest {
 
   @Test
   public void testLockWithLease() throws Exception {
-    long lease = grantLease(20);
-
+    long lease = grantLease(5);
     CompletableFuture<LockResponse> feature = lockClient.lock(SAMPLE_NAME, lease);
     LockResponse response = feature.get();
 
-    long currentMillis = System.currentTimeMillis();
+    long startMillis = System.currentTimeMillis();
 
     CompletableFuture<LockResponse> feature2 = lockClient.lock(SAMPLE_NAME, 0);
     LockResponse response2 = feature2.get();
 
-    long time = System.currentTimeMillis() - currentMillis;
+    long time = System.currentTimeMillis() - startMillis;
 
     test.assertNotEquals(response.getKey(), response2.getKey());
-    test.assertTrue(time >= 19500 && time <= 21000,
-            String.format("Lease not runned out after 20000ms, was %dms", time));
+    test.assertTrue(time >= 4500 && time <= 6000,
+        String.format("Lease not runned out after 5000ms, was %dms", time));
 
     locksToRelease.add(response.getKey());
     locksToRelease.add(response2.getKey());
   }
 
   @Test
-  public void testLockWithUnlock() throws Exception {
+  public void testLockAndUnlock() throws Exception {
     long lease = grantLease(20);
     CompletableFuture<LockResponse> feature = lockClient.lock(SAMPLE_NAME, lease);
     LockResponse response = feature.get();
 
-    Thread.sleep(5000);
-
     lockClient.unlock(response.getKey()).get();
 
-    long currentMillis = System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
 
     CompletableFuture<LockResponse> feature2 = lockClient.lock(SAMPLE_NAME, 0);
     LockResponse response2 = feature2.get();
 
-    long time = System.currentTimeMillis() - currentMillis;
+    long time = System.currentTimeMillis() - startTime;
+
+    locksToRelease.add(response2.getKey());
 
     test.assertNotEquals(response.getKey(), response2.getKey());
     test.assertTrue(time <= 500,
-            String.format("Lease not unlocked, wait time was too long (%dms)", time));
-
-    locksToRelease.add(response2.getKey());
+        String.format("Lease not unlocked, wait time was too long (%dms)", time));
   }
 
   private long grantLease(long ttl) throws Exception {
