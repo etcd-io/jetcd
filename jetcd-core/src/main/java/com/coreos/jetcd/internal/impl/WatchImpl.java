@@ -50,7 +50,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -63,8 +63,7 @@ class WatchImpl implements Watch {
   private static final Logger logger = Logger.getLogger(WatchImpl.class.getName());
   // watchers stores a mapping between leaseID -> WatchIml.
   private final ConcurrentHashMap<Long, WatcherImpl> watchers = new ConcurrentHashMap<>();
-  private final ConcurrentLinkedQueue<WatcherImpl>
-      pendingWatchers = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<WatcherImpl> pendingWatchers = new ConcurrentLinkedQueue<>();
   private final Set<Long> cancelSet = ConcurrentHashMap.newKeySet();
   private final ExecutorService executor = Executors.newCachedThreadPool();
   private final ScheduledExecutorService scheduledExecutorService = Executors
@@ -73,6 +72,7 @@ class WatchImpl implements Watch {
   private final WatchGrpc.WatchStub stub;
   private volatile StreamObserver<WatchRequest> grpcWatchStreamObserver;
   private boolean closed = false;
+  private final AtomicBoolean needToResume = new AtomicBoolean(false);
 
   WatchImpl(ClientConnectionManager connectionManager) {
     this.connectionManager = connectionManager;
@@ -117,7 +117,7 @@ class WatchImpl implements Watch {
     }
 
     this.setClosed();
-    this.notifyWatchers(newClosedWatchClientException());
+    this.notifyWatchersAndClear(newClosedWatchClientException());
     this.closeGrpcWatchStreamObserver();
     this.executor.shutdownNow();
     this.scheduledExecutorService.shutdownNow();
@@ -125,6 +125,12 @@ class WatchImpl implements Watch {
 
   // notifies all watchers about a exception. it doesn't close watchers.
   // it is the responsibility of user to close watchers.
+  private void notifyWatchersAndClear(EtcdException e) {
+    this.notifyWatchers(e);
+    this.pendingWatchers.clear();
+    this.watchers.clear();
+  }
+
   private void notifyWatchers(EtcdException e) {
     WatchResponseWithError wre = new WatchResponseWithError(e);
     this.pendingWatchers.forEach(watcher -> {
@@ -134,7 +140,6 @@ class WatchImpl implements Watch {
         logger.log(Level.WARNING, "failed to notify watcher", we);
       }
     });
-    this.pendingWatchers.clear();
     this.watchers.values().forEach(watcher -> {
       try {
         watcher.enqueue(wre);
@@ -142,7 +147,6 @@ class WatchImpl implements Watch {
         logger.log(Level.WARNING, "failed to notify watcher", we);
       }
     });
-    this.watchers.clear();
   }
 
   private synchronized void cancelWatcher(long id) {
@@ -211,13 +215,16 @@ class WatchImpl implements Watch {
 
     Status status = Status.fromThrowable(t);
     if (this.isHaltError(status) || this.isNoLeaderError(status)) {
-      this.notifyWatchers(toEtcdException(status));
+      this.notifyWatchersAndClear(toEtcdException(status));
       this.closeGrpcWatchStreamObserver();
       this.cancelSet.clear();
       return;
     }
-    // resume with a delay; avoiding immediate retry on a long connection downtime.
-    scheduledExecutorService.schedule(this::resume, 500, TimeUnit.MILLISECONDS);
+    // resume with a delay; avoiding immediate retry on a long connection
+    // downtime.
+    this.needToResume.set(true);
+    this.notifyWatchers(EtcdExceptionFactory
+        .newEtcdException(ErrorCode.UNAVAILABLE, "Lost connection to etcd"));
   }
 
   private synchronized void resume() {
@@ -257,7 +264,8 @@ class WatchImpl implements Watch {
     if (watcher == null) {
       // shouldn't happen
       // may happen due to duplicate watch create responses.
-      logger.log(Level.WARNING,
+      logger.log(
+          Level.WARNING,
           "Watch client receives watch create response but find no corresponding watcher");
       return;
     }
@@ -267,8 +275,9 @@ class WatchImpl implements Watch {
     }
 
     if (response.getWatchId() == -1) {
-      watcher.enqueue(new WatchResponseWithError(
-          newEtcdException(ErrorCode.INTERNAL, "etcd server failed to create watch id")));
+      watcher.enqueue(
+          new WatchResponseWithError(
+              newEtcdException(ErrorCode.INTERNAL, "etcd server failed to create watch id")));
       return;
     }
 
@@ -305,9 +314,10 @@ class WatchImpl implements Watch {
     }
 
     if (response.getCompactRevision() != 0) {
-      watcher.enqueue(new WatchResponseWithError(
-          EtcdExceptionFactory
-              .newCompactedException(response.getCompactRevision())));
+      watcher.enqueue(
+          new WatchResponseWithError(
+              EtcdExceptionFactory
+                  .newCompactedException(response.getCompactRevision())));
       return;
     }
 
@@ -345,10 +355,10 @@ class WatchImpl implements Watch {
     }
     String reason = response.getCancelReason();
     if (Strings.isNullOrEmpty(reason)) {
-      watcher.enqueue(new WatchResponseWithError(newEtcdException(
-          ErrorCode.OUT_OF_RANGE,
-          "etcdserver: mvcc: required revision is a future revision"))
-      );
+      watcher.enqueue(
+          new WatchResponseWithError(newEtcdException(
+              ErrorCode.OUT_OF_RANGE,
+              "etcdserver: mvcc: required revision is a future revision")));
 
     } else {
       watcher.enqueue(
@@ -382,7 +392,7 @@ class WatchImpl implements Watch {
   /**
    * Watcher class holds watcher information.
    */
-  public static class WatcherImpl implements Watcher {
+  class WatcherImpl implements Watcher {
 
     final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final WatchOption watchOption;
@@ -467,6 +477,11 @@ class WatchImpl implements Watch {
         throw newClosedWatcherException();
       }
 
+      // Check if connection was lost and we need to resume first
+      if (WatchImpl.this.needToResume.get()) {
+        WatchImpl.this.resume();
+      }
+
       try {
         return this.createWatchResponseFuture().get();
       } catch (ExecutionException e) {
@@ -499,4 +514,3 @@ class WatchImpl implements Watch {
     }
   }
 }
-
