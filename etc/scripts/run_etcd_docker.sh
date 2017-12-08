@@ -17,7 +17,7 @@
 
 ETCD_VERSION="v3.2"
 
-export SCRIPT_PATH=$(dirname "$(readlink -f "$0")")
+export SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export ROOT=$SCRIPT_PATH/../../
 export CERT_HOME=$ROOT/jetcd-core/src/test/resources/ssl/cert
 
