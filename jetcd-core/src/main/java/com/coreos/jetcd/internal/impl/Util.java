@@ -16,12 +16,12 @@
 
 package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.handleInterrupt;
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.newEtcdException;
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.toEtcdException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.handleInterrupt;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
+import com.coreos.jetcd.common.exception.ErrorCode;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.exception.ErrorCode;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.Status;

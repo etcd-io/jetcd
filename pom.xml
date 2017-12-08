@@ -98,17 +98,22 @@
         <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
         <maven-site-plugin.version>3.6</maven-site-plugin.version>
         <maven-surefire-plugin.version>2.20.1</maven-surefire-plugin.version>
+        <directory-maven-plugin.version>0.2</directory-maven-plugin.version>
 
         <!-- dependencies -->
         <grpc.version>1.9.1</grpc.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <auto-service.version>1.0-rc3</auto-service.version>
         <plexus-compiler-javac-errorprone.version>2.8.2</plexus-compiler-javac-errorprone.version>
         <error-prone-core.version>2.1.3</error-prone-core.version>
         <log4j2.version>2.10.0</log4j2.version>
         <jcommander.version>1.72</jcommander.version>
         <!-- should be in sync with protobuf grpc dependencies -->
         <protobuf.version>3.5.1</protobuf.version>
+
+        <!-- osgi dependencies -->
+        <karaf.version>4.1.4</karaf.version>
+        <osgi.ds.version>1.3.0</osgi.ds.version>
+        <pax.exam.version>4.11.0</pax.exam.version>
 
         <!-- test dependencies -->
         <testng.version>6.13.1</testng.version>
@@ -119,13 +124,48 @@
     </properties>
 
     <modules>
+        <module>jetcd-common</module>
+        <module>jetcd-resolver</module>
+        <module>jetcd-resolver-dns-srv</module>
         <module>jetcd-core</module>
-        <module>jetcd-discovery-dns-srv</module>
+        <module>jetcd-all</module>
+        <module>jetcd-osgi</module>
         <module>jetcd-examples</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>jetcd-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>jetcd-resolver</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>jetcd-resolver-dns-srv</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>jetcd-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>jetcd-all</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>jetcd-osgi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-core</artifactId>
@@ -177,13 +217,6 @@
                 <groupId>com.beust</groupId>
                 <artifactId>jcommander</artifactId>
                 <version>${jcommander.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.google.auto.service</groupId>
-                <artifactId>auto-service</artifactId>
-                <version>${auto-service.version}</version>
-                <optional>true</optional>
             </dependency>
 
             <dependency>
@@ -488,46 +521,60 @@
                     <version>${exec-maven-plugin.version}</version>
                 </plugin>
 
-                <plugin>
-                    <groupId>com.mycila</groupId>
-                    <artifactId>license-maven-plugin</artifactId>
-                    <version>${license-maven-plugin.version}</version>
-                    <configuration>
-                        <header>etc/license.txt</header>
-                        <excludes>
-                            <exclude>**/ErrorCode.java</exclude>
-                            <exclude>LICENSE</exclude>
-                            <exclude>MAINTAINERS</exclude>
-                            <exclude>CONTRIBUTING.md</exclude>
-                            <exclude>README.md</exclude>
-                            <exclude>docs/**</exclude>
-                            <exclude>.mvn/wrapper/maven-wrapper.properties</exclude>
-                            <exclude>mvnw*</exclude>
-                            <exclude>etc/license.txt</exclude>
-                            <exclude>etc/checkstyle-header-java.txt</exclude>
-                            <exclude>etc/cert/*</exclude>
-                            <exclude>external/**</exclude>
-                        </excludes>
-                        <mapping>
-                            <proto>DOUBLESLASH_STYLE</proto>
-                        </mapping>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-
             </plugins>
         </pluginManagement>
 
+
         <plugins>
+            <plugin>
+                <groupId>org.commonjava.maven.plugins</groupId>
+                <artifactId>directory-maven-plugin</artifactId>
+                <version>${directory-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>directories</id>
+                        <goals>
+                            <goal>highest-basedir</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <property>jetcd.project.root</property>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
+                <version>${license-maven-plugin.version}</version>
+                <configuration>
+                    <header>${jetcd.project.root}/etc/license.txt</header>
+                    <excludes>
+                        <exclude>**/ErrorCode.java</exclude>
+                        <exclude>LICENSE</exclude>
+                        <exclude>MAINTAINERS</exclude>
+                        <exclude>CONTRIBUTING.md</exclude>
+                        <exclude>README.md</exclude>
+                        <exclude>docs/**</exclude>
+                        <exclude>.mvn/wrapper/maven-wrapper.properties</exclude>
+                        <exclude>mvnw*</exclude>
+                        <exclude>etc/license.txt</exclude>
+                        <exclude>etc/checkstyle-header-java.txt</exclude>
+                        <exclude>etc/cert/*</exclude>
+                        <exclude>external/**</exclude>
+                    </excludes>
+                    <mapping>
+                        <proto>DOUBLESLASH_STYLE</proto>
+                    </mapping>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -540,6 +587,16 @@
             </activation>
             <properties>
                 <additionalparam>-Xdoclint:none</additionalparam>
+            </properties>
+        </profile>
+
+
+        <profile>
+            <id>fast</id>
+            <properties>
+                <checkstyle.skip>true</checkstyle.skip>
+                <maven.test.skip>true</maven.test.skip>
+                <license.skip>true</license.skip>
             </properties>
         </profile>
 

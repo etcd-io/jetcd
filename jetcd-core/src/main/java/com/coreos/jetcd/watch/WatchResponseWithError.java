@@ -17,7 +17,7 @@
 package com.coreos.jetcd.watch;
 
 import com.coreos.jetcd.api.WatchResponse;
-import com.coreos.jetcd.exception.EtcdException;
+import com.coreos.jetcd.common.exception.EtcdException;
 
 public class WatchResponseWithError {
 

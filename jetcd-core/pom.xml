@@ -32,6 +32,15 @@
 
     <dependencies>
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>jetcd-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>jetcd-resolver</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-core</artifactId>
         </dependency>
@@ -194,17 +203,6 @@
                         <Export-Package>com.coreos.jetcd.*;-noimport:=true</Export-Package>
                     </instructions>
                 </configuration>
-                <executions>
-                    <!--
-                      This execution makes sure that the manifest is available
-                      when the tests are executed
-                    -->
-                    <execution>
-                        <goals>
-                            <goal>manifest</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

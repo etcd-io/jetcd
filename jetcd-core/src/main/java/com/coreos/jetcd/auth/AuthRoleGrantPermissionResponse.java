@@ -16,7 +16,7 @@
 
 package com.coreos.jetcd.auth;
 
-import com.coreos.jetcd.Auth;
+import com.coreos.jetcd.api.Auth;
 import com.coreos.jetcd.api.Permission.Type;
 import com.coreos.jetcd.data.AbstractResponse;
 import com.coreos.jetcd.data.ByteSequence;

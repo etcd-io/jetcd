@@ -87,7 +87,7 @@ docker run \
     --name etcd-ssl \
     --hostname etcd-ssl \
     --network etcd \
-    --volume $CERT_HOME:/etc/ssl/etcd \
+    --volume $CERT_HOME:/etc/ssl/etcd:Z \
     --publish 42379:2379 \
     gcr.io/etcd-development/etcd:${ETCD_VERSION} \
     etcd \

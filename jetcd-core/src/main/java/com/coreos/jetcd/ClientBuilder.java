@@ -20,8 +20,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.coreos.jetcd.common.exception.EtcdException;
+import com.coreos.jetcd.common.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.internal.impl.ClientImpl;
 import com.coreos.jetcd.resolver.URIResolverLoader;
 import io.grpc.LoadBalancer;
@@ -208,7 +209,7 @@ public final class ClientBuilder implements Cloneable {
    * build a new Client.
    *
    * @return Client instance.
-   * @throws com.coreos.jetcd.exception.EtcdException if client experiences build error.
+   * @throws EtcdException if client experiences build error.
    */
   public Client build() {
     checkState(

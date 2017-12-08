@@ -28,9 +28,14 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>jetcd-all</artifactId>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
 
     <dependencies>
+        <dependency>
+            <groupId>com.coreos</groupId>
+            <artifactId>jetcd-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.coreos</groupId>
             <artifactId>jetcd-core</artifactId>
@@ -38,7 +43,12 @@
         </dependency>
         <dependency>
             <groupId>com.coreos</groupId>
-            <artifactId>jetcd-discovery-dns-srv</artifactId>
+            <artifactId>jetcd-resolver</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.coreos</groupId>
+            <artifactId>jetcd-resolver-dns-srv</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
@@ -67,7 +77,8 @@
                             <relocations>
                                 <relocation>
                                     <pattern>com.google</pattern>
-                                    <shadedPattern>com.coreos.jetcd.shaded.com.google</shadedPattern>
+                                    <shadedPattern>com.coreos.jetcd.shaded.com.google
+                                    </shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>io.grpc</pattern>
@@ -81,11 +92,52 @@
                                     <pattern>javax.annotation</pattern>
                                     <shadedPattern>com.coreos.jetcd.shaded.javax.annotation</shadedPattern>
                                 </relocation>
-                              </relocations>
+                                <relocation>
+                                    <pattern>io.opencensus</pattern>
+                                    <shadedPattern>com.coreos.jetcd.shaded.io.opencensus
+                                    </shadedPattern>
+                                </relocation>
+                            </relocations>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>CoreOS :: ${project.artifactId}</Bundle-Name>
+                        <Bundle-Version>${project.version}</Bundle-Version>
+                        <Export-Package>com.coreos.jetcd.*</Export-Package>
+                        <Export-Package>
+                            com.coreos.jetcd.common.exception,
+                            com.coreos.jetcd.resolver,
+                            com.coreos.jetcd.resolver.dnssrv,
+                            com.coreos.jetcd,
+                            com.coreos.jetcd.auth,
+                            com.coreos.jetcd.cluster,
+                            com.coreos.jetcd.data,
+                            com.coreos.jetcd.kv,
+                            com.coreos.jetcd.lease,
+                            com.coreos.jetcd.lock,
+                            com.coreos.jetcd.maintenance,
+                            com.coreos.jetcd.op,
+                            com.coreos.jetcd.options,
+                            com.coreos.jetcd.watch
+                        </Export-Package>
+                        <Import-Package>
+                            org.slf4j;version="[1.7,2)",
+                            javax.net.ssl;resolution:=optional
+                        </Import-Package>
+                    </instructions>
+                    <unpackBundle>true</unpackBundle>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 
