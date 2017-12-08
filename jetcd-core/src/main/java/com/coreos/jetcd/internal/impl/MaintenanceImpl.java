@@ -16,9 +16,9 @@
 
 package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.newClosedSnapshotException;
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.newEtcdException;
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.toEtcdException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newClosedSnapshotException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -32,7 +32,7 @@ import com.coreos.jetcd.api.MoveLeaderRequest;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
 import com.coreos.jetcd.api.StatusRequest;
-import com.coreos.jetcd.exception.ErrorCode;
+import com.coreos.jetcd.common.exception.ErrorCode;
 import com.coreos.jetcd.maintenance.AlarmResponse;
 import com.coreos.jetcd.maintenance.DefragmentResponse;
 import com.coreos.jetcd.maintenance.HashKVResponse;

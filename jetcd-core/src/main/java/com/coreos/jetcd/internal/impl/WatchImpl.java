@@ -16,10 +16,10 @@
 
 package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.newClosedWatchClientException;
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.newClosedWatcherException;
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.newEtcdException;
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.toEtcdException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newClosedWatchClientException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newClosedWatcherException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
 import com.coreos.jetcd.Watch;
 import com.coreos.jetcd.api.WatchCancelRequest;
@@ -27,10 +27,10 @@ import com.coreos.jetcd.api.WatchCreateRequest;
 import com.coreos.jetcd.api.WatchGrpc;
 import com.coreos.jetcd.api.WatchRequest;
 import com.coreos.jetcd.api.WatchResponse;
+import com.coreos.jetcd.common.exception.ErrorCode;
+import com.coreos.jetcd.common.exception.EtcdException;
+import com.coreos.jetcd.common.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.exception.ErrorCode;
-import com.coreos.jetcd.exception.EtcdException;
-import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.options.WatchOption;
 import com.coreos.jetcd.watch.WatchResponseWithError;
 import com.google.common.base.Strings;

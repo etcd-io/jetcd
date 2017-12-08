@@ -16,6 +16,9 @@
 
 package com.coreos.jetcd;
 
+import com.coreos.jetcd.common.exception.ClosedClientException;
+import com.coreos.jetcd.common.exception.ClosedKeepAliveListenerException;
+import com.coreos.jetcd.common.exception.EtcdException;
 import com.coreos.jetcd.internal.impl.CloseableClient;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
@@ -78,11 +81,11 @@ public interface Lease extends CloseableClient {
      * Listen for keep-alive events.
      *
      * @return listen blocks until it receives a LeaseKeepAliveResponse.
-     * @throws com.coreos.jetcd.exception.ClosedClientException if Lease client has been closed.
-     * @throws com.coreos.jetcd.exception.ClosedKeepAliveListenerException if listener has been
+     * @throws ClosedClientException if Lease client has been closed.
+     * @throws ClosedKeepAliveListenerException if listener has been
      *        closed.
      * @throws InterruptedException if listen is interrupted.
-     * @throws com.coreos.jetcd.exception.EtcdException if KeepAliveListener encounters client side
+     * @throws EtcdException if KeepAliveListener encounters client side
      *        and server side errors.
      */
     LeaseKeepAliveResponse listen() throws InterruptedException;

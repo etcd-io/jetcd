@@ -16,8 +16,8 @@
 
 package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.handleInterrupt;
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.toEtcdException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.handleInterrupt;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 import static com.coreos.jetcd.internal.impl.Util.byteStringFromByteSequence;
 import static com.coreos.jetcd.internal.impl.Util.isInvalidTokenError;
 import static com.coreos.jetcd.resolver.SmartNameResolverFactory.forEndpoints;
@@ -27,8 +27,8 @@ import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.api.AuthGrpc;
 import com.coreos.jetcd.api.AuthenticateRequest;
 import com.coreos.jetcd.api.AuthenticateResponse;
+import com.coreos.jetcd.common.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.resolver.URIResolverLoader;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -234,7 +234,7 @@ final class ClientConnectionManager {
    * get token with ClientBuilder.
    *
    * @return the auth token
-   * @throws com.coreos.jetcd.exception.EtcdException a exception indicates failure reason.
+   * @throws com.coreos.jetcd.common.exception.EtcdException a exception indicates failure reason.
    */
   private Optional<String> generateToken(Channel channel) {
 

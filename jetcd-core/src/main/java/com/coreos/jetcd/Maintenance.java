@@ -16,6 +16,7 @@
 
 package com.coreos.jetcd;
 
+import com.coreos.jetcd.common.exception.ClosedSnapshotException;
 import com.coreos.jetcd.internal.impl.CloseableClient;
 import com.coreos.jetcd.maintenance.AlarmMember;
 import com.coreos.jetcd.maintenance.AlarmResponse;
@@ -127,7 +128,7 @@ public interface Maintenance extends CloseableClient {
      * <p>this method blocks until farther snapshot data are available,
      * end of stream is detected, or an exception is thrown.
      *
-     * @throws com.coreos.jetcd.exception.ClosedSnapshotException if snapshot has been closed.
+     * @throws ClosedSnapshotException if snapshot has been closed.
      * @throws IOException if write experiences any I/O issues.
      * @throws InterruptedException if the write thread is interrupted.
      */

@@ -16,10 +16,10 @@
 
 package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.newClosedKeepAliveListenerException;
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.newClosedLeaseClientException;
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.newEtcdException;
-import static com.coreos.jetcd.exception.EtcdExceptionFactory.toEtcdException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newClosedKeepAliveListenerException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newClosedLeaseClientException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.Lease;
@@ -28,8 +28,8 @@ import com.coreos.jetcd.api.LeaseGrpc;
 import com.coreos.jetcd.api.LeaseKeepAliveRequest;
 import com.coreos.jetcd.api.LeaseRevokeRequest;
 import com.coreos.jetcd.api.LeaseTimeToLiveRequest;
-import com.coreos.jetcd.exception.ErrorCode;
-import com.coreos.jetcd.exception.EtcdException;
+import com.coreos.jetcd.common.exception.ErrorCode;
+import com.coreos.jetcd.common.exception.EtcdException;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponseWithError;

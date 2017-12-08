@@ -16,6 +16,7 @@
 package com.coreos.jetcd.internal.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
 import com.coreos.jetcd.api.DeleteRangeResponse;
 import com.coreos.jetcd.api.PutResponse;
 import com.coreos.jetcd.api.RangeResponse;
