@@ -37,6 +37,7 @@ public class TxnResponseTest {
             .setResponseDeleteRange(DeleteRangeResponse.getDefaultInstance()))
         .addResponses(ResponseOp.newBuilder()
             .setResponseRange(RangeResponse.getDefaultInstance()))
+        .addResponses(ResponseOp.newBuilder().setResponseTxn(com.coreos.jetcd.api.TxnResponse.getDefaultInstance()))
         .build();
     txnResponse = new TxnResponse(response);
   }
@@ -55,4 +56,10 @@ public class TxnResponseTest {
   public void getGetResponsesTest() {
     assertThat(txnResponse.getGetResponses().size()).isEqualTo(1);
   }
+  
+  @Test
+  public void getTxnResponsesTest() {
+    assertThat(txnResponse.getTxnResponses().size()).isEqualTo(1);
+  }
+
 }

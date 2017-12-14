@@ -194,4 +194,31 @@ public class KVTest {
     test.assertEquals(getResp.getKvs().size(), 1);
     test.assertEquals(getResp.getKvs().get(0).getValue().toStringUtf8(), putValue.toStringUtf8());
   }
+
+  @Test
+  public void testNestedTxn() throws Exception {
+    ByteSequence foo = ByteSequence.fromString("txn_foo");
+    ByteSequence bar = ByteSequence.fromString("txn_bar");
+    ByteSequence barz = ByteSequence.fromString("txn_barz");
+    ByteSequence abc = ByteSequence.fromString("txn_abc");
+    ByteSequence oneTwoThree = ByteSequence.fromString("txn_123");
+    
+    Txn txn = kvClient.txn();
+    Cmp cmp = new Cmp(foo, Cmp.Op.EQUAL, CmpTarget.version(0));
+    CompletableFuture<com.coreos.jetcd.kv.TxnResponse> txnResp = txn.If(cmp)
+        .Then(Op.put(foo, bar, PutOption.DEFAULT),
+            Op.txn(null,
+                new Op[] {Op.put(abc, oneTwoThree, PutOption.DEFAULT)},
+                null))
+        .Else(Op.put(foo, barz, PutOption.DEFAULT)).commit();
+    txnResp.get();
+
+    GetResponse getResp = kvClient.get(foo).get();
+    test.assertEquals(getResp.getKvs().size(), 1);
+    test.assertEquals(getResp.getKvs().get(0).getValue().toStringUtf8(), bar.toStringUtf8());
+
+    GetResponse getResp2 = kvClient.get(abc).get();
+    test.assertEquals(getResp2.getKvs().size(), 1);
+    test.assertEquals(getResp2.getKvs().get(0).getValue().toStringUtf8(), oneTwoThree.toStringUtf8());
+  }
 }

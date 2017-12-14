@@ -23,11 +23,14 @@ import com.coreos.jetcd.api.DeleteRangeRequest;
 import com.coreos.jetcd.api.PutRequest;
 import com.coreos.jetcd.api.RangeRequest;
 import com.coreos.jetcd.api.RequestOp;
+import com.coreos.jetcd.api.TxnRequest;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.options.DeleteOption;
 import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.PutOption;
 import com.google.protobuf.ByteString;
+
+import java.util.Arrays;
 
 /**
  * Etcd Operation.
@@ -38,7 +41,7 @@ public abstract class Op {
    * Operation type.
    */
   public enum Type {
-    PUT, RANGE, DELETE_RANGE,
+    PUT, RANGE, DELETE_RANGE, TXN
   }
 
   protected final Type type;
@@ -62,6 +65,10 @@ public abstract class Op {
 
   public static DeleteOp delete(ByteSequence key, DeleteOption option) {
     return new DeleteOp(ByteString.copyFrom(key.getBytes()), option);
+  }
+
+  public static TxnOp txn(Cmp[] cmps, Op[] thenOps, Op[] elseOps) {
+    return new TxnOp(cmps, thenOps, elseOps);
   }
 
   public static final class PutOp extends Op {
@@ -133,6 +140,46 @@ public abstract class Op {
       }
 
       return RequestOp.newBuilder().setRequestDeleteRange(delete).build();
+    }
+  }
+
+  public static final class TxnOp extends Op {
+
+    private Cmp[] cmps;
+
+    private Op[] thenOps;
+
+    private Op[] elseOps;
+
+    protected TxnOp(Cmp[] cmps, Op[] thenOps, Op[] elseOps) {
+      super(Type.TXN, null);
+      this.cmps = cmps;
+      this.thenOps = thenOps;
+      this.elseOps = elseOps;
+    }
+
+    RequestOp toRequestOp() {
+      TxnRequest.Builder txn = TxnRequest.newBuilder();
+
+      if (cmps != null) {
+        for (Cmp cmp : cmps) {
+          txn.addCompare(cmp.toCompare());
+        }
+      }
+
+      if (thenOps != null) {
+        for (Op thenOp : thenOps) {
+          txn.addSuccess(thenOp.toRequestOp());
+        }
+      }
+
+      if (elseOps != null) {
+        for (Op elseOp : elseOps) {
+          txn.addFailure(elseOp.toRequestOp());
+        }
+      }
+
+      return RequestOp.newBuilder().setRequestTxn(txn).build();
     }
   }
 }

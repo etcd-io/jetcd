@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-ETCD_VERSION="v3.2"
+ETCD_VERSION="v3.3"
 
 export SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export ROOT=$SCRIPT_PATH/../../
