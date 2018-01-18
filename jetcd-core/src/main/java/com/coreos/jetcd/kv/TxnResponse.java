@@ -19,6 +19,7 @@ package com.coreos.jetcd.kv;
 import static com.coreos.jetcd.api.ResponseOp.ResponseCase.RESPONSE_DELETE_RANGE;
 import static com.coreos.jetcd.api.ResponseOp.ResponseCase.RESPONSE_PUT;
 import static com.coreos.jetcd.api.ResponseOp.ResponseCase.RESPONSE_RANGE;
+import static com.coreos.jetcd.api.ResponseOp.ResponseCase.RESPONSE_TXN;
 
 import com.coreos.jetcd.data.AbstractResponse;
 import java.util.List;
@@ -34,6 +35,7 @@ public class TxnResponse extends AbstractResponse<com.coreos.jetcd.api.TxnRespon
   private List<PutResponse> putResponses;
   private List<GetResponse> getResponses;
   private List<DeleteResponse> deleteResponses;
+  private List<TxnResponse> txnResponses;
 
 
   public TxnResponse(com.coreos.jetcd.api.TxnResponse txnResponse) {
@@ -87,5 +89,16 @@ public class TxnResponse extends AbstractResponse<com.coreos.jetcd.api.TxnRespon
     }
 
     return putResponses;
+  }
+
+  public synchronized List<TxnResponse> getTxnResponses() {
+    if (txnResponses == null) {
+      txnResponses = getResponse().getResponsesList().stream()
+          .filter((responseOp) -> responseOp.getResponseCase() == RESPONSE_TXN)
+          .map(responseOp -> new TxnResponse(responseOp.getResponseTxn()))
+          .collect(Collectors.toList());
+    }
+
+    return txnResponses;
   }
 }
