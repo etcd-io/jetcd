@@ -43,12 +43,9 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -384,7 +381,6 @@ class WatchImpl implements Watch {
    */
   public static class WatcherImpl implements Watcher {
 
-    final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final WatchOption watchOption;
     private final ByteSequence key;
     private final Object closedLock = new Object();
@@ -455,10 +451,10 @@ class WatchImpl implements Watch {
           return;
         }
         this.setClosed();
+        enqueue(new WatchResponseWithError(newClosedWatcherException()));
       }
 
       this.owner.cancelWatcher(this.watchID);
-      this.executor.shutdownNow();
     }
 
     @Override
@@ -467,35 +463,12 @@ class WatchImpl implements Watch {
         throw newClosedWatcherException();
       }
 
-      try {
-        return this.createWatchResponseFuture().get();
-      } catch (ExecutionException e) {
-        synchronized (this.closedLock) {
-          if (isClosed()) {
-            throw newClosedWatcherException();
-          }
-        }
-        Throwable t = e.getCause();
-        if (t instanceof EtcdException) {
-          throw (EtcdException) t;
-        }
-        throw toEtcdException(e);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw e;
-      } catch (RejectedExecutionException e) {
-        throw newClosedWatcherException();
+      WatchResponseWithError watchResponse = this.eventsQueue.take();
+      if (watchResponse.getException() != null) {
+        throw watchResponse.getException();
       }
-    }
 
-    private Future<com.coreos.jetcd.watch.WatchResponse> createWatchResponseFuture() {
-      return this.executor.submit(() -> {
-        WatchResponseWithError watchResponse = this.eventsQueue.take();
-        if (watchResponse.getException() != null) {
-          throw watchResponse.getException();
-        }
-        return new com.coreos.jetcd.watch.WatchResponse(watchResponse.getWatchResponse());
-      });
+      return new com.coreos.jetcd.watch.WatchResponse(watchResponse.getWatchResponse());
     }
   }
 }

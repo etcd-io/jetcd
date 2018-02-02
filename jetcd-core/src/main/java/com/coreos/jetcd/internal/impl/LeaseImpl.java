@@ -29,7 +29,6 @@ import com.coreos.jetcd.api.LeaseKeepAliveRequest;
 import com.coreos.jetcd.api.LeaseRevokeRequest;
 import com.coreos.jetcd.api.LeaseTimeToLiveRequest;
 import com.coreos.jetcd.exception.ErrorCode;
-import com.coreos.jetcd.exception.EtcdException;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponseWithError;
@@ -44,15 +43,12 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 
 /**
@@ -342,7 +338,6 @@ public class LeaseImpl implements Lease {
 
     private final Object closedLock = new Object();
     private BlockingQueue<LeaseKeepAliveResponseWithError> queue = new LinkedBlockingDeque<>(1);
-    private ExecutorService service = Executors.newSingleThreadExecutor();
     private boolean closed = false;
     private KeepAlive owner;
 
@@ -354,14 +349,11 @@ public class LeaseImpl implements Lease {
      * add LeaseKeepAliveResponseWithError to KeepAliveListener's internal queue.
      */
     public void enqueue(LeaseKeepAliveResponseWithError lkae) {
-      if (this.isClosed()) {
-        return;
+      try {
+        this.queue.put(lkae);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
-      if (lkae.error != null) {
-        // returned error to the user on next listen() call.
-        this.queue.clear();
-      }
-      this.queue.offer(lkae);
     }
 
     @Override
@@ -371,33 +363,11 @@ public class LeaseImpl implements Lease {
         throw newClosedKeepAliveListenerException();
       }
 
-      Future<LeaseKeepAliveResponse> future = service.submit(() -> {
-        LeaseKeepAliveResponseWithError lkae = this.queue.take();
-        if (lkae.error != null) {
-          throw lkae.error;
-        }
-        return new LeaseKeepAliveResponse(lkae.leaseKeepAliveResponse);
-      });
-
-      try {
-        return future.get();
-      } catch (ExecutionException e) {
-        synchronized (this.closedLock) {
-          if (isClosed()) {
-            throw newClosedKeepAliveListenerException();
-          }
-        }
-        Throwable t = e.getCause();
-        if (t instanceof EtcdException) {
-          throw (EtcdException) t;
-        }
-        throw toEtcdException(e);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw e;
-      } catch (RejectedExecutionException e) {
-        throw newClosedKeepAliveListenerException();
+      LeaseKeepAliveResponseWithError lkae = this.queue.take();
+      if (lkae.error != null) {
+        throw lkae.error;
       }
+      return new LeaseKeepAliveResponse(lkae.leaseKeepAliveResponse);
     }
 
     private boolean isClosed() {
@@ -409,10 +379,13 @@ public class LeaseImpl implements Lease {
     @Override
     public void close() {
       synchronized (this.closedLock) {
+        if (isClosed()) {
+          return;
+        }
         this.closed = true;
-        this.owner.removeListener(this);
-        this.service.shutdownNow();
+        this.enqueue(new LeaseKeepAliveResponseWithError(newClosedKeepAliveListenerException()));
       }
+      this.owner.removeListener(this);
     }
   }
 
