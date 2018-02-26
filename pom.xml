@@ -101,7 +101,7 @@
         <directory-maven-plugin.version>0.2</directory-maven-plugin.version>
 
         <!-- dependencies -->
-        <grpc.version>1.9.1</grpc.version>
+        <grpc.version>1.10.0</grpc.version>
         <slf4j.version>1.7.25</slf4j.version>
         <plexus-compiler-javac-errorprone.version>2.8.2</plexus-compiler-javac-errorprone.version>
         <error-prone-core.version>2.1.3</error-prone-core.version>
