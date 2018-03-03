@@ -70,7 +70,7 @@ public class WatchUnitTest {
   @Rule
   public Timeout timeout = Timeout.seconds(10);
   private Watch watchClient;
-  private ExecutorService executor = Executors.newFixedThreadPool(2);
+  private ExecutorService executor;
   private AtomicReference<StreamObserver<WatchResponse>> responseObserverRef;
   @Mock
   private StreamObserver<WatchRequest> requestStreamObserverMock;
@@ -283,6 +283,9 @@ public class WatchUnitTest {
                       Status.UNAVAILABLE.withDescription("Temporary connection issue").asRuntimeException());
       // resets mock call counter.
       Mockito.<StreamObserver>reset(this.requestStreamObserverMock);
+
+      // call listen to init reconnect
+      executor.submit(watcher::listen);
 
       // expects re-send WatchCreateRequest.
       verify(this.requestStreamObserverMock, timeout(1000).times(1))

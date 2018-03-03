@@ -35,9 +35,11 @@ import com.coreos.jetcd.options.WatchOption;
 import com.coreos.jetcd.watch.WatchResponseWithError;
 import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
+
 import io.grpc.Status;
 import io.grpc.Status.Code;
 import io.grpc.stub.StreamObserver;
+
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -51,9 +53,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 
 /**
  * watch Implementation.
@@ -63,12 +66,12 @@ class WatchImpl implements Watch {
   private static final Logger logger = Logger.getLogger(WatchImpl.class.getName());
   // watchers stores a mapping between leaseID -> WatchIml.
   private final ConcurrentHashMap<Long, WatcherImpl> watchers = new ConcurrentHashMap<>();
-  private final ConcurrentLinkedQueue<WatcherImpl>
-      pendingWatchers = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<WatcherImpl> pendingWatchers = new ConcurrentLinkedQueue<>();
+  private final AtomicReference<WatcherImpl> watcherBeingCreated = new AtomicReference<>();
   private final Set<Long> cancelSet = ConcurrentHashMap.newKeySet();
   private final ExecutorService executor = Executors.newCachedThreadPool();
-  private final ScheduledExecutorService scheduledExecutorService = Executors
-      .newScheduledThreadPool(1);
+  private final ScheduledExecutorService scheduledExecutorService =
+      Executors.newScheduledThreadPool(1);
   private final ClientConnectionManager connectionManager;
   private final WatchGrpc.WatchStub stub;
   private volatile StreamObserver<WatchRequest> grpcWatchStreamObserver;
@@ -94,54 +97,50 @@ class WatchImpl implements Watch {
 
   @Override
   public synchronized Watcher watch(ByteSequence key, WatchOption watchOption) {
-    if (isClosed()) {
+    if (this.isClosed()) {
       throw newClosedWatchClientException();
     }
 
     WatcherImpl watcher = new WatcherImpl(key, watchOption, this);
     this.pendingWatchers.add(watcher);
-
-    if (this.pendingWatchers.size() == 1) {
-      // head of the queue send watchCreate request.
-      WatchRequest request = this.toWatchCreateRequest(watcher);
-      this.getGrpcWatchStreamObserver().onNext(request);
-    }
+    this.triggerWatcherCreation();
 
     return watcher;
   }
 
   @Override
   public synchronized void close() {
-    if (isClosed()) {
+    if (this.isClosed()) {
       return;
     }
 
     this.setClosed();
     this.notifyWatchers(newClosedWatchClientException());
+    this.clearWatchers();
     this.closeGrpcWatchStreamObserver();
     this.executor.shutdownNow();
     this.scheduledExecutorService.shutdownNow();
   }
 
-  // notifies all watchers about a exception. it doesn't close watchers.
-  // it is the responsibility of user to close watchers.
   private void notifyWatchers(EtcdException e) {
     WatchResponseWithError wre = new WatchResponseWithError(e);
-    this.pendingWatchers.forEach(watcher -> {
+
+    Consumer<? super WatcherImpl> notificationAction = watcher -> {
       try {
         watcher.enqueue(wre);
       } catch (Exception we) {
         logger.log(Level.WARNING, "failed to notify watcher", we);
       }
-    });
+    };
+
+    Optional.ofNullable(this.watcherBeingCreated.get()).ifPresent(notificationAction);
+    this.pendingWatchers.forEach(notificationAction);
+    this.watchers.values().forEach(notificationAction);
+  }
+
+  private void clearWatchers() {
+    this.watcherBeingCreated.set(null);
     this.pendingWatchers.clear();
-    this.watchers.values().forEach(watcher -> {
-      try {
-        watcher.enqueue(wre);
-      } catch (Exception we) {
-        logger.log(Level.WARNING, "failed to notify watcher", we);
-      }
-    });
     this.watchers.clear();
   }
 
@@ -158,8 +157,8 @@ class WatchImpl implements Watch {
     this.cancelSet.add(id);
 
     WatchCancelRequest watchCancelRequest = WatchCancelRequest.newBuilder().setWatchId(id).build();
-    WatchRequest cancelRequest = WatchRequest.newBuilder().setCancelRequest(watchCancelRequest)
-        .build();
+    WatchRequest cancelRequest =
+        WatchRequest.newBuilder().setCancelRequest(watchCancelRequest).build();
     this.getGrpcWatchStreamObserver().onNext(cancelRequest);
   }
 
@@ -174,17 +173,16 @@ class WatchImpl implements Watch {
     return new StreamObserver<WatchResponse>() {
       @Override
       public void onNext(WatchResponse watchResponse) {
-        processWatchResponse(watchResponse);
+        WatchImpl.this.processWatchResponse(watchResponse);
       }
 
       @Override
       public void onError(Throwable t) {
-        processError(t);
+        WatchImpl.this.processError(t);
       }
 
       @Override
-      public void onCompleted() {
-      }
+      public void onCompleted() {}
     };
   }
 
@@ -195,11 +193,11 @@ class WatchImpl implements Watch {
     }
 
     if (watchResponse.getCreated()) {
-      processCreate(watchResponse);
+      this.processCreate(watchResponse);
     } else if (watchResponse.getCanceled()) {
-      processCanceled(watchResponse);
+      this.processCanceled(watchResponse);
     } else {
-      processEvents(watchResponse);
+      this.processEvents(watchResponse);
     }
   }
 
@@ -209,21 +207,32 @@ class WatchImpl implements Watch {
       return;
     }
 
+    this.closeGrpcWatchStreamObserver();
+    this.cancelSet.clear();
+
     Status status = Status.fromThrowable(t);
     if (this.isHaltError(status) || this.isNoLeaderError(status)) {
       this.notifyWatchers(toEtcdException(status));
-      this.closeGrpcWatchStreamObserver();
-      this.cancelSet.clear();
+      this.clearWatchers();
       return;
     }
-    // resume with a delay; avoiding immediate retry on a long connection downtime.
-    scheduledExecutorService.schedule(this::resume, 500, TimeUnit.MILLISECONDS);
+
+    this.notifyWatchers(
+        EtcdExceptionFactory.newEtcdException(ErrorCode.UNAVAILABLE, "Lost connection to etcd"));
+    this.resetWatchers();
+    // recreate watchers with a delay; avoiding immediate retry on a long
+    // connection downtime.
+    this.scheduledExecutorService.schedule(this::triggerWatcherCreation, 500,
+        TimeUnit.MILLISECONDS);
   }
 
-  private synchronized void resume() {
-    this.closeGrpcWatchStreamObserver();
-    this.cancelSet.clear();
-    this.resumeWatchers();
+  private synchronized void triggerWatcherCreation() {
+    // will move one of the pending watchers to the creation process, given
+    // there is no watcher currently being created, and sends a creation request
+    if (this.watcherBeingCreated.compareAndSet(null, this.pendingWatchers.peek())) {
+      Optional.ofNullable(this.pendingWatchers.poll()).map(this::toWatchCreateRequest)
+          .ifPresent(this.getGrpcWatchStreamObserver()::onNext);
+    }
   }
 
   // closeGrpcWatchStreamObserver closes the underlying grpc watch stream.
@@ -250,9 +259,9 @@ class WatchImpl implements Watch {
   }
 
   private void processCreate(WatchResponse response) {
-    WatcherImpl watcher = this.pendingWatchers.poll();
+    WatcherImpl watcher = this.watcherBeingCreated.getAndSet(null);
 
-    this.sendNextWatchCreateRequest();
+    this.triggerWatcherCreation();
 
     if (watcher == null) {
       // shouldn't happen
@@ -280,22 +289,6 @@ class WatchImpl implements Watch {
     this.watchers.put(watcher.getWatchID(), watcher);
   }
 
-  /**
-   * chooses the next resuming watcher to register with the grpc stream.
-   */
-  private Optional<WatchRequest> nextResume() {
-    WatcherImpl pendingWatcher = this.pendingWatchers.peek();
-    if (pendingWatcher != null) {
-      return Optional.of(this.toWatchCreateRequest(pendingWatcher));
-    }
-    return Optional.empty();
-  }
-
-  private void sendNextWatchCreateRequest() {
-    this.nextResume().ifPresent(
-        (nextWatchRequest -> this.getGrpcWatchStreamObserver().onNext(nextWatchRequest)));
-  }
-
   private void processEvents(WatchResponse response) {
     WatcherImpl watcher = this.watchers.get(response.getWatchId());
     if (watcher == null) {
@@ -306,8 +299,7 @@ class WatchImpl implements Watch {
 
     if (response.getCompactRevision() != 0) {
       watcher.enqueue(new WatchResponseWithError(
-          EtcdExceptionFactory
-              .newCompactedException(response.getCompactRevision())));
+          EtcdExceptionFactory.newCompactedException(response.getCompactRevision())));
       return;
     }
 
@@ -318,12 +310,12 @@ class WatchImpl implements Watch {
 
     watcher.enqueue(new WatchResponseWithError(response));
     watcher.setRevision(
-        response
-            .getEvents(response.getEventsCount() - 1)
-            .getKv().getModRevision() + 1);
+        response.getEvents(response.getEventsCount() - 1).getKv().getModRevision() + 1);
   }
 
-  private void resumeWatchers() {
+  private void resetWatchers() {
+    Optional.ofNullable(this.watcherBeingCreated.getAndSet(null))
+        .filter(watcher -> !watcher.isClosed()).ifPresent(this.pendingWatchers::add);
     this.watchers.values().forEach(watcher -> {
       if (watcher.isClosed()) {
         return;
@@ -331,10 +323,7 @@ class WatchImpl implements Watch {
       watcher.setWatchID(-1);
       this.pendingWatchers.add(watcher);
     });
-
     this.watchers.clear();
-
-    this.sendNextWatchCreateRequest();
   }
 
   private void processCanceled(WatchResponse response) {
@@ -345,10 +334,8 @@ class WatchImpl implements Watch {
     }
     String reason = response.getCancelReason();
     if (Strings.isNullOrEmpty(reason)) {
-      watcher.enqueue(new WatchResponseWithError(newEtcdException(
-          ErrorCode.OUT_OF_RANGE,
-          "etcdserver: mvcc: required revision is a future revision"))
-      );
+      watcher.enqueue(new WatchResponseWithError(newEtcdException(ErrorCode.OUT_OF_RANGE,
+          "etcdserver: mvcc: required revision is a future revision")));
 
     } else {
       watcher.enqueue(
@@ -359,11 +346,9 @@ class WatchImpl implements Watch {
   private WatchRequest toWatchCreateRequest(WatcherImpl watcher) {
     ByteString key = Util.byteStringFromByteSequence(watcher.getKey());
     WatchOption option = watcher.getWatchOption();
-    WatchCreateRequest.Builder builder = WatchCreateRequest.newBuilder()
-        .setKey(key)
-        .setPrevKv(option.isPrevKV())
-        .setProgressNotify(option.isProgressNotify())
-        .setStartRevision(watcher.getRevision());
+    WatchCreateRequest.Builder builder =
+        WatchCreateRequest.newBuilder().setKey(key).setPrevKv(option.isPrevKV())
+            .setProgressNotify(option.isProgressNotify()).setStartRevision(watcher.getRevision());
 
     option.getEndKey()
         .ifPresent(endKey -> builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
@@ -382,7 +367,7 @@ class WatchImpl implements Watch {
   /**
    * Watcher class holds watcher information.
    */
-  public static class WatcherImpl implements Watcher {
+  static class WatcherImpl implements Watcher {
 
     final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final WatchOption watchOption;
@@ -413,7 +398,7 @@ class WatchImpl implements Watch {
 
     public boolean isClosed() {
       synchronized (this.closedLock) {
-        return closed;
+        return this.closed;
       }
     }
 
@@ -424,7 +409,7 @@ class WatchImpl implements Watch {
     }
 
     private long getWatchID() {
-      return watchID;
+      return this.watchID;
     }
 
     private void setWatchID(long watchID) {
@@ -432,11 +417,11 @@ class WatchImpl implements Watch {
     }
 
     private WatchOption getWatchOption() {
-      return watchOption;
+      return this.watchOption;
     }
 
     private ByteSequence getKey() {
-      return key;
+      return this.key;
     }
 
     private void enqueue(WatchResponseWithError watchResponse) {
@@ -451,7 +436,7 @@ class WatchImpl implements Watch {
     @Override
     public void close() {
       synchronized (this.closedLock) {
-        if (isClosed()) {
+        if (this.isClosed()) {
           return;
         }
         this.setClosed();
@@ -463,7 +448,7 @@ class WatchImpl implements Watch {
 
     @Override
     public synchronized com.coreos.jetcd.watch.WatchResponse listen() throws InterruptedException {
-      if (isClosed()) {
+      if (this.isClosed()) {
         throw newClosedWatcherException();
       }
 
@@ -471,7 +456,7 @@ class WatchImpl implements Watch {
         return this.createWatchResponseFuture().get();
       } catch (ExecutionException e) {
         synchronized (this.closedLock) {
-          if (isClosed()) {
+          if (this.isClosed()) {
             throw newClosedWatcherException();
           }
         }
@@ -499,4 +484,3 @@ class WatchImpl implements Watch {
     }
   }
 }
-
