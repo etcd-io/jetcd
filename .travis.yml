@@ -15,7 +15,6 @@ before_install:
   - sdk install java 8u144-zulu
 
 script:
-  - ./etc/scripts/run_etcd_docker.sh
   - sdk use java 8u144-zulu
   - java -version
   - ./mvnw clean install
