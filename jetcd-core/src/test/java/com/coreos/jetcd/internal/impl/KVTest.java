@@ -19,6 +19,8 @@ import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Txn;
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
+import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
 import com.coreos.jetcd.kv.DeleteResponse;
 import com.coreos.jetcd.kv.GetResponse;
 import com.coreos.jetcd.kv.PutResponse;
@@ -30,17 +32,21 @@ import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.GetOption.SortOrder;
 import com.coreos.jetcd.options.GetOption.SortTarget;
 import com.coreos.jetcd.options.PutOption;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
+
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 
 /**
  * KV service test cases.
  */
 public class KVTest {
+  private static final EtcdCluster CLUSTER = ClusterFactory.buildThreeNodeCluster("kv-etcd");
 
   private KV kvClient;
   private Assertion test;
@@ -55,7 +61,7 @@ public class KVTest {
   @BeforeTest
   public void setUp() throws Exception {
     test = new Assertion();
-    Client client = Client.builder().endpoints(TestConstants.endpoints).build();
+    Client client = CLUSTER.getClient();
     kvClient = client.getKVClient();
   }
 
@@ -220,5 +226,10 @@ public class KVTest {
     GetResponse getResp2 = kvClient.get(abc).get();
     test.assertEquals(getResp2.getKvs().size(), 1);
     test.assertEquals(getResp2.getKvs().get(0).getValue().toStringUtf8(), oneTwoThree.toStringUtf8());
+  }
+
+  @AfterTest
+  public void tearDown() throws IOException {
+    CLUSTER.close();
   }
 }

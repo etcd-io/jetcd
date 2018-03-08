@@ -15,28 +15,45 @@
  */
 package com.coreos.jetcd.internal.impl;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
+import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
+import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
 import com.coreos.jetcd.kv.PutResponse;
 import io.grpc.PickFirstBalancerFactory;
 import io.grpc.util.RoundRobinLoadBalancerFactory;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * KV service test cases.
  */
 public class LoadBalancerTest {
+  private static final EtcdCluster CLUSTER = ClusterFactory.buildThreeNodeCluster("load-balancer-etcd");
+
+  private static List<String> endpoints;
+
+  @BeforeClass
+  public static void setUp() {
+    endpoints = CLUSTER.getClientEndpoints();
+  }
+
   @Rule
   public Timeout timeout = Timeout.seconds(10);
 
   @Test
   public void testPickFirstBalancerFactory() throws Exception {
     try (Client client = Client.builder()
-            .endpoints(TestConstants.endpoints)
+            .endpoints(endpoints)
             .loadBalancerFactory(PickFirstBalancerFactory.getInstance())
             .build();
 
@@ -44,7 +61,7 @@ public class LoadBalancerTest {
       PutResponse response;
       long lastMemberId = 0;
 
-      for (int i = 0; i < TestConstants.endpoints.length * 2; i++) {
+      for (int i = 0; i < endpoints.stream().collect(Collectors.joining(",")).length() * 2; i++) {
         response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
 
         if (i == 0) {
@@ -60,7 +77,7 @@ public class LoadBalancerTest {
   public void testRoundRobinLoadBalancerFactory() throws Exception {
 
     try (Client client = Client.builder()
-            .endpoints(TestConstants.endpoints)
+            .endpoints(endpoints)
             .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
             .build();
          KV kv = client.getKVClient()) {
@@ -68,7 +85,7 @@ public class LoadBalancerTest {
       long lastMemberId = 0;
       long differences = 0;
 
-      for (int i = 0; i < TestConstants.endpoints.length; i++) {
+      for (int i = 0; i < endpoints.stream().collect(Collectors.joining(",")).length(); i++) {
         response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
 
         if (i > 0 && lastMemberId != response.getHeader().getMemberId()) {
@@ -80,5 +97,10 @@ public class LoadBalancerTest {
 
       assertThat(differences).isNotEqualTo(lastMemberId);
     }
+  }
+
+  @AfterClass
+  public static void tearDown() throws IOException {
+    CLUSTER.close();
   }
 }

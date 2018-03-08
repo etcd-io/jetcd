@@ -16,35 +16,39 @@
 package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.Client;
-import com.coreos.jetcd.ClientBuilder;
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.Maintenance.Snapshot;
-import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
+import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
 import com.coreos.jetcd.maintenance.StatusResponse;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+import org.testng.asserts.Assertion;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
 
 /**
  * Maintenance test.
  */
 public class MaintenanceTest {
+  private static final EtcdCluster CLUSTER = ClusterFactory.buildThreeNodeCluster("maintenance-etcd");
 
   private Client client;
   private Maintenance maintenance;
   private final Assertion test = new Assertion();
+  private List<String> endpoints;
 
   @BeforeClass
   public void setup() {
-    this.client = Client.builder().endpoints(TestConstants.endpoints).build();
+    endpoints = CLUSTER.getClientEndpoints();
+    this.client = Client.builder().endpoints(endpoints).build();
     this.maintenance = client.getMaintenanceClient();
   }
 
@@ -54,7 +58,7 @@ public class MaintenanceTest {
    */
   @Test
   public void testStatusMember() throws ExecutionException, InterruptedException {
-    StatusResponse statusResponse = maintenance.statusMember(TestConstants.endpoints[0]).get();
+    StatusResponse statusResponse = maintenance.statusMember(endpoints.get(0)).get();
     test.assertTrue(statusResponse.getDbSize() > 0);
   }
 
@@ -75,7 +79,7 @@ public class MaintenanceTest {
 
   @Test
   public void testHashKV() throws ExecutionException, InterruptedException {
-    maintenance.hashKV(TestConstants.endpoints[0], 0).get();
+    maintenance.hashKV(endpoints.get(0), 0).get();
   }
 
   /**
@@ -93,14 +97,14 @@ public class MaintenanceTest {
    */
   @Test
   public void testDefragment() throws ExecutionException, InterruptedException {
-    maintenance.defragmentMember(TestConstants.endpoints[0]).get();
+    maintenance.defragmentMember(endpoints.get(0)).get();
   }
 
   @Test
   public void testMoveLeader() throws ExecutionException, InterruptedException {
     String leaderEndpoint = null;
     List<Long> followers = new ArrayList<>();
-    for(String ep : TestConstants.endpoints){
+    for(String ep : endpoints){
       StatusResponse statusResponse = maintenance.statusMember(ep).get();
       long memberId = statusResponse.getHeader().getMemberId();
       if (memberId == statusResponse.getLeader()) {
@@ -116,5 +120,10 @@ public class MaintenanceTest {
     try(Client client = Client.builder().endpoints(leaderEndpoint).build()) {
       client.getMaintenanceClient().moveLeader(followers.get(0)).get();
     }
+  }
+
+  @AfterTest
+  public void tearDown() throws IOException {
+    CLUSTER.close();
   }
 }

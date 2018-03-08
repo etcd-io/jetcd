@@ -15,28 +15,33 @@
  */
 package com.coreos.jetcd.internal.impl;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Lease;
 import com.coreos.jetcd.Lease.KeepAliveListener;
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
+import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
 import com.coreos.jetcd.kv.PutResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
 import com.coreos.jetcd.options.LeaseOption;
 import com.coreos.jetcd.options.PutOption;
-import java.util.concurrent.ExecutionException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * KV service test cases.
  */
 public class LeaseTest {
+  private static final EtcdCluster CLUSTER = ClusterFactory.buildThreeNodeCluster("lease-etcd");
 
   private KV kvClient;
   private Client client;
@@ -50,14 +55,15 @@ public class LeaseTest {
   @BeforeClass
   public void setUp() throws Exception {
     test = new Assertion();
-    client = Client.builder().endpoints(TestConstants.endpoints).build();
+    client = Client.builder().endpoints(CLUSTER.getClientEndpoints()).build();
     kvClient = client.getKVClient();
     leaseClient = client.getLeaseClient();
   }
 
   @AfterClass
-  public void tearDown() {
+  public void tearDown() throws IOException {
     this.client.close();
+    CLUSTER.close();
   }
 
   @Test
