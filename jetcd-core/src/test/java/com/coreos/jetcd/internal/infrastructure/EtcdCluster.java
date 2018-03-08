@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.coreos.jetcd.internal.impl;
+package com.coreos.jetcd.internal.infrastructure;
 
-/**
- * Test constants, contain the cluster info.
- */
-public class TestConstants {
-  public static final String ETCD_DOCKER_IMAGE_NAME = "gcr.io/etcd-development/etcd:v3.3";
+import com.coreos.jetcd.Client;
 
-  public static final int ETCD_CLIENT_PORT = 2379;
-  public static final int ETCD_PEER_PORT = 2380;
+import javax.annotation.Nonnull;
+import java.io.Closeable;
+import java.util.List;
 
-  public static final String DEFAULT_SSL_AUTHORITY = "etcd-ssl";
+public interface EtcdCluster extends Closeable {
+  @Nonnull
+  Client getClient();
 
-  public static final String DEFAULT_SSL_CA_PATH = "/ssl/cert/ca.pem";
+  @Nonnull
+  List<String> getClientEndpoints();
+
+  @Nonnull
+  List<String> getPeerEndpoints();
 }
