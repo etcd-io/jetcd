@@ -77,15 +77,9 @@ The current major version is zero (0.y.z). Anything may change at any time. The 
 
 ## Running tests
 
-The project is to be tested against a three node `etcd` setup, launched by the [scripts/run_etcd_docker.sh](etc/scripts/run_etcd_docker.sh) shell script:
-
-```
-./etc/scripts/run_etcd_docker.sh
-```
-
+The project is to be tested against a three node `etcd` setup, which automatically launched via Testcontainers framework.
+For more info and prerequisites visit [official website](https://www.testcontainers.org/)
 It should work on either macOS or Linux.
-
-Note: Make sure you don't have a default `etcd` running on your system! The script uses the default port `2379` for the first node, which fails to launch if that port is already taken.
 
 ```sh
 $ mvn test
