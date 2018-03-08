@@ -16,46 +16,52 @@
 package com.coreos.jetcd.internal.impl;
 
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Watch;
 import com.coreos.jetcd.Watch.Watcher;
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
+import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
 import com.coreos.jetcd.watch.WatchEvent;
 import com.coreos.jetcd.watch.WatchEvent.EventType;
 import com.coreos.jetcd.watch.WatchResponse;
-import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * watch test case.
  */
 public class WatchTest {
+  private static final EtcdCluster CLUSTER = ClusterFactory.buildThreeNodeCluster("watch-etcd");
 
-  private Client client;
-  private Watch watchClient;
-  private KV kvClient;
+  private static Client client;
+  private static Watch watchClient;
+  private static KV kvClient;
 
   @Rule
   public Timeout timeout = Timeout.seconds(10);
 
-  @Before
-  public void setUp() {
-    client = Client.builder().endpoints(TestConstants.endpoints).build();
+  @BeforeClass
+  public static void setUp() {
+    client = Client.builder().endpoints(CLUSTER.getClientEndpoints()).build();
     watchClient = client.getWatchClient();
     kvClient = client.getKVClient();
   }
 
-  @After
-  public void tearDown() {
+  @AfterClass
+  public static void tearDown() throws IOException {
     client.close();
+    CLUSTER.close();
   }
 
   @Test
@@ -87,6 +93,3 @@ public class WatchTest {
     }
   }
 }
-
-
-

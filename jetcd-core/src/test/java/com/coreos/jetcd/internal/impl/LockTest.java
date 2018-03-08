@@ -19,22 +19,24 @@ import com.coreos.jetcd.Client;
 import com.coreos.jetcd.Lease;
 import com.coreos.jetcd.Lock;
 import com.coreos.jetcd.data.ByteSequence;
+import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
+import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lock.LockResponse;
+import org.testng.annotations.*;
+import org.testng.asserts.Assertion;
+
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
 
 /**
  * Lock service test cases.
  */
 public class LockTest {
+  private static final EtcdCluster CLUSTER = ClusterFactory.buildThreeNodeCluster("lock-etcd");
 
   private Lock lockClient;
   private Lease leaseClient;
@@ -46,7 +48,7 @@ public class LockTest {
   @BeforeTest
   public void setUp() throws Exception {
     test = new Assertion();
-    Client client = Client.builder().endpoints(TestConstants.endpoints).build();
+    Client client = Client.builder().endpoints(CLUSTER.getClientEndpoints()).build();
     lockClient = client.getLockClient();
     leaseClient = client.getLeaseClient();
   }
@@ -57,7 +59,7 @@ public class LockTest {
   }
 
   @AfterMethod
-  public void tearDown() throws Exception {
+  public void tearDownEach() throws Exception {
     for (ByteSequence lockKey : locksToRelease) {
       lockClient.unlock(lockKey).get();
     }
@@ -130,4 +132,8 @@ public class LockTest {
     return response.getID();
   }
 
+  @AfterTest
+  public void tearDown() throws IOException {
+    CLUSTER.close();
+  }
 }

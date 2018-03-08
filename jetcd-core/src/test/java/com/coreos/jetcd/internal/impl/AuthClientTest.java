@@ -15,9 +15,6 @@
  */
 package com.coreos.jetcd.internal.impl;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
 import com.coreos.jetcd.Auth;
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
@@ -26,15 +23,24 @@ import com.coreos.jetcd.auth.AuthRoleListResponse;
 import com.coreos.jetcd.auth.Permission;
 import com.coreos.jetcd.auth.Permission.Type;
 import com.coreos.jetcd.data.ByteSequence;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
+import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
+import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**
  * test etcd auth
  */
 public class AuthClientTest {
+  private static final EtcdCluster CLUSTER = ClusterFactory.buildSingleNodeCluster("auth-etcd");
 
   private ByteSequence rootRolekeyRangeBegin = ByteSequence.fromString("root");
   private ByteSequence rootkeyRangeEnd = ByteSequence.fromString("root1");
@@ -65,14 +71,16 @@ public class AuthClientTest {
   private Auth authDisabledAuthClient;
   private KV authDisabledKVClient;
 
+  private List<String> endpoints;
 
   /**
    * Build etcd client to create role, permission
    */
   @BeforeTest
   public void setupEnv() {
+    endpoints = CLUSTER.getClientEndpoints();
     Client client = Client.builder()
-        .endpoints("http://localhost:12379")
+        .endpoints(endpoints)
         .build();
 
     this.authDisabledKVClient = client.getKVClient();
@@ -165,11 +173,11 @@ public class AuthClientTest {
   @Test(dependsOnMethods = "testEnableAuth", groups = "authEnable", priority = 1)
   public void setupAuthClient() {
     this.userClient = Client.builder()
-        .endpoints("http://localhost:12379")
+        .endpoints(endpoints)
         .user(user)
         .password(userNewPass).build();
     this.rootClient = Client.builder()
-        .endpoints("http://localhost:12379")
+        .endpoints(endpoints)
         .user(root)
         .password(rootPass).build();
   }
@@ -260,5 +268,10 @@ public class AuthClientTest {
   public void delRole() throws ExecutionException, InterruptedException {
     this.authDisabledAuthClient.roleDelete(rootRole).get();
     this.authDisabledAuthClient.roleDelete(userRole).get();
+  }
+
+  @AfterTest
+  public void tearDown() throws IOException {
+    CLUSTER.close();
   }
 }
