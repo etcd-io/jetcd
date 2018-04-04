@@ -129,9 +129,7 @@
         <module>jetcd-resolver</module>
         <module>jetcd-resolver-dns-srv</module>
         <module>jetcd-core</module>
-        <!-- disable jetcd-all for release due to lacking javadoc
         <module>jetcd-all</module>
-        -->
         <module>jetcd-osgi</module>
         <module>jetcd-examples</module>
     </modules>
