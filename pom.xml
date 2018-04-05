@@ -99,6 +99,7 @@
         <maven-site-plugin.version>3.6</maven-site-plugin.version>
         <maven-surefire-plugin.version>2.20.1</maven-surefire-plugin.version>
         <directory-maven-plugin.version>0.2</directory-maven-plugin.version>
+        <versions-maven-plugin.version>2.5</versions-maven-plugin.version>
 
         <!-- dependencies -->
         <grpc.version>1.11.0</grpc.version>
@@ -599,7 +600,6 @@
             </properties>
         </profile>
 
-
         <profile>
             <id>fast</id>
             <properties>
@@ -609,6 +609,29 @@
             </properties>
         </profile>
 
+        <profile>
+            <id>deps</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>versions-maven-plugin</artifactId>
+                        <version>${versions-maven-plugin.version}</version>
+                        <configuration>
+                            <rulesUri>file:///${jetcd.project.root}/etc/versions-rules.xml</rulesUri>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>display-dependency-updates</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>release</id>
             <build>
