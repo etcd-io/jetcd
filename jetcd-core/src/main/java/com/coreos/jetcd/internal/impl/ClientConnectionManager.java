@@ -43,6 +43,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
+import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
 import java.util.Collections;
@@ -182,9 +183,10 @@ final class ClientConnectionManager {
     NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget("etcd");
 
     if (builder.sslContext() != null) {
+      channelBuilder.negotiationType(NegotiationType.TLS);
       channelBuilder.sslContext(builder.sslContext());
     } else {
-      channelBuilder.usePlaintext(true);
+      channelBuilder.negotiationType(NegotiationType.PLAINTEXT);
     }
 
     channelBuilder.nameResolverFactory(
