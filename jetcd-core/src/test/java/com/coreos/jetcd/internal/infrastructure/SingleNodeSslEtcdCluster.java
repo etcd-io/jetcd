@@ -15,19 +15,19 @@
  */
 package com.coreos.jetcd.internal.infrastructure;
 
+import static com.coreos.jetcd.internal.impl.TestConstants.ETCD_CLIENT_PORT;
+import static com.coreos.jetcd.internal.impl.TestConstants.ETCD_DOCKER_IMAGE_NAME;
+
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.internal.impl.TestUtil;
+import java.util.Collections;
+import java.util.List;
+import javax.annotation.Nonnull;
 import org.assertj.core.util.Lists;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-
-import javax.annotation.Nonnull;
-import java.util.Collections;
-import java.util.List;
-
-import static com.coreos.jetcd.internal.impl.TestConstants.ETCD_CLIENT_PORT;
-import static com.coreos.jetcd.internal.impl.TestConstants.ETCD_DOCKER_IMAGE_NAME;
+import org.testcontainers.containers.SelinuxContext;
 
 public class SingleNodeSslEtcdCluster implements EtcdCluster {
   private final GenericContainer nodeContainer;
@@ -37,8 +37,16 @@ public class SingleNodeSslEtcdCluster implements EtcdCluster {
   SingleNodeSslEtcdCluster(Network network) {
     nodeContainer = new GenericContainer(ETCD_DOCKER_IMAGE_NAME)
             .withExposedPorts(ETCD_CLIENT_PORT)
-            .withClasspathResourceMapping("ssl/cert/server.pem", "/etc/ssl/etcd/server.pem", BindMode.READ_ONLY)
-            .withClasspathResourceMapping("ssl/cert/server-key.pem", "/etc/ssl/etcd/server-key.pem", BindMode.READ_ONLY)
+            .withClasspathResourceMapping(
+                "ssl/cert/server.pem",
+                "/etc/ssl/etcd/server.pem",
+                BindMode.READ_ONLY,
+                SelinuxContext.SHARED)
+            .withClasspathResourceMapping(
+                "ssl/cert/server-key.pem",
+                "/etc/ssl/etcd/server-key.pem",
+                BindMode.READ_ONLY,
+                SelinuxContext.SHARED)
             .withNetwork(network)
             .withNetworkAliases("etcd-ssl")
             .withCommand(
