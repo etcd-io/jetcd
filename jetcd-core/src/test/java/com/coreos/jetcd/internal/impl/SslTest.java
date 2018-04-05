@@ -15,25 +15,24 @@
  */
 package com.coreos.jetcd.internal.impl;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
 import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
 import io.grpc.netty.GrpcSslContexts;
-import org.junit.AfterClass;
-import org.junit.Test;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
-
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import org.junit.AfterClass;
+import org.junit.Test;
 
 public class SslTest {
-  private final static EtcdCluster CLUSTER = ClusterFactory.buildSingleNodeClusterWithSsl("ssl-etcd");
+  private final static EtcdCluster CLUSTER = ClusterFactory.buildSingleNodeClusterWithSsl("etcd-ssl");
 
   @Test(timeout = 5000)
   public void testSimpleSllSetup() throws Exception {
