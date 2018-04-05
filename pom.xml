@@ -563,12 +563,14 @@
                         <exclude>MAINTAINERS</exclude>
                         <exclude>CONTRIBUTING.md</exclude>
                         <exclude>README.md</exclude>
+                        <exclude>NOTICE</exclude>
+                        <exclude>DCO</exclude>
                         <exclude>docs/**</exclude>
                         <exclude>.mvn/wrapper/maven-wrapper.properties</exclude>
                         <exclude>mvnw*</exclude>
                         <exclude>etc/license.txt</exclude>
                         <exclude>etc/checkstyle-header-java.txt</exclude>
-                        <exclude>etc/cert/*</exclude>
+                        <exclude>jetcd-core/src/test/resources/ssl/cert/*</exclude>
                         <exclude>external/**</exclude>
                     </excludes>
                     <mapping>
