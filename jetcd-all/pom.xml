@@ -34,22 +34,18 @@
         <dependency>
             <groupId>com.coreos</groupId>
             <artifactId>jetcd-common</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.coreos</groupId>
             <artifactId>jetcd-core</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.coreos</groupId>
             <artifactId>jetcd-resolver</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.coreos</groupId>
             <artifactId>jetcd-resolver-dns-srv</artifactId>
-            <version>${project.version}</version>
         </dependency>
     </dependencies>
 
@@ -65,6 +61,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <createSourcesJar>true</createSourcesJar>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <shadedArtifactAttached>false</shadedArtifactAttached>
                             <minimizeJar>false</minimizeJar>

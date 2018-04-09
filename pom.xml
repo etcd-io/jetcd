@@ -632,6 +632,7 @@
                 </plugins>
             </build>
         </profile>
+
         <profile>
             <id>release</id>
             <build>
