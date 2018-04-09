@@ -167,6 +167,11 @@
                 <artifactId>jetcd-osgi</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>jetcd-karaf</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>io.grpc</groupId>
