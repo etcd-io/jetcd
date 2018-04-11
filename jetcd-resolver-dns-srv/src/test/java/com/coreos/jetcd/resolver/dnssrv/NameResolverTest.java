@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.resolver.dnssrv;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,10 +31,10 @@ public class NameResolverTest {
   @Test
   public void testUriResolverDiscovery() throws Exception {
     final URIResolverLoader loader = URIResolverLoader.defaultLoader();
-    final SmartNameResolver resolver = new SmartNameResolver("etcd", Collections.emptyList(), loader);
+    final SmartNameResolver res = new SmartNameResolver("etcd", Collections.emptyList(), loader);
 
-    assertThat(resolver.getResolvers().stream().anyMatch(DnsSrvUriResolver.class::isInstance)).isTrue();
-    assertThat(resolver.getResolvers().stream().anyMatch(DirectUriResolver.class::isInstance)).isTrue();
+    assertThat(res.getResolvers().stream().anyMatch(DnsSrvUriResolver.class::isInstance)).isTrue();
+    assertThat(res.getResolvers().stream().anyMatch(DirectUriResolver.class::isInstance)).isTrue();
   }
 
   @Test

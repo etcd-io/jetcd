@@ -15,6 +15,6 @@ before_install:
   - sdk install java 8u144-zulu
 
 script:
-  - sdk use java 8u144-zulu
+  - sdk use java 8.0.163-zulu
   - java -version
-  - ./mvnw clean install
+  - ./gradlew clean check install

@@ -13,3 +13,4 @@ logs/
 # Created by './scripts/run_etcd.sh'
 /external/
 bin/
+build/

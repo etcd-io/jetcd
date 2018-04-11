@@ -1,0 +1,21 @@
+apply plugin: "com.github.ben-manes.versions"
+
+dependencyUpdates {
+    revision = 'release'
+
+    resolutionStrategy = {
+        componentSelection {
+            rules ->
+                rules.all { selection ->
+                    def qualifiers = ['alpha', 'beta', 'rc', 'cr', 'm']
+                    def filter = { qualifier ->
+                        selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
+                    }
+
+                    if (qualifiers.any(filter)) {
+                        selection.reject('Release candidate')
+                    }
+                }
+        }
+    }
+}

@@ -1,0 +1,13 @@
+apply plugin: 'biz.aQute.bnd.builder'
+
+jar {
+    // We need -split-package because of grpc issue:
+    //   - https://github.com/grpc/grpc-java/issues/4085
+    //   - https://github.com/grpc/grpc-java/issues/3522
+    //
+    // warning: Split package, multiple jars provide the same package:io/grpc
+    // Use Import/Export Package directive -split-package:=(merge-first|merge-last|error|first) to get rid of this warning
+    // Package found in   [Jar:grpc-core-1.11.0, Jar:grpc-context-1.11.0]
+
+    manifest.attributes['Export-Package'] = '*;-noimport:=true;-split-package:=merge-first'
+}

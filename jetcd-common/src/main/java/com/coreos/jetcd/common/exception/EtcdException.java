@@ -32,6 +32,8 @@ public class EtcdException extends RuntimeException {
 
   /**
    * Returns the error code associated with this exception.
+   * 
+   * @return the error code
    */
   public ErrorCode getErrorCode() {
     return code;

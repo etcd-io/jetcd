@@ -1,0 +1,3 @@
+apply from: "$rootDir/gradle/subproject.gradle"
+apply from: "$rootDir/gradle/subproject-osgi.gradle"
+apply from: "$rootDir/gradle/subproject-release.gradle"

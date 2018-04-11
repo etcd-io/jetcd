@@ -1,22 +1,40 @@
 = jetcd-watch-example
 
+Download and start an etcd node from https://github.com/coreos/etcd/blob/master/Documentation/dl_build.md[instruction]
+
+NOTE: For windows machine, run `..\..\gradlew .cmd` instead of `../../gradlew`
+
+Build the example application:
+
+[source,bash]
+----
+../../gradlew clean installDist
+----
+
 How to run:
 
-* start the etcd cluster using
-+
-    etc/scritps/run_etcd_docker.sh
+* start an etcd cluster
 
 * from a different shell run the example
 +
-    mvn clean package exec:java
+[source,bash]
+----
+$ ./build/install/jetcd-watch-example/bin/jetcd-watch-example \
+    -e http://localhost:2379 \
+    -k watch-key
+----
 
 * from a different shell run the example
 +
-    docker exec -e ETCDCTL_API=3 -ti etcd-proxy etcdctl put watch-key watch-value1
-
+[source,bash]
+----
+$ export ETCDCTL_API=3
+$ etcdctl put watch-key watch-value1
+----
 
 You should see something like:
-
-    15:19:29.300|INFO |Main - Watching for key=watch-key
-    15:19:39.245|INFO |Main - type=PUT, key=watch-key, value=watch-value1
-    15:19:39.245|INFO |Main - Watching for key=watch-key
+[source,bash]
+----
+15:19:29.300|INFO |Main - Watching for key=watch-key
+15:19:39.245|INFO |Main - type=PUT, key=watch-key, value=watch-value1
+----

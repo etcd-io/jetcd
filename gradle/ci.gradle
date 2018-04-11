@@ -1,0 +1,8 @@
+
+task ci(dependsOn: project.gradleCiTasks) {
+    doFirst {
+        println "=============================================================="
+        println "CI Tasks: ${project.gradleCiTasks}"
+        println "=============================================================="
+    }
+}

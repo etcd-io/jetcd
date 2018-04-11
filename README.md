@@ -33,16 +33,6 @@ dependencies {
 }
 ``` 
 
-### Manual
-
-Download latest jetcd-core jar from [Maven](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.coreos%22%20AND%20v%3A%220.0.2%22) and all its dependent jars:
-
-[grpc-core-1.10.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-core/1.10.0/)
-[grpc-netty-1.10.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-netty/1.10.0/)
-[grpc-protobuf-1.10.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-protobuf/1.10.0/)
-[grpc-stub-1.10.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-stub/1.10.0/)
-[slf4j-api-1.7.2.jar](http://repo1.maven.org/maven2/org/apache/directory/studio/org.slf4j.api/1.7.2/)
-
 ### Usage
 
 ```java
@@ -82,32 +72,156 @@ For more info and prerequisites visit [official website](https://www.testcontain
 It should work on either macOS or Linux.
 
 ```sh
-$ mvn test
-...
+$ ./gradlew clean check
+ 
+ > Task :jetcd-core:test 
+ 
+   com.coreos.jetcd.internal.impl.LeaseUnitTest
+ 
+     ✔ testTimeToLiveNullOption
+     ✔ testKeepAliveResetOnStreamErrors (1.6s)
+     ✔ testKeepAliveOnce
+     ✔ testKeepAliveCloseOnlyListener (1s)
+     ✔ testKeepAliveOnSendingKeepAliveRequests
+     - testKeepAliveReceivesExpiredLease
+     ✔ testKeepAliveListenerClosesOnListening
+     - testKeepAliveOnceStreamCloseOnSuccess
+     ✔ testKeepAliveListenAfterListenerClose
+     ✔ testKeepAliveClientClosesOnListening
+     - testKeepAliveListenOnOneResponse
+     ✔ testKeepAliveAfterFirstKeepAliveTimeout (7s)
+     ✔ testKeepAliveCloseSomeListeners (1.2s)
+     ✔ testKeepAliveOnceConnectError
+ 
+   com.coreos.jetcd.internal.impl.MaintenanceUnitTest
+ 
+     ✔ testWriteTwice
+     ✔ testWriteAfterClosed
+     ✔ testWrite
+     ✔ testConnectionError
+     ✔ testInterruptWrite
+     ✔ testCloseWhenWrite
+ 
+   com.coreos.jetcd.internal.impl.TxnResponseTest
+ 
+     ✔ getTxnResponsesTest
+     ✔ getDeleteResponsesTest
+     ✔ getGetResponsesTest
+     ✔ getPutResponsesTest
+ 
+ 
+     09:12:30.317|INFO |org.testcontainers.dockerclient.DockerClientProviderStrategy - Loaded org.testcontainers.dockerclient.EnvironmentAndSystemPropertyClientProviderStrategy from ~/.testcontainers.properties, will try it first
+     09:12:30.956|INFO |org.testcontainers.dockerclient.EnvironmentAndSystemPropertyClientProviderStrategy - Found docker client settings from environment
+     09:12:30.975|INFO |org.testcontainers.dockerclient.DockerClientProviderStrategy - Found Docker environment with Environment variables, system properties and defaults. Resolved: 
+         dockerHost=unix:///var/run/docker.sock
+         apiVersion='{UNKNOWN_VERSION}'
+         registryUrl='https://index.docker.io/v1/'
+         registryUsername='lburgazz'
+         registryPassword='null'
+         registryEmail='null'
+         dockerConfig='DefaultDockerClientConfig[dockerHost=unix:///var/run/docker.sock,registryUsername=lburgazz,registryPassword=<null>,registryEmail=<null>,registryUrl=https://index.docker.io/v1/,dockerConfig=/home/lburgazz/.docker,sslConfig=<null>,apiVersion={UNKNOWN_VERSION}[]'
+     
+     09:12:30.979|INFO |org.testcontainers.DockerClientFactory - Docker host IP address is localhost
+     09:12:31.108|INFO |org.testcontainers.DockerClientFactory - Connected to docker: 
+       Server Version: 1.13.1
+       API Version: 1.26
+       Operating System: Fedora 27 (Twenty Seven)
+       Total Memory: 31612 MB
+     09:12:31.807|INFO |org.testcontainers.DockerClientFactory - Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
+             ℹ︎ Checking the system...
+             ✔ Docker version should be at least 1.6.0
+             ✔ Docker environment should have more than 2GB free disk space
+             ✔ File should be mountable
+ 
+   com.coreos.jetcd.internal.impl.LoadBalancerTest
+ 
+     ✔ testPickFirstBalancerFactory (1.3s)
+     ✔ testRoundRobinLoadBalancerFactory
+ 
+   com.coreos.jetcd.internal.impl.SslTest
+ 
+     ✔ testSimpleSllSetup
+ 
+   com.coreos.jetcd.internal.impl.WatchTest
+ 
+     ✔ testWatchOnDelete
+     ✔ testWatchOnPut
+ 
+   com.coreos.jetcd.internal.impl.WatchUnitTest
+ 
+     ✔ testCreateWatcherAfterClientClosed
+     ✔ testWatcherCreateOnCompactionError
+     ✔ testWatchOnUnrecoverableConnectionIssue
+     ✔ testWatchOnSendingWatchCreateRequest
+     ✔ testWatcherCreateOnInvalidWatchID
+     ✔ testWatcherListenForMultiplePuts
+     ✔ testWatcherCreateOnCancellationWithReason
+     ✔ testWatcherListenAfterWatcherClose
+     ✔ testWatcherCreateOnCancellationWithNoReason
+     ✔ testWatchOnRecoverableConnectionIssue
+     ✔ testWatcherListenOnResponse
+     ✔ testWatcherListenOnWatchClientClose
+     ✔ testWatcherDelete
+     ✔ testWatcherListenOnWatcherClose
+ 
+   com.coreos.jetcd.op.TxnTest
+ 
+     ✔ testIfs
+     ✔ testElses
+     ✔ testThens
+     ✔ testIfAfterElse
+     ✔ testIfAfterThen
+     ✔ testThenAfterElse
+ 
+   46 passing (32.9s)
+   3 pending
+ 
+ 
+ > Task :jetcd-karaf:test 
+ 
+ 
+     09:12:50.887|INFO |org.ops4j.pax.exam.spi.DefaultExamSystem - Pax Exam System (Version: 4.11.0) created.
+     09:12:50.934|INFO |org.ops4j.pax.exam.junit.impl.ProbeRunner - creating PaxExam runner for class com.coreos.jetcd.osgi.ClientServiceTest
+     09:12:50.961|INFO |org.ops4j.pax.exam.junit.impl.ProbeRunner - running test class com.coreos.jetcd.osgi.ClientServiceTest
+     09:12:50.964|INFO |org.ops4j.pax.exam.karaf.container.internal.KarafTestContainer - Creating RMI registry server on 127.0.0.1:21000
+     09:12:51.689|INFO |org.ops4j.pax.exam.karaf.container.internal.KarafTestContainer - Found 0 options when requesting OverrideJUnitBundlesOption.class
+     09:12:51.702|INFO |org.ops4j.pax.exam.karaf.container.internal.KarafTestContainer - Wait for test container to finish its initialization [ RelativeTimeout value = 180000 []
+     09:12:51.702|INFO |org.ops4j.pax.exam.rbc.client.RemoteBundleContextClient - Waiting for remote bundle context.. on 21000 name: 043cdd7f-d724-418d-bfc4-d460584817a7 timout: [ RelativeTimeout value = 180000 []
+ 
+   com.coreos.jetcd.osgi.ClientServiceTest
+ 
+     ✔ testServiceAvailability
+ 
+     09:12:56.042|INFO |org.ops4j.pax.exam.spi.reactors.ReactorManager - suite finished
+ 
+ 
+   1 passing (6.8s)
+ 
+ 
+ > Task :jetcd-resolver:test 
+ 
+   com.coreos.jetcd.resolver.NameResolverTest
+ 
+     ✔ testDirectResolver
+     ✔ testUnsupportedDirectSchema
+     ✔ testDefaults
+ 
+   3 passing (1.5s)
+ 
+ 
+ > Task :jetcd-resolver-dns-srv:test 
+ 
+   com.coreos.jetcd.resolver.dnssrv.NameResolverTest
+ 
+     ✔ testUriResolverDiscovery
+     ✔ testDnsSrvResolver
+ 
+   2 passing (2s)
+ 
+ 
+ 
+ BUILD SUCCESSFUL in 45s
 
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running TestSuite
-[WARNING] Tests run: 104, Failures: 0, Errors: 0, Skipped: 3, Time elapsed: 31.308 s - in TestSuite
-[INFO]
-[INFO] Results:
-[INFO]
-[WARNING] Tests run: 104, Failures: 0, Errors: 0, Skipped: 3
-...
-[INFO] Reactor Summary:
-[INFO]
-[INFO] jetcd .............................................. SUCCESS [  0.010 s]
-[INFO] jetcd-core ......................................... SUCCESS [ 55.480 s]
-[INFO] jetcd-discovery-dns-srv ............................ SUCCESS [  3.225 s]
-[INFO] jetcd-watch-example ................................ SUCCESS [  0.291 s]
-[INFO] jetcd-simple-ctl ................................... SUCCESS [  0.028 s]
-[INFO] jetcd-examples ..................................... SUCCESS [  0.000 s]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time: 59.929 s
-[INFO] Finished at: 2018-02-13T12:51:13-08:00
-[INFO] Final Memory: 84M/443M
 ````
 
 ## Contact
