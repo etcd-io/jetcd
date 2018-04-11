@@ -21,7 +21,7 @@ import com.coreos.jetcd.data.AbstractResponse;
 import java.util.List;
 
 /**
- * AuthUserListResponse returned by {@link Auth#userList()} contains a header and
+ * AuthUserListResponse returned by {@link com.coreos.jetcd.Auth#userList()} contains a header and
  * a list of users.
  */
 public class AuthUserListResponse extends

@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * AuthRoleGetResponse returned by {@link Auth#roleGet(ByteSequence)} contains
+ * AuthRoleGetResponse returned by {@link com.coreos.jetcd.Auth#roleGet(ByteSequence)} contains
  * a header and a list of permissions.
  */
 public class AuthRoleGetResponse extends

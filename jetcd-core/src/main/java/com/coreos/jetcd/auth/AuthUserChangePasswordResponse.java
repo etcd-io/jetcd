@@ -21,7 +21,7 @@ import com.coreos.jetcd.data.AbstractResponse;
 import com.coreos.jetcd.data.ByteSequence;
 
 /**
- * AuthUserChangePasswordResponse returned by {@link Auth#userChangePassword(ByteSequence,
+ * AuthUserChangePasswordResponse returned by {@link com.coreos.jetcd.Auth#userChangePassword(ByteSequence,
  * ByteSequence)} contains a header.
  */
 public class AuthUserChangePasswordResponse extends

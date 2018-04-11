@@ -21,7 +21,7 @@ import com.coreos.jetcd.data.AbstractResponse;
 import com.coreos.jetcd.data.ByteSequence;
 
 /**
- * AuthUserGrantRoleResponse returned by {@link Auth#userGrantRole(ByteSequence,
+ * AuthUserGrantRoleResponse returned by {@link com.coreos.jetcd.Auth#userGrantRole(ByteSequence,
  * ByteSequence)} contains a header.
  */
 public class AuthUserGrantRoleResponse extends

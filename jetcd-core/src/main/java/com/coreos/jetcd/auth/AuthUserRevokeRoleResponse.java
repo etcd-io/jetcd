@@ -21,7 +21,7 @@ import com.coreos.jetcd.data.AbstractResponse;
 import com.coreos.jetcd.data.ByteSequence;
 
 /**
- * AuthUserRevokeRoleResponse returned by {@link Auth#userRevokeRole(ByteSequence, ByteSequence)}
+ * AuthUserRevokeRoleResponse returned by {@link com.coreos.jetcd.Auth#userRevokeRole(ByteSequence, ByteSequence)}
  * contains a header.
  */
 public class AuthUserRevokeRoleResponse extends

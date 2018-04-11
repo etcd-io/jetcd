@@ -22,7 +22,7 @@ import com.coreos.jetcd.data.ByteSequence;
 import java.util.List;
 
 /**
- * AuthUserGetResponse returned by {@link Auth#userGet(ByteSequence)} contains a header and
+ * AuthUserGetResponse returned by {@link com.coreos.jetcd.Auth#userGet(ByteSequence)} contains a header and
  * a list of roles associated with the user.
  */
 public class AuthUserGetResponse extends

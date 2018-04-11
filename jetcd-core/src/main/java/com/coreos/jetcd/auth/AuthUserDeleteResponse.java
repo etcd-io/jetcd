@@ -21,7 +21,7 @@ import com.coreos.jetcd.data.AbstractResponse;
 import com.coreos.jetcd.data.ByteSequence;
 
 /**
- * AuthUserDeleteResponse returned by {@link Auth#userDelete(ByteSequence)} contains a header.
+ * AuthUserDeleteResponse returned by {@link com.coreos.jetcd.Auth#userDelete(ByteSequence)} contains a header.
  */
 public class AuthUserDeleteResponse extends
     AbstractResponse<com.coreos.jetcd.api.AuthUserDeleteResponse> {

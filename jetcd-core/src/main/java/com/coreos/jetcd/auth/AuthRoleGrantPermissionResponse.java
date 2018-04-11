@@ -22,8 +22,7 @@ import com.coreos.jetcd.data.AbstractResponse;
 import com.coreos.jetcd.data.ByteSequence;
 
 /**
- * AuthRoleGrantPermissionResponse returned by {@link Auth#roleGrantPermission(ByteSequence,
- * ByteSequence, ByteSequence, Type)} contains a header.
+ * AuthRoleGrantPermissionResponse returned by {@link com.coreos.jetcd.Auth#roleGrantPermission(ByteSequence, ByteSequence, ByteSequence, Permission.Type)} contains a header.
  */
 public class AuthRoleGrantPermissionResponse extends
     AbstractResponse<com.coreos.jetcd.api.AuthRoleGrantPermissionResponse> {

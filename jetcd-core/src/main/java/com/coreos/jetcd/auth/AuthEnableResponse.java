@@ -20,7 +20,7 @@ import com.coreos.jetcd.api.Auth;
 import com.coreos.jetcd.data.AbstractResponse;
 
 /**
- * AuthEnableResponse returned by {@link Auth#authEnable()} call contains a header.
+ * AuthEnableResponse returned by {@link com.coreos.jetcd.Auth#authEnable()} call contains a header.
  */
 public class AuthEnableResponse extends AbstractResponse<com.coreos.jetcd.api.AuthEnableResponse> {
 

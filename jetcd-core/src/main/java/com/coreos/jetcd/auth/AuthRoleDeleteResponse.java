@@ -21,7 +21,7 @@ import com.coreos.jetcd.data.AbstractResponse;
 import com.coreos.jetcd.data.ByteSequence;
 
 /**
- * AuthRoleDeleteResponse returned by {@link Auth#roleDelete(ByteSequence)}
+ * AuthRoleDeleteResponse returned by {@link com.coreos.jetcd.Auth#roleDelete(ByteSequence)}
  * contains a header.
  */
 public class AuthRoleDeleteResponse extends

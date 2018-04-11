@@ -21,7 +21,7 @@ import com.coreos.jetcd.data.ByteSequence;
 import com.google.protobuf.ByteString;
 
 /**
- * The compare predicate in {@link Txn}.
+ * The compare predicate in {@link com.coreos.jetcd.Txn}.
  */
 public class Cmp {
 
