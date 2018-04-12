@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.data.ByteSequence;
-import org.testcontainers.containers.GenericContainer;
-
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.testcontainers.containers.GenericContainer;
 
 public class TestUtil {
 
@@ -44,20 +41,8 @@ public class TestUtil {
     return buildEndpoint(container, "http", TestConstants.ETCD_CLIENT_PORT);
   }
 
-  public static List<String> buildClientEndpoints(GenericContainer... etcdContainers) {
-    return Arrays.stream(etcdContainers)
-            .map(TestUtil::buildClientEndpoint)
-            .collect(Collectors.toList());
-  }
-
   public static String buildPeerEndpoint(GenericContainer container) {
     return buildEndpoint(container, "http", TestConstants.ETCD_PEER_PORT);
-  }
-
-  public static List<String> buildPeerEndpoints(GenericContainer... etcdContainers) {
-    return Arrays.stream(etcdContainers)
-            .map(TestUtil::buildPeerEndpoint)
-            .collect(Collectors.toList());
   }
 
   public static String buildEndpoint(GenericContainer container, String scheme, int port) {

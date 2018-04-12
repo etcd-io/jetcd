@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.Client;
@@ -32,15 +33,15 @@ import com.coreos.jetcd.options.GetOption;
 import com.coreos.jetcd.options.GetOption.SortOrder;
 import com.coreos.jetcd.options.GetOption.SortTarget;
 import com.coreos.jetcd.options.PutOption;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+import org.testng.asserts.Assertion;
 
 /**
  * KV service test cases.

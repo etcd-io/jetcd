@@ -1,4 +1,3 @@
-
 dependencies {
     // common
     compile "org.slf4j:slf4j-api:$versions.slf4j"
@@ -19,18 +18,6 @@ dependencies {
     testRuntime "org.apache.logging.log4j:log4j-core:$versions.log4j2"
     testRuntime "org.apache.logging.log4j:log4j-slf4j-impl:$versions.log4j2"
     testRuntime "org.apache.logging.log4j:log4j-1.2-api:$versions.log4j2"
-}
-
-checkstyle {
-    configFile = file("$rootDir/etc/checkstyle.xml")
-    toolVersion = '8.9'
-    ignoreFailures = false
-
-    if (rootProject.hasProperty('checkstyle.ignoreFailures')) {
-        ignoreFailures = rootProject.properties['checkstyle.ignoreFailures'].toBoolean()
-    }
-
-    configProperties["rootDir"] = rootDir
 }
 
 jar {

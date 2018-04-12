@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.Client;
@@ -22,10 +23,6 @@ import com.coreos.jetcd.cluster.MemberAddResponse;
 import com.coreos.jetcd.cluster.MemberListResponse;
 import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
 import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -35,8 +32,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+import org.testng.asserts.Assertion;
+
 /**
- * test etcd cluster client
+ * test etcd cluster client.
  */
 public class ClusterClientTest {
   private static final EtcdCluster CLUSTER = ClusterFactory.buildThreeNodeCluster("CLUSTER-etcd");
@@ -48,7 +50,7 @@ public class ClusterClientTest {
   private List<String> peerUrls;
 
   /**
-   * test list cluster function
+   * test list cluster function.
    */
 
   @BeforeTest
@@ -69,7 +71,7 @@ public class ClusterClientTest {
   }
 
   /**
-   * test add cluster function, added member will be removed by testDeleteMember
+   * test add cluster function, added member will be removed by testDeleteMember.
    */
   @Test(dependsOnMethods = "testListCluster")
   public void testAddMember()
@@ -88,7 +90,7 @@ public class ClusterClientTest {
   }
 
   /**
-   * test update peer url for member
+   * test update peer url for member.
    */
   @Test(dependsOnMethods = "testAddMember")
   public void testUpdateMember() {
@@ -112,7 +114,7 @@ public class ClusterClientTest {
   }
 
   /**
-   * test remove member from cluster, the member is added by testAddMember
+   * test remove member from cluster, the member is added by testAddMember.
    */
   @Test(dependsOnMethods = "testUpdateMember")
   public void testDeleteMember()

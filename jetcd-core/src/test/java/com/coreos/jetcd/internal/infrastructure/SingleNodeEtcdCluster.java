@@ -13,58 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.infrastructure;
 
+import static com.coreos.jetcd.internal.impl.TestConstants.ETCD_CLIENT_PORT;
+import static com.coreos.jetcd.internal.impl.TestConstants.ETCD_DOCKER_IMAGE_NAME;
+import static com.coreos.jetcd.internal.impl.TestConstants.ETCD_PEER_PORT;
+
 import com.coreos.jetcd.Client;
-import com.coreos.jetcd.internal.impl.TestUtil;
+import java.util.Collections;
+import java.util.List;
+import javax.annotation.Nonnull;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 
-import javax.annotation.Nonnull;
-import java.util.Collections;
-import java.util.List;
-
-import static com.coreos.jetcd.internal.impl.TestConstants.*;
-
 public class SingleNodeEtcdCluster implements EtcdCluster {
   private final GenericContainer nodeContainer;
-  private final List<String> clientEndpoints;
-  private final List<String> peerEndpoints;
 
   SingleNodeEtcdCluster(Network network) {
     nodeContainer = new GenericContainer(ETCD_DOCKER_IMAGE_NAME)
-            .withExposedPorts(ETCD_CLIENT_PORT, ETCD_PEER_PORT)
-            .withNetwork(network)
-            .withNetworkAliases("etcd")
-            .withCommand(
-                    "etcd " +
-                            "-name etcd " +
-                            "-advertise-client-urls http://0.0.0.0:2379 " +
-                            "-listen-client-urls http://0.0.0.0:2379 " +
-                            "-initial-advertise-peer-urls http://etcd:2380 " +
-                            "-listen-peer-urls http://0.0.0.0:2380"
-            );
+      .withExposedPorts(ETCD_CLIENT_PORT, ETCD_PEER_PORT)
+      .withNetwork(network)
+      .withNetworkAliases("etcd")
+      .withCommand(
+        "etcd "
+          + "-name etcd "
+          + "-advertise-client-urls http://0.0.0.0:2379 "
+          + "-listen-client-urls http://0.0.0.0:2379 "
+          + "-initial-advertise-peer-urls http://etcd:2380 "
+          + "-listen-peer-urls http://0.0.0.0:2380"
+      );
+
     nodeContainer.start();
-    clientEndpoints = TestUtil.buildClientEndpoints(nodeContainer);
-    peerEndpoints = TestUtil.buildPeerEndpoints(nodeContainer);
   }
 
   @Nonnull
   @Override
   public Client getClient() {
-    return Client.builder().endpoints(clientEndpoints).build();
+    return Client.builder().endpoints(getClientEndpoints()).build();
   }
 
   @Nonnull
   @Override
-  public List<String> getClientEndpoints() {
-    return Collections.unmodifiableList(clientEndpoints);
-  }
-
-  @Nonnull
-  @Override
-  public List<String> getPeerEndpoints() {
-    return Collections.unmodifiableList(peerEndpoints);
+  public List<GenericContainer> getContainers() {
+    return Collections.singletonList(nodeContainer);
   }
 
   @Override

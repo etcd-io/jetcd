@@ -23,7 +23,6 @@ shadowJar {
     relocate 'io.opencensus', 'om.coreos.jetcd.shaded.io.opencensus'
 }
 
-
 javadoc {
     classpath = files(subprojects.collect { subproject -> subproject.javadoc.classpath })
 

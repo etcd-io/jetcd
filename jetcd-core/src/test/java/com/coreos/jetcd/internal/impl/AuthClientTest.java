@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.impl;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import com.coreos.jetcd.Auth;
 import com.coreos.jetcd.Client;
@@ -25,19 +29,15 @@ import com.coreos.jetcd.auth.Permission.Type;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
 import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
 /**
- * test etcd auth
+ * test etcd auth.
  */
 public class AuthClientTest {
   private static final EtcdCluster CLUSTER = ClusterFactory.buildSingleNodeCluster("auth-etcd");
@@ -74,7 +74,7 @@ public class AuthClientTest {
   private List<String> endpoints;
 
   /**
-   * Build etcd client to create role, permission
+   * Build etcd client to create role, permission.
    */
   @BeforeTest
   public void setupEnv() {
@@ -88,7 +88,7 @@ public class AuthClientTest {
   }
 
   /**
-   * create role with un-auth etcd client
+   * create role with un-auth etcd client.
    */
   @Test(groups = "role", priority = 1)
   public void testRoleAdd() throws ExecutionException, InterruptedException {
@@ -104,7 +104,7 @@ public class AuthClientTest {
 
 
   /**
-   * grant permission to role
+   * grant permission to role.
    */
   @Test(dependsOnMethods = "testRoleAdd", groups = "role", priority = 1)
   public void testRoleGrantPermission() throws ExecutionException, InterruptedException {
@@ -117,7 +117,7 @@ public class AuthClientTest {
   }
 
   /**
-   * add user with rootPass and username
+   * add user with rootPass and username.
    */
   @Test(groups = "user", priority = 1)
   public void testUserAdd() throws ExecutionException, InterruptedException {
@@ -139,7 +139,7 @@ public class AuthClientTest {
   }
 
   /**
-   * grant user role
+   * grant user role.
    */
   @Test(dependsOnMethods = {"testUserAdd",
       "testRoleGrantPermission"}, groups = "user", priority = 1)
@@ -160,7 +160,7 @@ public class AuthClientTest {
   }
 
   /**
-   * enable etcd auth
+   * enable etcd auth.
    */
   @Test(dependsOnGroups = "user", groups = "authEnable", priority = 1)
   public void testEnableAuth() throws ExecutionException, InterruptedException {
@@ -168,7 +168,7 @@ public class AuthClientTest {
   }
 
   /**
-   * auth client with rootPass and user name
+   * auth client with rootPass and user name.
    */
   @Test(dependsOnMethods = "testEnableAuth", groups = "authEnable", priority = 1)
   public void setupAuthClient() {
@@ -183,7 +183,7 @@ public class AuthClientTest {
   }
 
   /**
-   * put and range with auth client
+   * put and range with auth client.
    */
   @Test(groups = "testAuth", dependsOnGroups = "authEnable", priority = 1)
   public void testKVWithAuth() throws ExecutionException, InterruptedException {
@@ -194,7 +194,7 @@ public class AuthClientTest {
   }
 
   /**
-   * put and range with non auth client
+   * put and range with non auth client.
    */
   @Test(groups = "testAuth", dependsOnGroups = "authEnable", priority = 1)
   public void testKVWithoutAuth() throws InterruptedException {
@@ -209,7 +209,7 @@ public class AuthClientTest {
   }
 
   /**
-   * get auth's permission
+   * get auth's permission.
    */
   @Test(groups = "testAuth", dependsOnGroups = "authEnable", priority = 1)
   public void testRoleGet() throws ExecutionException, InterruptedException {
@@ -245,7 +245,7 @@ public class AuthClientTest {
   }
 
   /**
-   * disable etcd auth
+   * disable etcd auth.
    */
   @Test(dependsOnGroups = "testAuth", groups = "disableAuth", priority = 1)
   public void testDisableAuth() throws ExecutionException, InterruptedException {
@@ -253,7 +253,7 @@ public class AuthClientTest {
   }
 
   /**
-   * delete user
+   * delete user.
    */
   @Test(dependsOnGroups = "disableAuth", groups = "clearEnv", priority = 1)
   public void delUser() throws ExecutionException, InterruptedException {
@@ -262,7 +262,7 @@ public class AuthClientTest {
   }
 
   /**
-   * delete role
+   * delete role.
    */
   @Test(dependsOnGroups = "disableAuth", groups = "clearEnv", priority = 1)
   public void delRole() throws ExecutionException, InterruptedException {

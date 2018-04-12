@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.Client;
@@ -23,14 +24,17 @@ import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
 import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lock.LockResponse;
-import org.testng.annotations.*;
-import org.testng.asserts.Assertion;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+import org.testng.asserts.Assertion;
 
 /**
  * Lock service test cases.

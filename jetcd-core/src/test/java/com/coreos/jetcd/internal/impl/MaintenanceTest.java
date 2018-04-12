@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.impl;
 
 import com.coreos.jetcd.Client;
@@ -21,11 +22,6 @@ import com.coreos.jetcd.Maintenance.Snapshot;
 import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
 import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
 import com.coreos.jetcd.maintenance.StatusResponse;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -33,6 +29,10 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+import org.testng.asserts.Assertion;
 
 /**
  * Maintenance test.
@@ -47,14 +47,14 @@ public class MaintenanceTest {
 
   @BeforeClass
   public void setup() {
-    endpoints = CLUSTER.getClientEndpoints();
+    this.endpoints = CLUSTER.getClientEndpoints();
     this.client = Client.builder().endpoints(endpoints).build();
     this.maintenance = client.getMaintenanceClient();
   }
 
 
   /**
-   * test status member function
+   * test status member function.
    */
   @Test
   public void testStatusMember() throws ExecutionException, InterruptedException {
@@ -70,7 +70,7 @@ public class MaintenanceTest {
 
     // leverage try-with-resources
     try (Snapshot snapshot = maintenance.snapshot();
-      FileOutputStream fop = new FileOutputStream(snapfile)) {
+        FileOutputStream fop = new FileOutputStream(snapfile)) {
       snapshot.write(fop);
     } catch (Exception e) {
       snapfile.delete();
@@ -93,7 +93,7 @@ public class MaintenanceTest {
   }
 
   /**
-   * test defragmentMember function
+   * test defragmentMember function.
    */
   @Test
   public void testDefragment() throws ExecutionException, InterruptedException {
@@ -104,7 +104,7 @@ public class MaintenanceTest {
   public void testMoveLeader() throws ExecutionException, InterruptedException {
     String leaderEndpoint = null;
     List<Long> followers = new ArrayList<>();
-    for(String ep : endpoints){
+    for (String ep : endpoints) {
       StatusResponse statusResponse = maintenance.statusMember(ep).get();
       long memberId = statusResponse.getHeader().getMemberId();
       if (memberId == statusResponse.getLeader()) {
@@ -117,7 +117,7 @@ public class MaintenanceTest {
       test.fail("leader not found");
     }
 
-    try(Client client = Client.builder().endpoints(leaderEndpoint).build()) {
+    try (Client client = Client.builder().endpoints(leaderEndpoint).build()) {
       client.getMaintenanceClient().moveLeader(followers.get(0)).get();
     }
   }

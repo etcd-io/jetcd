@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,14 +62,15 @@ import org.mockito.junit.MockitoRule;
  * watch test case.
  */
 public class WatchUnitTest {
+  private static final ByteSequence KEY = ByteSequence.fromString("test_key");
 
-  private final static ByteSequence KEY = ByteSequence.fromString("test_key");
   @Rule
   public final GrpcServerRule grpcServerRule = new GrpcServerRule().directExecutor();
   @Rule
-  public MockitoRule mockitoRule = MockitoJUnit.rule();
+  public final MockitoRule mockitoRule = MockitoJUnit.rule();
   @Rule
-  public Timeout timeout = Timeout.seconds(10);
+  public final Timeout timeout = Timeout.seconds(10);
+
   private Watch watchClient;
   private ExecutorService executor = Executors.newFixedThreadPool(2);
   private AtomicReference<StreamObserver<WatchResponse>> responseObserverRef;

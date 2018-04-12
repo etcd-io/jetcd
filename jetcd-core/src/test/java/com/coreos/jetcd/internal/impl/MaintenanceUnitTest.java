@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,13 +21,11 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.coreos.jetcd.Client;
-import com.coreos.jetcd.Cluster;
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.Maintenance.Snapshot;
 import com.coreos.jetcd.api.MaintenanceGrpc.MaintenanceImplBase;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
-import com.coreos.jetcd.cluster.MemberListResponse;
 import com.coreos.jetcd.common.exception.ClosedSnapshotException;
 import com.coreos.jetcd.common.exception.EtcdException;
 import com.google.protobuf.ByteString;
@@ -66,15 +65,15 @@ public class MaintenanceUnitTest {
   @Before
   public void setUp() throws IOException {
     serviceRegistry.addService(new MaintenanceImplBase() {
-       @Override
-       public void snapshot(SnapshotRequest request, StreamObserver<SnapshotResponse> observer) {
-         try {
-           observerQueue.put(observer);
-         } catch (InterruptedException e) {
-           throw new RuntimeException(e);
-         }
-       }
-     }
+        @Override
+        public void snapshot(SnapshotRequest request, StreamObserver<SnapshotResponse> observer) {
+          try {
+            observerQueue.put(observer);
+          } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
     );
 
     fakeServer = NettyServerBuilder.forPort(TestUtil.findNextAvailablePort())

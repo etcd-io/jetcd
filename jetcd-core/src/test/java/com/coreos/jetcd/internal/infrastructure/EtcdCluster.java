@@ -13,21 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.infrastructure;
 
 import com.coreos.jetcd.Client;
 
-import javax.annotation.Nonnull;
+import com.coreos.jetcd.internal.impl.TestUtil;
 import java.io.Closeable;
 import java.util.List;
+
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import org.testcontainers.containers.GenericContainer;
 
 public interface EtcdCluster extends Closeable {
   @Nonnull
   Client getClient();
 
   @Nonnull
-  List<String> getClientEndpoints();
+  List<GenericContainer> getContainers();
 
   @Nonnull
-  List<String> getPeerEndpoints();
+  default List<String> getClientEndpoints() {
+    return getContainers().stream().map(TestUtil::buildClientEndpoint).collect(Collectors.toList());
+  }
+
+  @Nonnull
+  default List<String> getPeerEndpoints() {
+    return getContainers().stream().map(TestUtil::buildPeerEndpoint).collect(Collectors.toList());
+  }
 }

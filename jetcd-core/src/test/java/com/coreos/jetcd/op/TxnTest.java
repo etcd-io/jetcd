@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.op;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -23,10 +24,16 @@ import org.junit.Test;
 
 public class TxnTest {
 
-  final Cmp CMP = new Cmp(ByteSequence.fromString("key"), Cmp.Op.GREATER,
-      CmpTarget.value(ByteSequence.fromString("value")));
-  final Op OP = Op
-      .put(ByteSequence.fromString("key2"), ByteSequence.fromString("value2"), PutOption.DEFAULT);
+  private static final Cmp CMP = new Cmp(
+      ByteSequence.fromString("key"), Cmp.Op.GREATER,
+      CmpTarget.value(ByteSequence.fromString("value"))
+  );
+
+  private static final Op OP = Op.put(
+      ByteSequence.fromString("key2"),
+      ByteSequence.fromString("value2"),
+      PutOption.DEFAULT
+  );
 
   @Test
   public void testIfs() {
