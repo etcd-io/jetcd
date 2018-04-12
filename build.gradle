@@ -31,7 +31,6 @@ ext {
     gitProject        = "https://github.com/coreos/jetcd"
     gitURL            = "git@github.com:coreos/jetcd"
     osgiVersion       = project.version.replaceAll('-', '.')
-    gradleCiTasks     = (isReleaseVersion || isPR) ? ['clean', 'test'] : ['clean', 'test', 'uploadArchives']
 
     if (isReleaseVersion) {
         nexusUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
