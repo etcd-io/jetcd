@@ -2,13 +2,13 @@ apply from: "$rootDir/gradle/subproject-release.gradle"
 apply plugin: "com.github.lburgazzoli.karaf"
 
 configurations {
-    karaf
+    karaf {
+        transitive = false
+    }
 }
 
-compileJava.dependsOn tasks.getByPath(':jetcd-all:install')
-compileJava.dependsOn tasks.getByPath(':jetcd-osgi:install')
-
 dependencies {
+    // test
     testCompile (group: "junit", name: "junit", version: versions.junit)
     testCompile (group: "org.assertj", name: "assertj-core", version: versions.assertj)
     testCompile (group: "org.ops4j.pax.exam", name: "pax-exam-container-karaf", version: versions.pax_exam)
@@ -20,30 +20,29 @@ dependencies {
         exclude group: 'org.apache.karaf', module: 'org.apache.karaf.client'
     }
 
-    // test runtime
-    testCompile project(":jetcd-core")
-    testCompile project(":jetcd-resolver")
+    testCompile project(':jetcd-core')
 
+    // test runtime
     testRuntime "org.apache.logging.log4j:log4j-api:$versions.log4j2"
     testRuntime "org.apache.logging.log4j:log4j-core:$versions.log4j2"
     testRuntime "org.apache.logging.log4j:log4j-slf4j-impl:$versions.log4j2"
     testRuntime "org.apache.logging.log4j:log4j-1.2-api:$versions.log4j2"
 
-    karaf("com.coreos:jetcd-all:$versions.jetcd") {
-        transitive = false
-    }
-    karaf("com.coreos:jetcd-osgi:$versions.jetcd") {
-        transitive = false
-    }
+    karaf project(path: ':jetcd-all', configuration: 'shadow')
+    karaf project(path: ':jetcd-osgi')
 }
 
 test {
     versions.each {
         k, v -> systemProperty("version.$k", v)
-
     }
 
     systemProperty "build.dir", project.buildDir
+
+    dependsOn(
+        ':jetcd-all:install',
+        ':jetcd-osgi:install'
+    )
 }
 
 karaf {
@@ -58,6 +57,13 @@ karaf {
             description     = 'coreos-jetcd'
             version         = project.version
             configurations 'karaf'
+
+            bundle ('com.coreos:jetcd-all') {
+                remap {
+                    type = null
+                    classifier = null
+                }
+            }
         }
     }
 }
