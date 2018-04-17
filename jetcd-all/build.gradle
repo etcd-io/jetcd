@@ -1,0 +1,84 @@
+apply plugin: 'osgi'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+dependencies {
+    compile project(':jetcd-common')
+    compile project(':jetcd-resolver')
+    compile project(':jetcd-resolver-dns-srv')
+    compile project(':jetcd-core')
+}
+
+shadowJar {
+    classifier = null
+
+    dependencies {
+        exclude(dependency { it.moduleGroup == 'org.slf4j' })
+        exclude(dependency { it.moduleGroup == 'com.google.errorprone' })
+    }
+
+    relocate 'com.google', 'com.coreos.jetcd.shaded.com.google'
+    relocate 'io.grpc', 'com.coreos.jetcd.shaded.io.grpc'
+    relocate 'io.netty', 'com.coreos.jetcd.shaded.io.netty'
+    relocate 'javax.annotation', 'com.coreos.jetcd.javax.annotation'
+    relocate 'io.opencensus', 'om.coreos.jetcd.shaded.io.opencensus'
+}
+
+javadoc {
+    classpath = files(subprojects.collect { subproject -> subproject.javadoc.classpath })
+
+    for (subproject in subprojects) {
+        if (subproject == project) {
+            continue
+        }
+
+        source subproject.javadoc.source
+        options.links subproject.javadoc.options.links.toArray(new String[0])
+    }
+}
+
+jar {
+    classifier 'original'
+
+    manifest {
+        instruction(
+            'Export-Package',
+                "com.coreos.jetcd.common;version=$project.osgiVersion",
+                "com.coreos.jetcd.common.exception;version=$project.osgiVersion",
+                "com.coreos.jetcd.resolver;version=$project.osgiVersion",
+                "com.coreos.jetcd.resolver.dnssrv;version=$project.osgiVersion",
+                "com.coreos.jetcd;version=$project.osgiVersion",
+                "com.coreos.jetcd.auth;version=$project.osgiVersion",
+                "com.coreos.jetcd.cluster;version=$project.osgiVersion",
+                "com.coreos.jetcd.data;version=$project.osgiVersion",
+                "com.coreos.jetcd.kv;version=$project.osgiVersion",
+                "com.coreos.jetcd.lease;version=$project.osgiVersion",
+                "com.coreos.jetcd.lock;version=$project.osgiVersion",
+                "com.coreos.jetcd.maintenance;version=$project.osgiVersion",
+                "com.coreos.jetcd.op;version=$project.osgiVersion",
+                "com.coreos.jetcd.options;version=$project.osgiVersion",
+                "com.coreos.jetcd.watch;version=$project.osgiVersion",
+                "com.coreos.jetcd.osgi;version=$project.osgiVersion"
+        )
+
+        instruction(
+            'Import-Package',
+                'javax.net.ssl,org.slf4j;version="[1.7,2)"'
+        )
+    }
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier 'javadoc'
+    from javadoc.destinationDir
+}
+
+task sourcesJar(type: Jar) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+    archives shadowJar
+}

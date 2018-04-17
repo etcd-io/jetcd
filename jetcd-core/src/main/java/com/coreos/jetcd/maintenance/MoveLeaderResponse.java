@@ -19,7 +19,7 @@ package com.coreos.jetcd.maintenance;
 import com.coreos.jetcd.data.AbstractResponse;
 
 /**
- * MoveLeaderResponse returned by {@link com.coreos.jetcd.Maintenance#MoveLeader(long)}.
+ * MoveLeaderResponse returned by {@link com.coreos.jetcd.Maintenance#moveLeader(long)}.
  */
 public class MoveLeaderResponse extends AbstractResponse<com.coreos.jetcd.api.MoveLeaderResponse> {
 

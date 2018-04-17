@@ -12,9 +12,9 @@ before_install:
   - mkdir -p "$HOME/.sdkman/etc"
   - echo "sdkman_auto_answer=true" > "$HOME/.sdkman/etc/config"
   - echo "sdkman_auto_selfupdate=true" >> "$HOME/.sdkman/etc/config"
-  - sdk install java 8u144-zulu
+  - sdk install java 8.0.163-zulu
 
 script:
-  - sdk use java 8u144-zulu
+  - sdk use java 8.0.163-zulu
   - java -version
-  - ./mvnw clean install
+  - ./gradlew clean check install

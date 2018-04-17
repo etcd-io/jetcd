@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
@@ -26,17 +28,14 @@ import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
 import com.coreos.jetcd.watch.WatchEvent;
 import com.coreos.jetcd.watch.WatchEvent.EventType;
 import com.coreos.jetcd.watch.WatchResponse;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * watch test case.

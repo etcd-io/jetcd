@@ -1,0 +1,20 @@
+
+task ci {
+    if (isReleaseVersion || isPR) {
+        doLast {
+            println "=============================================================="
+            println "CI Tasks: 'clean', 'check'"
+            println "=============================================================="
+        }
+
+        dependsOn clean, check
+    } else {
+        doLast {
+            println "=============================================================="
+            println "CI Tasks: 'clean', 'check', 'uploadArchives'"
+            println "=============================================================="
+        }
+
+        dependsOn clean, check, uploadArchives
+    }
+}

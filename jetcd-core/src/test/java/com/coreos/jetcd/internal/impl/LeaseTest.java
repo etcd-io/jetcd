@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.impl;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
@@ -27,15 +30,12 @@ import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
 import com.coreos.jetcd.options.LeaseOption;
 import com.coreos.jetcd.options.PutOption;
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
-
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * KV service test cases.

@@ -1,0 +1,18 @@
+rootProject.name = 'jetcd'
+
+// common
+include 'jetcd-common'
+include 'jetcd-resolver'
+include 'jetcd-resolver-dns-srv'
+include 'jetcd-core'
+
+// shaded
+include 'jetcd-all'
+
+// OSGi
+include 'jetcd-osgi'
+include 'jetcd-karaf'
+
+// examples
+include 'jetcd-examples:jetcd-simple-ctl'
+include 'jetcd-examples:jetcd-watch-example'

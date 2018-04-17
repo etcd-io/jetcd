@@ -1,0 +1,7 @@
+apply plugin: 'net.researchgate.release'
+apply plugin: 'io.codearte.nexus-staging'
+
+afterReleaseBuild.dependsOn uploadArchives
+
+task close(dependsOn: 'closeAndReleaseRepository') {
+}

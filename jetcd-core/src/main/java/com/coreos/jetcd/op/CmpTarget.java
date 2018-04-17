@@ -21,7 +21,7 @@ import com.coreos.jetcd.data.ByteSequence;
 import com.google.protobuf.ByteString;
 
 /**
- * Cmp target used in {@link Txn}.
+ * Cmp target used in {@link com.coreos.jetcd.Txn}.
  */
 public abstract class CmpTarget<T> {
 

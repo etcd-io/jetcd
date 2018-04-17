@@ -1,0 +1,54 @@
+apply from: "$rootDir/gradle/subproject.gradle"
+apply from: "$rootDir/gradle/subproject-osgi.gradle"
+apply from: "$rootDir/gradle/subproject-release.gradle"
+
+apply plugin: 'com.google.protobuf'
+apply plugin: 'idea'
+
+dependencies {
+    compile project(':jetcd-common')
+    compile project(':jetcd-resolver')
+
+    // test compile    
+    testCompile "io.grpc:grpc-testing:$versions.grpc"
+    testCompile "org.testcontainers:testcontainers:$versions.testcontainers"
+
+    // we should get rid of this one
+    testCompile "org.testng:testng:$versions.testng"
+
+    // testRuntime
+    testRuntime "io.netty:netty-tcnative-boringssl-static:$versions.netty_tcnative"
+}
+
+idea {
+    module {
+        sourceDirs += file("${projectDir}/src/generated/main/java");
+        sourceDirs += file("${projectDir}/src/generated/main/grpc");
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:$versions.protobuf"
+    }
+
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:$versions.grpc"
+        }
+    }
+
+    generatedFilesBaseDir = "$projectDir/src/generated"
+
+    generateProtoTasks {
+        all().each { task ->
+            task.plugins {
+                grpc {}
+            }
+        }
+
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}

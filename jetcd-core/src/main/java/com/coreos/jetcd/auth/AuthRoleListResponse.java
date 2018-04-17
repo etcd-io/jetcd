@@ -21,7 +21,7 @@ import com.coreos.jetcd.data.AbstractResponse;
 import java.util.List;
 
 /**
- * AuthRoleListResponse returned by {@link Auth#roleList()} contains a header and
+ * AuthRoleListResponse returned by {@link com.coreos.jetcd.Auth#roleList()} contains a header and
  * a list of roles.
  */
 public class AuthRoleListResponse extends

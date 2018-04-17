@@ -20,7 +20,7 @@ import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.data.AbstractResponse;
 
 /**
- * HashKVResponse returned by {@link Maintenance#HashKV(String, long)}.
+ * HashKVResponse returned by {@link Maintenance#hashKV(String, long)}.
  */
 public class HashKVResponse extends AbstractResponse<com.coreos.jetcd.api.HashKVResponse> {
 

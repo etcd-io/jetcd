@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.infrastructure;
 
-import org.testcontainers.containers.Network;
-
 import javax.annotation.Nonnull;
+import org.testcontainers.containers.Network;
 
 public class ClusterFactory {
   @Nonnull

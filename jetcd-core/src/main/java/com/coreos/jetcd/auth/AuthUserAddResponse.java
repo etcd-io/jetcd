@@ -21,7 +21,7 @@ import com.coreos.jetcd.data.AbstractResponse;
 import com.coreos.jetcd.data.ByteSequence;
 
 /**
- * AuthUserAddResponse returned by {@link Auth#userAdd(ByteSequence, ByteSequence)} contains a
+ * AuthUserAddResponse returned by {@link com.coreos.jetcd.Auth#userAdd(ByteSequence, ByteSequence)} contains a
  * header.
  */
 public class AuthUserAddResponse extends

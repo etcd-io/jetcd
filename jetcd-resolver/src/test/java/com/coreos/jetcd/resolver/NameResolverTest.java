@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.resolver;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import com.coreos.jetcd.common.exception.EtcdException;
 import java.net.URI;
@@ -27,9 +31,9 @@ public class NameResolverTest {
   @Test
   public void testDefaults() throws Exception {
     final URIResolverLoader loader = URIResolverLoader.defaultLoader();
-    final SmartNameResolver resolver = new SmartNameResolver("etcd", Collections.emptyList(), loader);
+    final SmartNameResolver res = new SmartNameResolver("etcd", Collections.emptyList(), loader);
 
-    Assertions.assertThat(resolver.getResolvers().stream().anyMatch(DirectUriResolver.class::isInstance)).isTrue();
+    assertThat(res.getResolvers().stream().anyMatch(DirectUriResolver.class::isInstance)).isTrue();
   }
 
   @Test
@@ -39,8 +43,8 @@ public class NameResolverTest {
     for (String scheme : DIRECT_SCHEMES) {
       URI uri = URI.create(scheme + "://127.0.0.1:2379");
 
-      Assertions.assertThat(discovery.supports(uri)).isTrue();
-      Assertions.assertThat(discovery.resolve(uri).size()).isGreaterThan(0);
+      assertThat(discovery.supports(uri)).isTrue();
+      assertThat(discovery.resolve(uri).size()).isGreaterThan(0);
     }
   }
 
@@ -49,8 +53,8 @@ public class NameResolverTest {
     final DirectUriResolver discovery = new DirectUriResolver();
     final URI uri = URI.create("mailto://127.0.0.1:2379");
 
-    Assertions.assertThat(discovery.supports(uri)).isFalse();
-    Assertions.assertThatExceptionOfType(EtcdException.class)
+    assertThat(discovery.supports(uri)).isFalse();
+    assertThatExceptionOfType(EtcdException.class)
         .isThrownBy(() -> discovery.resolve(uri))
         .withMessageContaining("Unsupported URI " + uri);
   }

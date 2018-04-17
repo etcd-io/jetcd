@@ -52,9 +52,8 @@ public class Main {
       return;
     }
 
-    try (Client client = Client.builder()
-            .endpoints(main.endpoints.split(","))
-            .build()) {
+    String[] endpoints = main.endpoints.split(",");
+    try (Client client = Client.builder().endpoints(endpoints).build()) {
       switch (parsedCmd) {
         case "get":
           getCmd.get(client);
@@ -65,6 +64,8 @@ public class Main {
         case "watch":
           watchCmd.watch(client);
           break;
+        default:
+          LOGGER.warn("Unknown command: {}", parsedCmd);
       }
     } catch (Exception e) {
       LOGGER.error(parsedCmd + " Error {}", e);

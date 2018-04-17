@@ -1,0 +1,54 @@
+dependencies {
+    // common
+    compile "org.slf4j:slf4j-api:$versions.slf4j"
+
+    // grpc
+    compile "io.grpc:grpc-core:$versions.grpc"
+    compile "io.grpc:grpc-netty:$versions.grpc"
+    compile "io.grpc:grpc-protobuf:$versions.grpc"
+    compile "io.grpc:grpc-stub:$versions.grpc"
+
+    // test compile
+    testCompile "junit:junit:$versions.junit"
+    testCompile "org.assertj:assertj-core:$versions.assertj"
+    testCompile "org.mockito:mockito-core:$versions.mockito"
+
+    // test runtime
+    testRuntime "org.apache.logging.log4j:log4j-api:$versions.log4j2"
+    testRuntime "org.apache.logging.log4j:log4j-core:$versions.log4j2"
+    testRuntime "org.apache.logging.log4j:log4j-slf4j-impl:$versions.log4j2"
+    testRuntime "org.apache.logging.log4j:log4j-1.2-api:$versions.log4j2"
+}
+
+jar {
+    baseName = "${project.name}"
+
+    // OSGi
+    manifest.attributes['Bundle-Description'     ] = "${project.name}"
+    manifest.attributes['Bundle-Name'            ] = "${project.name}"
+    manifest.attributes['Bundle-SymbolicName'    ] = "${project.group}-${project.name}"
+    manifest.attributes['Bundle-Version'         ] = osgiVersion
+
+    // JPMS
+    manifest.attributes['Automatic-Module-Name'  ] = "${project.group}-${project.name}".replaceAll('-','.')
+}
+
+javadoc {
+    // without the -quiet option, the build fails
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+task sourcesJar(type: Jar) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}

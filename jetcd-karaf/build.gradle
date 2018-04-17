@@ -1,0 +1,69 @@
+apply from: "$rootDir/gradle/subproject-release.gradle"
+apply plugin: "com.github.lburgazzoli.karaf"
+
+configurations {
+    karaf {
+        transitive = false
+    }
+}
+
+dependencies {
+    // test
+    testCompile (group: "junit", name: "junit", version: versions.junit)
+    testCompile (group: "org.assertj", name: "assertj-core", version: versions.assertj)
+    testCompile (group: "org.ops4j.pax.exam", name: "pax-exam-container-karaf", version: versions.pax_exam)
+    testCompile (group: "org.ops4j.pax.exam", name: "pax-exam-junit4", version: versions.pax_exam)
+    testCompile (group: "org.apache.geronimo.specs", name: "geronimo-atinject_1.0_spec", version: 1.0)
+
+    testCompile (group: "org.apache.karaf.itests", name: "itests", version: versions.karaf, classifier: "tests")
+    testCompile (group: "org.apache.karaf", name: "apache-karaf-minimal", version: versions.karaf, ext: "tar.gz") {
+        exclude group: 'org.apache.karaf', module: 'org.apache.karaf.client'
+    }
+
+    testCompile project(':jetcd-core')
+
+    // test runtime
+    testRuntime "org.apache.logging.log4j:log4j-api:$versions.log4j2"
+    testRuntime "org.apache.logging.log4j:log4j-core:$versions.log4j2"
+    testRuntime "org.apache.logging.log4j:log4j-slf4j-impl:$versions.log4j2"
+    testRuntime "org.apache.logging.log4j:log4j-1.2-api:$versions.log4j2"
+
+    karaf project(path: ':jetcd-all', configuration: 'shadow')
+    karaf project(path: ':jetcd-osgi')
+}
+
+test {
+    versions.each {
+        k, v -> systemProperty("version.$k", v)
+    }
+
+    systemProperty "build.dir", project.buildDir
+
+    dependsOn(
+        ':jetcd-all:install',
+        ':jetcd-osgi:install'
+    )
+}
+
+karaf {
+    features {
+        xsdVersion  = '1.3.0'
+        name        = 'coreos-jetcd'
+        version     = project.version
+        description = 'coreos-jetcd'
+
+        feature {
+            name            = 'coreos-jetcd'
+            description     = 'coreos-jetcd'
+            version         = project.version
+            configurations 'karaf'
+
+            bundle ('com.coreos:jetcd-all') {
+                remap {
+                    type = null
+                    classifier = null
+                }
+            }
+        }
+    }
+}

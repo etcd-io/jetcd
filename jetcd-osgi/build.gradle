@@ -1,0 +1,22 @@
+apply from: "$rootDir/gradle/subproject-release.gradle"
+
+apply plugin: 'biz.aQute.bnd.builder'
+
+dependencies {
+    // OSGi DS annotations
+    compileOnly "org.osgi:org.osgi.service.metatype.annotations:$versions.osgi_ds"
+    compileOnly "org.osgi:org.osgi.service.component.annotations:$versions.osgi_ds"
+
+    // Project deps
+    compile project(':jetcd-common')
+    compile project(':jetcd-resolver')
+    compile project(':jetcd-resolver-dns-srv')
+    compile project(':jetcd-core')
+}
+
+jar {
+    manifest {
+        attributes['Export-Package'] = "com.coreos.jetcd.osgi.*;-noimport:=true"
+        attributes['Import-Package'] = "javax.net.ssl,*"
+    }
+}
