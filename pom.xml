@@ -572,7 +572,7 @@
                         <exclude>NOTICE</exclude>
                         <exclude>DCO</exclude>
                         <exclude>docs/**</exclude>
-                        <exclude>.mvn/wrapper/maven-wrapper.properties</exclude>
+                        <exclude>.mvn/wrapper/**</exclude>
                         <exclude>mvnw*</exclude>
                         <exclude>etc/license.txt</exclude>
                         <exclude>etc/checkstyle-header-java.txt</exclude>
