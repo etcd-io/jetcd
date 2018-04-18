@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-package com.coreos.jetcd.karaf;
+package com.coreos.jetcd.all;

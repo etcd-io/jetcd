@@ -13,9 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.all;
 
-public final class JetcdAll {    
-    private JetcdAll() {        
-    }
+/**
+ * Placeholder.
+ */
+public final class JetcdAll {
+  /**
+   * Private c-tor.
+   */
+  private JetcdAll() {
+  }
 }

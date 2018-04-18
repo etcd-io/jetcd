@@ -30,6 +30,11 @@
     <artifactId>jetcd-osgi</artifactId>
     <packaging>bundle</packaging>
 
+    <properties>
+        <checkstyle.config.location>${basedir}/../../etc/checkstyle.xml</checkstyle.config.location>
+        <checkstyle.header.file>${basedir}../../etc/checkstyle-header-java.txt</checkstyle.header.file>
+    </properties>
+
     <dependencies>
         <!-- ds -->
         <dependency>
