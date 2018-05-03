@@ -16,6 +16,9 @@
 
 package com.coreos.jetcd;
 
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newClosedWatcherException;
+import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
+
 import com.coreos.jetcd.common.exception.ClosedClientException;
 import com.coreos.jetcd.common.exception.ClosedWatcherException;
 import com.coreos.jetcd.common.exception.CompactedException;
@@ -24,6 +27,9 @@ import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.internal.impl.CloseableClient;
 import com.coreos.jetcd.options.WatchOption;
 import com.coreos.jetcd.watch.WatchResponse;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Interface of the watch client.
@@ -70,6 +76,30 @@ public interface Watch extends CloseableClient {
      *        etcd server error, or any internal client error.
      * @throws InterruptedException when listen thread is interrupted.
      */
-    WatchResponse listen() throws InterruptedException;
+    default WatchResponse listen() throws InterruptedException {
+      try {
+        return this.listenAsync().get();
+      } catch (ExecutionException e) {
+        Throwable t = e.getCause();
+        if (t instanceof EtcdException) {
+          throw (EtcdException) t;
+        }
+        throw toEtcdException(e);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw e;
+      } catch (RejectedExecutionException e) {
+        throw newClosedWatcherException();
+      }
+    }
+
+    /**
+     * Schedule a listen action to retrieve the next watch response.
+     *
+     * <p>The listen action is triggered and the completable future is satisfied when watch response arrives.
+     *
+     * @return
+     */
+    CompletableFuture<WatchResponse> listenAsync();
   }
 }

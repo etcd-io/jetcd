@@ -41,14 +41,12 @@ import io.grpc.stub.StreamObserver;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -384,10 +382,12 @@ class WatchImpl implements Watch {
    */
   public static class WatcherImpl implements Watcher {
 
-    final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final WatchOption watchOption;
     private final ByteSequence key;
     private final Object closedLock = new Object();
+    // watch requests buffer.
+    private final BlockingQueue<CompletableFuture<com.coreos.jetcd.watch.WatchResponse>> watchQueue
+        = new LinkedBlockingQueue<>();
     // watch events buffer.
     private final BlockingQueue<WatchResponseWithError> eventsQueue = new LinkedBlockingQueue<>();
     private long watchID;
@@ -446,6 +446,49 @@ class WatchImpl implements Watch {
         Thread.currentThread().interrupt();
         logger.log(Level.WARNING, "Interrupted", e);
       }
+      // notify watchers that there is a watch response available
+      notifyWatchers();
+    }
+
+    private void notifyWatchers() {
+      while (notifyOne()) {
+          // notify as many watchers as possible
+      }
+    }
+
+    /**
+     * Notify one watcher is there is one.
+     *
+     * @return true if a watcher is notified, otherwise false.
+     */
+    private boolean notifyOne() {
+      CompletableFuture<com.coreos.jetcd.watch.WatchResponse> watchFuture = watchQueue.peek();
+      if (null == watchFuture) {
+        // no one is watching, return
+        return false;
+      }
+
+      if (isClosed()) {
+        watchFuture.completeExceptionally(newClosedWatcherException());
+        watchQueue.remove(watchFuture);
+        return true;
+      }
+
+      // someone is watching
+      WatchResponseWithError resp = eventsQueue.poll();
+      if (null == resp) {
+        // there is no watch response
+        return false;
+      }
+
+      // there is a watcher and there is a watch response, satisfy the watcher
+      if (resp.getException() != null) {
+        watchFuture.completeExceptionally(resp.getException());
+      } else {
+        watchFuture.complete(new com.coreos.jetcd.watch.WatchResponse(resp.getWatchResponse()));
+      }
+      watchQueue.remove(watchFuture);
+      return true;
     }
 
     @Override
@@ -458,44 +501,16 @@ class WatchImpl implements Watch {
       }
 
       this.owner.cancelWatcher(this.watchID);
-      this.executor.shutdownNow();
+
+      notifyWatchers();
     }
 
     @Override
-    public synchronized com.coreos.jetcd.watch.WatchResponse listen() throws InterruptedException {
-      if (isClosed()) {
-        throw newClosedWatcherException();
-      }
-
-      try {
-        return this.createWatchResponseFuture().get();
-      } catch (ExecutionException e) {
-        synchronized (this.closedLock) {
-          if (isClosed()) {
-            throw newClosedWatcherException();
-          }
-        }
-        Throwable t = e.getCause();
-        if (t instanceof EtcdException) {
-          throw (EtcdException) t;
-        }
-        throw toEtcdException(e);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw e;
-      } catch (RejectedExecutionException e) {
-        throw newClosedWatcherException();
-      }
-    }
-
-    private Future<com.coreos.jetcd.watch.WatchResponse> createWatchResponseFuture() {
-      return this.executor.submit(() -> {
-        WatchResponseWithError watchResponse = this.eventsQueue.take();
-        if (watchResponse.getException() != null) {
-          throw watchResponse.getException();
-        }
-        return new com.coreos.jetcd.watch.WatchResponse(watchResponse.getWatchResponse());
-      });
+    public CompletableFuture<com.coreos.jetcd.watch.WatchResponse> listenAsync() {
+      CompletableFuture<com.coreos.jetcd.watch.WatchResponse> listenFuture = new CompletableFuture<>();
+      watchQueue.add(listenFuture);
+      notifyWatchers();
+      return listenFuture;
     }
   }
 }
