@@ -129,7 +129,7 @@ public class LeaseImpl implements Lease {
     }
 
     KeepAlive keepAlive = this.keepAlives.computeIfAbsent(leaseId, (key) -> {
-      KeepAlive ka = new KeepAlive(this.keepAlives, this, leaseId);
+      KeepAlive ka = new KeepAlive(this.keepAlives, leaseId);
       long now = System.currentTimeMillis();
       ka.setDeadLine(now + FIRST_KEEPALIVE_TIMEOUT_MS);
       ka.setNextKeepAlive(now);
@@ -343,7 +343,7 @@ public class LeaseImpl implements Lease {
     private final Object closedLock = new Object();
     private BlockingQueue<LeaseKeepAliveResponseWithError> queue = new LinkedBlockingDeque<>(1);
     private ExecutorService service = Executors.newSingleThreadExecutor();
-    private boolean closed = false;
+    private volatile boolean closed = false;
     private KeepAlive owner;
 
     public KeepAliveListenerImpl(KeepAlive owner) {
@@ -401,9 +401,7 @@ public class LeaseImpl implements Lease {
     }
 
     private boolean isClosed() {
-      synchronized (this.closedLock) {
-        return this.closed;
-      }
+      return this.closed;
     }
 
     @Override
@@ -422,7 +420,8 @@ public class LeaseImpl implements Lease {
   private static class KeepAlive {
 
     // ownerLock protects owner map.
-    private final Object ownerLock;
+    // remove ownerLock for private inner class
+    //private final Object ownerLock;
     private long deadLine;
     private long nextKeepAlive;
     private Map<Long, KeepAlive> owner;
@@ -432,9 +431,8 @@ public class LeaseImpl implements Lease {
     private Set<KeepAliveListenerImpl> listenersSet = Collections
         .newSetFromMap(new ConcurrentHashMap<>());
 
-    public KeepAlive(Map<Long, KeepAlive> owner, Object ownerLock, long leaseId) {
+    public KeepAlive(Map<Long, KeepAlive> owner, long leaseId) {
       this.owner = owner;
-      this.ownerLock = ownerLock;
       this.leaseId = leaseId;
     }
 
@@ -463,12 +461,11 @@ public class LeaseImpl implements Lease {
       this.listenersSet.forEach((l) -> l.enqueue(lkae));
     }
 
+    //removeListener only would be called synchronously by close in KeepAliveListener, no need to get lock here
     public void removeListener(KeepAliveListenerImpl l) {
       this.listenersSet.remove(l);
-      synchronized (this.ownerLock) {
-        if (this.listenersSet.isEmpty()) {
-          this.owner.remove(this.leaseId);
-        }
+      if (this.listenersSet.isEmpty()) {
+        this.owner.remove(this.leaseId);
       }
     }
 
