@@ -21,8 +21,22 @@ import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newClosedLe
 import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
 import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 import static com.google.common.base.Preconditions.checkNotNull;
-import io.grpc.stub.StreamObserver;
 
+import com.coreos.jetcd.Lease;
+import com.coreos.jetcd.api.LeaseGrantRequest;
+import com.coreos.jetcd.api.LeaseGrpc;
+import com.coreos.jetcd.api.LeaseKeepAliveRequest;
+import com.coreos.jetcd.api.LeaseRevokeRequest;
+import com.coreos.jetcd.api.LeaseTimeToLiveRequest;
+import com.coreos.jetcd.common.exception.ErrorCode;
+import com.coreos.jetcd.common.exception.EtcdException;
+import com.coreos.jetcd.lease.LeaseGrantResponse;
+import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
+import com.coreos.jetcd.lease.LeaseKeepAliveResponseWithError;
+import com.coreos.jetcd.lease.LeaseRevokeResponse;
+import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
+import com.coreos.jetcd.options.LeaseOption;
+import io.grpc.stub.StreamObserver;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,21 +53,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
-import com.coreos.jetcd.Lease;
-import com.coreos.jetcd.api.LeaseGrantRequest;
-import com.coreos.jetcd.api.LeaseGrpc;
-import com.coreos.jetcd.api.LeaseKeepAliveRequest;
-import com.coreos.jetcd.api.LeaseRevokeRequest;
-import com.coreos.jetcd.api.LeaseTimeToLiveRequest;
-import com.coreos.jetcd.common.exception.ErrorCode;
-import com.coreos.jetcd.common.exception.EtcdException;
-import com.coreos.jetcd.lease.LeaseGrantResponse;
-import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
-import com.coreos.jetcd.lease.LeaseKeepAliveResponseWithError;
-import com.coreos.jetcd.lease.LeaseRevokeResponse;
-import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
-import com.coreos.jetcd.options.LeaseOption;
 
 
 /**
