@@ -20,14 +20,13 @@ import com.coreos.jetcd.Cluster;
 import com.coreos.jetcd.cluster.Member;
 import com.coreos.jetcd.cluster.MemberAddResponse;
 import com.coreos.jetcd.cluster.MemberListResponse;
-import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
 import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
+import com.coreos.jetcd.internal.infrastructure.EtcdClusterFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import org.testng.asserts.Assertion;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -39,7 +38,7 @@ import java.util.concurrent.TimeoutException;
  * test etcd cluster client
  */
 public class ClusterClientTest {
-  private static final EtcdCluster CLUSTER = ClusterFactory.buildThreeNodeCluster("CLUSTER-etcd");
+  private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("cluster-client", 3 ,false);
 
   private Assertion assertion = new Assertion();
   private Member addedMember;
@@ -53,6 +52,8 @@ public class ClusterClientTest {
 
   @BeforeTest
   public void setUp() throws InterruptedException {
+    CLUSTER.start();
+
     endpoints = CLUSTER.getClientEndpoints();
     peerUrls = CLUSTER.getPeerEndpoints();
     TimeUnit.SECONDS.sleep(5);
@@ -129,7 +130,7 @@ public class ClusterClientTest {
   }
 
   @AfterTest
-  public void tearDown() throws IOException {
+  public void tearDown() {
     CLUSTER.close();
   }
 }

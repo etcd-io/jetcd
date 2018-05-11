@@ -15,12 +15,11 @@
  */
 package com.coreos.jetcd.internal.impl;
 
-import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Txn;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
 import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
+import com.coreos.jetcd.internal.infrastructure.EtcdClusterFactory;
 import com.coreos.jetcd.kv.DeleteResponse;
 import com.coreos.jetcd.kv.GetResponse;
 import com.coreos.jetcd.kv.PutResponse;
@@ -46,7 +45,7 @@ import java.util.concurrent.ExecutionException;
  * KV service test cases.
  */
 public class KVTest {
-  private static final EtcdCluster CLUSTER = ClusterFactory.buildThreeNodeCluster("kv-etcd");
+  private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("etcd-kv", 3 ,false);
 
   private KV kvClient;
   private Assertion test;
@@ -60,9 +59,10 @@ public class KVTest {
 
   @BeforeTest
   public void setUp() throws Exception {
+    CLUSTER.start();
+
     test = new Assertion();
-    Client client = CLUSTER.getClient();
-    kvClient = client.getKVClient();
+    kvClient = CLUSTER.getClient().getKVClient();
   }
 
   @Test
