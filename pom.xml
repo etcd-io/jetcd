@@ -85,10 +85,10 @@
         <maven-dependency-plugin.version>3.0.1</maven-dependency-plugin.version>
         <depends-maven-plugin.version>1.4.0</depends-maven-plugin.version>
         <os-maven-plugin.version>1.5.0.Final</os-maven-plugin.version>
-        <protobuf-maven-plugin.version>0.5.0</protobuf-maven-plugin.version>
+        <protobuf-maven-plugin.version>0.5.1</protobuf-maven-plugin.version>
         <jacoco-maven-plugin.version>0.7.9</jacoco-maven-plugin.version>
-        <com-puppycrawl-tools.version>8.9</com-puppycrawl-tools.version>
-        <com-puppycrawl-tools-guava.version>24.1-jre</com-puppycrawl-tools-guava.version>
+        <com-puppycrawl-tools.version>8.10</com-puppycrawl-tools.version>
+        <com-puppycrawl-tools-guava.version>25.0-jre</com-puppycrawl-tools-guava.version>
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
         <license-maven-plugin.version>3.0</license-maven-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
@@ -102,10 +102,10 @@
         <versions-maven-plugin.version>2.5</versions-maven-plugin.version>
 
         <!-- dependencies -->
-        <grpc.version>1.11.0</grpc.version>
+        <grpc.version>1.12.0</grpc.version>
         <slf4j.version>1.7.25</slf4j.version>
         <plexus-compiler-javac-errorprone.version>2.8.4</plexus-compiler-javac-errorprone.version>
-        <error-prone-core.version>2.2.0</error-prone-core.version>
+        <error-prone-core.version>2.3.1</error-prone-core.version>
         <log4j2.version>2.11.0</log4j2.version>
         <jcommander.version>1.72</jcommander.version>
         <!-- should be in sync with protobuf grpc dependencies -->
@@ -118,11 +118,11 @@
 
         <!-- test dependencies -->
         <testng.version>6.14.3</testng.version>
-        <mockito.version>2.18.0</mockito.version>
+        <mockito.version>2.18.3</mockito.version>
         <assertj.version>3.9.1</assertj.version>
         <junit.version>4.12</junit.version>
         <netty-tcnative.version>2.0.8.Final</netty-tcnative.version>
-        <testcontainers.version>1.7.0</testcontainers.version>
+        <testcontainers.version>1.7.2</testcontainers.version>
     </properties>
 
     <modules>
@@ -308,6 +308,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
+                    <configuration>
+                        <systemPropertyVariables>
+                            <visibleassertions.silence>true</visibleassertions.silence>
+                        </systemPropertyVariables>
+                    </configuration>
                 </plugin>
 
                 <plugin>
