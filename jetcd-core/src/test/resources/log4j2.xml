@@ -26,8 +26,10 @@
 
   <Loggers>
     <!-- package loggers -->
-    <Logger name="org.testcontainers" level="INFO" additivity="true"/>
-    <Logger name="🐳 [gcr.io/etcd-development/etcd:v3.3]" level="WARN" additivity="true"/>
+    <Logger name="org.testcontainers" level="INFO"/>
+    <Logger name="🐳 [gcr.io/etcd-development/etcd:v3.3]" level="WARN"/>
+    
+    <Logger name="com.coreos.jetcd.internal.infrastructure" level="INFO"/>
 
     <!-- main logger -->
     <Root level="INFO">

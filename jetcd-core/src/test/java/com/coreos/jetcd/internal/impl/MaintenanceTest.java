@@ -18,7 +18,7 @@ package com.coreos.jetcd.internal.impl;
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.Maintenance.Snapshot;
-import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
+import com.coreos.jetcd.internal.infrastructure.EtcdClusterFactory;
 import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
 import com.coreos.jetcd.maintenance.StatusResponse;
 import org.testng.annotations.AfterTest;
@@ -38,7 +38,7 @@ import java.util.concurrent.ExecutionException;
  * Maintenance test.
  */
 public class MaintenanceTest {
-  private static final EtcdCluster CLUSTER = ClusterFactory.buildThreeNodeCluster("maintenance-etcd");
+  private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("etcd-maintenance", 3 ,false);
 
   private Client client;
   private Maintenance maintenance;
@@ -47,6 +47,8 @@ public class MaintenanceTest {
 
   @BeforeClass
   public void setup() {
+    CLUSTER.start();
+
     endpoints = CLUSTER.getClientEndpoints();
     this.client = Client.builder().endpoints(endpoints).build();
     this.maintenance = client.getMaintenanceClient();

@@ -24,7 +24,7 @@ public class TestConstants {
   public static final int ETCD_CLIENT_PORT = 2379;
   public static final int ETCD_PEER_PORT = 2380;
 
-  public static final String DEFAULT_SSL_AUTHORITY = "etcd-ssl";
+  public static final String DEFAULT_SSL_AUTHORITY = "etcd0";
 
   public static final String DEFAULT_SSL_CA_PATH = "/ssl/cert/ca.pem";
 }

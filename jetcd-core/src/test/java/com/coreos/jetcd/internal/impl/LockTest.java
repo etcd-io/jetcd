@@ -19,7 +19,7 @@ import com.coreos.jetcd.Client;
 import com.coreos.jetcd.Lease;
 import com.coreos.jetcd.Lock;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
+import com.coreos.jetcd.internal.infrastructure.EtcdClusterFactory;
 import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lock.LockResponse;
@@ -36,7 +36,7 @@ import java.util.concurrent.ExecutionException;
  * Lock service test cases.
  */
 public class LockTest {
-  private static final EtcdCluster CLUSTER = ClusterFactory.buildThreeNodeCluster("lock-etcd");
+  private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("etcd-lock", 3 ,false);
 
   private Lock lockClient;
   private Lease leaseClient;
@@ -47,8 +47,11 @@ public class LockTest {
 
   @BeforeTest
   public void setUp() throws Exception {
-    test = new Assertion();
+    CLUSTER.start();
+
     Client client = Client.builder().endpoints(CLUSTER.getClientEndpoints()).build();
+
+    test = new Assertion();
     lockClient = client.getLockClient();
     leaseClient = client.getLeaseClient();
   }

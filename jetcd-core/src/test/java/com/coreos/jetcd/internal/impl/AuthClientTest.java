@@ -15,6 +15,9 @@
  */
 package com.coreos.jetcd.internal.impl;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 import com.coreos.jetcd.Auth;
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
@@ -23,8 +26,8 @@ import com.coreos.jetcd.auth.AuthRoleListResponse;
 import com.coreos.jetcd.auth.Permission;
 import com.coreos.jetcd.auth.Permission.Type;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
 import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
+import com.coreos.jetcd.internal.infrastructure.EtcdClusterFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -33,14 +36,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
 /**
  * test etcd auth
  */
 public class AuthClientTest {
-  private static final EtcdCluster CLUSTER = ClusterFactory.buildSingleNodeCluster("auth-etcd");
+
+  private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("auth-etcd", 1, false);
 
   private ByteSequence rootRolekeyRangeBegin = ByteSequence.fromString("root");
   private ByteSequence rootkeyRangeEnd = ByteSequence.fromString("root1");
@@ -78,6 +79,7 @@ public class AuthClientTest {
    */
   @BeforeTest
   public void setupEnv() {
+    CLUSTER.start();
     endpoints = CLUSTER.getClientEndpoints();
     Client client = Client.builder()
         .endpoints(endpoints)

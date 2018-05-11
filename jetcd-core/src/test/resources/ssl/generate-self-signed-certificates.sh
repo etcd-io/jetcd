@@ -37,6 +37,21 @@ export ADDRESS=etcd-ssl
 export NAME=server
 echo '{"CN":"'$NAME'","hosts":[""],"key":{"algo":"rsa","size":2048}}' | $CFSSL_HOME/cfssl gencert -config=ca-config.json -ca=ca.pem -ca-key=ca-key.pem -hostname="$ADDRESS" - | $CFSSL_HOME/cfssljson -bare $NAME
 
+
+export ADDRESS=etcd0
+export NAME=etcd0
+echo '{"CN":"'$NAME'","hosts":[""],"key":{"algo":"rsa","size":2048}}' | $CFSSL_HOME/cfssl gencert -config=ca-config.json -ca=ca.pem -ca-key=ca-key.pem -hostname="$ADDRESS" - | $CFSSL_HOME/cfssljson -bare $NAME
+
+
+export ADDRESS=etcd1
+export NAME=etcd1
+echo '{"CN":"'$NAME'","hosts":[""],"key":{"algo":"rsa","size":2048}}' | $CFSSL_HOME/cfssl gencert -config=ca-config.json -ca=ca.pem -ca-key=ca-key.pem -hostname="$ADDRESS" - | $CFSSL_HOME/cfssljson -bare $NAME
+
+
+export ADDRESS=etcd2
+export NAME=etcd2
+echo '{"CN":"'$NAME'","hosts":[""],"key":{"algo":"rsa","size":2048}}' | $CFSSL_HOME/cfssl gencert -config=ca-config.json -ca=ca.pem -ca-key=ca-key.pem -hostname="$ADDRESS" - | $CFSSL_HOME/cfssljson -bare $NAME
+
 export ADDRESS=
 export NAME=client
 echo '{"CN":"'$NAME'","hosts":[""],"key":{"algo":"rsa","size":2048}}' | $CFSSL_HOME/cfssl gencert -config=ca-config.json -ca=ca.pem -ca-key=ca-key.pem -hostname="$ADDRESS" - | $CFSSL_HOME/cfssljson -bare $NAME

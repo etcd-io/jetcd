@@ -20,19 +20,19 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.data.ByteSequence;
-import com.coreos.jetcd.internal.infrastructure.ClusterFactory;
-import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
+import com.coreos.jetcd.internal.infrastructure.EtcdClusterResource;
 import io.grpc.netty.GrpcSslContexts;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Objects;
-import org.junit.AfterClass;
+import org.junit.Rule;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.Objects;
+
 public class SslTest {
-  private final static EtcdCluster CLUSTER = ClusterFactory.buildSingleNodeClusterWithSsl("etcd-ssl");
+  @Rule
+  public final EtcdClusterResource clusterResource = new EtcdClusterResource("etcd-ssl", 1, true);
 
   @Test(timeout = 5000)
   public void testSimpleSllSetup() throws Exception {
@@ -40,7 +40,7 @@ public class SslTest {
     final ByteSequence val = ByteSequence.fromString(TestUtil.randomString());
     final String capath = System.getProperty("ssl.cert.capath");
     final String authority = System.getProperty("ssl.cert.authority", TestConstants.DEFAULT_SSL_AUTHORITY);
-    final String endpoints = System.getProperty("ssl.cert.endpoints", CLUSTER.getClientEndpoints().get(0));
+    final String endpoints = System.getProperty("ssl.cert.endpoints", clusterResource.cluster().getClientEndpoints().get(0));
 
     try (InputStream is = Objects.nonNull(capath)
           ? new FileInputStream(new File(capath))
@@ -63,11 +63,6 @@ public class SslTest {
       kv.close();
       client.close();
     }
-  }
-
-  @AfterClass
-  public static void tearDown() throws IOException {
-    CLUSTER.close();
   }
 }
 

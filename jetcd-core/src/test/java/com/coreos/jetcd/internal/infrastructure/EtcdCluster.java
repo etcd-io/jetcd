@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.coreos.jetcd.internal.infrastructure;
 
 import com.coreos.jetcd.Client;
 
 import javax.annotation.Nonnull;
-import java.io.Closeable;
 import java.util.List;
 
-public interface EtcdCluster extends Closeable {
+public interface EtcdCluster extends AutoCloseable {
+  void start();
+
+  void close();
+
   @Nonnull
   Client getClient();
 
@@ -30,4 +34,9 @@ public interface EtcdCluster extends Closeable {
 
   @Nonnull
   List<String> getPeerEndpoints();
+
+  interface LifecycleListener {
+    void started(EtcdContainer container);
+    void stopped(EtcdContainer container);
+  }
 }
