@@ -207,6 +207,26 @@ final class ClientConnectionManager {
 
     channelBuilder.intercept(new AuthTokenInterceptor());
 
+    if (builder.headers() != null) {
+      channelBuilder.intercept(new ClientInterceptor() {
+        @Override
+        public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+            MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+          return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+            @Override
+            public void start(Listener<RespT> responseListener, Metadata headers) {
+              builder.headers().forEach(headers::put);
+              super.start(responseListener, headers);
+            }
+          };
+        }
+      });
+    }
+
+    if (builder.interceptors() != null) {
+      channelBuilder.intercept(builder.interceptors());
+    }
+
     return channelBuilder;
   }
 
