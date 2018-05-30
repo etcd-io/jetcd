@@ -87,8 +87,8 @@
         <os-maven-plugin.version>1.5.0.Final</os-maven-plugin.version>
         <protobuf-maven-plugin.version>0.5.1</protobuf-maven-plugin.version>
         <jacoco-maven-plugin.version>0.7.9</jacoco-maven-plugin.version>
-        <com-puppycrawl-tools.version>8.10</com-puppycrawl-tools.version>
-        <com-puppycrawl-tools-guava.version>25.0-jre</com-puppycrawl-tools-guava.version>
+        <com-puppycrawl-tools.version>8.10.1</com-puppycrawl-tools.version>
+        <com-puppycrawl-tools-guava.version>25.1-jre</com-puppycrawl-tools-guava.version>
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
         <license-maven-plugin.version>3.0</license-maven-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
