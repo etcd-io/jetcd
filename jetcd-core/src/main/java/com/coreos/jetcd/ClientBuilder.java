@@ -25,13 +25,19 @@ import com.coreos.jetcd.common.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.internal.impl.ClientImpl;
 import com.coreos.jetcd.resolver.URIResolverLoader;
+import io.grpc.ClientInterceptor;
 import io.grpc.LoadBalancer;
+import io.grpc.Metadata;
 import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -48,6 +54,8 @@ public final class ClientBuilder implements Cloneable {
   private String authority;
   private URIResolverLoader uriResolverLoader;
   private Integer maxInboundMessageSize;
+  private Map<Metadata.Key, Object> headers;
+  private List<ClientInterceptor> interceptors;
 
   ClientBuilder() {
   }
@@ -215,6 +223,62 @@ public final class ClientBuilder implements Cloneable {
    */
   public ClientBuilder maxInboundMessageSize(Integer maxInboundMessageSize) {
     this.maxInboundMessageSize = maxInboundMessageSize;
+    return this;
+  }
+
+  public Map<Metadata.Key, Object> headers() {
+    return headers;
+  }
+
+  /**
+   * Sets headers to be added to http request headers.
+   */
+  public ClientBuilder headers(Map<Metadata.Key, Object> headers) {
+    this.headers = new HashMap<>(headers);
+
+    return this;
+  }
+
+  /**
+   * Sets an header to be added to http request headers.
+   */
+  public ClientBuilder header(String key, String value) {
+    if (this.headers == null) {
+      this.headers = new HashMap<>();
+    }
+
+    this.headers.put(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER), value);
+
+    return this;
+  }
+
+  public List<ClientInterceptor> interceptors() {
+    return interceptors;
+  }
+
+  /**
+   * Set the interceptors.
+   */
+  public ClientBuilder interceptors(List<ClientInterceptor> interceptors) {
+    this.interceptors = new ArrayList<>(interceptors);
+
+    return this;
+  }
+
+  /**
+   * Add interceptors.
+   */
+  public ClientBuilder interceptor(ClientInterceptor interceptor, ClientInterceptor... interceptors) {
+    if (this.interceptors == null) {
+      this.interceptors = new ArrayList<>();
+    }
+
+    this.interceptors.add(interceptor);
+
+    for (ClientInterceptor i: interceptors) {
+      this.interceptors.add(i);
+    }
+
     return this;
   }
 
