@@ -47,6 +47,7 @@ public final class ClientBuilder implements Cloneable {
   private boolean lazyInitialization = false;
   private String authority;
   private URIResolverLoader uriResolverLoader;
+  private Integer maxInboundMessageSize;
 
   ClientBuilder() {
   }
@@ -202,6 +203,18 @@ public final class ClientBuilder implements Cloneable {
 
   public ClientBuilder uriResolverLoader(URIResolverLoader loader) {
     this.uriResolverLoader = loader;
+    return this;
+  }
+
+  public Integer maxInboundMessageSize() {
+    return maxInboundMessageSize;
+  }
+
+  /**
+   * Sets the maximum message size allowed for a single gRPC frame.
+   */
+  public ClientBuilder maxInboundMessageSize(Integer maxInboundMessageSize) {
+    this.maxInboundMessageSize = maxInboundMessageSize;
     return this;
   }
 

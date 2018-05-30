@@ -15,54 +15,47 @@
  */
 package com.coreos.jetcd.internal.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.ClientBuilder;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import io.grpc.netty.NettyChannelBuilder;
+import java.util.Random;
+import org.junit.Test;
 
 public class ClientBuilderTest {
 
-  private ClientBuilder builder;
-
-  @BeforeMethod
-  public void setup() {
-    builder = Client.builder();
-  }
-
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expected = NullPointerException.class)
   public void testEndPoints_Null() {
-    builder.endpoints((String)null);
+    Client.builder().endpoints((String)null);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testEndPoints_Verify_Empty() {
-    builder.endpoints("");
+    Client.builder().endpoints("");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testEndPoints_Verify_EmptyAfterTrim() {
-    builder.endpoints(" ");
+    Client.builder().endpoints(" ");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testEndPoints_Verify_SomeEmpty() {
-    builder.endpoints("127.0.0.1:2379", " ");
+    Client.builder().endpoints("127.0.0.1:2379", " ");
   }
 
-  @Test(expectedExceptions = IllegalStateException.class)
+  @Test(expected = IllegalStateException.class)
   public void testBuild_WithoutEndpoints() {
-    builder.build();
+    Client.builder().build();
   }
 
-  @DataProvider
-  private Object[][] validEndpoints() {
-    return new Object[][] {
-        {"http://[fe80::6e40:8ff:fe]:2380"},
-        {"http://127.0.0.1:2379"},
-        {"http://localhost:1984"},
-        {"http://www.foo.com:2300"},
-        {"http://192.168.1.10:8888"}
-    };
+  @Test
+  public void testMaxInboundMessageSize() {
+    final int value = 1024 * 1 + new Random().nextInt(10);
+    final ClientBuilder builder =  Client.builder().endpoints("http://127.0.0.1:2379").maxInboundMessageSize(value);
+    final NettyChannelBuilder channelBuilder = (NettyChannelBuilder)new ClientConnectionManager(builder).defaultChannelBuilder();
+
+    assertThat(channelBuilder).hasFieldOrPropertyWithValue("maxInboundMessageSize", value);
   }
 }

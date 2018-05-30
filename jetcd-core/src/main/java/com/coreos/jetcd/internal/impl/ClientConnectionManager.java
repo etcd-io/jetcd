@@ -30,6 +30,7 @@ import com.coreos.jetcd.api.AuthenticateResponse;
 import com.coreos.jetcd.common.exception.EtcdExceptionFactory;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.resolver.URIResolverLoader;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.grpc.CallOptions;
@@ -160,10 +161,9 @@ final class ClientConnectionManager {
     final ManagedChannel channel = defaultChannelBuilder()
         .nameResolverFactory(
             forEndpoints(
-                Optional.ofNullable(builder.authority()).orElse("etcd"),
+                Util.supplyIfNull(builder.authority(), () -> "etcd"),
                 Collections.singleton(endpoint),
-                Optional.ofNullable(builder.uriResolverLoader())
-                    .orElseGet(URIResolverLoader::defaultLoader)
+                Util.supplyIfNull(builder.uriResolverLoader(), URIResolverLoader::defaultLoader)
             )
         ).build();
 
@@ -179,9 +179,13 @@ final class ClientConnectionManager {
     }
   }
 
-  private ManagedChannelBuilder<?> defaultChannelBuilder() {
-    NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget("etcd");
+  @VisibleForTesting
+  protected ManagedChannelBuilder<?> defaultChannelBuilder() {
+    final NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget("etcd");
 
+    if (builder.maxInboundMessageSize() != null) {
+      channelBuilder.maxInboundMessageSize(builder.maxInboundMessageSize());
+    }
     if (builder.sslContext() != null) {
       channelBuilder.negotiationType(NegotiationType.TLS);
       channelBuilder.sslContext(builder.sslContext());
@@ -191,10 +195,9 @@ final class ClientConnectionManager {
 
     channelBuilder.nameResolverFactory(
         forEndpoints(
-          Optional.ofNullable(builder.authority()).orElse("etcd"),
+          Util.supplyIfNull(builder.authority(), () -> "etcd"),
           builder.endpoints(),
-          Optional.ofNullable(builder.uriResolverLoader())
-              .orElseGet(URIResolverLoader::defaultLoader)
+          Util.supplyIfNull(builder.uriResolverLoader(), URIResolverLoader::defaultLoader)
         )
     );
 

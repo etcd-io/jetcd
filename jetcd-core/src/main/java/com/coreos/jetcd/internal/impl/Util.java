@@ -29,6 +29,7 @@ import io.grpc.Status.Code;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
@@ -165,5 +166,15 @@ final class Util {
   static boolean isInvalidTokenError(Status status) {
     return status.getCode() == Code.UNAUTHENTICATED
         && "etcdserver: invalid auth token".equals(status.getDescription());
+  }
+
+  static <T> void applyIfNotNull(T target, Consumer<T> consumer) {
+    if (target != null) {
+      consumer.accept(target);
+    }
+  }
+
+  static <T> T supplyIfNull(T target, Supplier<T> supplier) {
+    return target != null ? target : supplier.get();
   }
 }
