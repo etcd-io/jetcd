@@ -1,0 +1,31 @@
+= KeyVal
+
+
+* Examples:
++
+.Retrieve All Keys
+[source,java]
+----
+ByteSequence key = ByteSequence.fromString("\0");
+
+GetOption option = GetOption.newBuilder()
+    .withSortField(GetOption.SortTarget.KEY)
+    .withSortOrder(GetOption.SortOrder.DESCEND)
+    .withRange(key)
+    .build();
+
+CompletableFuture<GetResponse> futureResponse = client.getKVClient().get(key, option);
+
+GetResponse response = futureResponse.get();
+Map<String, String> keyValueMap = new HashMap<>();
+
+for (KeyValue kv : response.getKvs()) {
+    keyValueMap.put(
+        kv.getKey().toStringUtf8(),
+        kv.getValue().toStringUtf8()
+    );
+}
+----
+
+
+
