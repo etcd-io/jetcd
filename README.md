@@ -19,7 +19,7 @@ Java 8 or above is required.
 <dependency>
   <groupId>com.coreos</groupId>
   <artifactId>jetcd-core</artifactId>
-  <version>0.0.2</version>
+  <version>${jetcd-version}</version>
 </dependency>
 ```
 
@@ -29,7 +29,7 @@ Development snapshots are available in [Sonatypes's snapshot repository](https:/
 
 ```
 dependencies {
-    compile 'com.coreos:jetcd-core:0.0.2'
+    compile "com.coreos:jetcd-core:$jetcd-version"
 }
 ``` 
 
