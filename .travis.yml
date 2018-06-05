@@ -18,3 +18,12 @@ script:
   - sdk use java 8.0.172-zulu
   - java -version
   - ./mvnw clean install
+
+deploy:
+  provider: script
+  script: ./mvnw deploy --settings etc/mvn-deploy-settings.xml
+  skip_cleanup: true 
+  on:
+    branch: release
+    condition: $TRAVIS_PULL_REQUEST = "false"
+    
