@@ -24,6 +24,6 @@ deploy:
   script: ./mvnw deploy --settings etc/mvn-deploy-settings.xml
   skip_cleanup: true 
   on:
-    branch: release
+    branch: master
     condition: $TRAVIS_PULL_REQUEST = "false"
     
