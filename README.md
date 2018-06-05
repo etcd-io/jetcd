@@ -33,16 +33,6 @@ dependencies {
 }
 ``` 
 
-### Manual
-
-Download latest jetcd-core jar from [Maven](https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.coreos%22%20AND%20v%3A%220.0.2%22) and all its dependent jars:
-
-[grpc-core-1.10.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-core/1.10.0/)
-[grpc-netty-1.10.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-netty/1.10.0/)
-[grpc-protobuf-1.10.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-protobuf/1.10.0/)
-[grpc-stub-1.10.0.jar](http://repo1.maven.org/maven2/io/grpc/grpc-stub/1.10.0/)
-[slf4j-api-1.7.2.jar](http://repo1.maven.org/maven2/org/apache/directory/studio/org.slf4j.api/1.7.2/)
-
 ### Usage
 
 ```java
