@@ -79,7 +79,7 @@
         <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
         <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
         <maven-javadoc-plugin.version>3.0.1</maven-javadoc-plugin.version>
-        <maven-bundle-plugin.version>3.5.0</maven-bundle-plugin.version>
+        <maven-bundle-plugin.version>3.5.1</maven-bundle-plugin.version>
         <maven-checkstyle-plugin.version>3.0.0</maven-checkstyle-plugin.version>
         <maven-shade-plugin.version>3.1.1</maven-shade-plugin.version>
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
@@ -97,19 +97,19 @@
         <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
         <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
         <maven-site-plugin.version>3.7.1</maven-site-plugin.version>
-        <maven-surefire-plugin.version>2.21.0</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>2.22.0</maven-surefire-plugin.version>
         <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
         <versions-maven-plugin.version>2.5</versions-maven-plugin.version>
 
         <!-- dependencies -->
-        <grpc.version>1.12.0</grpc.version>
+        <grpc.version>1.13.1</grpc.version>
         <slf4j.version>1.7.25</slf4j.version>
         <plexus-compiler-javac-errorprone.version>2.8.4</plexus-compiler-javac-errorprone.version>
         <error-prone-core.version>2.3.1</error-prone-core.version>
         <log4j2.version>2.11.0</log4j2.version>
         <jcommander.version>1.72</jcommander.version>
         <!-- should be in sync with protobuf grpc dependencies -->
-        <protobuf.version>3.5.1</protobuf.version>
+        <protobuf.version>3.6.0</protobuf.version>
 
         <!-- osgi dependencies -->
         <karaf.version>4.2.0</karaf.version>
