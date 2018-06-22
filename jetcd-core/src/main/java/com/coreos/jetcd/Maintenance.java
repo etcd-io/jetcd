@@ -16,16 +16,15 @@
 
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.common.exception.ClosedSnapshotException;
 import com.coreos.jetcd.internal.impl.CloseableClient;
 import com.coreos.jetcd.maintenance.AlarmMember;
 import com.coreos.jetcd.maintenance.AlarmResponse;
 import com.coreos.jetcd.maintenance.DefragmentResponse;
 import com.coreos.jetcd.maintenance.HashKVResponse;
 import com.coreos.jetcd.maintenance.MoveLeaderResponse;
+import com.coreos.jetcd.maintenance.SnapshotResponse;
 import com.coreos.jetcd.maintenance.StatusResponse;
-import java.io.Closeable;
-import java.io.IOException;
+import io.grpc.stub.StreamObserver;
 import java.io.OutputStream;
 import java.util.concurrent.CompletableFuture;
 
@@ -96,44 +95,18 @@ public interface Maintenance extends CloseableClient {
   /**
    * retrieves backend snapshot.
    *
-   * <p>-- ex: save backend snapshot to ./snapshot.db --
-   * <pre>
-   * {@code
-   * // create snapshot.db file current folder.
-   * String dir = Paths.get("").toAbsolutePath().toString();
-   * File snapfile = new File(dir, "snapshot.db");
-   *
-   * // leverage try-with-resources
-   * try (Snapshot snapshot = maintenance.snapshot();
-   * FileOutputStream fop = newFileOutputStream(snapfile)) {
-   * snapshot.write(fop);
-   * } catch (Exception e) {
-   * snapfile.delete();
-   * }
-   * }
-   * </pre>
+   * @param output the output stream to write the snapshot content.
    *
    * @return a Snapshot for retrieving backend snapshot.
    */
-  Snapshot snapshot();
+  CompletableFuture<Long> snapshot(OutputStream output);
 
-  interface Snapshot extends Closeable {
-
-    /**
-     * Write backend snapshot to user provided OutputStream.
-     *
-     * <p>write can only be called once; multiple calls on write results
-     * IOException thrown after first call.
-     *
-     * <p>this method blocks until farther snapshot data are available,
-     * end of stream is detected, or an exception is thrown.
-     *
-     * @throws ClosedSnapshotException if snapshot has been closed.
-     * @throws IOException if write experiences any I/O issues.
-     * @throws InterruptedException if the write thread is interrupted.
-     */
-    void write(OutputStream os) throws IOException, InterruptedException;
-  }
+  /**
+   * retrieves backend snapshot as as stream of chunks.
+   *
+   * @param  observer a stream of data chunks
+   */
+  void snapshot(StreamObserver<SnapshotResponse> observer);
 
   /**
    * moveLeader requests current leader to transfer its leadership to the transferee.
