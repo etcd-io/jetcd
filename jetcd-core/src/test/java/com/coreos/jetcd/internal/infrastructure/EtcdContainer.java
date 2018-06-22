@@ -47,7 +47,7 @@ public class EtcdContainer implements AutoCloseable {
 
   private final String endpoint;
   private final boolean ssl;
-  private final GenericContainer container;
+  private final GenericContainer<?> container;
   private final EtcdCluster.LifecycleListener listener;
 
   public EtcdContainer(Network network, EtcdCluster.LifecycleListener listener, boolean ssl, String clusterName, String endpoint, List<String> endpoints) {
@@ -58,7 +58,7 @@ public class EtcdContainer implements AutoCloseable {
     final String name = endpoint;
     final List<String> command = new ArrayList<>();
 
-    this.container = new GenericContainer(ETCD_DOCKER_IMAGE_NAME);
+    this.container = new GenericContainer<>(ETCD_DOCKER_IMAGE_NAME);
     this.container.withExposedPorts(ETCD_CLIENT_PORT, ETCD_PEER_PORT);
     this.container.withNetwork(network);
     this.container.withNetworkAliases(name);

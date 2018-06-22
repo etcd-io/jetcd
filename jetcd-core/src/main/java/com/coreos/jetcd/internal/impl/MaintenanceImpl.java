@@ -16,11 +16,8 @@
 
 package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newClosedSnapshotException;
-import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
 import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.coreos.jetcd.Maintenance;
 import com.coreos.jetcd.api.AlarmRequest;
@@ -32,25 +29,16 @@ import com.coreos.jetcd.api.MoveLeaderRequest;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
 import com.coreos.jetcd.api.StatusRequest;
-import com.coreos.jetcd.common.exception.ErrorCode;
 import com.coreos.jetcd.maintenance.AlarmResponse;
 import com.coreos.jetcd.maintenance.DefragmentResponse;
 import com.coreos.jetcd.maintenance.HashKVResponse;
 import com.coreos.jetcd.maintenance.MoveLeaderResponse;
-import com.coreos.jetcd.maintenance.SnapshotReaderResponseWithError;
 import com.coreos.jetcd.maintenance.StatusResponse;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implementation of maintenance client.
@@ -159,6 +147,19 @@ class MaintenanceImpl implements Maintenance {
   }
 
   @Override
+  public CompletableFuture<MoveLeaderResponse> moveLeader(long transfereeID) {
+    return Util.toCompletableFuture(
+      this.stub.moveLeader(
+        MoveLeaderRequest.newBuilder()
+          .setTargetID(transfereeID)
+          .build()
+      ),
+      MoveLeaderResponse::new,
+      this.connectionManager.getExecutorService()
+    );
+  }
+
+  @Override
   public CompletableFuture<HashKVResponse> hashKV(String endpoint, long rev) {
     return this.connectionManager.withNewChannel(
         endpoint,
@@ -172,144 +173,53 @@ class MaintenanceImpl implements Maintenance {
   }
 
   @Override
-  public Snapshot snapshot() {
-    SnapshotImpl snapshot = new SnapshotImpl();
-    this.streamStub.snapshot(SnapshotRequest.getDefaultInstance(), snapshot.getSnapshotObserver());
-    return snapshot;
+  public CompletableFuture<Long> snapshot(OutputStream outputStream) {
+    final CompletableFuture<Long> answer = new CompletableFuture<>();
+    final AtomicLong bytes = new AtomicLong(0);
+
+    this.streamStub.snapshot(SnapshotRequest.getDefaultInstance(),  new StreamObserver<SnapshotResponse>() {
+      @Override
+      public void onNext(SnapshotResponse snapshotResponse) {
+        try {
+          snapshotResponse.getBlob().writeTo(outputStream);
+
+          bytes.addAndGet(snapshotResponse.getBlob().size());
+        } catch (IOException e) {
+          answer.completeExceptionally(toEtcdException(e));
+        }
+      }
+
+      @Override
+      public void onError(Throwable throwable) {
+        answer.completeExceptionally(toEtcdException(throwable));
+      }
+
+      @Override
+      public void onCompleted() {
+        answer.complete(bytes.get());
+      }
+    });
+
+    return answer;
   }
 
   @Override
-  public CompletableFuture<MoveLeaderResponse> moveLeader(long transfereeID) {
-    return Util.toCompletableFuture(
-        this.stub.moveLeader(
-            MoveLeaderRequest.newBuilder()
-                .setTargetID(transfereeID)
-                .build()
-        ),
-        MoveLeaderResponse::new,
-        this.connectionManager.getExecutorService()
-    );
-  }
-
-  static class SnapshotImpl implements Snapshot {
-
-    private final SnapshotResponse endOfStreamResponse =
-        SnapshotResponse.newBuilder().setRemainingBytes(-1).build();
-    // closeLock protects closed.
-    private final Object closeLock = new Object();
-    private StreamObserver<SnapshotResponse> snapshotObserver;
-    private ExecutorService executorService = Executors.newFixedThreadPool(2);
-    private BlockingQueue<SnapshotReaderResponseWithError> snapshotResponseBlockingQueue =
-        new LinkedBlockingQueue<>();
-    private boolean closed = false;
-    private boolean writeOnce = false;
-
-
-    SnapshotImpl() {
-      this.snapshotObserver = this.createSnapshotObserver();
-    }
-
-    private StreamObserver<SnapshotResponse> getSnapshotObserver() {
-      return snapshotObserver;
-    }
-
-    private StreamObserver<SnapshotResponse> createSnapshotObserver() {
-      return new StreamObserver<SnapshotResponse>() {
-        @Override
-        public void onNext(SnapshotResponse snapshotResponse) {
-          snapshotResponseBlockingQueue
-              .add(new SnapshotReaderResponseWithError(snapshotResponse));
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-          snapshotResponseBlockingQueue.add(
-              new SnapshotReaderResponseWithError(
-                  toEtcdException(throwable)));
-        }
-
-        @Override
-        public void onCompleted() {
-          snapshotResponseBlockingQueue
-              .add(new SnapshotReaderResponseWithError(endOfStreamResponse));
-        }
-      };
-    }
-
-    private boolean isClosed() {
-      synchronized (this.closeLock) {
-        return this.closed;
-      }
-    }
-
-    @Override
-    public void close() throws IOException {
-      synchronized (this.closeLock) {
-        if (this.closed) {
-          return;
-        }
-        this.closed = true;
+  public void snapshot(StreamObserver<com.coreos.jetcd.maintenance.SnapshotResponse> observer) {
+    this.streamStub.snapshot(SnapshotRequest.getDefaultInstance(),  new StreamObserver<SnapshotResponse>() {
+      @Override
+      public void onNext(SnapshotResponse snapshotResponse) {
+        observer.onNext(new com.coreos.jetcd.maintenance.SnapshotResponse(snapshotResponse));
       }
 
-      this.snapshotObserver.onCompleted();
-      this.snapshotObserver = null;
-      this.snapshotResponseBlockingQueue.clear();
-      this.executorService.shutdownNow();
-      try {
-        this.executorService.awaitTermination(1, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+      @Override
+      public void onError(Throwable throwable) {
+        observer.onError(toEtcdException(throwable));
       }
-    }
 
-    @Override
-    public synchronized void write(OutputStream os) throws IOException, InterruptedException {
-      checkNotNull(os);
-      if (this.isClosed()) {
-        throw newClosedSnapshotException();
+      @Override
+      public void onCompleted() {
+        observer.onCompleted();
       }
-      if (this.writeOnce) {
-        throw new IOException(
-            newEtcdException(
-                ErrorCode.INTERNAL,
-                "write is called more than once"
-            )
-        );
-      }
-      this.writeOnce = true;
-
-      Future<Integer> done = this.executorService.submit(() -> {
-        while (true) {
-          SnapshotReaderResponseWithError snapshotReaderResponseWithError =
-              this.snapshotResponseBlockingQueue.take();
-          if (snapshotReaderResponseWithError.error != null) {
-            throw snapshotReaderResponseWithError.error;
-          }
-
-          SnapshotResponse snapshotResponse =
-              snapshotReaderResponseWithError.snapshotResponse;
-          if (snapshotResponse.getRemainingBytes() == -1) {
-            return -1;
-          }
-          os.write(snapshotResponse.getBlob().toByteArray());
-        }
-      });
-
-      try {
-        done.get();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw e;
-      } catch (ExecutionException e) {
-        synchronized (this.closeLock) {
-          if (isClosed()) {
-            throw newClosedSnapshotException();
-          }
-        }
-        throw new IOException(toEtcdException(e));
-      } catch (RejectedExecutionException e) {
-        throw newClosedSnapshotException();
-      }
-    }
+    });
   }
 }

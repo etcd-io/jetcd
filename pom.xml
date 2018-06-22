@@ -23,7 +23,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.coreos</groupId>
     <artifactId>jetcd-parent</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.2.0-SNAPSHOT</version>
     <name>jetcd</name>
     <description>Java Client for etcd V3</description>
     <url>https://github.com/coreos/jetcd</url>
@@ -123,6 +123,7 @@
         <junit.version>4.12</junit.version>
         <netty-tcnative.version>2.0.10.Final</netty-tcnative.version>
         <testcontainers.version>1.8.0</testcontainers.version>
+        <commons-io.version>2.6</commons-io.version>
     </properties>
 
     <modules>
@@ -273,6 +274,11 @@
                 <artifactId>testcontainers</artifactId>
                 <version>${testcontainers.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

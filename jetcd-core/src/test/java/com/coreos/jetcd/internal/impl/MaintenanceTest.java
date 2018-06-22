@@ -15,45 +15,70 @@
  */
 package com.coreos.jetcd.internal.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
+
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.Maintenance;
-import com.coreos.jetcd.Maintenance.Snapshot;
-import com.coreos.jetcd.internal.infrastructure.EtcdClusterFactory;
 import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
+import com.coreos.jetcd.internal.infrastructure.EtcdClusterFactory;
+import com.coreos.jetcd.maintenance.SnapshotResponse;
 import com.coreos.jetcd.maintenance.StatusResponse;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
-
-import java.io.File;
-import java.io.FileOutputStream;
+import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import org.apache.commons.io.output.NullOutputStream;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * Maintenance test.
  */
 public class MaintenanceTest {
-  private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("etcd-maintenance", 3 ,false);
+  private static EtcdCluster CLUSTER;
 
   private Client client;
   private Maintenance maintenance;
-  private final Assertion test = new Assertion();
   private List<String> endpoints;
 
-  @BeforeClass
-  public void setup() {
-    CLUSTER.start();
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    endpoints = CLUSTER.getClientEndpoints();
+  @BeforeClass
+  public static void beforeClass() {
+    CLUSTER = EtcdClusterFactory.buildCluster("etcd-maintenance", 3 ,false);
+    CLUSTER.start();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    CLUSTER.close();
+  }
+
+
+  @Before
+  public void setUp() {
+    this.endpoints = CLUSTER.getClientEndpoints();
     this.client = Client.builder().endpoints(endpoints).build();
     this.maintenance = client.getMaintenanceClient();
   }
 
+  @After
+  public void tearDown() {
+  }
 
   /**
    * test status member function
@@ -61,22 +86,52 @@ public class MaintenanceTest {
   @Test
   public void testStatusMember() throws ExecutionException, InterruptedException {
     StatusResponse statusResponse = maintenance.statusMember(endpoints.get(0)).get();
-    test.assertTrue(statusResponse.getDbSize() > 0);
+    assertThat(statusResponse.getDbSize()).isGreaterThan(0);
   }
 
-  // TODO: find a better way to test snapshot.
   @Test
-  public void testNnapshot() throws IOException {
+  public void testSnapshotToOutputStream() throws ExecutionException, InterruptedException, IOException {
     // create a snapshot file current folder.
-    File snapfile = Files.createTempFile("snapshot-", null).toFile();
+    final Path snapfile = temporaryFolder.newFile().toPath();
 
     // leverage try-with-resources
-    try (Snapshot snapshot = maintenance.snapshot();
-      FileOutputStream fop = new FileOutputStream(snapfile)) {
-      snapshot.write(fop);
-    } catch (Exception e) {
-      snapfile.delete();
+    try (OutputStream stream = Files.newOutputStream(snapfile)) {
+      Long bytes = maintenance.snapshot(stream).get();
+
+      stream.flush();
+
+      Long fsize = Files.size(snapfile);
+
+      assertThat(bytes).isEqualTo(fsize);
     }
+  }
+
+  @Test
+  public void testSnapshotChunks() throws ExecutionException, InterruptedException {
+    final Long bytes = maintenance.snapshot(NullOutputStream.NULL_OUTPUT_STREAM).get();
+    final AtomicLong count = new AtomicLong();
+    final CountDownLatch latcht = new CountDownLatch(1);
+
+    maintenance.snapshot(new StreamObserver<SnapshotResponse>() {
+      @Override
+      public void onNext(SnapshotResponse value) {
+        count.addAndGet(value.getBlob().size());
+      }
+
+      @Override
+      public void onError(Throwable t) {
+        fail("Should not throw exception");
+      }
+
+      @Override
+      public void onCompleted() {
+        latcht.countDown();
+      }
+    });
+
+    latcht.await(10, TimeUnit.SECONDS);
+
+    assertThat(bytes).isEqualTo(count.get());
   }
 
   @Test
@@ -116,16 +171,11 @@ public class MaintenanceTest {
       followers.add(memberId);
     }
     if (leaderEndpoint == null) {
-      test.fail("leader not found");
+      fail("leader not found");
     }
 
     try(Client client = Client.builder().endpoints(leaderEndpoint).build()) {
       client.getMaintenanceClient().moveLeader(followers.get(0)).get();
     }
-  }
-
-  @AfterTest
-  public void tearDown() throws IOException {
-    CLUSTER.close();
   }
 }

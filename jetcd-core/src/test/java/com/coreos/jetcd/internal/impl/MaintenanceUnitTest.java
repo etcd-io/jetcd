@@ -16,18 +16,14 @@
 package com.coreos.jetcd.internal.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Fail.fail;
 
 import com.coreos.jetcd.Client;
-import com.coreos.jetcd.Cluster;
 import com.coreos.jetcd.Maintenance;
-import com.coreos.jetcd.Maintenance.Snapshot;
 import com.coreos.jetcd.api.MaintenanceGrpc.MaintenanceImplBase;
 import com.coreos.jetcd.api.SnapshotRequest;
 import com.coreos.jetcd.api.SnapshotResponse;
-import com.coreos.jetcd.cluster.MemberListResponse;
-import com.coreos.jetcd.common.exception.ClosedSnapshotException;
 import com.coreos.jetcd.common.exception.EtcdException;
 import com.google.protobuf.ByteString;
 import io.grpc.Server;
@@ -37,34 +33,38 @@ import io.grpc.stub.StreamObserver;
 import io.grpc.util.MutableHandlerRegistry;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.commons.io.output.NullOutputStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
-import org.testng.Assert;
 
 // TODO: have separate folders to unit and integration tests.
 public class MaintenanceUnitTest {
 
-  private final MutableHandlerRegistry serviceRegistry = new MutableHandlerRegistry();
-  private final BlockingQueue<StreamObserver<SnapshotResponse>> observerQueue = new LinkedBlockingQueue<>();
   @Rule
   public Timeout timeout = Timeout.seconds(10);
+
+  private MutableHandlerRegistry serviceRegistry;
+  private BlockingQueue<StreamObserver<SnapshotResponse>> observerQueue;
   private Server fakeServer;
-  private ExecutorService executor = Executors.newFixedThreadPool(2);
+  private ExecutorService executor;
   private Client client;
   private Maintenance maintenance;
 
   @Before
   public void setUp() throws IOException {
+    observerQueue = new LinkedBlockingQueue<>();
+    executor = Executors.newFixedThreadPool(2);
+
+    serviceRegistry = new MutableHandlerRegistry();
     serviceRegistry.addService(new MaintenanceImplBase() {
        @Override
        public void snapshot(SnapshotRequest request, StreamObserver<SnapshotResponse> observer) {
@@ -95,90 +95,32 @@ public class MaintenanceUnitTest {
   }
 
   @Test
-  public void testConnectionError() throws Exception {
-    final Snapshot snapshot = maintenance.snapshot();
-    final OutputStream out = new ByteArrayOutputStream();
-
+  public void testConnectionError() {
     executor.execute(() -> {
       try {
         Thread.sleep(50);
         observerQueue.take().onError(Status.ABORTED.asRuntimeException());
       } catch (InterruptedException e) {
-        Assert.fail("expect no exception, but got InterruptedException", e);
+        fail("expect no exception, but got InterruptedException", e);
       }
     });
 
-    assertThatThrownBy(() -> snapshot.write(out))
-        .isInstanceOf(IOException.class)
+    assertThatThrownBy(() -> maintenance.snapshot(NullOutputStream.NULL_OUTPUT_STREAM).get())
+        .isInstanceOf(ExecutionException.class)
         .hasCauseInstanceOf(EtcdException.class);
   }
 
   @Test
-  public void testWriteAfterClosed() throws Exception {
-    Snapshot snapshot = maintenance.snapshot();
-    snapshot.close();
-    OutputStream out = new ByteArrayOutputStream();
-    assertThatExceptionOfType(ClosedSnapshotException.class)
-        .isThrownBy(() -> snapshot.write(out));
-  }
-
-  @Test
-  public void testWriteTwice() throws Exception {
-    Snapshot snapshot = maintenance.snapshot();
-    observerQueue.take().onCompleted();
-    OutputStream out = new ByteArrayOutputStream();
-    snapshot.write(out);
-    assertThatExceptionOfType(IOException.class)
-        .isThrownBy(() -> snapshot.write(out))
-        .withMessageContaining("write is called more than once");
-  }
-
-  @Test
-  public void testCloseWhenWrite() throws Exception {
-    final Snapshot snapshot = maintenance.snapshot();
-    final OutputStream out = new ByteArrayOutputStream();
-
-    executor.execute(() -> {
-      try {
-        Thread.sleep(50);
-        snapshot.close();
-      } catch (Exception e) {
-        Assert.fail("don't expect any exception, but got", e);
-      }
-    });
-    assertThatExceptionOfType(ClosedSnapshotException.class)
-        .isThrownBy(() -> snapshot.write(out));
-  }
-
-  @Test
-  public void testInterruptWrite() throws ExecutionException, InterruptedException {
-    final Snapshot snapshot = maintenance.snapshot();
-    final OutputStream out = new ByteArrayOutputStream();
-    Future<?> done = executor.submit(
-        () ->
-            assertThatExceptionOfType(InterruptedException.class)
-                .isThrownBy(() -> snapshot.write(out))
-    );
-    Thread.sleep(50);
-    executor.shutdownNow();
-    done.get();
-  }
-
-  @Test
   public void testWrite() throws Exception {
-    final Snapshot snapshot = maintenance.snapshot();
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    ByteString blob = ByteString.copyFromUtf8("blob");
+    final ByteArrayOutputStream out = new ByteArrayOutputStream();
+    final ByteString blob = ByteString.copyFromUtf8("blob");
+    final CompletableFuture<Long> answer = maintenance.snapshot(out);
 
     StreamObserver<SnapshotResponse> observer = observerQueue.take();
-
-    observer.onNext(SnapshotResponse.newBuilder()
-        .setBlob(blob)
-        .setRemainingBytes(0)
-        .build());
+    observer.onNext(SnapshotResponse.newBuilder().setBlob(blob).setRemainingBytes(0).build());
     observer.onCompleted();
 
-    snapshot.write(out);
+    answer.get();
 
     assertThat(out.toByteArray()).isEqualTo(blob.toByteArray());
   }
