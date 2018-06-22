@@ -70,6 +70,10 @@ public final class EtcdExceptionFactory {
 
   public static EtcdException toEtcdException(Throwable cause) {
     checkNotNull(cause, "cause can't be null");
+    if (cause instanceof EtcdException) {
+      return (EtcdException)cause;
+    }
+
     return toEtcdException(fromThrowable(cause));
   }
 

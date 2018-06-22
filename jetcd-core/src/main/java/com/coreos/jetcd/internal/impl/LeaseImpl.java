@@ -16,7 +16,6 @@
 
 package com.coreos.jetcd.internal.impl;
 
-import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newClosedKeepAliveListenerException;
 import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newClosedLeaseClientException;
 import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
 import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
@@ -29,27 +28,19 @@ import com.coreos.jetcd.api.LeaseKeepAliveRequest;
 import com.coreos.jetcd.api.LeaseRevokeRequest;
 import com.coreos.jetcd.api.LeaseTimeToLiveRequest;
 import com.coreos.jetcd.common.exception.ErrorCode;
-import com.coreos.jetcd.common.exception.EtcdException;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
-import com.coreos.jetcd.lease.LeaseKeepAliveResponseWithError;
 import com.coreos.jetcd.lease.LeaseRevokeResponse;
 import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
 import com.coreos.jetcd.options.LeaseOption;
 import io.grpc.stub.StreamObserver;
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -69,11 +60,11 @@ public class LeaseImpl implements Lease {
   private final ClientConnectionManager connectionManager;
   private final LeaseGrpc.LeaseFutureStub stub;
   private final LeaseGrpc.LeaseStub leaseStub;
-  private final Map<Long, KeepAlive> keepAlives = new ConcurrentHashMap<>();
+  private final Map<Long, KeepAlive> keepAlives;
   /**
    * Timer schedule to send keep alive request.
    */
-  private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2);
+  private final ScheduledExecutorService scheduledExecutorService;
   private ScheduledFuture<?> keepAliveFuture;
   private ScheduledFuture<?> deadlineFuture;
   /**
@@ -90,14 +81,15 @@ public class LeaseImpl implements Lease {
   /**
    * hasKeepAliveServiceStarted indicates whether the background keep alive service has started.
    */
-  private boolean hasKeepAliveServiceStarted = false;
-
-  private boolean closed;
+  private volatile boolean hasKeepAliveServiceStarted;
+  private volatile boolean closed;
 
   LeaseImpl(ClientConnectionManager connectionManager) {
     this.connectionManager = connectionManager;
     this.stub = connectionManager.newStub(LeaseGrpc::newFutureStub);
     this.leaseStub = connectionManager.newStub(LeaseGrpc::newStub);
+    this.keepAlives = new ConcurrentHashMap<>();
+    this.scheduledExecutorService = Executors.newScheduledThreadPool(2);
   }
 
   @Override
@@ -106,7 +98,6 @@ public class LeaseImpl implements Lease {
     return Util.toCompletableFutureWithRetry(
         () -> this.stub.leaseGrant(leaseGrantRequest),
         LeaseGrantResponse::new,
-        Util::isRetriable,
         connectionManager.getExecutorService()
     );
   }
@@ -117,34 +108,30 @@ public class LeaseImpl implements Lease {
     return Util.toCompletableFutureWithRetry(
         () -> this.stub.leaseRevoke(leaseRevokeRequest),
         LeaseRevokeResponse::new,
-        Util::isRetriable,
         connectionManager.getExecutorService()
     );
   }
 
   @Override
-  public synchronized KeepAliveListener keepAlive(long leaseId) {
+  public synchronized CloseableClient keepAlive(long leaseId, StreamObserver<LeaseKeepAliveResponse> observer) {
     if (this.closed) {
       throw newClosedLeaseClientException();
     }
 
-    KeepAlive keepAlive = this.keepAlives.computeIfAbsent(leaseId, (key) -> {
-      KeepAlive ka = new KeepAlive(this.keepAlives, leaseId);
-      long now = System.currentTimeMillis();
-      ka.setDeadLine(now + FIRST_KEEPALIVE_TIMEOUT_MS);
-      ka.setNextKeepAlive(now);
-      return ka;
-    });
-
-    KeepAliveListenerImpl kal = new KeepAliveListenerImpl(keepAlive);
-    keepAlive.addListener(kal);
+    KeepAlive keepAlive = this.keepAlives.computeIfAbsent(leaseId, (key) -> new KeepAlive(leaseId));
+    keepAlive.addObserver(observer);
 
     if (!this.hasKeepAliveServiceStarted) {
       this.hasKeepAliveServiceStarted = true;
       this.start();
     }
 
-    return kal;
+    return new CloseableClient() {
+      @Override
+      public void close() {
+        keepAlive.removeObserver(observer);
+      }
+    };
   }
 
   @Override
@@ -163,20 +150,15 @@ public class LeaseImpl implements Lease {
     this.keepAliveRequestObserver.onCompleted();
     this.keepAliveResponseObserver.onCompleted();
     this.scheduledExecutorService.shutdownNow();
-    this.closeKeepAlives();
+
+    final Throwable errResp = newClosedLeaseClientException();
+
+    this.keepAlives.forEach((k, v) -> v.onError(errResp));
+    this.keepAlives.clear();
   }
 
   private synchronized void removeKeepAlive(long leaseId) {
     this.keepAlives.remove(leaseId);
-  }
-
-  private void closeKeepAlives() {
-    final LeaseKeepAliveResponseWithError errResp = new LeaseKeepAliveResponseWithError(
-        newClosedLeaseClientException());
-    this.keepAlives.values().forEach(ka -> {
-      ka.sentKeepAliveResp(errResp);
-    });
-    this.keepAlives.clear();
   }
 
   private void start() {
@@ -192,38 +174,26 @@ public class LeaseImpl implements Lease {
   }
 
   private void sendKeepAliveExecutor() {
-    this.keepAliveResponseObserver = this.createResponseObserver();
+    this.keepAliveResponseObserver = Observers.observer(
+      response -> processKeepAliveResponse(response),
+      error -> processOnError()
+    );
+
     this.keepAliveRequestObserver = this.leaseStub.leaseKeepAlive(this.keepAliveResponseObserver);
-    this.keepAliveFuture = scheduledExecutorService
-        .scheduleAtFixedRate(() -> {
-          long now = System.currentTimeMillis();
+    this.keepAliveFuture = scheduledExecutorService.scheduleAtFixedRate(
+        () -> {
+            // send keep alive req to the leases whose next keep alive is before now.
+            this.keepAlives.entrySet().stream()
+                .filter(entry -> entry.getValue().getNextKeepAlive() < System.currentTimeMillis())
+                .map(Entry::getKey)
+                .map(leaseId -> LeaseKeepAliveRequest.newBuilder().setID(leaseId).build())
+                .forEach(keepAliveRequestObserver::onNext);
 
-          // send keep alive req to the leases whose next keep alive is before now.
-          this.keepAlives.entrySet().stream()
-              .filter(entry -> entry.getValue().getNextKeepAlive() < now)
-              .map(Entry::getKey)
-              .map(this::newKeepAliveRequest)
-              .forEach(keepAliveRequestObserver::onNext);
-
-        }, 0, 500, TimeUnit.MILLISECONDS);
-  }
-
-  private StreamObserver<com.coreos.jetcd.api.LeaseKeepAliveResponse> createResponseObserver() {
-    return new StreamObserver<com.coreos.jetcd.api.LeaseKeepAliveResponse>() {
-      @Override
-      public void onNext(com.coreos.jetcd.api.LeaseKeepAliveResponse leaseKeepAliveResponse) {
-        processKeepAliveResponse(leaseKeepAliveResponse);
-      }
-
-      @Override
-      public void onError(Throwable throwable) {
-        processOnError();
-      }
-
-      @Override
-      public void onCompleted() {
-      }
-    };
+        },
+        0,
+        500,
+        TimeUnit.MILLISECONDS
+    );
   }
 
   private synchronized void processOnError() {
@@ -240,85 +210,74 @@ public class LeaseImpl implements Lease {
       return;
     }
 
-    long leaseID = leaseKeepAliveResponse.getID();
-    long ttl = leaseKeepAliveResponse.getTTL();
+    final long leaseID = leaseKeepAliveResponse.getID();
+    final long ttl = leaseKeepAliveResponse.getTTL();
+    final KeepAlive ka = this.keepAlives.get(leaseID);
 
-    KeepAlive ka = this.keepAlives.get(leaseID);
-    if (ka == null) { // return if the corresponding keep alive has closed.
+    if (ka == null) {
+      // return if the corresponding keep alive has closed.
       return;
     }
 
-    if (ttl <= 0) {
+    if (ttl > 0) {
+      long nextKeepAlive = System.currentTimeMillis() + ttl * 1000 / 3;
+      ka.setNextKeepAlive(nextKeepAlive);
+      ka.setDeadLine(System.currentTimeMillis() + ttl * 1000);
+      ka.onNext(leaseKeepAliveResponse);
+    } else {
       // lease expired; close all keep alive
       this.removeKeepAlive(leaseID);
-      ka.sentKeepAliveResp(new LeaseKeepAliveResponseWithError(
-              newEtcdException(
-                  ErrorCode.NOT_FOUND,
-                  "etcdserver: requested lease not found"
-              )
+      ka.onError(
+          newEtcdException(
+            ErrorCode.NOT_FOUND,
+            "etcdserver: requested lease not found"
           )
       );
-      return;
     }
-
-    long nextKeepAlive =
-        System.currentTimeMillis() + ttl * 1000 / 3;
-    ka.setNextKeepAlive(nextKeepAlive);
-    ka.setDeadLine(System.currentTimeMillis() + ttl * 1000);
-    ka.sentKeepAliveResp(new LeaseKeepAliveResponseWithError(leaseKeepAliveResponse));
   }
 
-
   private void deadLineExecutor() {
-    this.deadlineFuture = scheduledExecutorService
-        .scheduleAtFixedRate(() -> {
+    this.deadlineFuture = scheduledExecutorService.scheduleAtFixedRate(
+      () -> {
           long now = System.currentTimeMillis();
 
           this.keepAlives.values().removeIf((ka -> {
             if (ka.getDeadLine() < now) {
-              ka.close();
+              ka.onCompleted();
               return true;
             }
             return false;
           }));
-        }, 0, 1000, TimeUnit.MILLISECONDS);
+        },
+        0,
+        1000,
+        TimeUnit.MILLISECONDS
+    );
   }
 
   @Override
-  public CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(
-      long leaseId) {
-    CompletableFuture<LeaseKeepAliveResponse> lkaFuture =
-        new CompletableFuture<>();
+  public CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId) {
+    CompletableFuture<LeaseKeepAliveResponse> future = new CompletableFuture<>();
 
-    StreamObserver<LeaseKeepAliveRequest> requestObserver = this.leaseStub
-        .leaseKeepAlive(new StreamObserver<com.coreos.jetcd.api.LeaseKeepAliveResponse>() {
-          @Override
-          public void onNext(com.coreos.jetcd.api.LeaseKeepAliveResponse leaseKeepAliveResponse) {
-            lkaFuture.complete(new LeaseKeepAliveResponse(leaseKeepAliveResponse));
-          }
-
-          @Override
-          public void onError(Throwable throwable) {
-            lkaFuture.completeExceptionally(toEtcdException(throwable));
-          }
-
-          @Override
-          public void onCompleted() {
-          }
-        });
-    requestObserver.onNext(this.newKeepAliveRequest(leaseId));
-
-    // cancel grpc stream when leaseKeepAliveResponseCompletableFuture completes.
-    lkaFuture.whenCompleteAsync(
-        (val, throwable) -> requestObserver.onCompleted(), connectionManager.getExecutorService()
+    StreamObserver<LeaseKeepAliveRequest> requestObserver = Observers.observe(
+        this.leaseStub::leaseKeepAlive,
+        response  -> future.complete(new LeaseKeepAliveResponse(response)),
+        throwable -> future.completeExceptionally(toEtcdException(throwable))
     );
 
-    return lkaFuture;
+    // cancel grpc stream when leaseKeepAliveResponseCompletableFuture completes.
+    CompletableFuture<LeaseKeepAliveResponse> answer = future.whenCompleteAsync(
+        (val, throwable) -> requestObserver.onCompleted(),
+        connectionManager.getExecutorService()
+    );
+
+    requestObserver.onNext(LeaseKeepAliveRequest.newBuilder().setID(leaseId).build());
+
+    return answer;
   }
 
   @Override
-  public CompletableFuture<LeaseTimeToLiveResponse> timeToLive(long leaseId,
-      LeaseOption option) {
+  public CompletableFuture<LeaseTimeToLiveResponse> timeToLive(long leaseId, LeaseOption option) {
     checkNotNull(option, "LeaseOption should not be null");
 
     LeaseTimeToLiveRequest leaseTimeToLiveRequest = LeaseTimeToLiveRequest.newBuilder()
@@ -329,110 +288,24 @@ public class LeaseImpl implements Lease {
     return Util.toCompletableFutureWithRetry(
         () -> this.stub.leaseTimeToLive(leaseTimeToLiveRequest),
         LeaseTimeToLiveResponse::new,
-        Util::isRetriable,
         connectionManager.getExecutorService());
-  }
-
-  private LeaseKeepAliveRequest newKeepAliveRequest(long leaseId) {
-    return LeaseKeepAliveRequest.newBuilder().setID(leaseId).build();
-  }
-
-
-  private static class KeepAliveListenerImpl implements KeepAliveListener {
-
-    private final Object closedLock = new Object();
-    private BlockingQueue<LeaseKeepAliveResponseWithError> queue = new LinkedBlockingDeque<>(1);
-    private ExecutorService service = Executors.newSingleThreadExecutor();
-    private volatile boolean closed = false;
-    private KeepAlive owner;
-
-    public KeepAliveListenerImpl(KeepAlive owner) {
-      this.owner = owner;
-    }
-
-    /**
-     * add LeaseKeepAliveResponseWithError to KeepAliveListener's internal queue.
-     */
-    public void enqueue(LeaseKeepAliveResponseWithError lkae) {
-      if (this.isClosed()) {
-        return;
-      }
-      if (lkae.error != null) {
-        // returned error to the user on next listen() call.
-        this.queue.clear();
-      }
-      this.queue.offer(lkae);
-    }
-
-    @Override
-    public synchronized LeaseKeepAliveResponse listen()
-        throws InterruptedException {
-      if (this.isClosed()) {
-        throw newClosedKeepAliveListenerException();
-      }
-
-      Future<LeaseKeepAliveResponse> future = service.submit(() -> {
-        LeaseKeepAliveResponseWithError lkae = this.queue.take();
-        if (lkae.error != null) {
-          throw lkae.error;
-        }
-        return new LeaseKeepAliveResponse(lkae.leaseKeepAliveResponse);
-      });
-
-      try {
-        return future.get();
-      } catch (ExecutionException e) {
-        synchronized (this.closedLock) {
-          if (isClosed()) {
-            throw newClosedKeepAliveListenerException();
-          }
-        }
-        Throwable t = e.getCause();
-        if (t instanceof EtcdException) {
-          throw (EtcdException) t;
-        }
-        throw toEtcdException(e);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw e;
-      } catch (RejectedExecutionException e) {
-        throw newClosedKeepAliveListenerException();
-      }
-    }
-
-    private boolean isClosed() {
-      return this.closed;
-    }
-
-    @Override
-    public void close() {
-      synchronized (this.closedLock) {
-        this.closed = true;
-        this.owner.removeListener(this);
-        this.service.shutdownNow();
-      }
-    }
   }
 
   /**
    * The KeepAlive hold the keepAlive information for lease.
    */
-  private static class KeepAlive {
+  private final class KeepAlive implements StreamObserver<com.coreos.jetcd.api.LeaseKeepAliveResponse> {
+    private final List<StreamObserver<LeaseKeepAliveResponse>> observers;
+    private final long leaseId;
 
-    // ownerLock protects owner map.
-    // remove ownerLock for private inner class
-    //private final Object ownerLock;
     private long deadLine;
     private long nextKeepAlive;
-    private Map<Long, KeepAlive> owner;
 
-    private long leaseId;
+    public KeepAlive(long leaseId) {
+      this.nextKeepAlive = System.currentTimeMillis();
+      this.deadLine = nextKeepAlive + FIRST_KEEPALIVE_TIMEOUT_MS;
 
-    private Set<KeepAliveListenerImpl> listenersSet = Collections
-        .newSetFromMap(new ConcurrentHashMap<>());
-
-    public KeepAlive(Map<Long, KeepAlive> owner, long leaseId) {
-      this.owner = owner;
+      this.observers = new CopyOnWriteArrayList<>();
       this.leaseId = leaseId;
     }
 
@@ -444,8 +317,16 @@ public class LeaseImpl implements Lease {
       this.deadLine = deadLine;
     }
 
-    public void addListener(KeepAliveListenerImpl listener) {
-      this.listenersSet.add(listener);
+    public void addObserver(StreamObserver<LeaseKeepAliveResponse> observer) {
+      this.observers.add(observer);
+    }
+
+    //removeObserver only would be called synchronously by close in KeepAliveListener, no need to get lock here
+    public void removeObserver(StreamObserver<LeaseKeepAliveResponse> listener) {
+      this.observers.remove(listener);
+      if (this.observers.isEmpty()) {
+        removeKeepAlive(leaseId);
+      }
     }
 
     public long getNextKeepAlive() {
@@ -456,22 +337,24 @@ public class LeaseImpl implements Lease {
       this.nextKeepAlive = nextKeepAlive;
     }
 
-
-    public void sentKeepAliveResp(LeaseKeepAliveResponseWithError lkae) {
-      this.listenersSet.forEach((l) -> l.enqueue(lkae));
-    }
-
-    //removeListener only would be called synchronously by close in KeepAliveListener, no need to get lock here
-    public void removeListener(KeepAliveListenerImpl l) {
-      this.listenersSet.remove(l);
-      if (this.listenersSet.isEmpty()) {
-        this.owner.remove(this.leaseId);
+    @Override
+    public void onNext(com.coreos.jetcd.api.LeaseKeepAliveResponse response) {
+      for (StreamObserver<LeaseKeepAliveResponse> observer : observers) {
+        observer.onNext(new LeaseKeepAliveResponse(response));
       }
     }
 
-    public void close() {
-      this.listenersSet.forEach((l) -> l.close());
-      this.listenersSet.clear();
+    @Override
+    public void onError(Throwable throwable) {
+      for (StreamObserver<LeaseKeepAliveResponse> observer : observers) {
+        observer.onError(toEtcdException(throwable));
+      }
+    }
+
+    @Override
+    public void onCompleted() {
+      this.observers.forEach(StreamObserver::onCompleted);
+      this.observers.clear();
     }
   }
 }
