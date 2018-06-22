@@ -20,96 +20,115 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.KV;
 import com.coreos.jetcd.Lease;
-import com.coreos.jetcd.Lease.KeepAliveListener;
 import com.coreos.jetcd.data.ByteSequence;
 import com.coreos.jetcd.internal.infrastructure.EtcdCluster;
 import com.coreos.jetcd.internal.infrastructure.EtcdClusterFactory;
-import com.coreos.jetcd.kv.PutResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
 import com.coreos.jetcd.options.LeaseOption;
 import com.coreos.jetcd.options.PutOption;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
-
-import java.io.IOException;
+import io.grpc.stub.StreamObserver;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
- * KV service test cases.
+ * Lease service test cases.
  */
 public class LeaseTest {
-  private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("etcd-lease", 3 ,false);
+  private static EtcdCluster CLUSTER;
 
   private KV kvClient;
   private Client client;
   private Lease leaseClient;
-  private Assertion test;
 
   private static final ByteSequence KEY = ByteSequence.fromString("foo");
   private static final ByteSequence KEY_2 = ByteSequence.fromString("foo2");
   private static final ByteSequence VALUE = ByteSequence.fromString("bar");
 
   @BeforeClass
-  public void setUp() throws Exception {
+  public static void beforeClass() {
+    CLUSTER = EtcdClusterFactory.buildCluster("etcd-lease", 3 ,false);
+    CLUSTER.start();
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    CLUSTER.close();
+  }
+
+  @Before
+  public void setUp() {
     CLUSTER.start();
 
-    test = new Assertion();
     client = Client.builder().endpoints(CLUSTER.getClientEndpoints()).build();
     kvClient = client.getKVClient();
     leaseClient = client.getLeaseClient();
   }
 
-  @AfterClass
-  public void tearDown() throws IOException {
-    this.client.close();
-    CLUSTER.close();
+  @After
+  public void tearDown() {
+    if (client != null) {
+      client.close();
+    }
   }
 
   @Test
   public void testGrant() throws Exception {
     long leaseID = leaseClient.grant(5).get().getID();
-    PutResponse putRep = kvClient
-        .put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
-    test.assertEquals(kvClient.get(KEY).get().getCount(), 1);
+
+    kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+    assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
 
     Thread.sleep(6000);
-    test.assertEquals(kvClient.get(KEY).get().getCount(), 0);
+    assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
   }
 
-  @Test(dependsOnMethods = "testGrant")
+  @Test//(dependsOnMethods = "testGrant")
   public void testRevoke() throws Exception {
     long leaseID = leaseClient.grant(5).get().getID();
-    kvClient
-        .put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
-    test.assertEquals(kvClient.get(KEY).get().getCount(), 1);
+    kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+    assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
     leaseClient.revoke(leaseID).get();
-    test.assertEquals(kvClient.get(KEY).get().getCount(), 0);
+    assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
   }
 
   @Test
   public void testKeepAliveOnce() throws ExecutionException, InterruptedException {
     long leaseID = leaseClient.grant(2).get().getID();
     kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
-    test.assertEquals(kvClient.get(KEY).get().getCount(), 1);
+    assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
     LeaseKeepAliveResponse rp = leaseClient.keepAliveOnce(leaseID).get();
     assertThat(rp.getTTL()).isGreaterThan(0);
   }
 
-  @Test(dependsOnMethods = "testRevoke")
+  @Test
   public void testKeepAlive() throws ExecutionException, InterruptedException {
     long leaseID = leaseClient.grant(2).get().getID();
     kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
     assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
 
-    KeepAliveListener kal = leaseClient.keepAlive(leaseID);
-    com.coreos.jetcd.lease.LeaseKeepAliveResponse lkarp = kal.listen();
-    assertThat(lkarp.getTTL()).isGreaterThan(0);
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<LeaseKeepAliveResponse> responseRef = new AtomicReference<>();
+    StreamObserver<LeaseKeepAliveResponse> observer = Observers.observer(
+      response -> {
+        responseRef.set(response);
+        latch.countDown();
+      }
+    );
 
-    // close keep alive listener should stop additional keep alive request on this lease.
-    kal.close();
+    try(CloseableClient c = leaseClient.keepAlive(leaseID, observer)) {
+      latch.await(5, TimeUnit.SECONDS);
+      LeaseKeepAliveResponse response = responseRef.get();
+      assertThat(response.getTTL()).isGreaterThan(0);
+    }
+
     Thread.sleep(3000);
     assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
   }

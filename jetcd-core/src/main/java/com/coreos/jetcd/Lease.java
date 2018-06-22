@@ -16,15 +16,14 @@
 
 package com.coreos.jetcd;
 
-import com.coreos.jetcd.common.exception.ClosedClientException;
-import com.coreos.jetcd.common.exception.ClosedKeepAliveListenerException;
-import com.coreos.jetcd.common.exception.EtcdException;
 import com.coreos.jetcd.internal.impl.CloseableClient;
 import com.coreos.jetcd.lease.LeaseGrantResponse;
 import com.coreos.jetcd.lease.LeaseKeepAliveResponse;
 import com.coreos.jetcd.lease.LeaseRevokeResponse;
 import com.coreos.jetcd.lease.LeaseTimeToLiveResponse;
 import com.coreos.jetcd.options.LeaseOption;
+import io.grpc.stub.StreamObserver;
+
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -68,34 +67,8 @@ public interface Lease extends CloseableClient {
    * keep the given lease alive forever.
    *
    * @param leaseId lease to be keep alive forever.
+   * @param observer the observer
    * @return a KeepAliveListener that listens for KeepAlive responses.
    */
-  KeepAliveListener keepAlive(long leaseId);
-
-  /**
-   * KeepAliveListener listens for LeaseKeepAliveResponse of a given leaseID.
-   */
-  interface KeepAliveListener {
-
-    /**
-     * Listen for keep-alive events.
-     *
-     * @return listen blocks until it receives a LeaseKeepAliveResponse.
-     * @throws ClosedClientException if Lease client has been closed.
-     * @throws ClosedKeepAliveListenerException if listener has been
-     *        closed.
-     * @throws InterruptedException if listen is interrupted.
-     * @throws EtcdException if KeepAliveListener encounters client side
-     *        and server side errors.
-     */
-    LeaseKeepAliveResponse listen() throws InterruptedException;
-
-    /**
-     * close KeepAliveListener. When all KeepAliveListeners for a given lease id are closed,
-     * keep alive for that lease id will be stopped.
-     *
-     * <p>close() must be called to release resources of KeepAliveListener.
-     */
-    void close();
-  }
+  CloseableClient keepAlive(long leaseId, StreamObserver<LeaseKeepAliveResponse> observer);
 }

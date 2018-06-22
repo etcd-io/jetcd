@@ -83,6 +83,26 @@ final class Util {
     return targetFuture;
   }
 
+
+
+  /**
+   * converts a ListenableFuture of Type S to a CompletableFuture of Type T with retry on
+   * ListenableFuture error.
+   *
+   * @param newSourceFuture a function that returns a new SourceFuture.
+   * @param resultConvert a function that converts Type S to Type T.
+   * @param executor a executor.
+   * @param <S> Source type
+   * @param <T> Converted Type.
+   * @return a CompletableFuture with type T.
+   */
+  static <S, T> CompletableFuture<T> toCompletableFutureWithRetry(
+      Supplier<ListenableFuture<S>> newSourceFuture,
+      Function<S, T> resultConvert,
+      Executor executor) {
+    return toCompletableFutureWithRetry(newSourceFuture, resultConvert, Util::isRetriable, executor);
+  }
+
   /**
    * converts a ListenableFuture of Type S to a CompletableFuture of Type T with retry on
    * ListenableFuture error.

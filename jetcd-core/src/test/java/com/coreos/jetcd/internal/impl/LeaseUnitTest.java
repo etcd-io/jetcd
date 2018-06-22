@@ -17,7 +17,6 @@ package com.coreos.jetcd.internal.impl;
 
 import static com.coreos.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.after;
@@ -26,24 +25,18 @@ import static org.mockito.Mockito.verify;
 
 import com.coreos.jetcd.Client;
 import com.coreos.jetcd.Lease;
-import com.coreos.jetcd.Lease.KeepAliveListener;
 import com.coreos.jetcd.api.LeaseGrpc.LeaseImplBase;
 import com.coreos.jetcd.api.LeaseKeepAliveRequest;
 import com.coreos.jetcd.api.LeaseKeepAliveResponse;
-import com.coreos.jetcd.common.exception.ClosedClientException;
-import com.coreos.jetcd.common.exception.ClosedKeepAliveListenerException;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcServerRule;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -57,7 +50,7 @@ public class LeaseUnitTest {
 
   private Lease leaseCli;
   private AtomicReference<StreamObserver<LeaseKeepAliveResponse>> responseObserverRef;
-  private static final long LEASE_ID = 1;
+  private static final long LEASE_ID_1 = 1;
   private static final long LEASE_ID_2 = 2;
 
   @Rule
@@ -92,10 +85,10 @@ public class LeaseUnitTest {
   @Test
   public void testKeepAliveOnce() throws ExecutionException, InterruptedException {
     CompletableFuture<com.coreos.jetcd.lease.LeaseKeepAliveResponse> lrpFuture = this.leaseCli
-        .keepAliveOnce(LEASE_ID);
+        .keepAliveOnce(LEASE_ID_1);
     LeaseKeepAliveResponse lrp = LeaseKeepAliveResponse
         .newBuilder()
-        .setID(LEASE_ID)
+        .setID(LEASE_ID_1)
         .build();
     this.responseObserverRef.get().onNext(lrp);
 
@@ -106,7 +99,7 @@ public class LeaseUnitTest {
   @Test
   public void testKeepAliveOnceConnectError() throws ExecutionException, InterruptedException {
     CompletableFuture<com.coreos.jetcd.lease.LeaseKeepAliveResponse> lrpFuture = this.leaseCli
-        .keepAliveOnce(LEASE_ID);
+        .keepAliveOnce(LEASE_ID_1);
     Throwable t = Status.ABORTED.asRuntimeException();
     responseObserverRef.get().onError(t);
 
@@ -114,24 +107,19 @@ public class LeaseUnitTest {
         .hasCause(toEtcdException(t));
   }
 
-  // TODO: sometime this.responseObserverRef.get().onNext(lrp) blocks even though client has received msg;
-  // seems like a bug in grpc test framework.
-  @Ignore
   @Test
-  public void testKeepAliveOnceStreamCloseOnSuccess()
-      throws ExecutionException, InterruptedException {
-    CompletableFuture<com.coreos.jetcd.lease.LeaseKeepAliveResponse> lrpFuture = this.leaseCli
-        .keepAliveOnce(LEASE_ID);
-    LeaseKeepAliveResponse lrp = LeaseKeepAliveResponse
-        .newBuilder()
-        .setID(LEASE_ID)
-        .build();
+  public void testKeepAliveOnceStreamCloseOnSuccess() throws ExecutionException, InterruptedException {
+    CompletableFuture<com.coreos.jetcd.lease.LeaseKeepAliveResponse> lrpFuture = this.leaseCli.keepAliveOnce(LEASE_ID_1);
+    LeaseKeepAliveResponse lrp = LeaseKeepAliveResponse.newBuilder().setID(LEASE_ID_1).build();
+
     this.responseObserverRef.get().onNext(lrp);
 
     lrpFuture.get();
+
     verify(this.requestStreamObserverMock, timeout(100).times(1)).onCompleted();
   }
 
+  /*
   // TODO: sometime this.responseObserverRef.get().onNext(lrp) blocks even though client has received msg;
   // seems like a bug in grpc test framework.
   @Ignore
@@ -152,139 +140,109 @@ public class LeaseUnitTest {
 
     listener.close();
   }
-
-  @Test
-  public void testKeepAliveListenAfterListenerClose() {
-    KeepAliveListener listener = this.leaseCli.keepAlive(LEASE_ID);
-    listener.close();
-    assertThatExceptionOfType(ClosedKeepAliveListenerException.class)
-        .isThrownBy(listener::listen);
-  }
-
-  @Test
-  public void testKeepAliveListenerClosesOnListening()
-      throws ExecutionException, InterruptedException {
-    KeepAliveListener listener = this.leaseCli.keepAlive(LEASE_ID);
-    Future<?> donef = Executors.newCachedThreadPool().submit(() -> {
-      Thread.sleep(50);
-      listener.close();
-      return 1;
-    });
-
-    assertThatExceptionOfType(ClosedKeepAliveListenerException.class)
-        .isThrownBy(listener::listen);
-
-    donef.get();
-  }
-
-  @Test
-  public void testKeepAliveClientClosesOnListening()
-      throws ExecutionException, InterruptedException {
-    KeepAliveListener listener = this.leaseCli.keepAlive(LEASE_ID);
-    Future<?> donef = Executors.newCachedThreadPool().submit(() -> {
-      Thread.sleep(50);
-      this.leaseCli.close();
-      return 1;
-    });
-
-    assertThatExceptionOfType(ClosedClientException.class)
-        .isThrownBy(listener::listen)
-        .withMessageContaining("Lease Client has been closed");
-
-    donef.get();
-  }
+  */
 
   @Test
   public void testKeepAliveOnSendingKeepAliveRequests() {
-    KeepAliveListener listener = this.leaseCli.keepAlive(LEASE_ID);
-    // expect more than one KeepAlive requests are sent within 1100 ms.
-    verify(this.requestStreamObserverMock, timeout(1100).atLeast(2))
-        .onNext(argThat(hasLeaseID(LEASE_ID)));
-    listener.close();
+    final StreamObserver<com.coreos.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> {});
+
+    try (CloseableClient listener = this.leaseCli.keepAlive(LEASE_ID_1, observer)) {
+      // expect more than one KeepAlive requests are sent within 1100 ms.
+      verify(this.requestStreamObserverMock, timeout(1100).atLeast(2)).onNext(argThat(hasLeaseID(LEASE_ID_1)));
+    }
   }
 
   @Test
   public void testKeepAliveAfterFirstKeepAliveTimeout() throws InterruptedException {
-    KeepAliveListener listener = this.leaseCli.keepAlive(LEASE_ID);
-    // expect at least some KeepAlive requests are sent within
-    // firstKeepAliveTimeout(5000 ms) + some quiet time (1000 ms).
-    verify(this.requestStreamObserverMock, after(6000).atLeastOnce())
-        .onNext(argThat(hasLeaseID(LEASE_ID)));
-    // reset mock to a empty state.
-    Mockito.<StreamObserver>reset(this.requestStreamObserverMock);
-    // verify no keepAlive requests are sent within one second after firstKeepAliveTimeout.
-    verify(this.requestStreamObserverMock, after(1000).times(0))
-        .onNext(argThat(hasLeaseID(LEASE_ID)));
+    final StreamObserver<com.coreos.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> {});
 
-    listener.close();
+    try (CloseableClient listener = this.leaseCli.keepAlive(LEASE_ID_1, observer)) {
+      // expect at least some KeepAlive requests are sent within
+      // firstKeepAliveTimeout(5000 ms) + some quiet time (1000 ms).
+      verify(this.requestStreamObserverMock, after(6000).atLeastOnce()).onNext(argThat(hasLeaseID(LEASE_ID_1)));
+
+      // reset mock to a empty state.
+      Mockito.<StreamObserver>reset(this.requestStreamObserverMock);
+
+      // verify no keepAlive requests are sent within one second after firstKeepAliveTimeout.
+      verify(this.requestStreamObserverMock, after(1000).times(0)).onNext(argThat(hasLeaseID(LEASE_ID_1)));
+    }
   }
 
   @Test
-  public void testTimeToLiveNullOption() throws ExecutionException, InterruptedException {
-    assertThatThrownBy(() -> this.leaseCli.timeToLive(LEASE_ID, null))
+  public void testTimeToLiveNullOption() {
+    assertThatThrownBy(() -> this.leaseCli.timeToLive(LEASE_ID_1, null))
         .isInstanceOf(NullPointerException.class)
         .hasMessage("LeaseOption should not be null");
   }
 
   @Test
   public void testKeepAliveCloseOnlyListener() {
-    KeepAliveListener listener = this.leaseCli.keepAlive(LEASE_ID);
-    listener.close();
+    final StreamObserver<com.coreos.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> {});
+    final CloseableClient client = this.leaseCli.keepAlive(LEASE_ID_1, observer);
+
+    client.close();
+
     // expect no more keep alive requests are sent after the initial one
     // within 1 second after closing the only listener.
     verify(this.requestStreamObserverMock, after(1000).atMost(1))
-        .onNext(argThat(hasLeaseID(LEASE_ID)));
+        .onNext(argThat(hasLeaseID(LEASE_ID_1)));
   }
 
   @Test
   public void testKeepAliveCloseSomeListeners() {
-    KeepAliveListener closingListener = this.leaseCli.keepAlive(LEASE_ID_2);
-    KeepAliveListener listener = this.leaseCli.keepAlive(LEASE_ID);
-    closingListener.close();
+    final StreamObserver<com.coreos.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> {});
+    final CloseableClient client1 = this.leaseCli.keepAlive(LEASE_ID_2, observer);
+    final CloseableClient client2 = this.leaseCli.keepAlive(LEASE_ID_1, observer);
+
+    client1.close();
     // expect closing closingListener doesn't affect sending keep alive requests for LEASE_ID_2.
     verify(this.requestStreamObserverMock, after(1200).atLeast(2))
-        .onNext(argThat(hasLeaseID(LEASE_ID)));
+        .onNext(argThat(hasLeaseID(LEASE_ID_1)));
 
-    listener.close();
+    client1.close();
   }
 
+  /*
   // TODO: sometime this.responseObserverRef.get().onNext(lrp) blocks even though client has received msg;
   // seems like a bug in grpc test framework.
   @Ignore
   @Test
   public void testKeepAliveReceivesExpiredLease() {
-    KeepAliveListener listener = this.leaseCli.keepAlive(LEASE_ID);
+    KeepAliveListener listener = this.leaseCli.keepAlive(LEASE_ID_1);
     LeaseKeepAliveResponse lrp = LeaseKeepAliveResponse
         .newBuilder()
-        .setID(LEASE_ID)
+        .setID(LEASE_ID_1)
         .setTTL(0)
         .build();
     this.responseObserverRef.get().onNext(lrp);
 
     // expect lease expired exception.
     assertThatThrownBy(() -> listener.listen())
-        .hasCause(new IllegalStateException("Lease " + LEASE_ID + " expired"));
+        .hasCause(new IllegalStateException("Lease " + LEASE_ID_1 + " expired"));
 
     // expect no more keep alive requests for LEASE_ID after receiving lease expired response.
     verify(this.requestStreamObserverMock, after(1000).atMost(1))
-        .onNext(argThat(hasLeaseID(LEASE_ID)));
+        .onNext(argThat(hasLeaseID(LEASE_ID_1)));
 
     listener.close();
   }
+  */
 
   @Test
   public void testKeepAliveResetOnStreamErrors() {
-    KeepAliveListener listener = this.leaseCli.keepAlive(LEASE_ID);
-    Throwable t = Status.ABORTED.asRuntimeException();
-    // onError triggers reset() to be executed.
-    // scheduler will execute reset() in 500 ms.
-    responseObserverRef.get().onError(t);
+    final StreamObserver<com.coreos.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> {});
 
-    // expect keep alive requests are still sending even with reset.
-    verify(this.requestStreamObserverMock, timeout(2000).atLeast(3))
-        .onNext(argThat(hasLeaseID(LEASE_ID)));
+    try (CloseableClient client = this.leaseCli.keepAlive(LEASE_ID_1, observer)) {
+      Throwable t = Status.ABORTED.asRuntimeException();
+      // onError triggers reset() to be executed.
+      // scheduler will execute reset() in 500 ms.
+      responseObserverRef.get().onError(t);
 
-    listener.close();
+      // expect keep alive requests are still sending even with reset.
+      verify(this.requestStreamObserverMock, timeout(2000).atLeast(3))
+        .onNext(argThat(hasLeaseID(LEASE_ID_1)));
+    }
   }
 
   // return a ArgumentMatcher that checks if the captured LeaseKeepAliveRequest has same leaseId.
