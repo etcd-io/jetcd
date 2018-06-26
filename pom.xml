@@ -580,7 +580,7 @@
                         <exclude>mvnw*</exclude>
                         <exclude>etc/license.txt</exclude>
                         <exclude>etc/checkstyle-header-java.txt</exclude>
-                        <exclude>src/test/resources/ssl/cert/**</exclude>
+                        <exclude>src/test/resources/ssl/**</exclude>
                         <exclude>external/**</exclude>
                     </excludes>
                     <mapping>
