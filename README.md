@@ -3,6 +3,7 @@
 [![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg?style=flat-square)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![Maven Central](https://img.shields.io/maven-central/v/com.coreos/jetcd-core.svg?style=flat-square)](https://search.maven.org/#search%7Cga%7C1%7Ccoreos)
 [![GitHub release](https://img.shields.io/github/release/coreos/jetcd.svg?style=flat-square)](https://github.com/coreos/jetcd/releases)
+[![Javadocs](http://www.javadoc.io/badge/com.coreos/jetcd-core.svg)](http://www.javadoc.io/doc/com.coreos/jetcd-core)
 
 jetcd is the official java client for [etcd](https://github.com/coreos/etcd)v3.
 
