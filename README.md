@@ -5,7 +5,7 @@
 [![GitHub release](https://img.shields.io/github/release/coreos/jetcd.svg?style=flat-square)](https://github.com/coreos/jetcd/releases)
 [![Javadocs](http://www.javadoc.io/badge/com.coreos/jetcd-core.svg)](http://www.javadoc.io/doc/com.coreos/jetcd-core)
 
-jetcd is the official java client for [etcd](https://github.com/coreos/etcd)v3.
+jetcd is the official java client for [etcd](https://github.com/coreos/etcd) v3.
 
 > Note: jetcd is work-in-progress and may break backward compatibility.
 
