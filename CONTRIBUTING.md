@@ -13,7 +13,7 @@ jetcd is Apache 2.0 licensed and accepts contributions via GitHub pull requests.
 
 ## Reporting bugs and creating issues
 
-Reporting bugs is one of the best ways to contribute. However, a good bug report has some very specific qualities, so please read over our short document on [reporting bugs](https://github.com/coreos/etcd/blob/master/Documentation/reporting_bugs.md) before submitting a bug report. This document might contain links to known issues, another good reason to take a look there before reporting a bug.
+Reporting bugs is one of the best ways to contribute. However, a good bug report has some very specific qualities, so please read over our short document on [reporting bugs](https://github.com/etcd-io/etcd/blob/master/Documentation/reporting_bugs.md) before submitting a bug report. This document might contain links to known issues, another good reason to take a look there before reporting a bug.
 
 ## Contribution flow
 
@@ -23,8 +23,8 @@ This is a rough outline of what a contributor's workflow looks like:
 - Make commits of logical units.
 - Make sure commit messages are in the proper format (see below).
 - Push changes in a topic branch to a personal fork of the repository.
-- Submit a pull request to coreos/jetcd.
-- The PR must receive a LGTM from at least one maintainer found in the [MAINTAINERS](https://github.com/coreos/etcd/blob/master/MAINTAINERS) file.
+- Submit a pull request to etcd-io/jetcd.
+- The PR must receive a LGTM from at least one maintainer found in the [MAINTAINERS](https://github.com/etcd-io/etcd/blob/master/MAINTAINERS) file.
 
 Thanks for contributing!
 

@@ -21,7 +21,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.coreos</groupId>
+    <groupId>io.etcd</groupId>
     <artifactId>jetcd-watch-example</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
@@ -33,9 +33,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.coreos</groupId>
+            <groupId>io.etcd</groupId>
             <artifactId>jetcd-core</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.3.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -89,7 +89,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>com.coreos.jetcd.examples.watch.Main</mainClass>
+                    <mainClass>io.etcd.jetcd.examples.watch.Main</mainClass>
                     <arguments>
                         <argument>-e</argument>
                         <argument>http://localhost:2379</argument>

@@ -16,10 +16,10 @@
     limitations under the License.
 
 -->
-<features xmlns="http://karaf.apache.org/xmlns/features/v1.4.0" name="coreos-jetcd">
-    <feature name="coreos-jetcd" description="coreos-jetcd" version="${project.version}}">
+<features xmlns="http://karaf.apache.org/xmlns/features/v1.4.0" name="etcd-io-jetcd">
+    <feature name="etcd-io-jetcd" description="etcd-io-jetcd" version="${project.version}}">
 
-        <details>CoreOS :: Java Client for etcd V3</details>
+        <details>Etcd :: Java Client for etcd V3</details>
 
         <feature prerequisite="true">wrap</feature>
 
@@ -75,15 +75,15 @@
 
         <!-- jetcd -->
         <!--
-        <bundle>mvn:com.coreos/jetcd-common/${project.version}</bundle>
-        <bundle>mvn:com.coreos/jetcd-resolver/${project.version}</bundle>
-        <bundle>mvn:com.coreos/jetcd-core/${project.version}</bundle>
-        <bundle>mvn:com.coreos/jetcd-resolver-dns-srv/${project.version}</bundle>
+        <bundle>mvn:io.etcd/jetcd-common/${project.version}</bundle>
+        <bundle>mvn:io.etcd/jetcd-resolver/${project.version}</bundle>
+        <bundle>mvn:io.etcd/jetcd-core/${project.version}</bundle>
+        <bundle>mvn:io.etcd/jetcd-resolver-dns-srv/${project.version}</bundle>
         -->
 
         <!-- use jetcd-all until grpc fixes split package -->
-        <bundle>mvn:com.coreos/jetcd-all/${project.version}</bundle>
-        <bundle>mvn:com.coreos/jetcd-osgi/${project.version}</bundle>
+        <bundle>mvn:io.etcd/jetcd-all/${project.version}</bundle>
+        <bundle>mvn:io.etcd/jetcd-osgi/${project.version}</bundle>
 
     </feature>
 </features>
