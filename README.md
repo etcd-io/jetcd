@@ -1,11 +1,11 @@
 # jetcd - A Java Client for etcd
-[![Build Status](https://img.shields.io/travis/coreos/jetcd.svg?style=flat-square)](https://travis-ci.org/coreos/jetcd)
+[![Build Status](https://img.shields.io/travis/com/etcd-io/jetcd.svg?style=flat-square)](https://travis-ci.com/etcd-io/jetcd)
 [![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg?style=flat-square)](http://www.apache.org/licenses/LICENSE-2.0.html)
-[![Maven Central](https://img.shields.io/maven-central/v/com.coreos/jetcd-core.svg?style=flat-square)](https://search.maven.org/#search%7Cga%7C1%7Ccoreos)
-[![GitHub release](https://img.shields.io/github/release/coreos/jetcd.svg?style=flat-square)](https://github.com/coreos/jetcd/releases)
-[![Javadocs](http://www.javadoc.io/badge/com.coreos/jetcd-core.svg)](http://www.javadoc.io/doc/com.coreos/jetcd-core)
+[![Maven Central](https://img.shields.io/maven-central/v/io.etcd/jetcd-core.svg?style=flat-square)](https://search.maven.org/#search%7Cga%7C1%7Cio.etcd)
+[![GitHub release](https://img.shields.io/github/release/etcd-io/jetcd.svg?style=flat-square)](https://github.com/etcd-io/jetcd/releases)
+[![Javadocs](http://www.javadoc.io/badge/io/etcd/jetcd-core.svg)](http://www.javadoc.io/doc/io/etcd/jetcd-core)
 
-jetcd is the official java client for [etcd](https://github.com/coreos/etcd) v3.
+jetcd is the official java client for [etcd](https://github.com/etcd-io/etcd) v3.
 
 > Note: jetcd is work-in-progress and may break backward compatibility.
 
@@ -18,19 +18,19 @@ Java 8 or above is required.
 ### Maven
 ```xml
 <dependency>
-  <groupId>com.coreos</groupId>
+  <groupId>io.etcd</groupId>
   <artifactId>jetcd-core</artifactId>
   <version>${jetcd-version}</version>
 </dependency>
 ```
 
-Development snapshots are available in [Sonatypes's snapshot repository](https://oss.sonatype.org/content/repositories/snapshots/com/coreos).
+Development snapshots are available in [Sonatypes's snapshot repository](https://oss.sonatype.org/content/repositories/snapshots/io/etcd).
 
 ### Gradle
 
 ```
 dependencies {
-    compile "com.coreos:jetcd-core:$jetcd-version"
+    compile "io.etcd:jetcd-core:$jetcd-version"
 }
 ``` 
 
@@ -57,11 +57,11 @@ GetResponse response = getFuture.get();
 kvClient.delete(key).get();
 ```
 
-For full etcd v3 API, plesase refer to [API_Reference](https://github.com/coreos/etcd/blob/master/Documentation/dev-guide/api_reference_v3.md).
+For full etcd v3 API, plesase refer to [API_Reference](https://github.com/etcd-io/etcd/blob/master/Documentation/dev-guide/api_reference_v3.md).
 
 ### Examples
 
-The [examples](https://github.com/coreos/jetcd/tree/master/jetcd-examples) are standalone projects that show usage of jetcd.
+The [examples](https://github.com/etcd-io/jetcd/tree/master/jetcd-examples) are standalone projects that show usage of jetcd.
 
 ## Versioning
 
@@ -111,12 +111,12 @@ $ mvn test
 
 ## Contributing
 
-See [CONTRIBUTING](https://github.com/coreos/jetcd/blob/master/CONTRIBUTING.md) for details on submitting patches and the contribution workflow.
+See [CONTRIBUTING](https://github.com/etcd-io/jetcd/blob/master/CONTRIBUTING.md) for details on submitting patches and the contribution workflow.
 
 ## Reporting bugs
 
-See [reporting bugs](https://github.com/coreos/etcd/blob/master/Documentation/reporting_bugs.md) for details about reporting any issues.
+See [reporting bugs](https://github.com/etcd-io/etcd/blob/master/Documentation/reporting_bugs.md) for details about reporting any issues.
 
 ## License
 
-jetcd is under the Apache 2.0 license. See the [LICENSE](https://github.com/coreos/jetcd/blob/master/LICENSE) file for details.
+jetcd is under the Apache 2.0 license. See the [LICENSE](https://github.com/etcd-io/jetcd/blob/master/LICENSE) file for details.

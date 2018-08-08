@@ -1,6 +1,6 @@
 ### jetcd-simple-ctl
 
-Download and start an etcd node from [instruction](https://github.com/coreos/etcd/blob/master/Documentation/dl_build.md)
+Download and start an etcd node from [instruction](https://github.com/etcd-io/etcd/blob/master/Documentation/dl_build.md)
 
 > Note: For windows machine, run `.\mvnw.cmd` instead of `./mvnw`
 

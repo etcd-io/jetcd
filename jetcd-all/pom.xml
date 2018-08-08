@@ -21,9 +21,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
-        <groupId>com.coreos</groupId>
+        <groupId>io.etcd</groupId>
         <artifactId>jetcd-parent</artifactId>
-        <version>0.2.0-SNAPSHOT</version>
+        <version>0.3.0-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -32,19 +32,19 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.coreos</groupId>
+            <groupId>io.etcd</groupId>
             <artifactId>jetcd-common</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.coreos</groupId>
+            <groupId>io.etcd</groupId>
             <artifactId>jetcd-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.coreos</groupId>
+            <groupId>io.etcd</groupId>
             <artifactId>jetcd-resolver</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.coreos</groupId>
+            <groupId>io.etcd</groupId>
             <artifactId>jetcd-resolver-dns-srv</artifactId>
         </dependency>
     </dependencies>
@@ -74,24 +74,24 @@
                             <relocations>
                                 <relocation>
                                     <pattern>com.google</pattern>
-                                    <shadedPattern>com.coreos.jetcd.shaded.com.google
+                                    <shadedPattern>io.etcd.jetcd.shaded.com.google
                                     </shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>io.grpc</pattern>
-                                    <shadedPattern>com.coreos.jetcd.shaded.io.grpc</shadedPattern>
+                                    <shadedPattern>io.etcd.jetcd.shaded.io.grpc</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>io.netty</pattern>
-                                    <shadedPattern>com.coreos.jetcd.shaded.io.netty</shadedPattern>
+                                    <shadedPattern>io.etcd.jetcd.shaded.io.netty</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>javax.annotation</pattern>
-                                    <shadedPattern>com.coreos.jetcd.shaded.javax.annotation</shadedPattern>
+                                    <shadedPattern>io.etcd.jetcd.shaded.javax.annotation</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>io.opencensus</pattern>
-                                    <shadedPattern>com.coreos.jetcd.shaded.io.opencensus
+                                    <shadedPattern>io.etcd.jetcd.shaded.io.opencensus
                                     </shadedPattern>
                                 </relocation>
                             </relocations>
@@ -107,24 +107,23 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>CoreOS :: ${project.artifactId}</Bundle-Name>
+                        <Bundle-Name>etcd :: ${project.artifactId}</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package>com.coreos.jetcd.*</Export-Package>
                         <Export-Package>
-                            com.coreos.jetcd.common.exception,
-                            com.coreos.jetcd.resolver,
-                            com.coreos.jetcd.resolver.dnssrv,
-                            com.coreos.jetcd,
-                            com.coreos.jetcd.auth,
-                            com.coreos.jetcd.cluster,
-                            com.coreos.jetcd.data,
-                            com.coreos.jetcd.kv,
-                            com.coreos.jetcd.lease,
-                            com.coreos.jetcd.lock,
-                            com.coreos.jetcd.maintenance,
-                            com.coreos.jetcd.op,
-                            com.coreos.jetcd.options,
-                            com.coreos.jetcd.watch
+                            io.etcd.jetcd.common.exception,
+                            io.etcd.jetcd.resolver,
+                            io.etcd.jetcd.resolver.dnssrv,
+                            io.etcd.jetcd,
+                            io.etcd.jetcd.auth,
+                            io.etcd.jetcd.cluster,
+                            io.etcd.jetcd.data,
+                            io.etcd.jetcd.kv,
+                            io.etcd.jetcd.lease,
+                            io.etcd.jetcd.lock,
+                            io.etcd.jetcd.maintenance,
+                            io.etcd.jetcd.op,
+                            io.etcd.jetcd.options,
+                            io.etcd.jetcd.watch
                         </Export-Package>
                         <Import-Package>
                             org.slf4j;version="[1.7,2)",

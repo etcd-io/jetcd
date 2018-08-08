@@ -21,9 +21,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
-        <groupId>com.coreos</groupId>
+        <groupId>io.etcd</groupId>
         <artifactId>jetcd-parent</artifactId>
-        <version>0.2.0-SNAPSHOT</version>
+        <version>0.3.0-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -94,7 +94,7 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <configuration>
                     <excludes>
-                        <exclude>com/coreos/jetcd/api/**</exclude>
+                        <exclude>io/etcd/jetcd/api/**</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -116,8 +116,8 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>CoreOS :: ${project.artifactId}</Bundle-Name>
-                        <Export-Package>com.coreos.jetcd.resolver.*;-noimport:=true</Export-Package>
+                        <Bundle-Name>etcd :: ${project.artifactId}</Bundle-Name>
+                        <Export-Package>io.etcd.jetcd.resolver.*;-noimport:=true</Export-Package>
                     </instructions>
                 </configuration>
             </plugin>

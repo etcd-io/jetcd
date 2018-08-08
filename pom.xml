@@ -21,12 +21,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.coreos</groupId>
+    <groupId>io.etcd</groupId>
     <artifactId>jetcd-parent</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.3.0-SNAPSHOT</version>
     <name>jetcd</name>
     <description>Java Client for etcd V3</description>
-    <url>https://github.com/coreos/jetcd</url>
+    <url>https://github.com/etcd-io/jetcd</url>
     <packaging>pom</packaging>
 
     <licenses>
@@ -46,6 +46,8 @@
         <developer>
             <name>Luca Burgazzoli</name>
             <email>lburgazzoli@gmail.com</email>
+            <organization>redhat</organization>
+            <organizationUrl>http://redhat.com/</organizationUrl>
         </developer>
         <developer>
             <name>Xiang Li</name>
@@ -62,9 +64,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:https://github.com/coreos/jetcd.git</connection>
-        <developerConnection>scm:git:https://github.com/coreos/jetcd.git</developerConnection>
-        <url>https://github.com/coreos/jetcd.git</url>
+        <connection>scm:git:https://github.com/etcd-io/jetcd.git</connection>
+        <developerConnection>scm:git:https://github.com/etcd-io/jetcd.git</developerConnection>
+        <url>https://github.com/etcd-io/jetcd.git</url>
     </scm>
 
     <properties>

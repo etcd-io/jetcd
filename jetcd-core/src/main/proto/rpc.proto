@@ -22,7 +22,7 @@ import "auth.proto";
 package etcdserverpb;
 
 option java_multiple_files = true;
-option java_package = "com.coreos.jetcd.api";
+option java_package = "io.etcd.jetcd.api";
 option java_outer_classname = "JetcdProto";
 option objc_class_prefix = "Jetcd";
 
