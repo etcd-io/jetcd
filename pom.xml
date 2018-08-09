@@ -90,7 +90,7 @@
         <protobuf-maven-plugin.version>0.5.1</protobuf-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.1</jacoco-maven-plugin.version>
         <com-puppycrawl-tools.version>8.11</com-puppycrawl-tools.version>
-        <com-puppycrawl-tools-guava.version>25.1-jre</com-puppycrawl-tools-guava.version>
+        <com-puppycrawl-tools-guava.version>26.0-jre</com-puppycrawl-tools-guava.version>
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
         <license-maven-plugin.version>3.0</license-maven-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
@@ -120,11 +120,11 @@
 
         <!-- test dependencies -->
         <testng.version>6.14.3</testng.version>
-        <mockito.version>2.20.1</mockito.version>
+        <mockito.version>2.21.0</mockito.version>
         <assertj.version>3.10.0</assertj.version>
         <junit.version>4.12</junit.version>
         <netty-tcnative.version>2.0.12.Final</netty-tcnative.version>
-        <testcontainers.version>1.8.2</testcontainers.version>
+        <testcontainers.version>1.8.3</testcontainers.version>
         <commons-io.version>2.6</commons-io.version>
     </properties>
 
