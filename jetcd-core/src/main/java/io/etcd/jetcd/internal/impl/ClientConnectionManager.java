@@ -19,7 +19,6 @@ package io.etcd.jetcd.internal.impl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.handleInterrupt;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
-import static io.etcd.jetcd.internal.impl.Util.byteStringFromByteSequence;
 import static io.etcd.jetcd.internal.impl.Util.isInvalidTokenError;
 import static io.etcd.jetcd.resolver.SmartNameResolverFactory.forEndpoints;
 
@@ -55,6 +54,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
 
 final class ClientConnectionManager {
 
@@ -240,10 +240,12 @@ final class ClientConnectionManager {
    * @return authResp
    */
   private ListenableFuture<AuthenticateResponse> authenticate(
-      Channel channel, ByteSequence username, ByteSequence password) {
+      @Nonnull Channel channel,
+      @Nonnull ByteSequence username,
+      @Nonnull ByteSequence password) {
 
-    ByteString user = byteStringFromByteSequence(username);
-    ByteString pass = byteStringFromByteSequence(password);
+    final ByteString user = username.getByteString();
+    final ByteString pass = password.getByteString();
 
     checkArgument(!user.isEmpty(), "username can not be empty.");
     checkArgument(!pass.isEmpty(), "password can not be empty.");

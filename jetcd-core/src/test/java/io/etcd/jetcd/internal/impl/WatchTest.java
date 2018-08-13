@@ -65,8 +65,8 @@ public class WatchTest {
 
   @Test
   public void testWatchOnPut() throws ExecutionException, InterruptedException {
-    ByteSequence key = ByteSequence.fromString(TestUtil.randomString());
-    ByteSequence value = ByteSequence.fromString("value");
+    ByteSequence key = ByteSequence.from(TestUtil.randomString());
+    ByteSequence value = ByteSequence.from("value");
     try (Watcher watcher = watchClient.watch(key)) {
       kvClient.put(key, value).get();
 
@@ -79,8 +79,8 @@ public class WatchTest {
 
   @Test
   public void testWatchOnDelete() throws ExecutionException, InterruptedException {
-    ByteSequence key = ByteSequence.fromString(TestUtil.randomString());
-    ByteSequence value = ByteSequence.fromString("value");
+    ByteSequence key = ByteSequence.from(TestUtil.randomString());
+    ByteSequence value = ByteSequence.from("value");
     kvClient.put(key, value).get();
     try (Watcher watcher = watchClient.watch(key)) {
       kvClient.delete(key);

@@ -62,7 +62,7 @@ import org.mockito.junit.MockitoRule;
  */
 public class WatchUnitTest {
 
-  private final static ByteSequence KEY = ByteSequence.fromString("test_key");
+  private final static ByteSequence KEY = ByteSequence.from("test_key");
   @Rule
   public final GrpcServerRule grpcServerRule = new GrpcServerRule().directExecutor();
   @Rule

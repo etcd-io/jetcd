@@ -21,9 +21,7 @@ import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdExcepti
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ByteString;
 import io.etcd.jetcd.common.exception.ErrorCode;
-import io.etcd.jetcd.data.ByteSequence;
 import io.grpc.Status;
 import io.grpc.Status.Code;
 import java.util.concurrent.CompletableFuture;
@@ -42,20 +40,6 @@ final class Util {
   private static final Logger logger = Logger.getLogger(Util.class.getName());
 
   private Util() {
-  }
-
-  /**
-   * convert ByteSequence to ByteString.
-   */
-  static ByteString byteStringFromByteSequence(ByteSequence byteSequence) {
-    return ByteString.copyFrom(byteSequence.getBytes());
-  }
-
-  /**
-   * convert ByteString to ByteSequence.
-   */
-  static ByteSequence byteSequenceFromByteString(ByteString byteString) {
-    return ByteSequence.fromBytes(byteString.toByteArray());
   }
 
   /**

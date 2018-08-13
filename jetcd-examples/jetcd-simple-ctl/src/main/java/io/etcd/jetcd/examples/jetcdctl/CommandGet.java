@@ -39,7 +39,7 @@ class CommandGet {
   // get executes the "get" command.
   void get(Client client) throws Exception {
     GetResponse getResponse = client.getKVClient().get(
-        ByteSequence.fromString(key),
+        ByteSequence.from(key),
         GetOption.newBuilder().withRevision(rev).build()
     ).get();
     if (getResponse.getKvs().isEmpty()) {

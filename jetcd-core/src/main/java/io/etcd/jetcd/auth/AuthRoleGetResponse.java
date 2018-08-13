@@ -37,8 +37,9 @@ public class AuthRoleGetResponse extends
   }
 
   private static Permission toPermission(io.etcd.jetcd.api.Permission perm) {
-    ByteSequence key = ByteSequence.fromBytes(perm.getKey().toByteArray());
-    ByteSequence rangeEnd = ByteSequence.fromBytes(perm.getRangeEnd().toByteArray());
+    ByteSequence key = ByteSequence.from(perm.getKey());
+    ByteSequence rangeEnd = ByteSequence.from(perm.getRangeEnd());
+
     Permission.Type type;
     switch (perm.getPermType()) {
       case READ:
@@ -53,6 +54,7 @@ public class AuthRoleGetResponse extends
       default:
         type = Type.UNRECOGNIZED;
     }
+
     return new Permission(type, key, rangeEnd);
   }
 

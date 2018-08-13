@@ -58,7 +58,7 @@ public class LeaseTimeToLiveResponse extends
   public synchronized List<ByteSequence> getKeys() {
     if (keys == null) {
       keys = getResponse().getKeysList().stream()
-          .map(byteStrings -> ByteSequence.fromBytes(byteStrings.toByteArray()))
+          .map(ByteSequence::from)
           .collect(Collectors.toList());
     }
 

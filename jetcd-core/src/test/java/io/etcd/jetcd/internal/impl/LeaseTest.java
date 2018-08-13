@@ -48,9 +48,9 @@ public class LeaseTest {
   private Client client;
   private Lease leaseClient;
 
-  private static final ByteSequence KEY = ByteSequence.fromString("foo");
-  private static final ByteSequence KEY_2 = ByteSequence.fromString("foo2");
-  private static final ByteSequence VALUE = ByteSequence.fromString("bar");
+  private static final ByteSequence KEY = ByteSequence.from("foo");
+  private static final ByteSequence KEY_2 = ByteSequence.from("foo2");
+  private static final ByteSequence VALUE = ByteSequence.from("bar");
 
   @BeforeClass
   public static void beforeClass() {
