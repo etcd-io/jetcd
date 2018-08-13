@@ -42,28 +42,28 @@ public class AuthClientTest {
 
   private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("auth-etcd", 1, false);
 
-  private ByteSequence rootRolekeyRangeBegin = ByteSequence.fromString("root");
-  private ByteSequence rootkeyRangeEnd = ByteSequence.fromString("root1");
+  private ByteSequence rootRolekeyRangeBegin = ByteSequence.from("root");
+  private ByteSequence rootkeyRangeEnd = ByteSequence.from("root1");
 
-  private ByteSequence userRolekeyRangeBegin = ByteSequence.fromString("foo");
-  private ByteSequence userRolekeyRangeEnd = ByteSequence.fromString("foo1");
+  private ByteSequence userRolekeyRangeBegin = ByteSequence.from("foo");
+  private ByteSequence userRolekeyRangeEnd = ByteSequence.from("foo1");
 
-  private ByteSequence rootRoleKey = ByteSequence.fromString("root");
-  private ByteSequence rootRoleValue = ByteSequence.fromString("b");
+  private ByteSequence rootRoleKey = ByteSequence.from("root");
+  private ByteSequence rootRoleValue = ByteSequence.from("b");
 
-  private ByteSequence userRoleKey = ByteSequence.fromString("foo");
-  private ByteSequence userRoleValue = ByteSequence.fromString("bar");
-
-
-  private ByteSequence root = ByteSequence.fromString("root");
-  private ByteSequence rootPass = ByteSequence.fromString("123");
-  private ByteSequence rootRole = ByteSequence.fromString("root");
+  private ByteSequence userRoleKey = ByteSequence.from("foo");
+  private ByteSequence userRoleValue = ByteSequence.from("bar");
 
 
-  private ByteSequence user = ByteSequence.fromString("user");
-  private ByteSequence userPass = ByteSequence.fromString("userPass");
-  private ByteSequence userNewPass = ByteSequence.fromString("newUserPass");
-  private ByteSequence userRole = ByteSequence.fromString("userRole");
+  private ByteSequence root = ByteSequence.from("root");
+  private ByteSequence rootPass = ByteSequence.from("123");
+  private ByteSequence rootRole = ByteSequence.from("root");
+
+
+  private ByteSequence user = ByteSequence.from("user");
+  private ByteSequence userPass = ByteSequence.from("userPass");
+  private ByteSequence userNewPass = ByteSequence.from("newUserPass");
+  private ByteSequence userRole = ByteSequence.from("userRole");
 
   private Client userClient;
   private Client rootClient;

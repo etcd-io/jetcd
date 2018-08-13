@@ -104,10 +104,10 @@ public class ClientService implements Client {
     builder.uriResolverLoader(() -> resolvers);
 
     if (config.user() != null) {
-      builder.user(ByteSequence.fromString(config.user()));
+      builder.user(ByteSequence.from(config.user()));
     }
     if (config.password() != null) {
-      builder.password(ByteSequence.fromString(config.password()));
+      builder.password(ByteSequence.from(config.password()));
     }
 
     this.delegate = builder.build();

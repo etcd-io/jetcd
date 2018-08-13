@@ -46,7 +46,7 @@ public class LockTest {
   private Assertion test;
   private Set<ByteSequence> locksToRelease;
 
-  private static final ByteSequence SAMPLE_NAME = ByteSequence.fromString("sample_name");
+  private static final ByteSequence SAMPLE_NAME = ByteSequence.from("sample_name");
 
   @BeforeTest
   public void setUp() throws Exception {

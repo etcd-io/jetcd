@@ -92,8 +92,8 @@ class AuthImpl implements Auth {
     checkNotNull(password, "password can't be null");
 
     AuthUserAddRequest addRequest = AuthUserAddRequest.newBuilder()
-        .setNameBytes(Util.byteStringFromByteSequence(user))
-        .setPasswordBytes(Util.byteStringFromByteSequence(password))
+        .setNameBytes(user.getByteString())
+        .setPasswordBytes(password.getByteString())
         .build();
     return Util.toCompletableFuture(
         this.stub.userAdd(addRequest),
@@ -106,7 +106,7 @@ class AuthImpl implements Auth {
     checkNotNull(user, "user can't be null");
 
     AuthUserDeleteRequest deleteRequest = AuthUserDeleteRequest.newBuilder()
-        .setNameBytes(Util.byteStringFromByteSequence(user))
+        .setNameBytes(user.getByteString())
         .build();
     return Util.toCompletableFuture(
         this.stub.userDelete(deleteRequest),
@@ -121,8 +121,8 @@ class AuthImpl implements Auth {
     checkNotNull(password, "password can't be null");
 
     AuthUserChangePasswordRequest changePasswordRequest = AuthUserChangePasswordRequest.newBuilder()
-        .setNameBytes(Util.byteStringFromByteSequence(user))
-        .setPasswordBytes(Util.byteStringFromByteSequence(password))
+        .setNameBytes(user.getByteString())
+        .setPasswordBytes(password.getByteString())
         .build();
     return Util.toCompletableFuture(
         this.stub.userChangePassword(changePasswordRequest),
@@ -135,7 +135,7 @@ class AuthImpl implements Auth {
     checkNotNull(user, "user can't be null");
 
     AuthUserGetRequest userGetRequest = AuthUserGetRequest.newBuilder()
-        .setNameBytes(Util.byteStringFromByteSequence(user))
+        .setNameBytes(user.getByteString())
         .build();
     return Util.toCompletableFuture(
         this.stub.userGet(userGetRequest),
@@ -159,8 +159,8 @@ class AuthImpl implements Auth {
     checkNotNull(role, "key can't be null");
 
     AuthUserGrantRoleRequest userGrantRoleRequest = AuthUserGrantRoleRequest.newBuilder()
-        .setUserBytes(Util.byteStringFromByteSequence(user))
-        .setRoleBytes(Util.byteStringFromByteSequence(role))
+        .setUserBytes(user.getByteString())
+        .setRoleBytes(role.getByteString())
         .build();
     return Util.toCompletableFuture(
         this.stub.userGrantRole(userGrantRoleRequest),
@@ -175,8 +175,8 @@ class AuthImpl implements Auth {
     checkNotNull(role, "key can't be null");
 
     AuthUserRevokeRoleRequest userRevokeRoleRequest = AuthUserRevokeRoleRequest.newBuilder()
-        .setNameBytes(Util.byteStringFromByteSequence(user))
-        .setRoleBytes(Util.byteStringFromByteSequence(role))
+        .setNameBytes(user.getByteString())
+        .setRoleBytes(role.getByteString())
         .build();
     return Util.toCompletableFuture(
         this.stub.userRevokeRole(userRevokeRoleRequest),
@@ -189,7 +189,7 @@ class AuthImpl implements Auth {
     checkNotNull(user, "user can't be null");
 
     AuthRoleAddRequest roleAddRequest = AuthRoleAddRequest.newBuilder()
-        .setNameBytes(Util.byteStringFromByteSequence(user))
+        .setNameBytes(user.getByteString())
         .build();
     return Util.toCompletableFuture(
         this.stub.roleAdd(roleAddRequest),
@@ -222,13 +222,13 @@ class AuthImpl implements Auth {
     }
 
     io.etcd.jetcd.api.Permission perm = io.etcd.jetcd.api.Permission.newBuilder()
-        .setKey(Util.byteStringFromByteSequence(key))
-        .setRangeEnd(Util.byteStringFromByteSequence(rangeEnd))
+        .setKey(key.getByteString())
+        .setRangeEnd(rangeEnd.getByteString())
         .setPermType(type)
         .build();
     AuthRoleGrantPermissionRequest roleGrantPermissionRequest = AuthRoleGrantPermissionRequest
         .newBuilder()
-        .setNameBytes(Util.byteStringFromByteSequence(role))
+        .setNameBytes(role.getByteString())
         .setPerm(perm)
         .build();
     return Util.toCompletableFuture(
@@ -242,7 +242,7 @@ class AuthImpl implements Auth {
     checkNotNull(role, "role can't be null");
 
     AuthRoleGetRequest roleGetRequest = AuthRoleGetRequest.newBuilder()
-        .setRoleBytes(Util.byteStringFromByteSequence(role))
+        .setRoleBytes(role.getByteString())
         .build();
     return Util.toCompletableFuture(
         this.stub.roleGet(roleGetRequest),
@@ -268,9 +268,9 @@ class AuthImpl implements Auth {
 
     AuthRoleRevokePermissionRequest roleRevokePermissionRequest = AuthRoleRevokePermissionRequest
         .newBuilder()
-        .setRoleBytes(Util.byteStringFromByteSequence(role))
-        .setKeyBytes(Util.byteStringFromByteSequence(key))
-        .setRangeEndBytes(Util.byteStringFromByteSequence(rangeEnd))
+        .setRoleBytes(role.getByteString())
+        .setKeyBytes(key.getByteString())
+        .setRangeEndBytes(rangeEnd.getByteString())
         .build();
     return Util
         .toCompletableFuture(
@@ -283,7 +283,7 @@ class AuthImpl implements Auth {
   public CompletableFuture<AuthRoleDeleteResponse> roleDelete(ByteSequence role) {
     checkNotNull(role, "role can't be null");
     AuthRoleDeleteRequest roleDeleteRequest = AuthRoleDeleteRequest.newBuilder()
-        .setRoleBytes(Util.byteStringFromByteSequence(role))
+        .setRoleBytes(role.getByteString())
         .build();
     return Util.toCompletableFuture(
         this.stub.roleDelete(roleDeleteRequest),

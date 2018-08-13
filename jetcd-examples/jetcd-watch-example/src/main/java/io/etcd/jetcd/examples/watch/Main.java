@@ -42,7 +42,7 @@ public class Main {
 
     try (Client client = Client.builder().endpoints(cmd.endpoints).build();
          Watch watch = client.getWatchClient();
-         Watch.Watcher watcher = watch.watch(ByteSequence.fromString(cmd.key))) {
+         Watch.Watcher watcher = watch.watch(ByteSequence.from(cmd.key))) {
       for (int i = 0; i < cmd.maxEvents; i++) {
         LOGGER.info("Watching for key={}", cmd.key);
         WatchResponse response = watcher.listen();

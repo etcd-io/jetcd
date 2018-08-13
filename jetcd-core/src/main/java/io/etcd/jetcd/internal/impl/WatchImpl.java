@@ -357,7 +357,7 @@ class WatchImpl implements Watch {
   }
 
   private WatchRequest toWatchCreateRequest(WatcherImpl watcher) {
-    ByteString key = Util.byteStringFromByteSequence(watcher.getKey());
+    ByteString key = watcher.getKey().getByteString();
     WatchOption option = watcher.getWatchOption();
     WatchCreateRequest.Builder builder = WatchCreateRequest.newBuilder()
         .setKey(key)
@@ -366,7 +366,8 @@ class WatchImpl implements Watch {
         .setStartRevision(watcher.getRevision());
 
     option.getEndKey()
-        .ifPresent(endKey -> builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
+      .map(ByteSequence::getByteString)
+      .ifPresent(builder::setRangeEnd);
 
     if (option.isNoDelete()) {
       builder.addFilters(WatchCreateRequest.FilterType.NODELETE);

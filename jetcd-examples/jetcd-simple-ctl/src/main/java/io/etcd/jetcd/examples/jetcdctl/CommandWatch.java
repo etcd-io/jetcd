@@ -43,7 +43,7 @@ class CommandWatch {
     Watcher watcher = null;
     try {
       watcher = client.getWatchClient().watch(
-          ByteSequence.fromString(key),
+          ByteSequence.from(key),
           WatchOption.newBuilder().withRevision(rev).build()
       );
 

@@ -31,7 +31,7 @@ public class LockResponse extends AbstractResponse<io.etcd.jetcd.api.lock.LockRe
    * undefined behavior.
    */
   public ByteSequence getKey() {
-    return ByteSequence.fromByteString(getResponse().getKey());
+    return ByteSequence.from(getResponse().getKey());
   }
 
 }

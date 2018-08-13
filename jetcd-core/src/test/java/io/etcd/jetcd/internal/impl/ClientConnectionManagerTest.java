@@ -63,7 +63,7 @@ public class ClientConnectionManagerTest {
       });
 
     try (Client client = builder.build()) {
-      client.getKVClient().put(ByteSequence.fromString("sample_key"), ByteSequence.fromString("sample_key"));
+      client.getKVClient().put(ByteSequence.from("sample_key"), ByteSequence.from("sample_key"));
       latch.await(1, TimeUnit.MINUTES);
     }
   }

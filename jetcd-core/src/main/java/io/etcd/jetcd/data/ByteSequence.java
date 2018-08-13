@@ -18,37 +18,18 @@ package io.etcd.jetcd.data;
 
 import com.google.protobuf.ByteString;
 import java.io.UnsupportedEncodingException;
-import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 
 /**
  * Etcd binary bytes, easy to convert between byte[], String and ByteString.
  */
-public class ByteSequence {
-
+public final class ByteSequence {
   private final int hashVal;
   private final ByteString byteString;
 
-
-  public ByteSequence(byte[] source) {
-    hashVal = calcHashCore(source);
-    byteString = toByteString(source);
-  }
-
-  protected ByteSequence(ByteString byteString) {
-    this(byteString.toByteArray());
-  }
-
-  public ByteSequence(String string) {
-    this(string.getBytes());
-  }
-
-  public ByteSequence(CharBuffer charBuffer) {
-    this(String.valueOf(charBuffer.array()));
-  }
-
-  public ByteSequence(CharSequence charSequence) {
-    this(java.nio.CharBuffer.wrap(charSequence));
+  private ByteSequence(ByteString byteString) {
+    this.byteString = byteString;
+    this.hashVal = byteString.hashCode();
   }
 
   @Override
@@ -69,18 +50,6 @@ public class ByteSequence {
 
   public ByteString getByteString() {
     return this.byteString;
-  }
-
-  private ByteString toByteString(byte[] bytes) {
-    return ByteString.copyFrom(bytes);
-  }
-
-  private int calcHashCore(byte[] bytes) {
-    int result = 0;
-    for (int i = 0; i < bytes.length; ++i) {
-      result = 31 * result + bytes[i];
-    }
-    return result;
   }
 
   @Override
@@ -104,24 +73,33 @@ public class ByteSequence {
     return byteString.toByteArray();
   }
 
-  public static ByteSequence fromString(String string) {
-    return new ByteSequence(string);
+  public static ByteSequence from(String source) {
+    byte[] bytes = source.getBytes();
+
+    return new ByteSequence(ByteString.copyFrom(bytes));
   }
 
-  public static ByteSequence fromCharSequence(CharSequence charSequence) {
-    return new ByteSequence(charSequence);
+  public static ByteSequence from(String source, Charset charset) {
+    byte[] bytes = source.getBytes(charset);
+
+    return new ByteSequence(ByteString.copyFrom(bytes));
   }
 
-  public static ByteSequence fromCharBuffer(CharBuffer charBuffer) {
-    return new ByteSequence(charBuffer);
+  public static ByteSequence from(CharSequence source) {
+    byte[] bytes = new byte[source.length()];
+    for (int i = source.length() - 1; i >= 0; i--) {
+      bytes[i] = (byte)source.charAt(i);
+    }
+
+    return new ByteSequence(ByteString.copyFrom(bytes));
   }
 
-  public static ByteSequence fromByteString(ByteString byteString) {
-    return new ByteSequence(byteString);
+  public static ByteSequence from(ByteString source) {
+    return new ByteSequence(source);
   }
 
-  public static ByteSequence fromBytes(byte[] bytes) {
-    return new ByteSequence(bytes);
+  public static ByteSequence from(byte[] source) {
+    return new ByteSequence(ByteString.copyFrom(source));
   }
 
 }

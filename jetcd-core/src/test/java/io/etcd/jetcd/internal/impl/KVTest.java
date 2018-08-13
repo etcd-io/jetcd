@@ -49,11 +49,11 @@ public class KVTest {
   private KV kvClient;
   private Assertion test;
 
-  private static final ByteSequence SAMPLE_KEY = ByteSequence.fromString("sample_key");
-  private static final ByteSequence SAMPLE_VALUE = ByteSequence.fromString("sample_value");
-  private static final ByteSequence SAMPLE_KEY_2 = ByteSequence.fromString("sample_key2");
-  private static final ByteSequence SAMPLE_VALUE_2 = ByteSequence.fromString("sample_value2");
-  private static final ByteSequence SAMPLE_KEY_3 = ByteSequence.fromString("sample_key3");
+  private static final ByteSequence SAMPLE_KEY = ByteSequence.from("sample_key");
+  private static final ByteSequence SAMPLE_VALUE = ByteSequence.from("sample_value");
+  private static final ByteSequence SAMPLE_KEY_2 = ByteSequence.from("sample_key2");
+  private static final ByteSequence SAMPLE_VALUE_2 = ByteSequence.from("sample_value2");
+  private static final ByteSequence SAMPLE_KEY_3 = ByteSequence.from("sample_key3");
 
 
   @BeforeTest
@@ -115,10 +115,10 @@ public class KVTest {
     GetOption option = GetOption.newBuilder()
         .withSortField(SortTarget.KEY)
         .withSortOrder(SortOrder.DESCEND)
-        .withPrefix(ByteSequence.fromString(prefix))
+        .withPrefix(ByteSequence.from(prefix))
         .build();
     CompletableFuture<GetResponse> getFeature = kvClient
-        .get(ByteSequence.fromString(prefix), option);
+        .get(ByteSequence.from(prefix), option);
     GetResponse response = getFeature.get();
 
     test.assertEquals(response.getKvs().size(), numPrefix);
@@ -147,7 +147,7 @@ public class KVTest {
   @Test
   public void testGetAndDeleteWithPrefix() throws Exception {
     String prefix = TestUtil.randomString();
-    ByteSequence key = ByteSequence.fromString(prefix);
+    ByteSequence key = ByteSequence.from(prefix);
     int numPrefixes = 10;
 
     putKeysWithPrefix(prefix, numPrefixes);
@@ -169,19 +169,19 @@ public class KVTest {
   private void putKeysWithPrefix(String prefix, int numPrefixes)
       throws ExecutionException, InterruptedException {
     for (int i = 0; i < numPrefixes; i++) {
-      ByteSequence key = ByteSequence.fromString(prefix + i);
-      ByteSequence value = ByteSequence.fromString("" + i);
+      ByteSequence key = ByteSequence.from(prefix + i);
+      ByteSequence value = ByteSequence.from("" + i);
       kvClient.put(key, value).get();
     }
   }
 
   @Test
   public void testTxn() throws Exception {
-    ByteSequence sampleKey = ByteSequence.fromString("txn_key");
-    ByteSequence sampleValue = ByteSequence.fromString("xyz");
-    ByteSequence cmpValue = ByteSequence.fromString("abc");
-    ByteSequence putValue = ByteSequence.fromString("XYZ");
-    ByteSequence putValueNew = ByteSequence.fromString("ABC");
+    ByteSequence sampleKey = ByteSequence.from("txn_key");
+    ByteSequence sampleValue = ByteSequence.from("xyz");
+    ByteSequence cmpValue = ByteSequence.from("abc");
+    ByteSequence putValue = ByteSequence.from("XYZ");
+    ByteSequence putValueNew = ByteSequence.from("ABC");
     CompletableFuture<PutResponse> feature = kvClient.put(sampleKey, sampleValue);
     // put the original txn key value pair
     PutResponse putResp = feature.get();
@@ -202,11 +202,11 @@ public class KVTest {
 
   @Test
   public void testNestedTxn() throws Exception {
-    ByteSequence foo = ByteSequence.fromString("txn_foo");
-    ByteSequence bar = ByteSequence.fromString("txn_bar");
-    ByteSequence barz = ByteSequence.fromString("txn_barz");
-    ByteSequence abc = ByteSequence.fromString("txn_abc");
-    ByteSequence oneTwoThree = ByteSequence.fromString("txn_123");
+    ByteSequence foo = ByteSequence.from("txn_foo");
+    ByteSequence bar = ByteSequence.from("txn_bar");
+    ByteSequence barz = ByteSequence.from("txn_barz");
+    ByteSequence abc = ByteSequence.from("txn_abc");
+    ByteSequence oneTwoThree = ByteSequence.from("txn_123");
     
     Txn txn = kvClient.txn();
     Cmp cmp = new Cmp(foo, Cmp.Op.EQUAL, CmpTarget.version(0));

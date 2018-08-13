@@ -28,11 +28,11 @@ public class KeyValue {
   }
 
   public ByteSequence getKey() {
-    return ByteSequence.fromByteString(kv.getKey());
+    return ByteSequence.from(kv.getKey());
   }
 
   public ByteSequence getValue() {
-    return ByteSequence.fromByteString(kv.getValue());
+    return ByteSequence.from(kv.getValue());
   }
 
   public long getCreateRevision() {

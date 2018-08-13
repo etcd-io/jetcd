@@ -23,10 +23,10 @@ import org.junit.Test;
 
 public class TxnTest {
 
-  final Cmp CMP = new Cmp(ByteSequence.fromString("key"), Cmp.Op.GREATER,
-      CmpTarget.value(ByteSequence.fromString("value")));
+  final Cmp CMP = new Cmp(ByteSequence.from("key"), Cmp.Op.GREATER,
+      CmpTarget.value(ByteSequence.from("value")));
   final Op OP = Op
-      .put(ByteSequence.fromString("key2"), ByteSequence.fromString("value2"), PutOption.DEFAULT);
+      .put(ByteSequence.from("key2"), ByteSequence.from("value2"), PutOption.DEFAULT);
 
   @Test
   public void testIfs() {

@@ -67,8 +67,8 @@ class KVImpl implements KV {
     checkNotNull(option, "option should not be null");
 
     PutRequest request = PutRequest.newBuilder()
-        .setKey(Util.byteStringFromByteSequence(key))
-        .setValue(Util.byteStringFromByteSequence(value))
+        .setKey(key.getByteString())
+        .setValue(value.getByteString())
         .setLease(option.getLeaseId())
         .setPrevKv(option.getPrevKV())
         .build();
@@ -92,7 +92,7 @@ class KVImpl implements KV {
     checkNotNull(option, "option should not be null");
 
     RangeRequest.Builder builder = RangeRequest.newBuilder()
-        .setKey(Util.byteStringFromByteSequence(key))
+        .setKey(key.getByteString())
         .setCountOnly(option.isCountOnly())
         .setLimit(option.getLimit())
         .setRevision(option.getRevision())
@@ -101,8 +101,9 @@ class KVImpl implements KV {
         .setSortOrder(toRangeRequestSortOrder(option.getSortOrder()))
         .setSortTarget(toRangeRequestSortTarget(option.getSortField()));
 
-    option.getEndKey().ifPresent((endKey) ->
-        builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
+    option.getEndKey()
+      .map(ByteSequence::getByteString)
+      .ifPresent(builder::setRangeEnd);
 
     RangeRequest request = builder.build();
 
@@ -125,11 +126,12 @@ class KVImpl implements KV {
     checkNotNull(option, "option should not be null");
 
     DeleteRangeRequest.Builder builder = DeleteRangeRequest.newBuilder()
-        .setKey(Util.byteStringFromByteSequence(key))
+        .setKey(key.getByteString())
         .setPrevKv(option.isPrevKV());
 
     option.getEndKey()
-        .ifPresent((endKey) -> builder.setRangeEnd(Util.byteStringFromByteSequence(endKey)));
+      .map(ByteSequence::getByteString)
+      .ifPresent(builder::setRangeEnd);
 
     DeleteRangeRequest request = builder.build();
 

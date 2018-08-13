@@ -30,7 +30,7 @@ public class TestUtil {
   }
 
   public static ByteSequence randomByteSequence() {
-    return ByteSequence.fromString(randomString());
+    return ByteSequence.from(randomString());
   }
 
   public static int findNextAvailablePort() throws IOException {
