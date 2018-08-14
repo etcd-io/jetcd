@@ -550,6 +550,19 @@
                       <pluginExecutions>
                         <pluginExecution>
                           <pluginExecutionFilter>
+                            <groupId>kr.motd.maven</groupId>
+                            <artifactId>os-maven-plugin</artifactId>
+                            <versionRange>[1.6.0,)</versionRange>
+                            <goals>
+                              <goal>detect</goal>
+                            </goals>
+                          </pluginExecutionFilter>
+                          <action>
+                            <execute></execute>
+                          </action>
+                        </pluginExecution>
+                        <pluginExecution>
+                          <pluginExecutionFilter>
                             <groupId>org.commonjava.maven.plugins</groupId>
                             <artifactId>directory-maven-plugin</artifactId>
                             <versionRange>[0.3.1,)</versionRange>
