@@ -69,15 +69,6 @@
     </dependencies>
 
     <build>
-        <resources>
-            <resource>
-                <directory>target/classes</directory>
-                <includes>
-                    <include>**/META-INF/services/*</include>
-                </includes>
-            </resource>
-        </resources>
-
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

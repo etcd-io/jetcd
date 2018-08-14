@@ -130,15 +130,6 @@
     </dependencies>
 
     <build>
-        <resources>
-            <resource>
-                <directory>target/classes</directory>
-                <includes>
-                    <include>**/META-INF/services/*</include>
-                </includes>
-            </resource>
-        </resources>
-
         <extensions>
             <extension>
                 <groupId>kr.motd.maven</groupId>
