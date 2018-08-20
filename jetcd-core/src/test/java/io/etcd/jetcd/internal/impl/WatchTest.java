@@ -84,7 +84,7 @@ public class WatchTest {
     ByteSequence value = ByteSequence.from("value", UTF_8);
     kvClient.put(key, value).get();
     try (Watcher watcher = watchClient.watch(key)) {
-      kvClient.delete(key);
+      kvClient.delete(key).get();
       WatchResponse response = watcher.listen();
       assertThat(response.getEvents().size()).isEqualTo(1);
       WatchEvent event = response.getEvents().get(0);

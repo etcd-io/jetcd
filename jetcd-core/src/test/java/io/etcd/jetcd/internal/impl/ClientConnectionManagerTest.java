@@ -23,6 +23,7 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.data.ByteSequence;
 import io.etcd.jetcd.internal.infrastructure.EtcdClusterResource;
+import io.etcd.jetcd.kv.PutResponse;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -30,7 +31,9 @@ import io.grpc.ClientInterceptor;
 import io.grpc.ForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,7 +43,7 @@ public class ClientConnectionManagerTest {
   public final EtcdClusterResource clusterResource = new EtcdClusterResource("connection-manager-etcd", 1);
 
   @Test
-  public void test() throws InterruptedException {
+  public void test() throws InterruptedException, ExecutionException {
     final CountDownLatch latch = new CountDownLatch(1);
 
     final ClientBuilder builder = Client.builder()
@@ -64,8 +67,9 @@ public class ClientConnectionManagerTest {
       });
 
     try (Client client = builder.build()) {
-      client.getKVClient().put(ByteSequence.from("sample_key", Charsets.UTF_8), ByteSequence.from("sample_key", Charsets.UTF_8));
+      CompletableFuture<PutResponse> future = client.getKVClient().put(ByteSequence.from("sample_key", Charsets.UTF_8), ByteSequence.from("sample_key", Charsets.UTF_8));
       latch.await(1, TimeUnit.MINUTES);
+      future.get();
     }
   }
 }

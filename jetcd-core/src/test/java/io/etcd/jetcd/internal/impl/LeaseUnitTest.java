@@ -170,6 +170,7 @@ public class LeaseUnitTest {
   }
 
   @Test
+  @SuppressWarnings("FutureReturnValueIgnored") // ignore the future returned by timeToLive
   public void testTimeToLiveNullOption() {
     assertThatThrownBy(() -> this.leaseCli.timeToLive(LEASE_ID_1, null))
         .isInstanceOf(NullPointerException.class)
@@ -246,11 +247,11 @@ public class LeaseUnitTest {
   }
 
   // return a ArgumentMatcher that checks if the captured LeaseKeepAliveRequest has same leaseId.
-  private ArgumentMatcher<LeaseKeepAliveRequest> hasLeaseID(long leaseId) {
+  private static ArgumentMatcher<LeaseKeepAliveRequest> hasLeaseID(long leaseId) {
     return o -> o.getID() == leaseId;
   }
 
-  private LeaseImplBase createLeaseImplBase(
+  private static LeaseImplBase createLeaseImplBase(
       AtomicReference<StreamObserver<LeaseKeepAliveResponse>> responseObserverRef,
       StreamObserver<LeaseKeepAliveRequest> requestStreamObserver) {
     return new LeaseImplBase() {

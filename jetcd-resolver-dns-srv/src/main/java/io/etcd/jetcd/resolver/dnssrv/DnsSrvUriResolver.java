@@ -16,6 +16,7 @@
 
 package io.etcd.jetcd.resolver.dnssrv;
 
+import com.google.common.base.Splitter;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.etcd.jetcd.resolver.URIResolver;
@@ -48,7 +49,7 @@ public final class DnsSrvUriResolver implements URIResolver {
     ENV.put("java.naming.provider.url", "dns:");
   }
 
-  private ConcurrentMap<String, SocketAddress> cache;
+  private final ConcurrentMap<String, SocketAddress> cache;
 
   public DnsSrvUriResolver() {
     this.cache = new ConcurrentHashMap<>();
@@ -87,11 +88,11 @@ public final class DnsSrvUriResolver implements URIResolver {
 
       while (resolved.hasMore()) {
         String record = (String) resolved.next();
-        String[] split = record.split(" ");
+        List<String> split = Splitter.on(' ').splitToList(record);
 
-        if (split.length >= 4) {
-          String host = split[3].trim();
-          String port = split[2].trim();
+        if (split.size() >= 4) {
+          String host = split.get(3).trim();
+          String port = split.get(2).trim();
 
           SocketAddress address = this.cache.computeIfAbsent(
               host + ":" + port,

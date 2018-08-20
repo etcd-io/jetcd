@@ -239,7 +239,7 @@ final class ClientConnectionManager {
    * @param password auth password
    * @return authResp
    */
-  private ListenableFuture<AuthenticateResponse> authenticate(
+  private static ListenableFuture<AuthenticateResponse> authenticate(
       @Nonnull Channel channel,
       @Nonnull ByteSequence username,
       @Nonnull ByteSequence password) {

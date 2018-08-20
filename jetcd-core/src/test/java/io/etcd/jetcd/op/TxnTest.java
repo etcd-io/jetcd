@@ -20,47 +20,51 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.etcd.jetcd.data.ByteSequence;
 import io.etcd.jetcd.options.PutOption;
+import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 
 public class TxnTest {
 
-  final Cmp CMP = new Cmp(ByteSequence.from("key", UTF_8), Cmp.Op.GREATER,
+  final static Cmp CMP = new Cmp(ByteSequence.from("key", UTF_8), Cmp.Op.GREATER,
       CmpTarget.value(ByteSequence.from("value", UTF_8)));
-  final Op OP = Op
+  final static Op OP = Op
       .put(ByteSequence.from("key2", UTF_8), ByteSequence.from("value2", UTF_8), PutOption.DEFAULT);
 
   @Test
-  public void testIfs() {
+  @SuppressWarnings("FutureReturnValueIgnored") // CompletableFuture is null
+  public void testIfs() throws InterruptedException, ExecutionException {
     TxnImpl.newTxn((t) -> null).If(CMP).If(CMP).commit();
   }
 
   @Test
-  public void testThens() {
+  @SuppressWarnings("FutureReturnValueIgnored") // CompletableFuture is null
+  public void testThens() throws InterruptedException, ExecutionException {
     TxnImpl.newTxn((t) -> null).Then(OP).Then(OP).commit();
   }
 
   @Test
-  public void testElses() {
+  @SuppressWarnings("FutureReturnValueIgnored") // CompletableFuture is null
+  public void testElses() throws InterruptedException, ExecutionException {
     TxnImpl.newTxn((t) -> null).Else(OP).Else(OP).commit();
   }
 
   @Test
   public void testIfAfterThen() {
-    assertThatThrownBy(() -> TxnImpl.newTxn((t) -> null).Then(OP).If(CMP).commit())
+    assertThatThrownBy(() -> TxnImpl.newTxn((t) -> null).Then(OP).If(CMP).commit().get())
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("cannot call If after Then!");
   }
 
   @Test
   public void testIfAfterElse() {
-    assertThatThrownBy(() -> TxnImpl.newTxn((t) -> null).Else(OP).If(CMP).commit())
+    assertThatThrownBy(() -> TxnImpl.newTxn((t) -> null).Else(OP).If(CMP).commit().get())
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("cannot call If after Else!");
   }
 
   @Test
   public void testThenAfterElse() {
-    assertThatThrownBy(() -> TxnImpl.newTxn((t) -> null).Else(OP).Then(OP).commit())
+    assertThatThrownBy(() -> TxnImpl.newTxn((t) -> null).Else(OP).Then(OP).commit().get())
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("cannot call Then after Else!");
   }

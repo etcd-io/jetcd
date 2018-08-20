@@ -22,6 +22,8 @@ import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdExcepti
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.api.WatchCancelRequest;
@@ -49,7 +51,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,8 +69,8 @@ class WatchImpl implements Watch {
       pendingWatchers = new ConcurrentLinkedQueue<>();
   private final Set<Long> cancelSet = ConcurrentHashMap.newKeySet();
   private final ExecutorService executor = Executors.newCachedThreadPool();
-  private final ScheduledExecutorService scheduledExecutorService = Executors
-      .newScheduledThreadPool(1);
+  private final ListeningScheduledExecutorService scheduledExecutorService =
+      MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
   private final ClientConnectionManager connectionManager;
   private final WatchGrpc.WatchStub stub;
   private volatile StreamObserver<WatchRequest> grpcWatchStreamObserver;
@@ -218,7 +219,8 @@ class WatchImpl implements Watch {
       return;
     }
     // resume with a delay; avoiding immediate retry on a long connection downtime.
-    scheduledExecutorService.schedule(this::resume, 500, TimeUnit.MILLISECONDS);
+    Util.addOnFailureLoggingCallback(scheduledExecutorService.schedule(this::resume, 500, TimeUnit.MILLISECONDS),
+        LOG, "scheduled resume failed");
   }
 
   private synchronized void resume() {
@@ -236,12 +238,12 @@ class WatchImpl implements Watch {
     this.grpcWatchStreamObserver = null;
   }
 
-  private boolean isNoLeaderError(Status status) {
+  private static boolean isNoLeaderError(Status status) {
     return status.getCode() == Code.UNAVAILABLE
         && "etcdserver: no leader".equals(status.getDescription());
   }
 
-  private boolean isHaltError(Status status) {
+  private static boolean isHaltError(Status status) {
     // Unavailable codes mean the system will be right back.
     // (e.g., can't connect, lost leader)
     // Treat Internal codes as if something failed, leaving the
@@ -356,7 +358,7 @@ class WatchImpl implements Watch {
     }
   }
 
-  private WatchRequest toWatchCreateRequest(WatcherImpl watcher) {
+  private static WatchRequest toWatchCreateRequest(WatcherImpl watcher) {
     ByteString key = watcher.getKey().getByteString();
     WatchOption option = watcher.getWatchOption();
     WatchCreateRequest.Builder builder = WatchCreateRequest.newBuilder()
