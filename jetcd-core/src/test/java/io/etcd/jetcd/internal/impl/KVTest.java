@@ -38,6 +38,7 @@ import io.etcd.jetcd.options.PutOption;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import org.assertj.core.api.Assertions;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -71,12 +72,12 @@ public class KVTest {
     assertTrue(!response.hasPrevKv());
   }
 
-  @Test(expected = ExecutionException.class)
-  // TODO Junit 5 assertThrows() expectedExceptionsMessageRegExp = ".*etcdserver: requested lease not found"
+  @Test
   public void testPutWithNotExistLease() throws ExecutionException, InterruptedException {
     PutOption option = PutOption.newBuilder().withLeaseId(99999).build();
-    CompletableFuture<PutResponse> feature = kvClient.put(SAMPLE_KEY, SAMPLE_VALUE, option);
-    feature.get();
+    CompletableFuture<PutResponse> future = kvClient.put(SAMPLE_KEY, SAMPLE_VALUE, option);
+    Assertions.assertThatExceptionOfType(ExecutionException.class).isThrownBy(() -> future.get())
+        .withMessageEndingWith("etcdserver: requested lease not found");
   }
 
   @Test
@@ -164,7 +165,7 @@ public class KVTest {
     assertEquals(numPrefixes, delResp.getDeleted());
   }
 
-  private void putKeysWithPrefix(String prefix, int numPrefixes)
+  private static void putKeysWithPrefix(String prefix, int numPrefixes)
       throws ExecutionException, InterruptedException {
     for (int i = 0; i < numPrefixes; i++) {
       ByteSequence key = ByteSequence.from(prefix + i, Charsets.UTF_8);

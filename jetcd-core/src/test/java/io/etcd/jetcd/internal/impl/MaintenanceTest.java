@@ -48,7 +48,7 @@ import org.junit.rules.TemporaryFolder;
  * Maintenance test.
  */
 public class MaintenanceTest {
-  private static EtcdCluster CLUSTER;
+  private static EtcdCluster cluster;
 
   private Client client;
   private Maintenance maintenance;
@@ -59,19 +59,19 @@ public class MaintenanceTest {
 
   @BeforeClass
   public static void beforeClass() {
-    CLUSTER = EtcdClusterFactory.buildCluster("etcd-maintenance", 3 ,false);
-    CLUSTER.start();
+    cluster = EtcdClusterFactory.buildCluster("etcd-maintenance", 3 ,false);
+    cluster.start();
   }
 
   @AfterClass
   public static void afterClass() {
-    CLUSTER.close();
+    cluster.close();
   }
 
 
   @Before
   public void setUp() {
-    this.endpoints = CLUSTER.getClientEndpoints();
+    this.endpoints = cluster.getClientEndpoints();
     this.client = Client.builder().endpoints(endpoints).build();
     this.maintenance = client.getMaintenanceClient();
   }

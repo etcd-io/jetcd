@@ -21,6 +21,8 @@ import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newClosedLease
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import io.etcd.jetcd.Lease;
 import io.etcd.jetcd.api.LeaseGrantRequest;
 import io.etcd.jetcd.api.LeaseGrpc;
@@ -41,15 +43,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of lease client.
  */
 public class LeaseImpl implements Lease {
+
+  private static final Logger LOG = LoggerFactory.getLogger(LeaseImpl.class);
 
   /**
    * FIRST_KEEPALIVE_TIMEOUT_MS is the timeout for the first keepalive request
@@ -64,7 +68,7 @@ public class LeaseImpl implements Lease {
   /**
    * Timer schedule to send keep alive request.
    */
-  private final ScheduledExecutorService scheduledExecutorService;
+  private final ListeningScheduledExecutorService scheduledExecutorService;
   private ScheduledFuture<?> keepAliveFuture;
   private ScheduledFuture<?> deadlineFuture;
   /**
@@ -89,7 +93,7 @@ public class LeaseImpl implements Lease {
     this.stub = connectionManager.newStub(LeaseGrpc::newFutureStub);
     this.leaseStub = connectionManager.newStub(LeaseGrpc::newStub);
     this.keepAlives = new ConcurrentHashMap<>();
-    this.scheduledExecutorService = Executors.newScheduledThreadPool(2);
+    this.scheduledExecutorService = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(2));
   }
 
   @Override
@@ -201,7 +205,8 @@ public class LeaseImpl implements Lease {
       return;
     }
 
-    this.scheduledExecutorService.schedule(() -> reset(), 500, TimeUnit.MILLISECONDS);
+    Util.addOnFailureLoggingCallback(this.scheduledExecutorService.schedule(() -> reset(), 500, TimeUnit.MILLISECONDS),
+        LOG, "scheduled reset failed");
   }
 
   private synchronized void processKeepAliveResponse(
@@ -241,13 +246,13 @@ public class LeaseImpl implements Lease {
       () -> {
           long now = System.currentTimeMillis();
 
-          this.keepAlives.values().removeIf((ka -> {
+          this.keepAlives.values().removeIf(ka -> {
             if (ka.getDeadLine() < now) {
               ka.onCompleted();
               return true;
             }
             return false;
-          }));
+          });
         },
         0,
         1000,

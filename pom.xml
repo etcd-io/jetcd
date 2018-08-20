@@ -378,6 +378,58 @@
                         <compilerArgs>
                             <arg>-Xlint:all</arg>
                             <!-- TODO <arg>-Werror</arg> -->
+                            <!-- There are lots of disabled goodies in error-prone which only emit warnings (which nobody will ever look at!),
+                                 so let us enable them all as least as warnings, and then selectively turn some of them into ERROR, and suppress
+                                 those we really don't want (or can't enforce for whatever reason) with OFF. -->
+                            <arg>-XepExcludedPaths:.*/target/.*</arg>
+                            <arg>-XepAllDisabledChecksAsWarnings</arg>
+                            <!-- StaticOrDefaultInterfaceMethod is an Android specific warning which we don't care about -->
+                            <arg>-Xep:StaticOrDefaultInterfaceMethod:OFF</arg>
+                            <!-- FieldMissingNullable is badly broken :( https://github.com/google/error-prone/issues/708 -->
+                            <arg>-Xep:FieldMissingNullable:OFF</arg>
+                            <!-- To "Use parameter comments to document ambiguous literals" is unrealistic on a large existing code base -->
+                            <arg>-Xep:BooleanParameter:OFF</arg>
+                            <arg>-Xep:ReturnMissingNullable:ERROR</arg>
+                            <arg>-Xep:MethodCanBeStatic:ERROR</arg>
+                            <arg>-Xep:TestExceptionChecker:ERROR</arg>
+                            <arg>-Xep:RedundantThrows:ERROR</arg>
+                            <arg>-Xep:ConstantField:ERROR</arg>
+                            <arg>-Xep:EmptySetMultibindingContributions:ERROR</arg>
+                            <arg>-Xep:MixedArrayDimensions:ERROR</arg>
+                            <arg>-Xep:MultipleTopLevelClasses:ERROR</arg>
+                            <arg>-Xep:MultiVariableDeclaration:ERROR</arg>
+                            <arg>-Xep:PackageLocation:ERROR</arg>
+                            <arg>-Xep:PrivateConstructorForNoninstantiableModule:ERROR</arg>
+                            <arg>-Xep:RemoveUnusedImports:ERROR</arg>
+                            <arg>-Xep:UnnecessaryStaticImport:ERROR</arg>
+                            <arg>-Xep:UseBinds:ERROR</arg>
+                            <arg>-Xep:WildcardImport:ERROR</arg>
+                            <!-- FutureReturnValueIgnored is better (stronger) than error-prone's own (and FindBug's) @CheckReturnValue annotation, as it checks that ANY return Future are checked, not just those from methods annotated @CheckReturnValue -->
+                            <arg>-Xep:FutureReturnValueIgnored:ERROR</arg>
+                            <arg>-Xep:IntLongMath:ERROR</arg>
+                            <arg>-Xep:FloatCast:ERROR</arg>
+                            <arg>-Xep:ClassNewInstance:ERROR</arg>
+                            <arg>-Xep:ConstructorInvokesOverridable:ERROR</arg>
+                            <arg>-Xep:ThreeLetterTimeZoneID:ERROR</arg>
+                            <arg>-Xep:UnsafeFinalization:ERROR</arg>
+                            <arg>-Xep:MutableMethodReturnType:ERROR</arg>
+                            <arg>-Xep:SynchronizeOnNonFinalField:ERROR</arg>
+                            <arg>-Xep:WaitNotInLoop:ERROR</arg>
+                            <arg>-Xep:SwitchDefault:ERROR</arg>
+                            <arg>-Xep:ReachabilityFenceUsage:ERROR</arg>
+                            <arg>-Xep:BoxedPrimitiveConstructor:ERROR</arg>
+                            <arg>-Xep:InjectOnConstructorOfAbstractClass:ERROR</arg>
+                            <arg>-Xep:StringSplitter:ERROR</arg>
+                            <arg>-Xep:DefaultCharset:ERROR</arg>
+                            <arg>-Xep:StreamResourceLeak:ERROR</arg>
+                            <arg>-Xep:InconsistentCapitalization:ERROR</arg>
+                            <arg>-Xep:TruthIncompatibleType:ERROR</arg>
+                            <arg>-Xep:ByteBufferBackingArray:ERROR</arg>
+                            <arg>-Xep:OrphanedFormatString:ERROR</arg>
+                            <arg>-Xep:CatchAndPrintStackTrace:ERROR</arg>
+                            <arg>-Xep:VarTypeName:ERROR</arg>
+                            <arg>-Xep:ObjectToString:ERROR</arg>
+                            <arg>-Xep:AssertThrowsMultipleStatements:ERROR</arg>
                         </compilerArgs>
                     </configuration>
                     <dependencies>

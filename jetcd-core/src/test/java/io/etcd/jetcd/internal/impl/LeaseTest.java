@@ -43,7 +43,7 @@ import org.junit.Test;
  * Lease service test cases.
  */
 public class LeaseTest {
-  private static EtcdCluster CLUSTER;
+  private static EtcdCluster cluster;
 
   private KV kvClient;
   private Client client;
@@ -55,20 +55,20 @@ public class LeaseTest {
 
   @BeforeClass
   public static void beforeClass() {
-    CLUSTER = EtcdClusterFactory.buildCluster("etcd-lease", 3 ,false);
-    CLUSTER.start();
+    cluster = EtcdClusterFactory.buildCluster("etcd-lease", 3 ,false);
+    cluster.start();
   }
 
   @AfterClass
   public static void afterClass() {
-    CLUSTER.close();
+    cluster.close();
   }
 
   @Before
   public void setUp() {
-    CLUSTER.start();
+    cluster.start();
 
-    client = Client.builder().endpoints(CLUSTER.getClientEndpoints()).build();
+    client = Client.builder().endpoints(cluster.getClientEndpoints()).build();
     kvClient = client.getKVClient();
     leaseClient = client.getLeaseClient();
   }

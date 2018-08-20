@@ -16,10 +16,12 @@
 
 package io.etcd.jetcd.internal.impl;
 
+import static com.google.common.util.concurrent.Futures.addCallback;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.handleInterrupt;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.grpc.Status;
@@ -30,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import org.slf4j.Logger;
 
 /**
  * a util class for jetcd.
@@ -175,5 +178,18 @@ final class Util {
 
   static <T> T supplyIfNull(T target, Supplier<T> supplier) {
     return target != null ? target : supplier.get();
+  }
+
+  static void addOnFailureLoggingCallback(ListenableFuture<?> listenableFuture, Logger callerLogger, String message) {
+    addCallback(listenableFuture, new FutureCallback<Object>() {
+      @Override
+      public void onFailure(Throwable throwable) {
+        callerLogger.error(message, throwable);
+      }
+
+      @Override
+      public void onSuccess(Object result) {
+      }
+    });
   }
 }

@@ -375,11 +375,11 @@ public class WatchUnitTest {
   }
 
   // return a ArgumentMatcher that checks if the captured WatchRequest has same key.
-  private ArgumentMatcher<WatchRequest> hasCreateKey(ByteSequence key) {
+  private static ArgumentMatcher<WatchRequest> hasCreateKey(ByteSequence key) {
     return o -> Arrays.equals(o.getCreateRequest().getKey().toByteArray(), key.getBytes());
   }
 
-  private WatchImplBase createWatchImpBase(
+  private static WatchImplBase createWatchImpBase(
       AtomicReference<StreamObserver<WatchResponse>> responseObserverRef,
       StreamObserver<WatchRequest> requestStreamObserver) {
     return new WatchImplBase() {
@@ -391,7 +391,7 @@ public class WatchUnitTest {
     };
   }
 
-  private void assertEqualOnWatchResponses(io.etcd.jetcd.watch.WatchResponse expected,
+  private static void assertEqualOnWatchResponses(io.etcd.jetcd.watch.WatchResponse expected,
       io.etcd.jetcd.watch.WatchResponse actual) {
     assertThat(actual.getEvents().size()).isEqualTo(expected.getEvents().size());
 
@@ -404,7 +404,7 @@ public class WatchUnitTest {
     }
   }
 
-  private void assertEqualOnKeyValues(io.etcd.jetcd.data.KeyValue act,
+  private static void assertEqualOnKeyValues(io.etcd.jetcd.data.KeyValue act,
       io.etcd.jetcd.data.KeyValue exp) {
     assertThat(act.getModRevision())
         .isEqualTo(exp.getModRevision());
