@@ -342,7 +342,7 @@
                             </goals>
                             <configuration>
                                 <sources>
-                                    <source>${basedir}/target/generated-sources</source>
+                                    <source>${basedir}/${project.build.directory}/generated-sources</source>
                                 </sources>
                             </configuration>
                         </execution>
@@ -424,7 +424,7 @@
                             </goals>
                             <configuration>
                                 <!-- Sets the path to the file which contains the execution data. -->
-                                <dataFile>target/jacoco.exec</dataFile>
+                                <dataFile>${project.build.directory}/jacoco.exec</dataFile>
                             </configuration>
                         </execution>
                     </executions>
@@ -476,7 +476,7 @@
 
                     The file is:
 
-                        target/classes/META-INF/maven/dependencies.properties
+                        ${project.build.directory}/classes/META-INF/maven/dependencies.properties
                 -->
                 <plugin>
                     <groupId>org.apache.servicemix.tooling</groupId>
@@ -772,6 +772,19 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+
+        <profile>
+          <id>ide</id>
+          <activation>
+            <property>
+              <name>m2e.version</name>
+            </property>
+          </activation>
+          <build>
+            <!-- Put the IDE's build output in a folder other than target, so that IDE builds don't interact with Maven builds -->
+            <directory>target-ide</directory>
+          </build>
         </profile>
     </profiles>
 
