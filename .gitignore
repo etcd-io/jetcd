@@ -2,6 +2,7 @@
 !.gitignore
 !.travis.yml
 target/
+target-ide/
 *.iml
 logs/
 *.releaseBackup
