@@ -18,6 +18,7 @@ package io.etcd.jetcd.examples.watch;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.google.common.base.Charsets;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.data.ByteSequence;
@@ -42,7 +43,7 @@ public class Main {
 
     try (Client client = Client.builder().endpoints(cmd.endpoints).build();
          Watch watch = client.getWatchClient();
-         Watch.Watcher watcher = watch.watch(ByteSequence.from(cmd.key))) {
+         Watch.Watcher watcher = watch.watch(ByteSequence.from(cmd.key, Charsets.UTF_8))) {
       for (int i = 0; i < cmd.maxEvents; i++) {
         LOGGER.info("Watching for key={}", cmd.key);
         WatchResponse response = watcher.listen();
@@ -71,7 +72,7 @@ public class Main {
         names = { "-e", "--endpoints" },
         description = "the etcd endpoints"
     )
-    private List<String> endpoints = new ArrayList<>();
+    private final List<String> endpoints = new ArrayList<>();
 
     @Parameter(
         required = true,
@@ -84,6 +85,6 @@ public class Main {
         names = { "-m", "--max-events" },
         description = "the maximum number of events to receive"
     )
-    private Integer maxEvents = Integer.MAX_VALUE;
+    private final Integer maxEvents = Integer.MAX_VALUE;
   }
 }

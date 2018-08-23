@@ -75,38 +75,12 @@ public final class ByteSequence {
 
   /**
    * Create new ByteSequence from a String.
-   * @deprecated Use {@link #from(String, Charset)} instead.
-   */
-  @Deprecated
-  public static ByteSequence from(String source) {
-    return from(source, Charset.defaultCharset());
-  }
-
-  /**
-   * Create new ByteSequence from a String.
    * @param source input String
    * @param charset the character set to use to transform the String into bytes
    * @return the ByteSequence
    */
   public static ByteSequence from(String source, Charset charset) {
     byte[] bytes = source.getBytes(charset);
-
-    return new ByteSequence(ByteString.copyFrom(bytes));
-  }
-
-  /**
-   * Create new ByteSequence from a CharSequence.
-   *
-   * @deprecated Do not use this method, because it assumes all characters in the
-   *             CharSequence are bytes (which they may well not necessarily be;
-   *             char is 2 bytes). It cannot handle encoding correctly.
-   */
-  @Deprecated
-  public static ByteSequence from(CharSequence source) {
-    byte[] bytes = new byte[source.length()];
-    for (int i = source.length() - 1; i >= 0; i--) {
-      bytes[i] = (byte)source.charAt(i);
-    }
 
     return new ByteSequence(ByteString.copyFrom(bytes));
   }

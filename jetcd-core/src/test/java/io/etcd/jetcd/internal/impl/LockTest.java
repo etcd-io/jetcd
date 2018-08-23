@@ -15,6 +15,7 @@
  */
 package io.etcd.jetcd.internal.impl;
 
+import com.google.common.base.Charsets;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Lease;
 import io.etcd.jetcd.Lock;
@@ -46,7 +47,7 @@ public class LockTest {
   private Assertion test;
   private Set<ByteSequence> locksToRelease;
 
-  private static final ByteSequence SAMPLE_NAME = ByteSequence.from("sample_name");
+  private static final ByteSequence SAMPLE_NAME = ByteSequence.from("sample_name", Charsets.UTF_8);
 
   @BeforeTest
   public void setUp() throws Exception {

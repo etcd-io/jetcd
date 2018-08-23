@@ -15,6 +15,7 @@
  */
 package io.etcd.jetcd.internal.impl;
 
+import com.google.common.base.Charsets;
 import io.etcd.jetcd.data.ByteSequence;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -30,7 +31,7 @@ public class TestUtil {
   }
 
   public static ByteSequence randomByteSequence() {
-    return ByteSequence.from(randomString());
+    return ByteSequence.from(randomString(), Charsets.UTF_8);
   }
 
   public static int findNextAvailablePort() throws IOException {

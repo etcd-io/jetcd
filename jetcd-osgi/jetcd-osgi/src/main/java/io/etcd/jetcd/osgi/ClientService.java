@@ -27,6 +27,7 @@ import io.etcd.jetcd.Maintenance;
 import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.data.ByteSequence;
 import io.etcd.jetcd.resolver.URIResolver;
+import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 import org.osgi.service.component.annotations.Activate;
@@ -60,34 +61,42 @@ public class ClientService implements Client {
     this.resolvers = new HashSet<>();
   }
 
+  @Override
   public Auth getAuthClient() {
     return delegate.getAuthClient();
   }
 
+  @Override
   public KV getKVClient() {
     return delegate.getKVClient();
   }
 
+  @Override
   public Cluster getClusterClient() {
     return delegate.getClusterClient();
   }
 
+  @Override
   public Maintenance getMaintenanceClient() {
     return delegate.getMaintenanceClient();
   }
 
+  @Override
   public Lease getLeaseClient() {
     return delegate.getLeaseClient();
   }
 
+  @Override
   public Watch getWatchClient() {
     return delegate.getWatchClient();
   }
 
+  @Override
   public Lock getLockClient() {
     return delegate.getLockClient();
   }
 
+  @Override
   public void close() {
     throw new UnsupportedOperationException("");
   }
@@ -104,10 +113,10 @@ public class ClientService implements Client {
     builder.uriResolverLoader(() -> resolvers);
 
     if (config.user() != null) {
-      builder.user(ByteSequence.from(config.user()));
+      builder.user(ByteSequence.from(config.user(), Charset.forName(config.charset())));
     }
     if (config.password() != null) {
-      builder.password(ByteSequence.from(config.password()));
+      builder.password(ByteSequence.from(config.password(), Charset.forName(config.charset())));
     }
 
     this.delegate = builder.build();
@@ -148,5 +157,8 @@ public class ClientService implements Client {
 
     @AttributeDefinition(required = false, type = AttributeType.PASSWORD)
     String password();
+
+    @AttributeDefinition(required = false, type = AttributeType.STRING, defaultValue = "UTF-8", description = "Character Set used for user and password")
+    String charset();
   }
 }

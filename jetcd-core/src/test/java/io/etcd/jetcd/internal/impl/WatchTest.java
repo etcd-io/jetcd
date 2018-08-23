@@ -16,6 +16,7 @@
 package io.etcd.jetcd.internal.impl;
 
 
+import static com.google.common.base.Charsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.etcd.jetcd.Client;
@@ -65,8 +66,8 @@ public class WatchTest {
 
   @Test
   public void testWatchOnPut() throws ExecutionException, InterruptedException {
-    ByteSequence key = ByteSequence.from(TestUtil.randomString());
-    ByteSequence value = ByteSequence.from("value");
+    ByteSequence key = TestUtil.randomByteSequence();
+    ByteSequence value = ByteSequence.from("value", UTF_8);
     try (Watcher watcher = watchClient.watch(key)) {
       kvClient.put(key, value).get();
 
@@ -79,8 +80,8 @@ public class WatchTest {
 
   @Test
   public void testWatchOnDelete() throws ExecutionException, InterruptedException {
-    ByteSequence key = ByteSequence.from(TestUtil.randomString());
-    ByteSequence value = ByteSequence.from("value");
+    ByteSequence key = TestUtil.randomByteSequence();
+    ByteSequence value = ByteSequence.from("value", UTF_8);
     kvClient.put(key, value).get();
     try (Watcher watcher = watchClient.watch(key)) {
       kvClient.delete(key);
