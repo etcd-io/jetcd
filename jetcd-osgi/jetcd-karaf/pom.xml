@@ -57,9 +57,14 @@
         <!-- test -->
         <dependency>
             <groupId>org.apache.karaf.itests</groupId>
-            <artifactId>itests</artifactId>
+            <artifactId>common</artifactId>
             <version>${karaf.version}</version>
-            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.karaf.itests</groupId>
+            <artifactId>tests</artifactId>
+            <version>${karaf.version}</version>
             <scope>test</scope>
         </dependency>
 
