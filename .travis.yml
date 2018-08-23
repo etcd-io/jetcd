@@ -12,7 +12,7 @@ before_install:
   - mkdir -p "$HOME/.sdkman/etc"
   - echo "sdkman_auto_answer=true" > "$HOME/.sdkman/etc/config"
   - echo "sdkman_auto_selfupdate=true" >> "$HOME/.sdkman/etc/config"
-  - sdk install 8.0.181-zulu
+  - sdk install java 8.0.181-zulu
 
 script:
   - sdk use java 8.0.181-zulu
