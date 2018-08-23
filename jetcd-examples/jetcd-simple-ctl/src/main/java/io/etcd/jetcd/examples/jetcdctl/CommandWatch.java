@@ -18,6 +18,7 @@ package io.etcd.jetcd.examples.jetcdctl;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.google.common.base.Charsets;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.data.ByteSequence;
@@ -43,7 +44,7 @@ class CommandWatch {
     Watcher watcher = null;
     try {
       watcher = client.getWatchClient().watch(
-          ByteSequence.from(key),
+          ByteSequence.from(key, Charsets.UTF_8),
           WatchOption.newBuilder().withRevision(rev).build()
       );
 

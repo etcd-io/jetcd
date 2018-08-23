@@ -18,6 +18,7 @@ package io.etcd.jetcd.internal.impl;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import com.google.common.base.Charsets;
 import io.etcd.jetcd.Auth;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
@@ -42,28 +43,28 @@ public class AuthClientTest {
 
   private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("auth-etcd", 1, false);
 
-  private ByteSequence rootRolekeyRangeBegin = ByteSequence.from("root");
-  private ByteSequence rootkeyRangeEnd = ByteSequence.from("root1");
+  private final ByteSequence rootRolekeyRangeBegin = ByteSequence.from("root", Charsets.UTF_8);
+  private final ByteSequence rootkeyRangeEnd = ByteSequence.from("root1", Charsets.UTF_8);
 
-  private ByteSequence userRolekeyRangeBegin = ByteSequence.from("foo");
-  private ByteSequence userRolekeyRangeEnd = ByteSequence.from("foo1");
+  private final ByteSequence userRolekeyRangeBegin = ByteSequence.from("foo", Charsets.UTF_8);
+  private final ByteSequence userRolekeyRangeEnd = ByteSequence.from("foo1", Charsets.UTF_8);
 
-  private ByteSequence rootRoleKey = ByteSequence.from("root");
-  private ByteSequence rootRoleValue = ByteSequence.from("b");
+  private final ByteSequence rootRoleKey = ByteSequence.from("root", Charsets.UTF_8);
+  private final ByteSequence rootRoleValue = ByteSequence.from("b", Charsets.UTF_8);
 
-  private ByteSequence userRoleKey = ByteSequence.from("foo");
-  private ByteSequence userRoleValue = ByteSequence.from("bar");
-
-
-  private ByteSequence root = ByteSequence.from("root");
-  private ByteSequence rootPass = ByteSequence.from("123");
-  private ByteSequence rootRole = ByteSequence.from("root");
+  private final ByteSequence userRoleKey = ByteSequence.from("foo", Charsets.UTF_8);
+  private final ByteSequence userRoleValue = ByteSequence.from("bar", Charsets.UTF_8);
 
 
-  private ByteSequence user = ByteSequence.from("user");
-  private ByteSequence userPass = ByteSequence.from("userPass");
-  private ByteSequence userNewPass = ByteSequence.from("newUserPass");
-  private ByteSequence userRole = ByteSequence.from("userRole");
+  private final ByteSequence root = ByteSequence.from("root", Charsets.UTF_8);
+  private final ByteSequence rootPass = ByteSequence.from("123", Charsets.UTF_8);
+  private final ByteSequence rootRole = ByteSequence.from("root", Charsets.UTF_8);
+
+
+  private final ByteSequence user = ByteSequence.from("user", Charsets.UTF_8);
+  private final ByteSequence userPass = ByteSequence.from("userPass", Charsets.UTF_8);
+  private final ByteSequence userNewPass = ByteSequence.from("newUserPass", Charsets.UTF_8);
+  private final ByteSequence userRole = ByteSequence.from("userRole", Charsets.UTF_8);
 
   private Client userClient;
   private Client rootClient;

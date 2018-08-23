@@ -17,6 +17,7 @@ package io.etcd.jetcd.internal.impl;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
+import com.google.common.base.Charsets;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.data.ByteSequence;
@@ -35,8 +36,8 @@ public class SslTest {
 
   @Test(timeout = 5000)
   public void testSimpleSllSetup() throws Exception {
-    final ByteSequence key = ByteSequence.from(TestUtil.randomString());
-    final ByteSequence val = ByteSequence.from(TestUtil.randomString());
+    final ByteSequence key = ByteSequence.from(TestUtil.randomString(), Charsets.UTF_8);
+    final ByteSequence val = ByteSequence.from(TestUtil.randomString(), Charsets.UTF_8);
     final String capath = System.getProperty("ssl.cert.capath");
     final String authority = System.getProperty("ssl.cert.authority", TestConstants.DEFAULT_SSL_AUTHORITY);
     final String endpoints = System.getProperty("ssl.cert.endpoints", clusterResource.cluster().getClientEndpoints().get(0));

@@ -17,6 +17,7 @@ package io.etcd.jetcd.internal.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.base.Charsets;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.Lease;
@@ -48,9 +49,9 @@ public class LeaseTest {
   private Client client;
   private Lease leaseClient;
 
-  private static final ByteSequence KEY = ByteSequence.from("foo");
-  private static final ByteSequence KEY_2 = ByteSequence.from("foo2");
-  private static final ByteSequence VALUE = ByteSequence.from("bar");
+  private static final ByteSequence KEY = ByteSequence.from("foo", Charsets.UTF_8);
+  private static final ByteSequence KEY_2 = ByteSequence.from("foo2", Charsets.UTF_8);
+  private static final ByteSequence VALUE = ByteSequence.from("bar", Charsets.UTF_8);
 
   @BeforeClass
   public static void beforeClass() {

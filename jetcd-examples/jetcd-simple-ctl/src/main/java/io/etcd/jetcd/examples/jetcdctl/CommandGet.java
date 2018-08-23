@@ -18,6 +18,7 @@ package io.etcd.jetcd.examples.jetcdctl;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.google.common.base.Charsets;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.data.ByteSequence;
 import io.etcd.jetcd.kv.GetResponse;
@@ -31,15 +32,15 @@ class CommandGet {
   private static final Logger LOGGER = LoggerFactory.getLogger(CommandGet.class);
 
   @Parameter(arity = 1, description = "<key>")
-  private String key = "";
+  private final String key = "";
 
   @Parameter(names = "--rev", description = "Specify the kv revision")
-  private Long rev = 0L;
+  private final Long rev = 0L;
 
   // get executes the "get" command.
   void get(Client client) throws Exception {
     GetResponse getResponse = client.getKVClient().get(
-        ByteSequence.from(key),
+        ByteSequence.from(key, Charsets.UTF_8),
         GetOption.newBuilder().withRevision(rev).build()
     ).get();
     if (getResponse.getKvs().isEmpty()) {

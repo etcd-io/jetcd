@@ -18,6 +18,7 @@ package io.etcd.jetcd.internal.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.base.Charsets;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.data.ByteSequence;
@@ -63,7 +64,7 @@ public class ClientConnectionManagerTest {
       });
 
     try (Client client = builder.build()) {
-      client.getKVClient().put(ByteSequence.from("sample_key"), ByteSequence.from("sample_key"));
+      client.getKVClient().put(ByteSequence.from("sample_key", Charsets.UTF_8), ByteSequence.from("sample_key", Charsets.UTF_8));
       latch.await(1, TimeUnit.MINUTES);
     }
   }

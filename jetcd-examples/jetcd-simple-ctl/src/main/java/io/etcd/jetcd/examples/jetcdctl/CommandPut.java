@@ -18,6 +18,7 @@ package io.etcd.jetcd.examples.jetcdctl;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.google.common.base.Charsets;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.data.ByteSequence;
 import java.util.List;
@@ -35,8 +36,8 @@ class CommandPut {
   // put executes the "put" command.
   void put(Client client) throws Exception {
     client.getKVClient().put(
-        ByteSequence.from(keyValue.get(0)),
-        ByteSequence.from(keyValue.get(1))
+        ByteSequence.from(keyValue.get(0), Charsets.UTF_8),
+        ByteSequence.from(keyValue.get(1), Charsets.UTF_8)
     ).get();
     LOGGER.info("OK");
   }

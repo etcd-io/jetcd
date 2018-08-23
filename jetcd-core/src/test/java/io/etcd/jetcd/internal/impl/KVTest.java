@@ -18,6 +18,7 @@ package io.etcd.jetcd.internal.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.google.common.base.Charsets;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.Txn;
 import io.etcd.jetcd.data.ByteSequence;
@@ -49,11 +50,11 @@ public class KVTest {
   private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("etcd-kv", 3 ,false);
   private static KV kvClient;
 
-  private static final ByteSequence SAMPLE_KEY = ByteSequence.from("sample_key");
-  private static final ByteSequence SAMPLE_VALUE = ByteSequence.from("sample_value");
-  private static final ByteSequence SAMPLE_KEY_2 = ByteSequence.from("sample_key2");
-  private static final ByteSequence SAMPLE_VALUE_2 = ByteSequence.from("sample_value2");
-  private static final ByteSequence SAMPLE_KEY_3 = ByteSequence.from("sample_key3");
+  private static final ByteSequence SAMPLE_KEY = ByteSequence.from("sample_key", Charsets.UTF_8);
+  private static final ByteSequence SAMPLE_VALUE = ByteSequence.from("sample_value", Charsets.UTF_8);
+  private static final ByteSequence SAMPLE_KEY_2 = ByteSequence.from("sample_key2", Charsets.UTF_8);
+  private static final ByteSequence SAMPLE_VALUE_2 = ByteSequence.from("sample_value2", Charsets.UTF_8);
+  private static final ByteSequence SAMPLE_KEY_3 = ByteSequence.from("sample_key3", Charsets.UTF_8);
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -111,10 +112,10 @@ public class KVTest {
     GetOption option = GetOption.newBuilder()
         .withSortField(SortTarget.KEY)
         .withSortOrder(SortOrder.DESCEND)
-        .withPrefix(ByteSequence.from(prefix))
+        .withPrefix(ByteSequence.from(prefix, Charsets.UTF_8))
         .build();
     CompletableFuture<GetResponse> getFeature = kvClient
-        .get(ByteSequence.from(prefix), option);
+        .get(ByteSequence.from(prefix, Charsets.UTF_8), option);
     GetResponse response = getFeature.get();
 
     assertEquals(numPrefix, response.getKvs().size());
@@ -144,7 +145,7 @@ public class KVTest {
   @Test
   public void testGetAndDeleteWithPrefix() throws Exception {
     String prefix = TestUtil.randomString();
-    ByteSequence key = ByteSequence.from(prefix);
+    ByteSequence key = ByteSequence.from(prefix, Charsets.UTF_8);
     int numPrefixes = 10;
 
     putKeysWithPrefix(prefix, numPrefixes);
@@ -166,19 +167,19 @@ public class KVTest {
   private void putKeysWithPrefix(String prefix, int numPrefixes)
       throws ExecutionException, InterruptedException {
     for (int i = 0; i < numPrefixes; i++) {
-      ByteSequence key = ByteSequence.from(prefix + i);
-      ByteSequence value = ByteSequence.from("" + i);
+      ByteSequence key = ByteSequence.from(prefix + i, Charsets.UTF_8);
+      ByteSequence value = ByteSequence.from("" + i, Charsets.UTF_8);
       kvClient.put(key, value).get();
     }
   }
 
   @Test
   public void testTxn() throws Exception {
-    ByteSequence sampleKey = ByteSequence.from("txn_key");
-    ByteSequence sampleValue = ByteSequence.from("xyz");
-    ByteSequence cmpValue = ByteSequence.from("abc");
-    ByteSequence putValue = ByteSequence.from("XYZ");
-    ByteSequence putValueNew = ByteSequence.from("ABC");
+    ByteSequence sampleKey = ByteSequence.from("txn_key", Charsets.UTF_8);
+    ByteSequence sampleValue = ByteSequence.from("xyz", Charsets.UTF_8);
+    ByteSequence cmpValue = ByteSequence.from("abc", Charsets.UTF_8);
+    ByteSequence putValue = ByteSequence.from("XYZ", Charsets.UTF_8);
+    ByteSequence putValueNew = ByteSequence.from("ABC", Charsets.UTF_8);
     // put the original txn key value pair
     kvClient.put(sampleKey, sampleValue).get();
 
@@ -198,11 +199,11 @@ public class KVTest {
 
   @Test
   public void testNestedTxn() throws Exception {
-    ByteSequence foo = ByteSequence.from("txn_foo");
-    ByteSequence bar = ByteSequence.from("txn_bar");
-    ByteSequence barz = ByteSequence.from("txn_barz");
-    ByteSequence abc = ByteSequence.from("txn_abc");
-    ByteSequence oneTwoThree = ByteSequence.from("txn_123");
+    ByteSequence foo = ByteSequence.from("txn_foo", Charsets.UTF_8);
+    ByteSequence bar = ByteSequence.from("txn_bar", Charsets.UTF_8);
+    ByteSequence barz = ByteSequence.from("txn_barz", Charsets.UTF_8);
+    ByteSequence abc = ByteSequence.from("txn_abc", Charsets.UTF_8);
+    ByteSequence oneTwoThree = ByteSequence.from("txn_123", Charsets.UTF_8);
 
     Txn txn = kvClient.txn();
     Cmp cmp = new Cmp(foo, Cmp.Op.EQUAL, CmpTarget.version(0));

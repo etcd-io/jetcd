@@ -15,6 +15,7 @@
  */
 package io.etcd.jetcd.op;
 
+import static com.google.common.base.Charsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.etcd.jetcd.data.ByteSequence;
@@ -23,10 +24,10 @@ import org.junit.Test;
 
 public class TxnTest {
 
-  final Cmp CMP = new Cmp(ByteSequence.from("key"), Cmp.Op.GREATER,
-      CmpTarget.value(ByteSequence.from("value")));
+  final Cmp CMP = new Cmp(ByteSequence.from("key", UTF_8), Cmp.Op.GREATER,
+      CmpTarget.value(ByteSequence.from("value", UTF_8)));
   final Op OP = Op
-      .put(ByteSequence.from("key2"), ByteSequence.from("value2"), PutOption.DEFAULT);
+      .put(ByteSequence.from("key2", UTF_8), ByteSequence.from("value2", UTF_8), PutOption.DEFAULT);
 
   @Test
   public void testIfs() {
