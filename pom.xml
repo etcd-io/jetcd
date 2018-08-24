@@ -649,6 +649,7 @@
                         <exclude>etc/checkstyle-header-java.txt</exclude>
                         <exclude>src/test/resources/ssl/**</exclude>
                         <exclude>external/**</exclude>
+                        <exclude>target-ide/**</exclude>
                     </excludes>
                     <mapping>
                         <proto>DOUBLESLASH_STYLE</proto>
