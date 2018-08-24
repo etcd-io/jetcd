@@ -30,14 +30,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.logging.Logger;
 
 /**
  * a util class for jetcd.
  */
 final class Util {
-
-  private static final Logger logger = Logger.getLogger(Util.class.getName());
 
   private Util() {
   }
@@ -66,8 +63,6 @@ final class Util {
 
     return targetFuture;
   }
-
-
 
   /**
    * converts a ListenableFuture of Type S to a CompletableFuture of Type T with retry on

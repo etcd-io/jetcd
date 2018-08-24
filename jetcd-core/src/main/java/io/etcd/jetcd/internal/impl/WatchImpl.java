@@ -51,8 +51,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -60,7 +60,8 @@ import java.util.logging.Logger;
  */
 class WatchImpl implements Watch {
 
-  private static final Logger logger = Logger.getLogger(WatchImpl.class.getName());
+  private static final Logger LOG = LoggerFactory.getLogger(WatchImpl.class);
+
   // watchers stores a mapping between leaseID -> WatchIml.
   private final ConcurrentHashMap<Long, WatcherImpl> watchers = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<WatcherImpl>
@@ -131,7 +132,7 @@ class WatchImpl implements Watch {
       try {
         watcher.enqueue(wre);
       } catch (Exception we) {
-        logger.log(Level.WARNING, "failed to notify watcher", we);
+        LOG.warn("failed to notify watcher", we);
       }
     });
     this.pendingWatchers.clear();
@@ -139,7 +140,7 @@ class WatchImpl implements Watch {
       try {
         watcher.enqueue(wre);
       } catch (Exception we) {
-        logger.log(Level.WARNING, "failed to notify watcher", we);
+        LOG.warn("failed to notify watcher", we);
       }
     });
     this.watchers.clear();
@@ -257,8 +258,7 @@ class WatchImpl implements Watch {
     if (watcher == null) {
       // shouldn't happen
       // may happen due to duplicate watch create responses.
-      logger.log(Level.WARNING,
-          "Watch client receives watch create response but find no corresponding watcher");
+      LOG.warn("Watch client receives watch create response but find no corresponding watcher");
       return;
     }
 
@@ -293,7 +293,7 @@ class WatchImpl implements Watch {
 
   private void sendNextWatchCreateRequest() {
     this.nextResume().ifPresent(
-        (nextWatchRequest -> this.getGrpcWatchStreamObserver().onNext(nextWatchRequest)));
+        nextWatchRequest -> this.getGrpcWatchStreamObserver().onNext(nextWatchRequest));
   }
 
   private void processEvents(WatchResponse response) {
@@ -445,7 +445,7 @@ class WatchImpl implements Watch {
         this.eventsQueue.put(watchResponse);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        logger.log(Level.WARNING, "Interrupted", e);
+        LOG.warn("Interrupted", e);
       }
     }
 
