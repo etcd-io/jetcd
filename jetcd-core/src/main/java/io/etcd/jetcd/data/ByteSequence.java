@@ -17,7 +17,6 @@
 package io.etcd.jetcd.data;
 
 import com.google.protobuf.ByteString;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
 /**
@@ -59,10 +58,6 @@ public final class ByteSequence {
 
   public String toString(Charset charset) {
     return byteString.toString(charset);
-  }
-
-  public String toString(String charsetName) throws UnsupportedEncodingException {
-    return byteString.toString(charsetName);
   }
 
   public byte[] getBytes() {
