@@ -15,10 +15,10 @@
  */
 package io.etcd.jetcd.internal.impl;
 
+import static com.google.common.base.Charsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import com.google.common.base.Charsets;
 import io.etcd.jetcd.Auth;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
@@ -43,28 +43,28 @@ public class AuthClientTest {
 
   private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("auth-etcd", 1, false);
 
-  private final ByteSequence rootRolekeyRangeBegin = ByteSequence.from("root", Charsets.UTF_8);
-  private final ByteSequence rootkeyRangeEnd = ByteSequence.from("root1", Charsets.UTF_8);
+  private final ByteSequence rootRolekeyRangeBegin = ByteSequence.from("root", UTF_8);
+  private final ByteSequence rootkeyRangeEnd = ByteSequence.from("root1", UTF_8);
 
-  private final ByteSequence userRolekeyRangeBegin = ByteSequence.from("foo", Charsets.UTF_8);
-  private final ByteSequence userRolekeyRangeEnd = ByteSequence.from("foo1", Charsets.UTF_8);
+  private final ByteSequence userRolekeyRangeBegin = ByteSequence.from("foo", UTF_8);
+  private final ByteSequence userRolekeyRangeEnd = ByteSequence.from("foo1", UTF_8);
 
-  private final ByteSequence rootRoleKey = ByteSequence.from("root", Charsets.UTF_8);
-  private final ByteSequence rootRoleValue = ByteSequence.from("b", Charsets.UTF_8);
+  private final ByteSequence rootRoleKey = ByteSequence.from("root", UTF_8);
+  private final ByteSequence rootRoleValue = ByteSequence.from("b", UTF_8);
 
-  private final ByteSequence userRoleKey = ByteSequence.from("foo", Charsets.UTF_8);
-  private final ByteSequence userRoleValue = ByteSequence.from("bar", Charsets.UTF_8);
-
-
-  private final ByteSequence root = ByteSequence.from("root", Charsets.UTF_8);
-  private final ByteSequence rootPass = ByteSequence.from("123", Charsets.UTF_8);
-  private final ByteSequence rootRole = ByteSequence.from("root", Charsets.UTF_8);
+  private final ByteSequence userRoleKey = ByteSequence.from("foo", UTF_8);
+  private final ByteSequence userRoleValue = ByteSequence.from("bar", UTF_8);
 
 
-  private final ByteSequence user = ByteSequence.from("user", Charsets.UTF_8);
-  private final ByteSequence userPass = ByteSequence.from("userPass", Charsets.UTF_8);
-  private final ByteSequence userNewPass = ByteSequence.from("newUserPass", Charsets.UTF_8);
-  private final ByteSequence userRole = ByteSequence.from("userRole", Charsets.UTF_8);
+  private final ByteSequence root = ByteSequence.from("root", UTF_8);
+  private final ByteSequence rootPass = ByteSequence.from("123", UTF_8);
+  private final ByteSequence rootRole = ByteSequence.from("root", UTF_8);
+
+
+  private final ByteSequence user = ByteSequence.from("user", UTF_8);
+  private final ByteSequence userPass = ByteSequence.from("userPass", UTF_8);
+  private final ByteSequence userNewPass = ByteSequence.from("newUserPass", UTF_8);
+  private final ByteSequence userRole = ByteSequence.from("userRole", UTF_8);
 
   private Client userClient;
   private Client rootClient;
@@ -101,7 +101,7 @@ public class AuthClientTest {
   @Test(dependsOnMethods = "testRoleAdd", groups = "role", priority = 1)
   public void testRoleList() throws ExecutionException, InterruptedException {
     AuthRoleListResponse response = this.authDisabledAuthClient.roleList().get();
-    assertThat(response.getRoles().get(0)).isEqualTo(this.rootRole.toStringUtf8());
+    assertThat(response.getRoles().get(0)).isEqualTo(this.rootRole.toString(UTF_8));
   }
 
 
@@ -136,8 +136,8 @@ public class AuthClientTest {
   @Test(dependsOnMethods = "testUserAdd", groups = "user", priority = 1)
   public void testUserList() throws ExecutionException, InterruptedException {
     List<String> users = this.authDisabledAuthClient.userList().get().getUsers();
-    assertThat(users.get(0)).isEqualTo(this.root.toStringUtf8());
-    assertThat(users.get(1)).isEqualTo(this.user.toStringUtf8());
+    assertThat(users.get(0)).isEqualTo(this.root.toString(UTF_8));
+    assertThat(users.get(1)).isEqualTo(this.user.toString(UTF_8));
   }
 
   /**
@@ -154,11 +154,11 @@ public class AuthClientTest {
   @Test(dependsOnMethods = "testUserGrantRole", groups = "user", priority = 1)
   public void testUserGet() throws ExecutionException, InterruptedException {
     assertThat(this.authDisabledAuthClient.userGet(root).get().getRoles().get(0))
-        .isEqualTo(rootRole.toStringUtf8());
+        .isEqualTo(rootRole.toString(UTF_8));
     assertThat(this.authDisabledAuthClient.userGet(user).get().getRoles().get(0))
-        .isEqualTo(rootRole.toStringUtf8());
+        .isEqualTo(rootRole.toString(UTF_8));
     assertThat(this.authDisabledAuthClient.userGet(user).get().getRoles().get(1))
-        .isEqualTo(userRole.toStringUtf8());
+        .isEqualTo(userRole.toString(UTF_8));
   }
 
   /**

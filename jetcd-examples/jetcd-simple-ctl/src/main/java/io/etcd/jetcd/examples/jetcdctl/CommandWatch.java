@@ -16,6 +16,8 @@
 
 package io.etcd.jetcd.examples.jetcdctl;
 
+import static com.google.common.base.Charsets.UTF_8;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.google.common.base.Charsets;
@@ -52,8 +54,8 @@ class CommandWatch {
         WatchResponse response = watcher.listen();
         for (WatchEvent event : response.getEvents()) {
           LOGGER.info(event.getEventType().toString());
-          LOGGER.info(event.getKeyValue().getKey().toStringUtf8());
-          LOGGER.info(event.getKeyValue().getValue().toStringUtf8());
+          LOGGER.info(event.getKeyValue().getKey().toString(UTF_8));
+          LOGGER.info(event.getKeyValue().getValue().toString(UTF_8));
         }
       }
 

@@ -57,10 +57,6 @@ public final class ByteSequence {
     return hashVal;
   }
 
-  public String toStringUtf8() {
-    return byteString.toStringUtf8();
-  }
-
   public String toString(Charset charset) {
     return byteString.toString(charset);
   }
