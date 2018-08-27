@@ -16,9 +16,10 @@
 
 package io.etcd.jetcd.examples.jetcdctl;
 
+import static com.google.common.base.Charsets.UTF_8;
+
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.google.common.base.Charsets;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.data.ByteSequence;
 import io.etcd.jetcd.kv.GetResponse;
@@ -40,7 +41,7 @@ class CommandGet {
   // get executes the "get" command.
   void get(Client client) throws Exception {
     GetResponse getResponse = client.getKVClient().get(
-        ByteSequence.from(key, Charsets.UTF_8),
+        ByteSequence.from(key, UTF_8),
         GetOption.newBuilder().withRevision(rev).build()
     ).get();
     if (getResponse.getKvs().isEmpty()) {
@@ -48,6 +49,6 @@ class CommandGet {
       return;
     }
     LOGGER.info(key);
-    LOGGER.info(getResponse.getKvs().get(0).getValue().toStringUtf8());
+    LOGGER.info(getResponse.getKvs().get(0).getValue().toString(UTF_8));
   }
 }

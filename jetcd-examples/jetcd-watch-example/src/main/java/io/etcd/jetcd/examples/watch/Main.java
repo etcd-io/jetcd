@@ -16,9 +16,10 @@
 
 package io.etcd.jetcd.examples.watch;
 
+import static com.google.common.base.Charsets.UTF_8;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.google.common.base.Charsets;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.data.ByteSequence;
@@ -43,7 +44,7 @@ public class Main {
 
     try (Client client = Client.builder().endpoints(cmd.endpoints).build();
          Watch watch = client.getWatchClient();
-         Watch.Watcher watcher = watch.watch(ByteSequence.from(cmd.key, Charsets.UTF_8))) {
+         Watch.Watcher watcher = watch.watch(ByteSequence.from(cmd.key, UTF_8))) {
       for (int i = 0; i < cmd.maxEvents; i++) {
         LOGGER.info("Watching for key={}", cmd.key);
         WatchResponse response = watcher.listen();
@@ -52,10 +53,10 @@ public class Main {
           LOGGER.info("type={}, key={}, value={}",
               event.getEventType(),
               Optional.ofNullable(event.getKeyValue().getKey())
-                  .map(ByteSequence::toStringUtf8)
+                  .map(bs -> bs.toString(UTF_8))
                   .orElse(""),
               Optional.ofNullable(event.getKeyValue().getValue())
-                  .map(ByteSequence::toStringUtf8)
+                  .map(bs -> bs.toString(UTF_8))
                   .orElse("")
           );
         }

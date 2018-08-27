@@ -15,6 +15,7 @@
  */
 package io.etcd.jetcd.internal.impl;
 
+import static com.google.common.base.Charsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -87,7 +88,7 @@ public class KVTest {
     CompletableFuture<GetResponse> getFeature = kvClient.get(SAMPLE_KEY_2);
     GetResponse response = getFeature.get();
     assertEquals(1, response.getKvs().size());
-    assertEquals(SAMPLE_VALUE_2.toStringUtf8(), response.getKvs().get(0).getValue().toStringUtf8());
+    assertEquals(SAMPLE_VALUE_2.toString(UTF_8), response.getKvs().get(0).getValue().toString(UTF_8));
     assertTrue(!response.isMore());
   }
 
@@ -101,7 +102,7 @@ public class KVTest {
     CompletableFuture<GetResponse> getFeature = kvClient.get(SAMPLE_KEY_3, option);
     GetResponse response = getFeature.get();
     assertEquals(1, response.getKvs().size());
-    assertEquals(SAMPLE_VALUE.toStringUtf8(), response.getKvs().get(0).getValue().toStringUtf8());
+    assertEquals(SAMPLE_VALUE.toString(UTF_8), response.getKvs().get(0).getValue().toString(UTF_8));
   }
 
   @Test
@@ -121,8 +122,8 @@ public class KVTest {
 
     assertEquals(numPrefix, response.getKvs().size());
     for (int i = 0; i < numPrefix; i++) {
-      assertEquals(prefix + (numPrefix - i - 1), response.getKvs().get(i).getKey().toStringUtf8());
-      assertEquals(String.valueOf(numPrefix - i - 1), response.getKvs().get(i).getValue().toStringUtf8());
+      assertEquals(prefix + (numPrefix - i - 1), response.getKvs().get(i).getKey().toString(UTF_8));
+      assertEquals(String.valueOf(numPrefix - i - 1), response.getKvs().get(i).getValue().toString(UTF_8));
     }
   }
 
@@ -195,7 +196,7 @@ public class KVTest {
     // get the value
     GetResponse getResp = kvClient.get(sampleKey).get();
     assertEquals(1, getResp.getKvs().size());
-    assertEquals(putValue.toStringUtf8(), getResp.getKvs().get(0).getValue().toStringUtf8());
+    assertEquals(putValue.toString(UTF_8), getResp.getKvs().get(0).getValue().toString(UTF_8));
   }
 
   @Test
@@ -218,11 +219,11 @@ public class KVTest {
 
     GetResponse getResp = kvClient.get(foo).get();
     assertEquals(1, getResp.getKvs().size());
-    assertEquals(bar.toStringUtf8(), getResp.getKvs().get(0).getValue().toStringUtf8());
+    assertEquals(bar.toString(UTF_8), getResp.getKvs().get(0).getValue().toString(UTF_8));
 
     GetResponse getResp2 = kvClient.get(abc).get();
     assertEquals(1, getResp2.getKvs().size());
-    assertEquals(oneTwoThree.toStringUtf8(), getResp2.getKvs().get(0).getValue().toStringUtf8());
+    assertEquals(oneTwoThree.toString(UTF_8), getResp2.getKvs().get(0).getValue().toString(UTF_8));
   }
 
   @AfterClass
