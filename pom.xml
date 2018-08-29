@@ -101,7 +101,7 @@
         <maven-site-plugin.version>3.7.1</maven-site-plugin.version>
         <maven-surefire-plugin.version>2.22.0</maven-surefire-plugin.version>
         <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
-        <versions-maven-plugin.version>2.5</versions-maven-plugin.version>
+        <versions-maven-plugin.version>2.6</versions-maven-plugin.version>
 
         <!-- dependencies -->
         <grpc.version>1.14.0</grpc.version>
