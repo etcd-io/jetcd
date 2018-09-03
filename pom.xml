@@ -123,7 +123,7 @@
         <mockito.version>2.21.0</mockito.version>
         <assertj.version>3.11.1</assertj.version>
         <junit.version>4.12</junit.version>
-        <netty-tcnative.version>2.0.14.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.15.Final</netty-tcnative.version>
         <testcontainers.version>1.8.3</testcontainers.version>
         <commons-io.version>2.6</commons-io.version>
     </properties>
