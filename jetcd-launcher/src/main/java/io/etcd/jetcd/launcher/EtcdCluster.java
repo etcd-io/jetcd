@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package io.etcd.jetcd.internal.infrastructure;
+package io.etcd.jetcd.launcher;
 
-import io.etcd.jetcd.Client;
 import java.util.List;
 import javax.annotation.Nonnull;
 
 public interface EtcdCluster extends AutoCloseable {
+
   void start();
 
+  @Override
   void close();
-
-  @Nonnull
-  Client getClient();
 
   @Nonnull
   List<String> getClientEndpoints();
@@ -36,6 +34,7 @@ public interface EtcdCluster extends AutoCloseable {
 
   interface LifecycleListener {
     void started(EtcdContainer container);
+
     void stopped(EtcdContainer container);
   }
 }

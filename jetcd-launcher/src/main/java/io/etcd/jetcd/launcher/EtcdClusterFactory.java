@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package io.etcd.jetcd.internal.infrastructure;
+package io.etcd.jetcd.launcher;
 
 import static java.util.stream.Collectors.toList;
 
-import io.etcd.jetcd.Client;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +43,9 @@ public class EtcdClusterFactory {
     };
 
     final List<String> endpoints = IntStream.range(0, nodes).mapToObj(i -> "etcd" + i).collect(toList());
-    final List<EtcdContainer> containers = endpoints.stream().map(e -> new EtcdContainer(network, listener, ssl, clusterName, e, endpoints)).collect(toList());
+
+    final List<EtcdContainer> containers = endpoints.stream()
+                .map(e -> new EtcdContainer(network, listener, ssl, clusterName, e, endpoints)).collect(toList());
 
     return new EtcdCluster() {
       @Override
@@ -63,12 +64,6 @@ public class EtcdClusterFactory {
       @Override
       public void close() {
         containers.forEach(EtcdContainer::close);
-      }
-
-      @Nonnull
-      @Override
-      public Client getClient() {
-        return Client.builder().endpoints(getClientEndpoints()).build();
       }
 
       @Nonnull

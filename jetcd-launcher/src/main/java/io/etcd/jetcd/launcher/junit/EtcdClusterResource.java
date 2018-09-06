@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package io.etcd.jetcd.internal.infrastructure;
+package io.etcd.jetcd.launcher.junit;
 
+import io.etcd.jetcd.launcher.EtcdCluster;
+import io.etcd.jetcd.launcher.EtcdClusterFactory;
 import org.junit.rules.ExternalResource;
 
 public class EtcdClusterResource extends ExternalResource {

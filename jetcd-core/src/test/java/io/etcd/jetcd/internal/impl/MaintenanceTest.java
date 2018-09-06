@@ -20,8 +20,8 @@ import static org.assertj.core.api.Fail.fail;
 
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Maintenance;
-import io.etcd.jetcd.internal.infrastructure.EtcdCluster;
-import io.etcd.jetcd.internal.infrastructure.EtcdClusterFactory;
+import io.etcd.jetcd.launcher.EtcdCluster;
+import io.etcd.jetcd.launcher.EtcdClusterFactory;
 import io.etcd.jetcd.maintenance.SnapshotResponse;
 import io.etcd.jetcd.maintenance.StatusResponse;
 import io.grpc.stub.StreamObserver;

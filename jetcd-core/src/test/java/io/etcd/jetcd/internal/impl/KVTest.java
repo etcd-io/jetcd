@@ -20,14 +20,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.base.Charsets;
+import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.Txn;
 import io.etcd.jetcd.data.ByteSequence;
-import io.etcd.jetcd.internal.infrastructure.EtcdCluster;
-import io.etcd.jetcd.internal.infrastructure.EtcdClusterFactory;
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
+import io.etcd.jetcd.launcher.EtcdCluster;
+import io.etcd.jetcd.launcher.EtcdClusterFactory;
 import io.etcd.jetcd.op.Cmp;
 import io.etcd.jetcd.op.CmpTarget;
 import io.etcd.jetcd.op.Op;
@@ -62,7 +63,7 @@ public class KVTest {
   public static void setUp() throws Exception {
     CLUSTER.start();
 
-    kvClient = CLUSTER.getClient().getKVClient();
+    kvClient = Client.builder().endpoints(CLUSTER.getClientEndpoints()).build().getKVClient();
   }
 
   @Test
