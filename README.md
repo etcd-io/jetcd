@@ -32,7 +32,7 @@ Development snapshots are available in [Sonatypes's snapshot repository](https:/
 dependencies {
     compile "io.etcd:jetcd-core:$jetcd-version"
 }
-``` 
+```
 
 ### Usage
 
@@ -63,6 +63,18 @@ For full etcd v3 API, plesase refer to [API_Reference](https://github.com/etcd-i
 
 The [examples](https://github.com/etcd-io/jetcd/tree/master/jetcd-examples) are standalone projects that show usage of jetcd.
 
+## Launcher
+
+The `io.etcd:jetcd-launcher` offers a convenient utility to programmatically start & stop an isolated `etcd` server.  This can be very useful e.g. for integration testing, like so:
+
+```java
+@Rule public final EtcdClusterResource etcd = new EtcdClusterResource("test-etcd", 1);
+Client client = Client.builder().endpoints(etcd.cluster().getClientEndpoints()).build();
+```
+
+This launcher uses the Testcontainers framework.
+For more info and prerequisites visit [testcontainers.org](https://www.testcontainers.org).
+
 ## Versioning
 
 The project follows [Semantic Versioning](http://semver.org/).
@@ -71,9 +83,7 @@ The current major version is zero (0.y.z). Anything may change at any time. The 
 
 ## Running tests
 
-The project is to be tested against a three node `etcd` setup, which automatically launched via Testcontainers framework.
-For more info and prerequisites visit [official website](https://www.testcontainers.org/)
-It should work on either macOS or Linux.
+The project is tested against a three node `etcd` setup started with the Launcher (above) :
 
 ```sh
 $ mvn test
