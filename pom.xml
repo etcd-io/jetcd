@@ -129,6 +129,7 @@
     </properties>
 
     <modules>
+        <module>jetcd-launcher</module>
         <module>jetcd-common</module>
         <module>jetcd-resolver</module>
         <module>jetcd-resolver-dns-srv</module>
@@ -140,6 +141,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>jetcd-launcher</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>jetcd-common</artifactId>
@@ -275,7 +281,6 @@
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers</artifactId>
                 <version>${testcontainers.version}</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>

@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package io.etcd.jetcd.internal.infrastructure;
+package io.etcd.jetcd.launcher;
 
-import static io.etcd.jetcd.internal.impl.TestConstants.ETCD_CLIENT_PORT;
-import static io.etcd.jetcd.internal.impl.TestConstants.ETCD_DOCKER_IMAGE_NAME;
-import static io.etcd.jetcd.internal.impl.TestConstants.ETCD_PEER_PORT;
+import static io.etcd.jetcd.launcher.TestConstants.ETCD_PEER_PORT;
 
 import com.github.dockerjava.api.DockerClient;
 import java.util.ArrayList;
@@ -49,7 +47,8 @@ public class EtcdContainer implements AutoCloseable {
   private final GenericContainer<?> container;
   private final EtcdCluster.LifecycleListener listener;
 
-  public EtcdContainer(Network network, EtcdCluster.LifecycleListener listener, boolean ssl, String clusterName, String endpoint, List<String> endpoints) {
+  public EtcdContainer(Network network, EtcdCluster.LifecycleListener listener, boolean ssl, String clusterName,
+            String endpoint, List<String> endpoints) {
     this.endpoint = endpoint;
     this.ssl = ssl;
     this.listener = listener;
@@ -57,8 +56,8 @@ public class EtcdContainer implements AutoCloseable {
     final String name = endpoint;
     final List<String> command = new ArrayList<>();
 
-    this.container = new GenericContainer<>(ETCD_DOCKER_IMAGE_NAME);
-    this.container.withExposedPorts(ETCD_CLIENT_PORT, ETCD_PEER_PORT);
+    this.container = new GenericContainer<>(TestConstants.ETCD_DOCKER_IMAGE_NAME);
+    this.container.withExposedPorts(TestConstants.ETCD_CLIENT_PORT, ETCD_PEER_PORT);
     this.container.withNetwork(network);
     this.container.withNetworkAliases(name);
     this.container.waitingFor(waitStrategy());
@@ -68,22 +67,22 @@ public class EtcdContainer implements AutoCloseable {
     command.add("--name");
     command.add(name);
     command.add("--advertise-client-urls");
-    command.add((ssl ? "https" : "http") + "://0.0.0.0:" + ETCD_CLIENT_PORT);
+    command.add((ssl ? "https" : "http") + "://0.0.0.0:" + TestConstants.ETCD_CLIENT_PORT);
     command.add("--listen-client-urls");
-    command.add((ssl ? "https" : "http") + "://0.0.0.0:" + ETCD_CLIENT_PORT);
+    command.add((ssl ? "https" : "http") + "://0.0.0.0:" + TestConstants.ETCD_CLIENT_PORT);
 
     if (ssl) {
       this.container.withClasspathResourceMapping(
-        "ssl/cert/" + name + ".pem",
-        "/etc/ssl/etcd/server.pem",
-        BindMode.READ_ONLY,
-        SelinuxContext.SHARED);
+          "ssl/cert/" + name + ".pem",
+          "/etc/ssl/etcd/server.pem",
+          BindMode.READ_ONLY,
+          SelinuxContext.SHARED);
 
       this.container.withClasspathResourceMapping(
-        "ssl/cert/" + name + "-key.pem",
-        "/etc/ssl/etcd/server-key.pem",
-        BindMode.READ_ONLY,
-        SelinuxContext.SHARED);
+          "ssl/cert/" + name + "-key.pem",
+          "/etc/ssl/etcd/server-key.pem",
+          BindMode.READ_ONLY,
+          SelinuxContext.SHARED);
 
       command.add("--cert-file");
       command.add("/etc/ssl/etcd/server.pem");
@@ -126,14 +125,14 @@ public class EtcdContainer implements AutoCloseable {
 
   public String clientEndpoint() {
     final String host = container.getContainerIpAddress();
-    final int port = container.getMappedPort(ETCD_CLIENT_PORT);
+    final int port = container.getMappedPort(TestConstants.ETCD_CLIENT_PORT);
 
     return String.format("%s://%s:%d", ssl ? "https" : "http", host, port);
   }
 
   public String peerEndpoint() {
     final String host = container.getContainerIpAddress();
-    final int port = container.getMappedPort(ETCD_PEER_PORT);
+    final int port = container.getMappedPort(TestConstants.ETCD_PEER_PORT);
 
     return String.format("%s://%s:%d", ssl ? "https" : "http", host, port);
   }
@@ -153,10 +152,10 @@ public class EtcdContainer implements AutoCloseable {
 
         try {
           waitingConsumer.waitUntil(
-            f -> f.getUtf8String().contains("ready to serve client requests"),
-            startupTimeout.getSeconds(),
-            TimeUnit.SECONDS,
-            1
+              f -> f.getUtf8String().contains("ready to serve client requests"),
+              startupTimeout.getSeconds(),
+              TimeUnit.SECONDS,
+              1
           );
         } catch (TimeoutException e) {
           throw new ContainerLaunchException("Timed out");

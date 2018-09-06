@@ -15,7 +15,6 @@
  */
 package io.etcd.jetcd.internal.impl;
 
-
 import static com.google.common.base.Charsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,7 +23,7 @@ import io.etcd.jetcd.KV;
 import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.data.ByteSequence;
-import io.etcd.jetcd.internal.infrastructure.EtcdClusterResource;
+import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
 import io.etcd.jetcd.watch.WatchEvent;
 import io.etcd.jetcd.watch.WatchEvent.EventType;
 import io.etcd.jetcd.watch.WatchResponse;

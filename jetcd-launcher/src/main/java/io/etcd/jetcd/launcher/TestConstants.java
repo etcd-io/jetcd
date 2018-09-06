@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.etcd.jetcd.internal.impl;
+
+package io.etcd.jetcd.launcher;
 
 /**
  * Test constants, contain the cluster info.
+ * @deprecated This will be removed.
  */
+@Deprecated
 public class TestConstants {
   public static final String ETCD_DOCKER_IMAGE_NAME = "gcr.io/etcd-development/etcd:v3.3";
 
