@@ -22,7 +22,6 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.data.ByteSequence;
 import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
-import io.etcd.jetcd.launcher.TestConstants;
 import io.grpc.netty.GrpcSslContexts;
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,20 +31,24 @@ import org.junit.Rule;
 import org.junit.Test;
 
 public class SslTest {
+
   @Rule
   public final EtcdClusterResource clusterResource = new EtcdClusterResource("etcd-ssl", 1, true);
+
+  private static final String DEFAULT_SSL_AUTHORITY = "etcd0";
+  private static final String DEFAULT_SSL_CA_PATH = "/ssl/cert/ca.pem";
 
   @Test(timeout = 5000)
   public void testSimpleSllSetup() throws Exception {
     final ByteSequence key = ByteSequence.from(TestUtil.randomString(), Charsets.UTF_8);
     final ByteSequence val = ByteSequence.from(TestUtil.randomString(), Charsets.UTF_8);
     final String capath = System.getProperty("ssl.cert.capath");
-    final String authority = System.getProperty("ssl.cert.authority", TestConstants.DEFAULT_SSL_AUTHORITY);
+    final String authority = System.getProperty("ssl.cert.authority", DEFAULT_SSL_AUTHORITY);
     final String endpoints = System.getProperty("ssl.cert.endpoints", clusterResource.cluster().getClientEndpoints().get(0));
 
     try (InputStream is = Objects.nonNull(capath)
           ? new FileInputStream(new File(capath))
-          : getClass().getResourceAsStream(TestConstants.DEFAULT_SSL_CA_PATH)) {
+          : getClass().getResourceAsStream(DEFAULT_SSL_CA_PATH)) {
 
       Client client = Client.builder()
           .endpoints(endpoints)

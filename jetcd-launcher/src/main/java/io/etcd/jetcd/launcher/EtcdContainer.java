@@ -16,8 +16,6 @@
 
 package io.etcd.jetcd.launcher;
 
-import static io.etcd.jetcd.launcher.TestConstants.ETCD_PEER_PORT;
-
 import com.github.dockerjava.api.DockerClient;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +40,10 @@ import org.testcontainers.utility.LogUtils;
 public class EtcdContainer implements AutoCloseable {
   private static final Logger LOGGER = LoggerFactory.getLogger(EtcdCluster.class);
 
+  private static final String ETCD_DOCKER_IMAGE_NAME = "gcr.io/etcd-development/etcd:v3.3";
+  private static final int ETCD_CLIENT_PORT = 2379;
+  private static final int ETCD_PEER_PORT = 2380;
+
   private final String endpoint;
   private final boolean ssl;
   private final GenericContainer<?> container;
@@ -56,8 +58,8 @@ public class EtcdContainer implements AutoCloseable {
     final String name = endpoint;
     final List<String> command = new ArrayList<>();
 
-    this.container = new GenericContainer<>(TestConstants.ETCD_DOCKER_IMAGE_NAME);
-    this.container.withExposedPorts(TestConstants.ETCD_CLIENT_PORT, ETCD_PEER_PORT);
+    this.container = new GenericContainer<>(ETCD_DOCKER_IMAGE_NAME);
+    this.container.withExposedPorts(ETCD_CLIENT_PORT, ETCD_PEER_PORT);
     this.container.withNetwork(network);
     this.container.withNetworkAliases(name);
     this.container.waitingFor(waitStrategy());
@@ -67,9 +69,9 @@ public class EtcdContainer implements AutoCloseable {
     command.add("--name");
     command.add(name);
     command.add("--advertise-client-urls");
-    command.add((ssl ? "https" : "http") + "://0.0.0.0:" + TestConstants.ETCD_CLIENT_PORT);
+    command.add((ssl ? "https" : "http") + "://0.0.0.0:" + ETCD_CLIENT_PORT);
     command.add("--listen-client-urls");
-    command.add((ssl ? "https" : "http") + "://0.0.0.0:" + TestConstants.ETCD_CLIENT_PORT);
+    command.add((ssl ? "https" : "http") + "://0.0.0.0:" + ETCD_CLIENT_PORT);
 
     if (ssl) {
       this.container.withClasspathResourceMapping(
@@ -125,14 +127,14 @@ public class EtcdContainer implements AutoCloseable {
 
   public String clientEndpoint() {
     final String host = container.getContainerIpAddress();
-    final int port = container.getMappedPort(TestConstants.ETCD_CLIENT_PORT);
+    final int port = container.getMappedPort(ETCD_CLIENT_PORT);
 
     return String.format("%s://%s:%d", ssl ? "https" : "http", host, port);
   }
 
   public String peerEndpoint() {
     final String host = container.getContainerIpAddress();
-    final int port = container.getMappedPort(TestConstants.ETCD_PEER_PORT);
+    final int port = container.getMappedPort(ETCD_PEER_PORT);
 
     return String.format("%s://%s:%d", ssl ? "https" : "http", host, port);
   }
