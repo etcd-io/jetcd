@@ -23,13 +23,10 @@ import java.net.URL;
 import org.ops4j.pax.exam.ConfigurationManager;
 
 public class TestSupport {
-  private static final String FEATURES_XML = "features.xml";
+  private static final String FEATURES_XML = "/features.xml";
 
   protected File getFeaturesFile() {
-    String featuresXml = System.getProperty(FEATURES_XML);
-    assertThat(featuresXml).isNotNull();
-
-    File featuresFile = new File(featuresXml);
+    File featuresFile = getConfigFile(FEATURES_XML);
     assertThat(featuresFile).exists();
 
     return featuresFile;
