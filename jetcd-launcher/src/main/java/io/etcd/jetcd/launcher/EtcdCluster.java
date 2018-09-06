@@ -31,10 +31,4 @@ public interface EtcdCluster extends AutoCloseable {
 
   @Nonnull
   List<String> getPeerEndpoints();
-
-  interface LifecycleListener {
-    void started(EtcdContainer container);
-
-    void stopped(EtcdContainer container);
-  }
 }

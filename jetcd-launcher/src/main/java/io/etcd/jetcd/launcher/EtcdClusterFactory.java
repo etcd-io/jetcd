@@ -25,13 +25,12 @@ import java.util.stream.IntStream;
 import javax.annotation.Nonnull;
 import org.testcontainers.containers.Network;
 
-
 public class EtcdClusterFactory {
 
   public static EtcdCluster buildCluster(@Nonnull String clusterName, int nodes, boolean ssl) {
     final Network network = Network.builder().id(clusterName).build();
     final CountDownLatch latch = new CountDownLatch(nodes);
-    final EtcdCluster.LifecycleListener listener = new EtcdCluster.LifecycleListener() {
+    final EtcdContainer.LifecycleListener listener = new EtcdContainer.LifecycleListener() {
       @Override
       public void started(EtcdContainer container) {
         latch.countDown();

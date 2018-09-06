@@ -38,6 +38,13 @@ import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.utility.LogUtils;
 
 public class EtcdContainer implements AutoCloseable {
+
+  interface LifecycleListener {
+    void started(EtcdContainer container);
+
+    void stopped(EtcdContainer container);
+  }
+
   private static final Logger LOGGER = LoggerFactory.getLogger(EtcdCluster.class);
 
   private static final String ETCD_DOCKER_IMAGE_NAME = "gcr.io/etcd-development/etcd:v3.3";
@@ -47,9 +54,9 @@ public class EtcdContainer implements AutoCloseable {
   private final String endpoint;
   private final boolean ssl;
   private final GenericContainer<?> container;
-  private final EtcdCluster.LifecycleListener listener;
+  private final LifecycleListener listener;
 
-  public EtcdContainer(Network network, EtcdCluster.LifecycleListener listener, boolean ssl, String clusterName,
+  public EtcdContainer(Network network, LifecycleListener listener, boolean ssl, String clusterName,
             String endpoint, List<String> endpoints) {
     this.endpoint = endpoint;
     this.ssl = ssl;
