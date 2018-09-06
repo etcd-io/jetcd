@@ -28,7 +28,6 @@
     </parent>
 
     <artifactId>jetcd-launcher</artifactId>
-    <packaging>bundle</packaging>
 
     <properties>
         <checkstyle.config.location>${basedir}/../etc/checkstyle.xml</checkstyle.config.location>
@@ -63,17 +62,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>etcd :: ${project.artifactId}</Bundle-Name>
-                    </instructions>
-                </configuration>
             </plugin>
         </plugins>
     </build>

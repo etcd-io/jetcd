@@ -30,8 +30,11 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRunti
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
 
 import io.etcd.jetcd.Client;
+import io.etcd.jetcd.data.ByteSequence;
 import io.etcd.jetcd.resolver.URIResolver;
 import java.io.File;
+import java.nio.charset.Charset;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,7 +54,8 @@ import org.osgi.framework.Constants;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
-public class ClientServiceTest extends TestSupport {
+public class ClientServiceChecks extends TestSupport {
+
   @Inject
   protected BundleContext bundleContext;
 
@@ -109,7 +113,7 @@ public class ClientServiceTest extends TestSupport {
             .artifactId("assertj-core")
             .versionAsInProject()
             .start(),
-        editConfigurationFilePut("etc/io.etcd.jetcd.cfg", "endpoints", "localhost:2379"),
+        editConfigurationFilePut("etc/io.etcd.jetcd.cfg", "endpoints", PaxExamWrapperTest.getClientEndpoints()),
         editConfigurationFilePut("etc/io.etcd.jetcd.resolver.dnssrv.cfg", "foo", "bar"),
         keepRuntimeFolder(),
         cleanCaches(),
@@ -118,10 +122,23 @@ public class ClientServiceTest extends TestSupport {
   }
 
   @Test
-  public void testServiceAvailability() {
+  public void testServiceAvailability() throws Exception {
     assertThat(bundleContext).isNotNull();
     assertThat(client).isNotNull();
     assertThat(uriResolver).isNotNull();
-  }
 
+    try {
+        client.getKVClient().get(ByteSequence.from("non-existing", Charset.forName("UTF-8"))).get(13, TimeUnit.SECONDS);
+    } catch (Throwable t) {
+        // Pax Exam's WrappedTestContainerException unfortunately only includes the message, not the cause,
+        // so the real reason for failures needs to be searched for in target/exam/*/data/log/karaf.log ...
+        // Just for convenience in local debugging, and to eastily understand failures on CI, we dump
+        // the failure's stack trace to STDOUT; like that it's easy to see in maven-surefire-plugin,
+        // or when running in the IDE, like for any other non-OSGi test failure.
+        t.printStackTrace();
+        throw t;
+    }
+    // NB: Any NoClassDefFoundError/ClassNotFoundException in the log "because the bundle wiring for io.etcd.jetcd-all is no longer valid"
+    // can be safely ignored - that's just jetcd/gRPC/Netty not being cleany shut down and still running.. doesn't really matter much.
+  }
 }

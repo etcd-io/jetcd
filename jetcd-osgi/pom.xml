@@ -34,7 +34,5 @@
         <module>jetcd-osgi</module>
         <module>jetcd-karaf</module>
     </modules>
-
-
 </project>
 
