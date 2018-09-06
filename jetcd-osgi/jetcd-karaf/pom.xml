@@ -108,6 +108,11 @@
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>jetcd-launcher</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
