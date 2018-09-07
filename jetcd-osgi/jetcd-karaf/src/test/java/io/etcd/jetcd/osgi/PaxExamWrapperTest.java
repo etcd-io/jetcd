@@ -17,6 +17,7 @@
 package io.etcd.jetcd.osgi;
 
 import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+import java.net.URI;
 import java.util.Optional;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,8 +47,8 @@ public class PaxExamWrapperTest {
 
     @Test
     public void testClientServiceChecks() throws Throwable {
-        String endpoint = etcd.cluster().getClientEndpoints().get(0);
-        System.setProperty(ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME, endpoint);
+        URI endpoint = etcd.cluster().getClientEndpoints().get(0);
+        System.setProperty(ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME, endpoint.toString());
 
         Optional<Failure> failure = JUnitCore.runClasses(ClientServiceChecks.class).getFailures().stream().findFirst();
         if (failure.isPresent()) {

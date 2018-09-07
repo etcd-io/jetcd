@@ -37,6 +37,7 @@ import io.etcd.jetcd.maintenance.StatusResponse;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -117,7 +118,7 @@ class MaintenanceImpl implements Maintenance {
    */
   @Override
   public CompletableFuture<DefragmentResponse> defragmentMember(
-      String endpoint) {
+      URI endpoint) {
     return this.connectionManager.withNewChannel(
         endpoint,
         MaintenanceGrpc::newFutureStub,
@@ -134,7 +135,7 @@ class MaintenanceImpl implements Maintenance {
    */
   @Override
   public CompletableFuture<StatusResponse> statusMember(
-      String endpoint) {
+      URI endpoint) {
     return this.connectionManager.withNewChannel(
         endpoint,
         MaintenanceGrpc::newFutureStub,
@@ -160,7 +161,7 @@ class MaintenanceImpl implements Maintenance {
   }
 
   @Override
-  public CompletableFuture<HashKVResponse> hashKV(String endpoint, long rev) {
+  public CompletableFuture<HashKVResponse> hashKV(URI endpoint, long rev) {
     return this.connectionManager.withNewChannel(
         endpoint,
         MaintenanceGrpc::newFutureStub,

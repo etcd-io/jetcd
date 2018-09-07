@@ -30,6 +30,8 @@ import io.grpc.LoadBalancer;
 import io.grpc.Metadata;
 import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,13 +41,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * ClientBuilder knows how to create an Client instance.
  */
 public final class ClientBuilder implements Cloneable {
 
-  private Set<String> endpoints = new HashSet<>();
+  private final Set<URI> endpoints = new HashSet<>();
   private ByteSequence user;
   private ByteSequence password;
   private LoadBalancer.Factory loadBalancerFactory;
@@ -65,7 +68,7 @@ public final class ClientBuilder implements Cloneable {
    *
    * @return the list of endpoints configured for the builder
    */
-  public Collection<String> endpoints() {
+  public Collection<URI> endpoints() {
     return Collections.unmodifiableCollection(this.endpoints);
   }
 
@@ -77,14 +80,13 @@ public final class ClientBuilder implements Cloneable {
    * @throws NullPointerException if endpoints is null or one of endpoint is null
    * @throws IllegalArgumentException if some endpoint is invalid
    */
-  public ClientBuilder endpoints(Collection<String> endpoints) {
+  public ClientBuilder endpoints(Collection<URI> endpoints) {
     checkNotNull(endpoints, "endpoints can't be null");
 
-    for (String endpoint : endpoints) {
+    for (URI endpoint : endpoints) {
       checkNotNull(endpoint, "endpoint can't be null");
-      final String trimmedEndpoint = endpoint.trim();
-      checkArgument(trimmedEndpoint.length() > 0, "invalid endpoint: endpoint=" + endpoint);
-      this.endpoints.add(trimmedEndpoint);
+      checkArgument(endpoint.toString().trim().length() > 0, "invalid endpoint: endpoint=" + endpoint);
+      this.endpoints.add(endpoint);
     }
 
     return this;
@@ -98,10 +100,20 @@ public final class ClientBuilder implements Cloneable {
    * @throws NullPointerException if endpoints is null or one of endpoint is null
    * @throws IllegalArgumentException if some endpoint is invalid
    */
-  public ClientBuilder endpoints(String... endpoints) {
+  public ClientBuilder endpoints(URI... endpoints) {
     checkNotNull(endpoints, "endpoints can't be null");
 
     return endpoints(Arrays.asList(endpoints));
+  }
+
+  public ClientBuilder endpoints(String... endpoints) {
+    return endpoints(Arrays.asList(endpoints).stream().map(uri -> {
+      try {
+        return new URI(uri);
+      } catch (URISyntaxException e) {
+        throw new IllegalArgumentException("Invalid endpoint URI: " + uri, e);
+      }
+    }).collect(Collectors.toList()));
   }
 
   public ByteSequence user() {

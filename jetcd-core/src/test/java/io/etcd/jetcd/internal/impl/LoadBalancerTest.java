@@ -24,6 +24,7 @@ import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
 import io.grpc.PickFirstBalancerFactory;
 import io.grpc.util.RoundRobinLoadBalancerFactory;
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Rule;
@@ -41,7 +42,7 @@ public class LoadBalancerTest {
 
   @Test
   public void testPickFirstBalancerFactory() throws Exception {
-    final List<String> endpoints = clusterResource.cluster().getClientEndpoints();
+    final List<URI> endpoints = clusterResource.cluster().getClientEndpoints();
 
     try (Client client = Client.builder()
             .endpoints(endpoints)
@@ -52,7 +53,7 @@ public class LoadBalancerTest {
 
       long lastMemberId = 0;
 
-      for (int i = 0; i < endpoints.stream().collect(Collectors.joining(",")).length() * 2; i++) {
+      for (int i = 0; i < endpoints.stream().map(uri -> uri.toString()).collect(Collectors.joining(",")).length() * 2; i++) {
         Response response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
 
         if (i == 0) {
@@ -66,7 +67,7 @@ public class LoadBalancerTest {
 
   @Test
   public void testRoundRobinLoadBalancerFactory() throws Exception {
-    final List<String> endpoints = clusterResource.cluster().getClientEndpoints();
+    final List<URI> endpoints = clusterResource.cluster().getClientEndpoints();
 
     try (Client client = Client.builder()
             .endpoints(endpoints)
@@ -77,7 +78,7 @@ public class LoadBalancerTest {
       long lastMemberId = 0;
       long differences = 0;
 
-      for (int i = 0; i < endpoints.stream().collect(Collectors.joining(",")).length(); i++) {
+      for (int i = 0; i < endpoints.stream().map(uri -> uri.toString()).collect(Collectors.joining(",")).length(); i++) {
         PutResponse response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
 
         if (i > 0 && lastMemberId != response.getHeader().getMemberId()) {

@@ -26,6 +26,7 @@ import io.etcd.jetcd.maintenance.SnapshotResponse;
 import io.etcd.jetcd.maintenance.StatusResponse;
 import io.grpc.stub.StreamObserver;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -77,12 +78,12 @@ public interface Maintenance extends CloseableClient {
    * To defragment multiple members in the cluster, user need to call defragment
    * multiple times with different endpoints.
    */
-  CompletableFuture<DefragmentResponse> defragmentMember(String endpoint);
+  CompletableFuture<DefragmentResponse> defragmentMember(URI endpoint);
 
   /**
    * get the status of a member by its endpoint.
    */
-  CompletableFuture<StatusResponse> statusMember(String endpoint);
+  CompletableFuture<StatusResponse> statusMember(URI endpoint);
 
 
   /**
@@ -90,7 +91,7 @@ public interface Maintenance extends CloseableClient {
    * If revision is zero, the hash is computed on all keys. If the revision
    * is non-zero, the hash is computed on all keys at or below the given revision.
    */
-  CompletableFuture<HashKVResponse> hashKV(String endpoint, long rev);
+  CompletableFuture<HashKVResponse> hashKV(URI endpoint, long rev);
 
   /**
    * retrieves backend snapshot.

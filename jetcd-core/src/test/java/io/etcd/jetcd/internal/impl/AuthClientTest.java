@@ -30,6 +30,7 @@ import io.etcd.jetcd.data.ByteSequence;
 import io.etcd.jetcd.launcher.EtcdCluster;
 import io.etcd.jetcd.launcher.EtcdClusterFactory;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import org.testng.annotations.AfterTest;
@@ -72,7 +73,7 @@ public class AuthClientTest {
   private Auth authDisabledAuthClient;
   private KV authDisabledKVClient;
 
-  private List<String> endpoints;
+  private List<URI> endpoints;
 
   /**
    * Build etcd client to create role, permission

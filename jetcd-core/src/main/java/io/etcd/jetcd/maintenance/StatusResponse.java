@@ -18,9 +18,10 @@ package io.etcd.jetcd.maintenance;
 
 import io.etcd.jetcd.Maintenance;
 import io.etcd.jetcd.data.AbstractResponse;
+import java.net.URI;
 
 /**
- * StatusResponse returned by {@link Maintenance#statusMember(String)} contains
+ * StatusResponse returned by {@link Maintenance#statusMember(URI)} contains
  * a header, version, dbSize, current leader, raftIndex, and raftTerm.
  */
 public class StatusResponse extends AbstractResponse<io.etcd.jetcd.api.StatusResponse> {

@@ -21,10 +21,7 @@ import io.grpc.Attributes;
 import io.grpc.NameResolver;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public class SmartNameResolverFactory extends NameResolver.Factory {
@@ -59,16 +56,8 @@ public class SmartNameResolverFactory extends NameResolver.Factory {
   }
 
   public static NameResolver.Factory forEndpoints(
-      String authority, Collection<String> endpoints, URIResolverLoader loader) {
+      String authority, Collection<URI> endpoints, URIResolverLoader loader) {
 
-    List<URI> uris = endpoints.stream().map(endpoint -> {
-      try {
-        return new URI(endpoint);
-      } catch (URISyntaxException e) {
-        throw new IllegalArgumentException(e);
-      }
-    }).collect(Collectors.toList());
-
-    return new SmartNameResolverFactory(authority, uris, loader);
+    return new SmartNameResolverFactory(authority, endpoints, loader);
   }
 }

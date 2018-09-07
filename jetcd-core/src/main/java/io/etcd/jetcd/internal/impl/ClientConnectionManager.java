@@ -46,6 +46,7 @@ import io.grpc.Status;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
+import java.net.URI;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -154,7 +155,7 @@ final class ClientConnectionManager {
   }
 
   <T extends AbstractStub<T>, R> CompletableFuture<R> withNewChannel(
-      String endpoint,
+      URI endpoint,
       Function<ManagedChannel, T> stubCustomizer,
       Function<T, CompletableFuture<R>> stubConsumer) {
 

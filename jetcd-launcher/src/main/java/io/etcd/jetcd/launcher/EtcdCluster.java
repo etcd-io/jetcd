@@ -16,6 +16,7 @@
 
 package io.etcd.jetcd.launcher;
 
+import java.net.URI;
 import java.util.List;
 import javax.annotation.Nonnull;
 
@@ -27,8 +28,8 @@ public interface EtcdCluster extends AutoCloseable {
   void close();
 
   @Nonnull
-  List<String> getClientEndpoints();
+  List<URI> getClientEndpoints();
 
   @Nonnull
-  List<String> getPeerEndpoints();
+  List<URI> getPeerEndpoints();
 }

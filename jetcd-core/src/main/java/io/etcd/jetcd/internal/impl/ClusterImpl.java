@@ -26,8 +26,10 @@ import io.etcd.jetcd.cluster.MemberAddResponse;
 import io.etcd.jetcd.cluster.MemberListResponse;
 import io.etcd.jetcd.cluster.MemberRemoveResponse;
 import io.etcd.jetcd.cluster.MemberUpdateResponse;
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of cluster client.
@@ -60,9 +62,9 @@ class ClusterImpl implements Cluster {
    * @param peerAddrs the peer addresses of the new member
    */
   @Override
-  public CompletableFuture<MemberAddResponse> addMember(List<String> peerAddrs) {
+  public CompletableFuture<MemberAddResponse> addMember(List<URI> peerAddrs) {
     MemberAddRequest memberAddRequest = MemberAddRequest.newBuilder()
-        .addAllPeerURLs(peerAddrs)
+        .addAllPeerURLs(peerAddrs.stream().map(uri -> uri.toString()).collect(Collectors.toList()))
         .build();
     return Util.toCompletableFuture(
         this.stub.memberAdd(memberAddRequest),
@@ -96,9 +98,9 @@ class ClusterImpl implements Cluster {
    */
   @Override
   public CompletableFuture<MemberUpdateResponse> updateMember(
-      long memberID, List<String> peerAddrs) {
+      long memberID, List<URI> peerAddrs) {
     MemberUpdateRequest memberUpdateRequest = MemberUpdateRequest.newBuilder()
-        .addAllPeerURLs(peerAddrs)
+        .addAllPeerURLs(peerAddrs.stream().map(uri -> uri.toString()).collect(Collectors.toList()))
         .setID(memberID)
         .build();
     return Util.toCompletableFuture(

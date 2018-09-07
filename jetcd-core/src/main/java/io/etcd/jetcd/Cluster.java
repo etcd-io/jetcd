@@ -21,6 +21,7 @@ import io.etcd.jetcd.cluster.MemberListResponse;
 import io.etcd.jetcd.cluster.MemberRemoveResponse;
 import io.etcd.jetcd.cluster.MemberUpdateResponse;
 import io.etcd.jetcd.internal.impl.CloseableClient;
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -39,7 +40,7 @@ public interface Cluster extends CloseableClient {
    *
    * @param peerAddrs the peer addresses of the new member
    */
-  CompletableFuture<MemberAddResponse> addMember(List<String> peerAddrs);
+  CompletableFuture<MemberAddResponse> addMember(List<URI> peerAddrs);
 
   /**
    * removes an existing member from the cluster.
@@ -49,6 +50,6 @@ public interface Cluster extends CloseableClient {
   /**
    * update peer addresses of the member.
    */
-  CompletableFuture<MemberUpdateResponse> updateMember(long memberID, List<String> peerAddrs);
+  CompletableFuture<MemberUpdateResponse> updateMember(long memberID, List<URI> peerAddrs);
 
 }

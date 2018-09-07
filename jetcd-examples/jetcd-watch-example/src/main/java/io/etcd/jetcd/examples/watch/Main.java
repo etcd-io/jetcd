@@ -42,7 +42,7 @@ public class Main {
         .build()
         .parse(args);
 
-    try (Client client = Client.builder().endpoints(cmd.endpoints).build();
+    try (Client client = Client.builder().endpoints(cmd.endpoints.toArray(new String[0])).build();
          Watch watch = client.getWatchClient();
          Watch.Watcher watcher = watch.watch(ByteSequence.from(cmd.key, UTF_8))) {
       for (int i = 0; i < cmd.maxEvents; i++) {

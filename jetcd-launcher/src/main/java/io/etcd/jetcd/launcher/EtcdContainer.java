@@ -17,6 +17,8 @@
 package io.etcd.jetcd.launcher;
 
 import com.github.dockerjava.api.DockerClient;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -132,23 +134,29 @@ public class EtcdContainer implements AutoCloseable {
     }
   }
 
-  public String clientEndpoint() {
+  public URI clientEndpoint() {
     final String host = container.getContainerIpAddress();
     final int port = container.getMappedPort(ETCD_CLIENT_PORT);
-
-    return String.format("%s://%s:%d", ssl ? "https" : "http", host, port);
+    return newURI(host, port);
   }
 
-  public String peerEndpoint() {
+  public URI peerEndpoint() {
     final String host = container.getContainerIpAddress();
     final int port = container.getMappedPort(ETCD_PEER_PORT);
-
-    return String.format("%s://%s:%d", ssl ? "https" : "http", host, port);
+    return newURI(host, port);
   }
 
   // ****************
   // helpers
   // ****************
+
+  private URI newURI(final String host, final int port) {
+    try {
+      return new URI(ssl ? "https" : "http", null, host, port, null, null, null);
+    } catch (URISyntaxException e) {
+      throw new IllegalArgumentException("URISyntaxException should never happen here", e);
+    }
+  }
 
   private WaitStrategy waitStrategy() {
     return new AbstractWaitStrategy() {
