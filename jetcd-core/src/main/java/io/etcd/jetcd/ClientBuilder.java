@@ -31,7 +31,6 @@ import io.grpc.Metadata;
 import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -41,7 +40,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * ClientBuilder knows how to create an Client instance.
@@ -107,13 +105,7 @@ public final class ClientBuilder implements Cloneable {
   }
 
   public ClientBuilder endpoints(String... endpoints) {
-    return endpoints(Arrays.asList(endpoints).stream().map(uri -> {
-      try {
-        return new URI(uri);
-      } catch (URISyntaxException e) {
-        throw new IllegalArgumentException("Invalid endpoint URI: " + uri, e);
-      }
-    }).collect(Collectors.toList()));
+    return endpoints(Util.toURIs(Arrays.asList(endpoints)));
   }
 
   public ByteSequence user() {
