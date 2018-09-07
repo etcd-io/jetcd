@@ -27,6 +27,7 @@ import io.etcd.jetcd.maintenance.StatusResponse;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public class MaintenanceTest {
 
   private Client client;
   private Maintenance maintenance;
-  private List<String> endpoints;
+  private List<URI> endpoints;
 
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -159,9 +160,9 @@ public class MaintenanceTest {
 
   @Test
   public void testMoveLeader() throws ExecutionException, InterruptedException {
-    String leaderEndpoint = null;
+    URI leaderEndpoint = null;
     List<Long> followers = new ArrayList<>();
-    for(String ep : endpoints){
+    for(URI ep : endpoints){
       StatusResponse statusResponse = maintenance.statusMember(ep).get();
       long memberId = statusResponse.getHeader().getMemberId();
       if (memberId == statusResponse.getLeader()) {

@@ -22,7 +22,7 @@ import io.etcd.jetcd.cluster.MemberAddResponse;
 import io.etcd.jetcd.cluster.MemberListResponse;
 import io.etcd.jetcd.launcher.EtcdCluster;
 import io.etcd.jetcd.launcher.EtcdClusterFactory;
-import java.util.Arrays;
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -39,11 +39,11 @@ import org.testng.asserts.Assertion;
 public class ClusterClientTest {
   private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("cluster-client", 3 ,false);
 
-  private Assertion assertion = new Assertion();
+  private final Assertion assertion = new Assertion();
   private Member addedMember;
 
-  private List<String> endpoints;
-  private List<String> peerUrls;
+  private List<URI> endpoints;
+  private List<URI> peerUrls;
 
   /**
    * test list cluster function
@@ -101,8 +101,8 @@ public class ClusterClientTest {
 
       Cluster clusterClient = client.getClusterClient();
       MemberListResponse response = clusterClient.listMember().get();
-      String[] newPeerUrl = peerUrls.subList(0, 1).toArray(new String[]{});
-      clusterClient.updateMember(response.getMembers().get(0).getId(), Arrays.asList(newPeerUrl))
+      List<URI> newPeerUrl = peerUrls.subList(0, 1);
+      clusterClient.updateMember(response.getMembers().get(0).getId(), newPeerUrl)
           .get();
     } catch (Exception e) {
       System.out.println(e);

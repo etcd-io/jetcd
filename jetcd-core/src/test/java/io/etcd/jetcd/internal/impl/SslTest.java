@@ -26,6 +26,7 @@ import io.grpc.netty.GrpcSslContexts;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Objects;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,14 +45,14 @@ public class SslTest {
     final ByteSequence val = ByteSequence.from(TestUtil.randomString(), Charsets.UTF_8);
     final String capath = System.getProperty("ssl.cert.capath");
     final String authority = System.getProperty("ssl.cert.authority", DEFAULT_SSL_AUTHORITY);
-    final String endpoints = System.getProperty("ssl.cert.endpoints", clusterResource.cluster().getClientEndpoints().get(0));
+    final URI endpoint = new URI(System.getProperty("ssl.cert.endpoints", clusterResource.cluster().getClientEndpoints().get(0).toString()));
 
     try (InputStream is = Objects.nonNull(capath)
           ? new FileInputStream(new File(capath))
           : getClass().getResourceAsStream(DEFAULT_SSL_CA_PATH)) {
 
       Client client = Client.builder()
-          .endpoints(endpoints)
+          .endpoints(endpoint)
           .authority(authority)
           .sslContext(GrpcSslContexts.forClient()
               .trustManager(is)

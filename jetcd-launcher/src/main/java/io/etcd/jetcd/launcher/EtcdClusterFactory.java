@@ -18,6 +18,7 @@ package io.etcd.jetcd.launcher;
 
 import static java.util.stream.Collectors.toList;
 
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -67,13 +68,13 @@ public class EtcdClusterFactory {
 
       @Nonnull
       @Override
-      public List<String> getClientEndpoints() {
+      public List<URI> getClientEndpoints() {
         return containers.stream().map(EtcdContainer::clientEndpoint).collect(toList());
       }
 
       @Nonnull
       @Override
-      public List<String> getPeerEndpoints() {
+      public List<URI> getPeerEndpoints() {
         return containers.stream().map(EtcdContainer::peerEndpoint).collect(toList());
       }
     };

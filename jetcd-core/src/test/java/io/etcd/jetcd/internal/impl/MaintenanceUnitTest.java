@@ -33,6 +33,8 @@ import io.grpc.stub.StreamObserver;
 import io.grpc.util.MutableHandlerRegistry;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -60,7 +62,7 @@ public class MaintenanceUnitTest {
   private Maintenance maintenance;
 
   @Before
-  public void setUp() throws IOException {
+  public void setUp() throws IOException, URISyntaxException {
     observerQueue = new LinkedBlockingQueue<>();
     executor = Executors.newFixedThreadPool(2);
 
@@ -83,7 +85,7 @@ public class MaintenanceUnitTest {
         .build()
         .start();
 
-    client = Client.builder().endpoints("http://127.0.0.1:" + fakeServer.getPort()).build();
+    client = Client.builder().endpoints(new URI("http://127.0.0.1:" + fakeServer.getPort())).build();
     maintenance = client.getMaintenanceClient();
   }
 

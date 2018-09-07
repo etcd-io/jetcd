@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
 import io.grpc.netty.NettyChannelBuilder;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Random;
 import org.junit.Test;
 
@@ -27,22 +29,17 @@ public class ClientBuilderTest {
 
   @Test(expected = NullPointerException.class)
   public void testEndPoints_Null() {
-    Client.builder().endpoints((String)null);
+    Client.builder().endpoints((URI)null);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testEndPoints_Verify_Empty() {
-    Client.builder().endpoints("");
+  public void testEndPoints_Verify_Empty() throws URISyntaxException {
+    Client.builder().endpoints(new URI(""));
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testEndPoints_Verify_EmptyAfterTrim() {
-    Client.builder().endpoints(" ");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testEndPoints_Verify_SomeEmpty() {
-    Client.builder().endpoints("127.0.0.1:2379", " ");
+  public void testEndPoints_Verify_SomeEmpty() throws URISyntaxException {
+    Client.builder().endpoints(new URI("http://127.0.0.1:2379"), new URI(""));
   }
 
   @Test(expected = IllegalStateException.class)
@@ -51,9 +48,9 @@ public class ClientBuilderTest {
   }
 
   @Test
-  public void testMaxInboundMessageSize() {
+  public void testMaxInboundMessageSize() throws URISyntaxException {
     final int value = 1024 * 1 + new Random().nextInt(10);
-    final ClientBuilder builder =  Client.builder().endpoints("http://127.0.0.1:2379").maxInboundMessageSize(value);
+    final ClientBuilder builder =  Client.builder().endpoints(new URI("http://127.0.0.1:2379")).maxInboundMessageSize(value);
     final NettyChannelBuilder channelBuilder = (NettyChannelBuilder)new ClientConnectionManager(builder).defaultChannelBuilder();
 
     assertThat(channelBuilder).hasFieldOrPropertyWithValue("maxInboundMessageSize", value);
