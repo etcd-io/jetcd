@@ -68,39 +68,5 @@
                 </executions>
             </plugin>
         </plugins>
-
-        <!-- TODO remove this, replace by a working jetcd-launcher-maven-plugin/src/main/resources/META-INF/m2e/lifecycle-mapping-metadata.xml -->
-        <pluginManagement>
-          <plugins>
-            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-            <plugin>
-              <groupId>org.eclipse.m2e</groupId>
-              <artifactId>lifecycle-mapping</artifactId>
-              <version>1.0.0</version>
-              <configuration>
-                <lifecycleMappingMetadata>
-                  <pluginExecutions>
-                    <pluginExecution>
-                      <pluginExecutionFilter>
-                        <groupId>io.etcd</groupId>
-                        <artifactId>
-                          jetcd-launcher-maven-plugin
-                        </artifactId>
-                        <versionRange>[0.3.0-SNAPSHOT,)</versionRange>
-                        <goals>
-                          <goal>start</goal>
-                          <goal>stop</goal>
-                        </goals>
-                      </pluginExecutionFilter>
-                      <action>
-                        <ignore></ignore>
-                      </action>
-                    </pluginExecution>
-                  </pluginExecutions>
-                </lifecycleMappingMetadata>
-              </configuration>
-            </plugin>
-          </plugins>
-        </pluginManagement>
     </build>
 </project>
