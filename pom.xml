@@ -130,7 +130,9 @@
 
     <modules>
         <module>jetcd-launcher</module>
+        <module>jetcd-launcher-maven-plugin</module>
         <module>jetcd-common</module>
+        <module>jetcd-launcher-maven-plugin-test</module>
         <module>jetcd-resolver</module>
         <module>jetcd-resolver-dns-srv</module>
         <module>jetcd-core</module>

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright 2017 The jetcd authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.etcd</groupId>
+        <artifactId>jetcd-parent</artifactId>
+        <version>0.3.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>jetcd-launcher-maven-plugin-test</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>jetcd-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+           <groupId>org.slf4j</groupId>
+           <artifactId>slf4j-simple</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>jetcd-launcher-maven-plugin</artifactId>
+                <version>${project.version}</version>
+                <executions>
+                  <execution>
+                    <id>start-etcd</id>
+                    <phase>process-test-classes</phase>
+                    <goals>
+                      <goal>start</goal>
+                    </goals>
+                  </execution>
+                  <execution>
+                    <id>stop-etcd</id>
+                    <phase>prepare-package</phase>
+                    <goals>
+                      <goal>stop</goal>
+                    </goals>
+                  </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
+        <!-- TODO remove this, replace by a working jetcd-launcher-maven-plugin/src/main/resources/META-INF/m2e/lifecycle-mapping-metadata.xml -->
+        <pluginManagement>
+          <plugins>
+            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+            <plugin>
+              <groupId>org.eclipse.m2e</groupId>
+              <artifactId>lifecycle-mapping</artifactId>
+              <version>1.0.0</version>
+              <configuration>
+                <lifecycleMappingMetadata>
+                  <pluginExecutions>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>io.etcd</groupId>
+                        <artifactId>
+                          jetcd-launcher-maven-plugin
+                        </artifactId>
+                        <versionRange>[0.3.0-SNAPSHOT,)</versionRange>
+                        <goals>
+                          <goal>start</goal>
+                          <goal>stop</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore></ignore>
+                      </action>
+                    </pluginExecution>
+                  </pluginExecutions>
+                </lifecycleMappingMetadata>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+    </build>
+</project>

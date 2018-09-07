@@ -44,10 +44,6 @@
             <artifactId>testcontainers</artifactId>
         </dependency>
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <!-- EtcdClusterResource is in src/main, but everyone depending on this launcher should be
