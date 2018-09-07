@@ -16,11 +16,21 @@
     limitations under the License.
 
 -->
-<!--
 <lifecycleMappingMetadata>
-    <pluginExecutions>
-        <pluginExecution>
-        </pluginExecution>
-    </pluginExecutions>
+  <pluginExecutions>
+    <pluginExecution>
+      <pluginExecutionFilter>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>${project.artifactId}</artifactId>
+        <versionRange>${project.version}</versionRange>
+        <goals>
+          <goal>start</goal>
+          <goal>stop</goal>
+        </goals>
+      </pluginExecutionFilter>
+      <action>
+        <ignore />
+      </action>
+    </pluginExecution>
+  </pluginExecutions>
 </lifecycleMappingMetadata>
- -->
