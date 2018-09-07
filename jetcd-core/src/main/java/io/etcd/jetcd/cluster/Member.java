@@ -16,6 +16,8 @@
 
 package io.etcd.jetcd.cluster;
 
+import io.etcd.jetcd.Util;
+import java.net.URI;
 import java.util.List;
 
 public class Member {
@@ -45,8 +47,8 @@ public class Member {
   /**
    * returns the list of URLs the member exposes to the cluster for communication.
    */
-  public List<String> getPeerURLs() {
-    return member.getPeerURLsList();
+  public List<URI> getPeerURIs() {
+    return Util.toURIs(member.getPeerURLsList());
   }
 
   /**
@@ -54,7 +56,7 @@ public class Member {
    *
    * <p>f the member is not started, clientURLs will be empty.
    */
-  public List<String> getClientURLS() {
-    return member.getClientURLsList();
+  public List<URI> getClientURIs() {
+    return Util.toURIs(member.getClientURLsList());
   }
 }
