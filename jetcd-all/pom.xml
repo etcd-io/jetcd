@@ -109,6 +109,7 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>etcd :: ${project.artifactId}</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
+                        <!-- The (shaded) protobuf has to also be exported because it's part of the public API surface of ByteSequence's getByteString() method; see https://github.com/etcd-io/jetcd/issues/393 -->
                         <Export-Package>
                             io.etcd.jetcd.common.exception,
                             io.etcd.jetcd.resolver,
@@ -123,7 +124,8 @@
                             io.etcd.jetcd.maintenance,
                             io.etcd.jetcd.op,
                             io.etcd.jetcd.options,
-                            io.etcd.jetcd.watch
+                            io.etcd.jetcd.watch,
+                            io.etcd.jetcd.shaded.com.google.protobuf
                         </Export-Package>
                         <Import-Package>
                             org.slf4j;version="[1.7,2)",
