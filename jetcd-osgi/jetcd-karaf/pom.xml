@@ -51,7 +51,13 @@
         <!-- jetcd -->
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>jetcd-osgi</artifactId>
+            <artifactId>jetcd-all</artifactId>
+            <exclusions>
+              <exclusion>
+                <groupId>*</groupId>
+                <artifactId>*</artifactId>
+              </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- test -->
