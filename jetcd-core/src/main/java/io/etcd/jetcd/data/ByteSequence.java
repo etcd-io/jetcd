@@ -31,6 +31,12 @@ public final class ByteSequence {
     this.hashVal = byteString.hashCode();
   }
 
+  public boolean startsWith(ByteSequence prefix) {
+    ByteString baseByteString = this.getByteString();
+    ByteString prefixByteString = prefix.getByteString();
+    return baseByteString.startsWith(prefixByteString);
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (obj == this) {
@@ -47,13 +53,13 @@ public final class ByteSequence {
     }
   }
 
-  public ByteString getByteString() {
-    return this.byteString;
-  }
-
   @Override
   public int hashCode() {
     return hashVal;
+  }
+
+  public ByteString getByteString() {
+    return this.byteString;
   }
 
   public String toString(Charset charset) {
