@@ -124,7 +124,7 @@
         <assertj.version>3.11.1</assertj.version>
         <junit.version>4.12</junit.version>
         <netty-tcnative.version>2.0.16.Final</netty-tcnative.version>
-        <testcontainers.version>1.8.3</testcontainers.version>
+        <testcontainers.version>1.9.0</testcontainers.version>
         <commons-io.version>2.6</commons-io.version>
     </properties>
 
