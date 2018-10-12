@@ -107,7 +107,7 @@
         <grpc.version>1.15.1</grpc.version>
         <slf4j.version>1.7.25</slf4j.version>
         <plexus-compiler-javac-errorprone.version>2.8.5</plexus-compiler-javac-errorprone.version>
-        <error-prone-core.version>2.3.1</error-prone-core.version>
+        <error-prone-core.version>2.3.2</error-prone-core.version>
         <log4j2.version>2.11.1</log4j2.version>
         <jcommander.version>1.72</jcommander.version>
         <!-- should be in sync with protobuf grpc dependencies -->
@@ -389,7 +389,11 @@
                                  so let us enable them all as least as warnings, and then selectively turn some of them into ERROR, and suppress
                                  those we really don't want (or can't enforce for whatever reason) with OFF. -->
                             <arg>-XepExcludedPaths:.*/target/.*</arg>
-                            <arg>-XepAllDisabledChecksAsWarnings</arg>
+
+                            <!-- https://github.com/google/error-prone/issues/1138 -->
+                            <!-- <arg>-XepAllDisabledChecksAsWarnings</arg> -->
+                            -Xep:NullableDereference:OFF
+
                             <!-- StaticOrDefaultInterfaceMethod is an Android specific warning which we don't care about -->
                             <arg>-Xep:StaticOrDefaultInterfaceMethod:OFF</arg>
                             <!-- FieldMissingNullable is badly broken :( https://github.com/google/error-prone/issues/708 -->
