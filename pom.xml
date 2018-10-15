@@ -86,7 +86,7 @@
         <maven-shade-plugin.version>3.2.0</maven-shade-plugin.version>
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
         <depends-maven-plugin.version>1.4.0</depends-maven-plugin.version>
-        <os-maven-plugin.version>1.6.0</os-maven-plugin.version>
+        <os-maven-plugin.version>1.6.1</os-maven-plugin.version>
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.2</jacoco-maven-plugin.version>
         <com-puppycrawl-tools.version>8.13</com-puppycrawl-tools.version>
