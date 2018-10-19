@@ -15,7 +15,6 @@
  */
 package io.etcd.jetcd;
 
-import static com.google.common.base.Charsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.etcd.jetcd.Watch.Watcher;
@@ -23,9 +22,14 @@ import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
 import io.etcd.jetcd.watch.WatchEvent;
 import io.etcd.jetcd.watch.WatchEvent.EventType;
 import io.etcd.jetcd.watch.WatchResponse;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -55,36 +59,102 @@ public class WatchTest {
   }
 
   @AfterClass
-  public static void tearDown() throws IOException {
+  public static void tearDown() {
     client.close();
   }
 
   @Test
-  public void testWatchOnPut() throws ExecutionException, InterruptedException {
+  public void testWatchOnPut() throws Exception {
+    CountDownLatch latch = new CountDownLatch(1);
     ByteSequence key = TestUtil.randomByteSequence();
-    ByteSequence value = ByteSequence.from("value", UTF_8);
-    try (Watcher watcher = watchClient.watch(key)) {
-      kvClient.put(key, value).get();
+    ByteSequence value = TestUtil.randomByteSequence();
+    AtomicReference<WatchResponse> ref = new AtomicReference<>();
 
-      WatchResponse response = watcher.listen();
-      assertThat(response.getEvents().size()).isEqualTo(1);
-      assertThat(response.getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
-      assertThat(response.getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
+    Watcher watcher = null;
+
+    try {
+      watcher = watchClient.watch(key, response -> {
+        ref.set(response);
+        latch.countDown();
+      });
+
+      kvClient.put(key, value).get();
+      latch.await(4, TimeUnit.SECONDS);
+
+      assertThat(ref.get()).isNotNull();
+      assertThat(ref.get().getEvents().size()).isEqualTo(1);
+      assertThat(ref.get().getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
+      assertThat(ref.get().getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
+    } finally {
+      IOUtils.closeQuietly(watcher);
     }
   }
 
   @Test
-  public void testWatchOnDelete() throws ExecutionException, InterruptedException {
+  public void testMultipleWatch() throws Exception {
+    CountDownLatch latch = new CountDownLatch(2);
     ByteSequence key = TestUtil.randomByteSequence();
-    ByteSequence value = ByteSequence.from("value", UTF_8);
-    kvClient.put(key, value).get();
-    try (Watcher watcher = watchClient.watch(key)) {
+    ByteSequence value = TestUtil.randomByteSequence();
+    List<WatchResponse> res = Collections.synchronizedList(new ArrayList<>(2));
+
+    Watcher w1 = null;
+    Watcher w2 = null;
+
+    try {
+      w1 = watchClient.watch(key, response -> {
+        res.add(response);
+        latch.countDown();
+      });
+
+      w2 = watchClient.watch(key, response -> {
+        res.add(response);
+        latch.countDown();
+      });
+
+      kvClient.put(key, value).get();
+      latch.await(4, TimeUnit.SECONDS);
+
+      assertThat(res).hasSize(2);
+      assertThat(res.get(0)).isEqualToComparingFieldByFieldRecursively(res.get(1));
+      assertThat(res.get(0).getEvents().size()).isEqualTo(1);
+      assertThat(res.get(0).getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
+      assertThat(res.get(0).getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
+    } finally {
+      IOUtils.closeQuietly(w1);
+      IOUtils.closeQuietly(w2);
+    }
+  }
+
+  @Test
+  public void testWatchOnDelete() throws Exception {
+    CountDownLatch latch = new CountDownLatch(1);
+    ByteSequence key = TestUtil.randomByteSequence();
+    ByteSequence value = TestUtil.randomByteSequence();
+    AtomicReference<WatchResponse> ref = new AtomicReference<>();
+
+    Watcher watcher = null;
+
+    try {
+      Watch.Listener listener = Watch.listener( response -> {
+        ref.set(response);
+        latch.countDown();
+      });
+
+      kvClient.put(key, value).get();
+
+      watcher = watchClient.watch(key, listener);
       kvClient.delete(key).get();
-      WatchResponse response = watcher.listen();
-      assertThat(response.getEvents().size()).isEqualTo(1);
-      WatchEvent event = response.getEvents().get(0);
+
+      latch.await(4, TimeUnit.SECONDS);
+
+      assertThat(ref.get()).isNotNull();
+      assertThat(ref.get().getEvents().size()).isEqualTo(1);
+
+      WatchEvent event = ref.get().getEvents().get(0);
       assertThat(event.getEventType()).isEqualTo(EventType.DELETE);
       assertThat(Arrays.equals(event.getKeyValue().getKey().getBytes(), key.getBytes())).isTrue();
+    } finally {
+      IOUtils.closeQuietly(watcher);
     }
   }
 }

@@ -21,12 +21,12 @@ import static com.google.common.base.Charsets.UTF_8;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.google.common.base.Charsets;
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Watch.Watcher;
-import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.watch.WatchEvent;
-import io.etcd.jetcd.watch.WatchResponse;
+import java.util.concurrent.CountDownLatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,30 +35,42 @@ class CommandWatch {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CommandWatch.class);
 
-  @Parameter(arity = 1, description = "<key>")
+  @Parameter(
+    arity = 1,
+    description = "<key>")
   String key;
 
-  @Parameter(names = "--rev", description = "Revision to start watching")
+  @Parameter(
+    names = "--rev",
+    description = "Revision to start watching")
   Long rev = 0L;
+
+  @Parameter(
+    names = { "-m", "--max-events" },
+    description = "the maximum number of events to receive"
+  )
+  Integer maxEvents = Integer.MAX_VALUE;
 
   // watch executes the "watch" command.
   void watch(Client client) throws Exception {
+    CountDownLatch latch = new CountDownLatch(maxEvents);
     Watcher watcher = null;
     try {
       watcher = client.getWatchClient().watch(
           ByteSequence.from(key, Charsets.UTF_8),
-          WatchOption.newBuilder().withRevision(rev).build()
+          WatchOption.newBuilder().withRevision(rev).build(),
+          response -> {
+            for (WatchEvent event : response.getEvents()) {
+              LOGGER.info(event.getEventType().toString());
+              LOGGER.info(event.getKeyValue().getKey().toString(UTF_8));
+              LOGGER.info(event.getKeyValue().getValue().toString(UTF_8));
+            }
+
+            latch.countDown();
+          }
       );
 
-      while (true) {
-        WatchResponse response = watcher.listen();
-        for (WatchEvent event : response.getEvents()) {
-          LOGGER.info(event.getEventType().toString());
-          LOGGER.info(event.getKeyValue().getKey().toString(UTF_8));
-          LOGGER.info(event.getKeyValue().getValue().toString(UTF_8));
-        }
-      }
-
+      latch.await();
     } catch (Exception e) {
       if (watcher != null) {
         watcher.close();

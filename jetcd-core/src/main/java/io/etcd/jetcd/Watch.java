@@ -17,11 +17,10 @@
 package io.etcd.jetcd;
 
 import io.etcd.jetcd.common.exception.ClosedClientException;
-import io.etcd.jetcd.common.exception.ClosedWatcherException;
-import io.etcd.jetcd.common.exception.CompactedException;
-import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.watch.WatchResponse;
+import java.io.Closeable;
+import java.util.function.Consumer;
 
 /**
  * Interface of the watch client.
@@ -32,11 +31,10 @@ public interface Watch extends CloseableClient {
    * watch on a key with option.
    *
    * @param key key to be watched on.
-   * @param watchOption see {@link io.etcd.jetcd.options.WatchOption}.
+   * @param option see {@link io.etcd.jetcd.options.WatchOption}.
    * @throws ClosedClientException if watch client has been closed.
    */
-  Watcher watch(ByteSequence key, WatchOption watchOption);
-
+  Watcher watch(ByteSequence key, WatchOption option, Listener listener);
 
   /**
    * watch on a key.
@@ -44,30 +42,132 @@ public interface Watch extends CloseableClient {
    * @param key key to be watched on.
    * @throws ClosedClientException if watch client has been closed.
    **/
-  Watcher watch(ByteSequence key);
+  default Watcher watch(
+      ByteSequence key,
+      Listener listener) {
+    return watch(key, WatchOption.DEFAULT, listener);
+  }
+
+  default Watcher watch(
+      ByteSequence key,
+      Consumer<WatchResponse> onNext) {
+    return watch(key, WatchOption.DEFAULT, listener(onNext));
+  }
+
+  default Watcher watch(
+      ByteSequence key,
+      Consumer<WatchResponse> onNext,
+      Consumer<Throwable> onError) {
+    return watch(key, WatchOption.DEFAULT, listener(onNext, onError));
+  }
+
+  default Watcher watch(
+      ByteSequence key,
+      Consumer<WatchResponse> onNext,
+      Consumer<Throwable> onError,
+      Runnable onCompleted) {
+    return watch(key, WatchOption.DEFAULT, listener(onNext, onError, onCompleted));
+  }
+
+  default Watcher watch(
+      ByteSequence key,
+      Consumer<WatchResponse> onNext,
+      Runnable onCompleted) {
+    return watch(key, WatchOption.DEFAULT, listener(onNext, t -> { }, onCompleted));
+  }
+
+  default Watcher watch(
+      ByteSequence key,
+      WatchOption option,
+      Consumer<WatchResponse> onNext) {
+    return watch(key, option, listener(onNext));
+  }
+
+  default Watcher watch(
+      ByteSequence key,
+      WatchOption option,
+      Consumer<WatchResponse> onNext,
+      Consumer<Throwable> onError) {
+    return watch(key, option, listener(onNext, onError));
+  }
+
+  default Watcher watch(
+      ByteSequence key,
+      WatchOption option,
+      Consumer<WatchResponse> onNext,
+      Runnable onCompleted) {
+    return watch(key, option, listener(onNext, t -> { }, onCompleted));
+  }
+
+  default Watcher watch(
+      ByteSequence key,
+      WatchOption option,
+      Consumer<WatchResponse> onNext,
+      Consumer<Throwable> onError,
+      Runnable onCompleted) {
+    return watch(key, option, listener(onNext, onError, onCompleted));
+  }
+
+  static Listener listener(Consumer<WatchResponse> onNext) {
+    return listener(onNext, t -> { }, () -> { });
+  }
+
+  static Listener listener(Consumer<WatchResponse> onNext, Consumer<Throwable> onError) {
+    return listener(onNext, onError, () -> { });
+  }
+
+  static Listener listener(Consumer<WatchResponse> onNext, Runnable onCompleted) {
+    return listener(onNext, t -> { }, onCompleted);
+  }
+
+  static Listener listener(Consumer<WatchResponse> onNext, Consumer<Throwable> onError, Runnable onCompleted) {
+    return new Listener() {
+      @Override
+      public void onNext(WatchResponse response) {
+        onNext.accept(response);
+      }
+
+      @Override
+      public void onError(Throwable throwable) {
+        onError.accept(throwable);
+      }
+
+      @Override
+      public void onCompleted() {
+        onCompleted.run();
+      }
+    };
+  }
 
   /**
    * Interface of Watcher.
    */
-  interface Watcher extends AutoCloseable {
+  interface Listener {
+    /**
+     * Invoked on new events.
+     *
+     * @param response the response.
+     */
+    void onNext(WatchResponse response);
 
+    /**
+     * Invoked on errors.
+     *
+     * @param throwable the error.
+     */
+    void onError(Throwable throwable);
+
+    /**
+     * Invoked on completion.
+     */
+    void onCompleted();
+  }
+
+  interface Watcher extends Closeable {
     /**
      * closes this watcher and all its resources.
-     **/
+     */
     @Override
     void close();
-
-    /**
-     * Retrieves next watch key, waiting if there are none.
-     *
-     * @throws ClosedWatcherException if watcher has been closed.
-     * @throws ClosedClientException if watch client has been closed.
-     * @throws CompactedException when watch a key at a revision that has
-     *        been compacted.
-     * @throws EtcdException when listen encounters connection error,
-     *        etcd server error, or any internal client error.
-     * @throws InterruptedException when listen thread is interrupted.
-     */
-    WatchResponse listen() throws InterruptedException;
   }
 }

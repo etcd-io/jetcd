@@ -18,21 +18,16 @@ package io.etcd.jetcd;
 import static com.google.common.base.Charsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.api.Event;
 import io.etcd.jetcd.api.Event.EventType;
-import io.etcd.jetcd.api.KeyValue;
 import io.etcd.jetcd.api.WatchGrpc.WatchImplBase;
 import io.etcd.jetcd.api.WatchRequest;
 import io.etcd.jetcd.api.WatchResponse;
 import io.etcd.jetcd.common.exception.ClosedClientException;
-import io.etcd.jetcd.common.exception.ClosedWatcherException;
-import io.etcd.jetcd.common.exception.CompactedException;
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.watch.WatchEvent;
@@ -40,9 +35,14 @@ import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.grpc.testing.GrpcServerRule;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.After;
 import org.junit.Before;
@@ -51,7 +51,6 @@ import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
@@ -97,53 +96,59 @@ public class WatchUnitTest {
   @Test
   public void testCreateWatcherAfterClientClosed() {
     watchClient.close();
+
     assertThatExceptionOfType(ClosedClientException.class)
-        .isThrownBy(() -> watchClient.watch(KEY));
+        .isThrownBy(() -> watchClient.watch(KEY, Watch.listener(r -> {})));
   }
 
   @Test
   public void testWatchOnSendingWatchCreateRequest() {
-    try (Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT)) {
+    try (Watch.Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT, Watch.listener(r -> {}))) {
       // expects a WatchCreateRequest is created.
-      verify(this.requestStreamObserverMock, timeout(100).times(1))
-              .onNext(argThat(hasCreateKey(KEY)));
+      verify(this.requestStreamObserverMock, timeout(100).times(1)).onNext(argThat(hasCreateKey(KEY)));
     }
   }
 
   @Test
   public void testWatcherListenOnResponse() throws InterruptedException {
-    try (Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT)) {
-      WatchResponse createdResponse = WatchResponse.newBuilder()
-              .setCreated(true)
-              .setWatchId(0)
-              .build();
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<io.etcd.jetcd.watch.WatchResponse> ref = new AtomicReference<>();
+    Watch.Listener listener = Watch.listener(response -> {
+      ref.set(response);
+      latch.countDown();
+    });
+
+    try (Watch.Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT, listener)) {
+      WatchResponse createdResponse = createWatchResponse(0);
       responseObserverRef.get().onNext(createdResponse);
 
-      WatchResponse putResponse = WatchResponse
+      io.etcd.jetcd.api.WatchResponse putResponse = io.etcd.jetcd.api.WatchResponse
               .newBuilder()
               .setWatchId(0)
               .addEvents(Event.newBuilder().setType(EventType.PUT).build()).build();
       responseObserverRef.get().onNext(putResponse);
 
-      io.etcd.jetcd.watch.WatchResponse actualResponse = watcher.listen();
-      assertThat(actualResponse.getEvents().size()).isEqualTo(1);
-      assertThat(actualResponse.getEvents().get(0).getEventType())
-              .isEqualTo(WatchEvent.EventType.PUT);
+      latch.await(4, TimeUnit.SECONDS);
+
+      assertThat(ref.get()).isNotNull();
+      assertThat(ref.get().getEvents().size()).isEqualTo(1);
+      assertThat(ref.get().getEvents().get(0).getEventType()).isEqualTo(WatchEvent.EventType.PUT);
     }
   }
 
   @Test
-  public void testWatcherListenAfterWatcherClose() {
-    Watcher watcher = watchClient.watch(KEY);
-    watcher.close();
+  public void testWatcherListenOnWatcherClose() throws InterruptedException {
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicBoolean ref = new AtomicBoolean();
+    Watch.Listener listener = Watch.listener(
+      r -> {},
+      () -> {
+        ref.set(true);
+        latch.countDown();
+      }
+    );
 
-    assertThatExceptionOfType(ClosedWatcherException.class)
-        .isThrownBy(watcher::listen);
-  }
-
-  @Test
-  public void testWatcherListenOnWatcherClose() {
-    Watcher watcher = watchClient.watch(KEY);
+    Watch.Watcher watcher = watchClient.watch(KEY, listener);
 
     executor.execute(() -> {
       try {
@@ -154,13 +159,24 @@ public class WatchUnitTest {
       }
     });
 
-    assertThatExceptionOfType(ClosedWatcherException.class)
-        .isThrownBy(watcher::listen);
+    latch.await(4, TimeUnit.SECONDS);
+
+    assertThat(ref.get()).isTrue();
   }
 
   @Test
   public void testWatcherListenOnWatchClientClose() throws InterruptedException {
-    Watcher watcher = watchClient.watch(KEY);
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicBoolean ref = new AtomicBoolean();
+    Watch.Listener listener = Watch.listener(
+      r -> {},
+      () -> {
+        ref.set(true);
+        latch.countDown();
+      }
+    );
+
+    Watch.Watcher watcher = watchClient.watch(KEY, listener);
 
     executor.execute(() -> {
       try {
@@ -171,175 +187,178 @@ public class WatchUnitTest {
       }
     });
 
-    assertThatExceptionOfType(ClosedClientException.class)
-        .isThrownBy(watcher::listen);
+    latch.await(4, TimeUnit.SECONDS);
+
+    assertThat(ref.get()).isTrue();
   }
 
   @Test
   public void testWatcherListenForMultiplePuts() throws InterruptedException {
-    try (Watcher watcher = watchClient.watch(KEY)) {
-      WatchResponse createdResponse = WatchResponse.newBuilder()
-              .setCreated(true)
-              .setWatchId(0)
-              .build();
+    CountDownLatch latch = new CountDownLatch(2);
+    List<io.etcd.jetcd.watch.WatchResponse> responses = new ArrayList<>();
+
+    Watch.Listener listener = Watch.listener(
+      r -> {
+        responses.add(r);
+        latch.countDown();
+      }
+    );
+
+    try (Watch.Watcher watcher = watchClient.watch(KEY, listener)) {
+      WatchResponse createdResponse = createWatchResponse(0);
       responseObserverRef.get().onNext(createdResponse);
 
-      WatchResponse putResponse = WatchResponse
-              .newBuilder()
-              .setWatchId(0)
-              .addEvents(Event.newBuilder()
-                      .setType(EventType.PUT)
-                      .setKv(KeyValue.newBuilder()
-                              .setModRevision(2)
-                              .build())
-                      .build())
-              .build();
-      responseObserverRef.get().onNext(putResponse);
+      io.etcd.jetcd.api.WatchResponse resp1 = io.etcd.jetcd.api.WatchResponse.newBuilder()
+        .setWatchId(0)
+        .addEvents(Event.newBuilder()
+          .setType(EventType.PUT)
+          .setKv(io.etcd.jetcd.api.KeyValue.newBuilder()
+            .setModRevision(2)
+            .build())
+          .build())
+        .build();
 
-      io.etcd.jetcd.watch.WatchResponse actualResponse = watcher.listen();
-      assertEqualOnWatchResponses(actualResponse,
-              new io.etcd.jetcd.watch.WatchResponse(putResponse));
+      io.etcd.jetcd.api.WatchResponse resp2 = WatchResponse.newBuilder()
+        .setWatchId(0)
+        .addEvents(Event.newBuilder()
+          .setType(EventType.PUT)
+          .setKv(io.etcd.jetcd.api.KeyValue.newBuilder()
+            .setModRevision(3)
+            .build())
+          .build())
+        .build();
 
-      putResponse = WatchResponse
-              .newBuilder()
-              .setWatchId(0)
-              .addEvents(Event.newBuilder()
-                      .setType(EventType.PUT)
-                      .setKv(KeyValue.newBuilder()
-                              .setModRevision(3)
-                              .build())
-                      .build())
-              .build();
-      responseObserverRef.get().onNext(putResponse);
+      responseObserverRef.get().onNext(resp1);
+      responseObserverRef.get().onNext(resp2);
 
-      actualResponse = watcher.listen();
-      assertEqualOnWatchResponses(actualResponse,
-              new io.etcd.jetcd.watch.WatchResponse(putResponse));
+      latch.await(4, TimeUnit.SECONDS);
 
+      assertThat(responses).hasSize(2);
+      assertEqualOnWatchResponses(responses.get(0), new io.etcd.jetcd.watch.WatchResponse(resp1));
+      assertEqualOnWatchResponses(responses.get(1), new io.etcd.jetcd.watch.WatchResponse(resp2));
     }
   }
 
   @Test
   public void testWatcherDelete() throws InterruptedException {
-    try (Watcher watcher = watchClient.watch(KEY)) {
-      WatchResponse createdResponse = WatchResponse
-              .newBuilder()
-              .setCreated(true)
-              .setWatchId(0)
-              .build();
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<io.etcd.jetcd.watch.WatchResponse> ref = new AtomicReference<>();
+    Watch.Listener listener = Watch.listener(response -> {
+      ref.set(response);
+      latch.countDown();
+    });
+
+    try (Watch.Watcher watcher = watchClient.watch(KEY, listener)) {
+      WatchResponse createdResponse = createWatchResponse(0);
       responseObserverRef.get().onNext(createdResponse);
 
-      WatchResponse deleteResponse = WatchResponse
-              .newBuilder()
-              .setWatchId(0)
-              .addEvents(Event
-                      .newBuilder()
-                      .setType(EventType.DELETE)
-                      .build())
-              .build();
+      WatchResponse deleteResponse = WatchResponse.newBuilder()
+          .setWatchId(0)
+          .addEvents(Event.newBuilder().setType(EventType.DELETE).build())
+          .build();
       responseObserverRef.get().onNext(deleteResponse);
 
-      io.etcd.jetcd.watch.WatchResponse actualResponse = watcher.listen();
-      assertEqualOnWatchResponses(actualResponse,
-              new io.etcd.jetcd.watch.WatchResponse(deleteResponse));
+      latch.await(4, TimeUnit.SECONDS);
+
+      assertThat(ref.get()).isNotNull();
+      assertEqualOnWatchResponses(ref.get(), new io.etcd.jetcd.watch.WatchResponse(deleteResponse));
     }
   }
 
   @Test
-  public void testWatchOnUnrecoverableConnectionIssue() {
-    try (Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT)) {
-      WatchResponse createdResponse = WatchResponse.newBuilder().setCreated(true).setWatchId(0)
-              .build();
+  public void testWatchOnUnrecoverableConnectionIssue() throws InterruptedException {
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<Throwable> ref = new AtomicReference<>();
+    Watch.Listener listener = Watch.listener(
+      r -> {},
+      t -> {
+      ref.set(t);
+      latch.countDown();
+    });
+
+    try (Watch.Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT, listener)) {
+      WatchResponse createdResponse = createWatchResponse(0);
+
       responseObserverRef.get().onNext(createdResponse);
+      responseObserverRef.get().onError(Status.ABORTED.withDescription("connection error").asRuntimeException());
 
-      // connection error causes client to release all resources including all watchers.
-      responseObserverRef.get()
-              .onError(Status.ABORTED.withDescription("connection error").asRuntimeException());
-      // expects connection error to propagate to active listener.
+      latch.await(4, TimeUnit.SECONDS);
 
-      assertThatExceptionOfType(EtcdException.class)
-              .isThrownBy(watcher::listen)
-              .withMessageContaining("connection error");
+      assertThat(ref.get()).isNotNull();
+      assertThat(ref.get()).isInstanceOf(EtcdException.class).hasMessageContaining("connection error");
     }
   }
 
   @Test
-  public void testWatchOnRecoverableConnectionIssue() {
-    try (Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT)) {
-      WatchResponse createdResponse = WatchResponse.newBuilder()
-              .setCreated(true)
-              .setWatchId(0)
-              .build();
-      responseObserverRef.get().onNext(createdResponse);
-      // expects a WatchCreateRequest is created.
-      verify(this.requestStreamObserverMock, timeout(100).times(1))
-              .onNext(argThat(hasCreateKey(KEY)));
+  public void testWatcherCreateOnCompactionError() throws InterruptedException {
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<Throwable> ref = new AtomicReference<>();
+    Watch.Listener listener = Watch.listener(
+      r -> {},
+      t -> {
+        ref.set(t);
+        latch.countDown();
+      }
+    );
 
-      // connection error causes client to release all resources including all watchers.
-      responseObserverRef.get()
-              .onError(
-                      Status.UNAVAILABLE.withDescription("Temporary connection issue").asRuntimeException());
-      // resets mock call counter.
-      Mockito.<StreamObserver>reset(this.requestStreamObserverMock);
-
-      // expects re-send WatchCreateRequest.
-      verify(this.requestStreamObserverMock, timeout(1000).times(1))
-              .onNext(argThat(hasCreateKey(KEY)));
-    }
-  }
-
-  @Test
-  public void testWatcherCreateOnCompactionError() {
-    try (Watcher watcher = watchClient.watch(KEY)) {
-      WatchResponse createdResponse = WatchResponse
-              .newBuilder()
-              .setCreated(true)
-              .setWatchId(0)
-              .build();
+    try (Watch.Watcher watcher = watchClient.watch(KEY, listener)) {
+      WatchResponse createdResponse = createWatchResponse(0);
       responseObserverRef.get().onNext(createdResponse);
 
-      WatchResponse compactedResponse = WatchResponse
-              .newBuilder()
-              .setCompactRevision(2)
-              .build();
+      WatchResponse compactedResponse = WatchResponse.newBuilder().setCompactRevision(2).build();
       responseObserverRef.get().onNext(compactedResponse);
 
-      assertThatThrownBy(watcher::listen)
-              .isInstanceOf(CompactedException.class)
-              .hasFieldOrPropertyWithValue("compactedRevision", 2L);
+      latch.await(4, TimeUnit.SECONDS);
+
+      assertThat(ref.get()).isNotNull();
+      assertThat(ref.get()).isInstanceOf(EtcdException.class).hasFieldOrPropertyWithValue("compactedRevision", 2L);
     }
   }
 
   @Test
-  public void testWatcherCreateOnCancellationWithNoReason() {
-    try (Watcher watcher = watchClient.watch(KEY)) {
-      WatchResponse createdResponse = WatchResponse
-              .newBuilder()
-              .setCreated(true)
-              .setWatchId(0)
-              .build();
+  public void testWatcherCreateOnCancellationWithNoReason() throws InterruptedException {
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<Throwable> ref = new AtomicReference<>();
+    Watch.Listener listener = Watch.listener(
+      r -> {},
+      t -> {
+        ref.set(t);
+        latch.countDown();
+      }
+    );
+
+    try (Watch.Watcher watcher = watchClient.watch(KEY, listener)) {
+      WatchResponse createdResponse = createWatchResponse(0);
       responseObserverRef.get().onNext(createdResponse);
 
-      WatchResponse canceledReponse = WatchResponse
+      WatchResponse canceledResponse = WatchResponse
               .newBuilder()
               .setCanceled(true)
               .build();
-      responseObserverRef.get().onNext(canceledReponse);
+      responseObserverRef.get().onNext(canceledResponse);
 
-      assertThatExceptionOfType(EtcdException.class)
-              .isThrownBy(watcher::listen)
-              .withMessageContaining("etcdserver: mvcc: required revision is a future revision");
+      latch.await(4, TimeUnit.SECONDS);
+
+      assertThat(ref.get()).isNotNull();
+      assertThat(ref.get()).isInstanceOf(EtcdException.class)
+        .hasMessageContaining("etcdserver: mvcc: required revision is a future revision");
     }
   }
 
   @Test
-  public void testWatcherCreateOnCancellationWithReason() {
-    try (Watcher watcher = watchClient.watch(KEY)) {
-      WatchResponse createdResponse = WatchResponse
-              .newBuilder()
-              .setCreated(true)
-              .setWatchId(0)
-              .build();
+  public void testWatcherCreateOnCancellationWithReason() throws InterruptedException {
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<Throwable> ref = new AtomicReference<>();
+    Watch.Listener listener = Watch.listener(
+      r -> {},
+      t -> {
+        ref.set(t);
+        latch.countDown();
+      }
+    );
+
+    try (Watch.Watcher watcher = watchClient.watch(KEY, listener)) {
+      WatchResponse createdResponse = createWatchResponse(0);
       responseObserverRef.get().onNext(createdResponse);
 
       WatchResponse canceledResponse = WatchResponse
@@ -349,25 +368,35 @@ public class WatchUnitTest {
               .build();
       responseObserverRef.get().onNext(canceledResponse);
 
-      assertThatExceptionOfType(EtcdException.class)
-              .isThrownBy(watcher::listen)
-              .withMessageContaining(canceledResponse.getCancelReason());
+      latch.await(4, TimeUnit.SECONDS);
+
+      assertThat(ref.get()).isNotNull();
+      assertThat(ref.get()).isInstanceOf(EtcdException.class)
+        .hasMessageContaining(canceledResponse.getCancelReason());
     }
   }
 
   @Test
-  public void testWatcherCreateOnInvalidWatchID() {
-    try (Watcher watcher = watchClient.watch(KEY)) {
-      WatchResponse createdResponse = WatchResponse
-              .newBuilder()
-              .setCreated(true)
-              .setWatchId(-1)
-              .build();
+  public void testWatcherCreateOnInvalidWatchID() throws InterruptedException {
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<Throwable> ref = new AtomicReference<>();
+    Watch.Listener listener = Watch.listener(
+      r -> {},
+      t -> {
+        ref.set(t);
+        latch.countDown();
+      }
+    );
+
+    try (Watch.Watcher watcher = watchClient.watch(KEY, listener)) {
+      WatchResponse createdResponse = createWatchResponse(-1);
       responseObserverRef.get().onNext(createdResponse);
 
-      assertThatExceptionOfType(EtcdException.class)
-              .isThrownBy(watcher::listen)
-              .withMessageContaining("etcd server failed to create watch id");
+      latch.await(4, TimeUnit.SECONDS);
+
+      assertThat(ref.get()).isNotNull();
+      assertThat(ref.get()).isInstanceOf(EtcdException.class)
+        .hasMessageContaining("etcd server failed to create watch id");
     }
   }
 
@@ -401,8 +430,7 @@ public class WatchUnitTest {
     }
   }
 
-  private static void assertEqualOnKeyValues(io.etcd.jetcd.KeyValue act,
-                                             io.etcd.jetcd.KeyValue exp) {
+  private static void assertEqualOnKeyValues(io.etcd.jetcd.KeyValue act, io.etcd.jetcd.KeyValue exp) {
     assertThat(act.getModRevision())
         .isEqualTo(exp.getModRevision());
     assertThat(act.getCreateRevision())
@@ -413,5 +441,17 @@ public class WatchUnitTest {
         .isEqualTo(exp.getValue().getBytes());
     assertThat(act.getVersion())
         .isEqualTo(exp.getVersion());
+  }
+
+  private static WatchResponse createWatchResponse(int id, Event... events) {
+    WatchResponse.Builder builder = WatchResponse.newBuilder()
+      .setCreated(true)
+      .setWatchId(id);
+
+    for (Event event: events) {
+      builder.addEvents(event);
+    }
+
+    return builder.build();
   }
 }

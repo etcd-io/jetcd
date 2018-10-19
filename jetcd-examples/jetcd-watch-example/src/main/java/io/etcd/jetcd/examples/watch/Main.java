@@ -20,14 +20,17 @@ import static com.google.common.base.Charsets.UTF_8;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import io.etcd.jetcd.Client;
-import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.Client;
+import io.etcd.jetcd.Util;
+import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.watch.WatchEvent;
-import io.etcd.jetcd.watch.WatchResponse;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,25 +45,33 @@ public class Main {
         .build()
         .parse(args);
 
-    try (Client client = Client.builder().endpoints(cmd.endpoints.toArray(new String[0])).build();
-         Watch watch = client.getWatchClient();
-         Watch.Watcher watcher = watch.watch(ByteSequence.from(cmd.key, UTF_8))) {
-      for (int i = 0; i < cmd.maxEvents; i++) {
-        LOGGER.info("Watching for key={}", cmd.key);
-        WatchResponse response = watcher.listen();
+    CountDownLatch latch = new CountDownLatch(cmd.maxEvents);
+    ByteSequence key = ByteSequence.from(cmd.key, UTF_8);
+    Collection<URI> endpoints = Util.toURIs(cmd.endpoints);
 
-        for (WatchEvent event : response.getEvents()) {
-          LOGGER.info("type={}, key={}, value={}",
-              event.getEventType(),
-              Optional.ofNullable(event.getKeyValue().getKey())
-                  .map(bs -> bs.toString(UTF_8))
-                  .orElse(""),
-              Optional.ofNullable(event.getKeyValue().getValue())
-                  .map(bs -> bs.toString(UTF_8))
-                  .orElse("")
-          );
-        }
+    Watch.Listener listener = Watch.listener(response -> {
+      LOGGER.info("Watching for key={}", cmd.key);
+
+      for (WatchEvent event : response.getEvents()) {
+        LOGGER.info("type={}, key={}, value={}",
+          event.getEventType(),
+          Optional.ofNullable(event.getKeyValue().getKey())
+            .map(bs -> bs.toString(UTF_8))
+            .orElse(""),
+          Optional.ofNullable(event.getKeyValue().getValue())
+            .map(bs -> bs.toString(UTF_8))
+            .orElse("")
+        );
       }
+
+      latch.countDown();
+    });
+
+    try (Client client = Client.builder().endpoints(endpoints).build();
+         Watch watch = client.getWatchClient();
+         Watch.Watcher watcher = watch.watch(key, listener)) {
+
+      latch.await();
     } catch (Exception e) {
       LOGGER.error("Watching Error {}", e);
       System.exit(1);
