@@ -20,8 +20,6 @@ import io.etcd.jetcd.common.exception.ClosedClientException;
 import io.etcd.jetcd.common.exception.ClosedWatcherException;
 import io.etcd.jetcd.common.exception.CompactedException;
 import io.etcd.jetcd.common.exception.EtcdException;
-import io.etcd.jetcd.data.ByteSequence;
-import io.etcd.jetcd.internal.impl.CloseableClient;
 import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.watch.WatchResponse;
 

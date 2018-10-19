@@ -16,9 +16,9 @@
 
 package io.etcd.jetcd.watch;
 
+import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.api.Event;
-import io.etcd.jetcd.data.AbstractResponse;
-import io.etcd.jetcd.data.KeyValue;
 import java.util.List;
 import java.util.stream.Collectors;
 

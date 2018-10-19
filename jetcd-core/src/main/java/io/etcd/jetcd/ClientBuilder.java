@@ -22,8 +22,6 @@ import static com.google.common.base.Preconditions.checkState;
 
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
-import io.etcd.jetcd.data.ByteSequence;
-import io.etcd.jetcd.internal.impl.ClientImpl;
 import io.etcd.jetcd.resolver.URIResolverLoader;
 import io.grpc.ClientInterceptor;
 import io.grpc.LoadBalancer;

@@ -29,10 +29,9 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.karafDist
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
 
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
-import io.etcd.jetcd.data.ByteSequence;
 import io.etcd.jetcd.resolver.URIResolver;
-import io.etcd.jetcd.shaded.com.google.protobuf.ByteString;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
@@ -133,11 +132,6 @@ public class ClientServiceChecks extends TestSupport {
     try {
         // It's important that we actually use jetcd, not just load it, so:
         client.getKVClient().get(ByteSequence.from("non-existing", UTF8)).get(13, TimeUnit.SECONDS);
-
-        // see https://github.com/etcd-io/jetcd/issues/393
-        ByteString protobufByteString = ByteSequence.from("...", UTF8).getByteString();
-        assertThat(protobufByteString.size()).isEqualTo(3);
-
     } catch (Throwable t) {
         // Pax Exam's WrappedTestContainerException unfortunately only includes the message, not the cause,
         // so the real reason for failures needs to be searched for in target/exam/*/data/log/karaf.log ...

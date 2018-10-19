@@ -16,8 +16,8 @@
 
 package io.etcd.jetcd.kv;
 
-import io.etcd.jetcd.data.AbstractResponse;
-import io.etcd.jetcd.data.KeyValue;
+import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.KeyValue;
 
 public class PutResponse extends AbstractResponse<io.etcd.jetcd.api.PutResponse> {
 

@@ -16,8 +16,8 @@
 
 package io.etcd.jetcd.options;
 
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.api.RangeRequest;
-import io.etcd.jetcd.data.ByteSequence;
 import io.etcd.jetcd.options.GetOption.SortOrder;
 import io.etcd.jetcd.options.GetOption.SortTarget;
 import java.util.Arrays;

@@ -16,7 +16,7 @@
 
 package io.etcd.jetcd.watch;
 
-import io.etcd.jetcd.data.KeyValue;
+import io.etcd.jetcd.KeyValue;
 
 /**
  * Watch event, return by watch, contain put, delete event.

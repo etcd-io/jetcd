@@ -124,8 +124,7 @@
                             io.etcd.jetcd.maintenance,
                             io.etcd.jetcd.op,
                             io.etcd.jetcd.options,
-                            io.etcd.jetcd.watch,
-                            io.etcd.jetcd.shaded.com.google.protobuf
+                            io.etcd.jetcd.watch
                         </Export-Package>
                         <Import-Package>
                             org.slf4j;version="[1.7,2)",

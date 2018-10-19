@@ -16,7 +16,7 @@
 
 package io.etcd.jetcd.lock;
 
-import io.etcd.jetcd.data.AbstractResponse;
+import io.etcd.jetcd.AbstractResponse;
 
 public class UnlockResponse extends AbstractResponse<io.etcd.jetcd.api.lock.UnlockResponse> {
 

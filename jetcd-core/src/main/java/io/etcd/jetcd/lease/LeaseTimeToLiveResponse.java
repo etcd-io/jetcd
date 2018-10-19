@@ -16,8 +16,8 @@
 
 package io.etcd.jetcd.lease;
 
-import io.etcd.jetcd.data.AbstractResponse;
-import io.etcd.jetcd.data.ByteSequence;
+import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.ByteSequence;
 import java.util.List;
 import java.util.stream.Collectors;
 

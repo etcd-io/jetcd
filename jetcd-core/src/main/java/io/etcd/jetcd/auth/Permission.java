@@ -16,7 +16,7 @@
 
 package io.etcd.jetcd.auth;
 
-import io.etcd.jetcd.data.ByteSequence;
+import io.etcd.jetcd.ByteSequence;
 
 /**
  * represents a permission over a range of keys.

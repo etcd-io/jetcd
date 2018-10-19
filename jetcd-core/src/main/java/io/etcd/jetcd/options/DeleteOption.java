@@ -18,8 +18,8 @@ package io.etcd.jetcd.options;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KV;
-import io.etcd.jetcd.data.ByteSequence;
 import java.util.Optional;
 
 

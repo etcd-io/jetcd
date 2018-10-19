@@ -20,7 +20,6 @@ import io.etcd.jetcd.cluster.MemberAddResponse;
 import io.etcd.jetcd.cluster.MemberListResponse;
 import io.etcd.jetcd.cluster.MemberRemoveResponse;
 import io.etcd.jetcd.cluster.MemberUpdateResponse;
-import io.etcd.jetcd.internal.impl.CloseableClient;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

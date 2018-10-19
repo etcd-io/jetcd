@@ -16,10 +16,10 @@
 
 package io.etcd.jetcd.auth;
 
+import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.api.Auth;
 import io.etcd.jetcd.auth.Permission.Type;
-import io.etcd.jetcd.data.AbstractResponse;
-import io.etcd.jetcd.data.ByteSequence;
 import java.util.List;
 import java.util.stream.Collectors;
 

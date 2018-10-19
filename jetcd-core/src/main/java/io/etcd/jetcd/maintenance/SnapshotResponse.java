@@ -17,7 +17,7 @@
 package io.etcd.jetcd.maintenance;
 
 import com.google.protobuf.ByteString;
-import io.etcd.jetcd.data.AbstractResponse;
+import io.etcd.jetcd.AbstractResponse;
 
 public class SnapshotResponse extends AbstractResponse<io.etcd.jetcd.api.SnapshotResponse> {
 

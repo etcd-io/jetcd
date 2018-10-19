@@ -16,8 +16,6 @@
 
 package io.etcd.jetcd;
 
-import io.etcd.jetcd.data.ByteSequence;
-
 /**
  * Constants of Etcd.
  */
