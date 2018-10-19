@@ -20,12 +20,12 @@ import static io.etcd.jetcd.options.OptionsUtil.toRangeRequestSortOrder;
 import static io.etcd.jetcd.options.OptionsUtil.toRangeRequestSortTarget;
 
 import com.google.protobuf.ByteString;
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.api.DeleteRangeRequest;
 import io.etcd.jetcd.api.PutRequest;
 import io.etcd.jetcd.api.RangeRequest;
 import io.etcd.jetcd.api.RequestOp;
 import io.etcd.jetcd.api.TxnRequest;
-import io.etcd.jetcd.data.ByteSequence;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;

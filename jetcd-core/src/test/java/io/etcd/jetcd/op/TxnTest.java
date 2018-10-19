@@ -18,7 +18,7 @@ package io.etcd.jetcd.op;
 import static com.google.common.base.Charsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.etcd.jetcd.data.ByteSequence;
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.options.PutOption;
 import java.util.concurrent.ExecutionException;
 import org.junit.Test;

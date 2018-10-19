@@ -16,7 +16,7 @@
 
 package io.etcd.jetcd.maintenance;
 
-import io.etcd.jetcd.data.AbstractResponse;
+import io.etcd.jetcd.AbstractResponse;
 
 /**
  * MoveLeaderResponse returned by {@link io.etcd.jetcd.Maintenance#MoveLeader(long)}.

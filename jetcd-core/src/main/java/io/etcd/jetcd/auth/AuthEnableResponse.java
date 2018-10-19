@@ -16,8 +16,8 @@
 
 package io.etcd.jetcd.auth;
 
+import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.api.Auth;
-import io.etcd.jetcd.data.AbstractResponse;
 
 /**
  * AuthEnableResponse returned by {@link Auth#authEnable()} call contains a header.

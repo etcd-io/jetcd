@@ -16,7 +16,7 @@
 
 package io.etcd.jetcd.cluster;
 
-import io.etcd.jetcd.data.AbstractResponse;
+import io.etcd.jetcd.AbstractResponse;
 import java.util.List;
 
 /**

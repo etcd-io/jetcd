@@ -16,10 +16,10 @@
 
 package io.etcd.jetcd.auth;
 
+import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.api.Auth;
 import io.etcd.jetcd.api.Permission.Type;
-import io.etcd.jetcd.data.AbstractResponse;
-import io.etcd.jetcd.data.ByteSequence;
 
 /**
  * AuthRoleGrantPermissionResponse returned by {@link Auth#roleGrantPermission(ByteSequence,

@@ -16,8 +16,8 @@
 
 package io.etcd.jetcd.maintenance;
 
+import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.Maintenance;
-import io.etcd.jetcd.data.AbstractResponse;
 
 /**
  * HashKVResponse returned by {@link Maintenance#HashKV(String, long)}.

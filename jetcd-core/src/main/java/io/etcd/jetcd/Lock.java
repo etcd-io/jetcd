@@ -16,8 +16,6 @@
 
 package io.etcd.jetcd;
 
-import io.etcd.jetcd.data.ByteSequence;
-import io.etcd.jetcd.internal.impl.CloseableClient;
 import io.etcd.jetcd.lock.LockResponse;
 import io.etcd.jetcd.lock.UnlockResponse;
 import java.util.concurrent.CompletableFuture;

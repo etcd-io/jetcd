@@ -20,7 +20,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.google.common.base.Charsets;
 import io.etcd.jetcd.Client;
-import io.etcd.jetcd.data.ByteSequence;
+import io.etcd.jetcd.ByteSequence;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

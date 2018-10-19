@@ -16,7 +16,6 @@
 
 package io.etcd.jetcd;
 
-import io.etcd.jetcd.internal.impl.CloseableClient;
 import io.etcd.jetcd.maintenance.AlarmMember;
 import io.etcd.jetcd.maintenance.AlarmResponse;
 import io.etcd.jetcd.maintenance.DefragmentResponse;

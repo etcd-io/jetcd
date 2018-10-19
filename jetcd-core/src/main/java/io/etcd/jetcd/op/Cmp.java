@@ -17,8 +17,8 @@
 package io.etcd.jetcd.op;
 
 import com.google.protobuf.ByteString;
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.api.Compare;
-import io.etcd.jetcd.data.ByteSequence;
 
 /**
  * The compare predicate in {@link Txn}.

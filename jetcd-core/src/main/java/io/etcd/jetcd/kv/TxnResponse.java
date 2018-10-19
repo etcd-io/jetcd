@@ -21,7 +21,7 @@ import static io.etcd.jetcd.api.ResponseOp.ResponseCase.RESPONSE_PUT;
 import static io.etcd.jetcd.api.ResponseOp.ResponseCase.RESPONSE_RANGE;
 import static io.etcd.jetcd.api.ResponseOp.ResponseCase.RESPONSE_TXN;
 
-import io.etcd.jetcd.data.AbstractResponse;
+import io.etcd.jetcd.AbstractResponse;
 import java.util.List;
 import java.util.stream.Collectors;
 

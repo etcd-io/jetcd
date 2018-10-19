@@ -17,8 +17,6 @@
 package io.etcd.jetcd;
 
 import com.google.common.annotations.Beta;
-import io.etcd.jetcd.data.ByteSequence;
-import io.etcd.jetcd.internal.impl.CloseableClient;
 import io.etcd.jetcd.kv.CompactResponse;
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;

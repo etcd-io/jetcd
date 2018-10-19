@@ -32,8 +32,6 @@ import io.etcd.jetcd.auth.AuthUserGrantRoleResponse;
 import io.etcd.jetcd.auth.AuthUserListResponse;
 import io.etcd.jetcd.auth.AuthUserRevokeRoleResponse;
 import io.etcd.jetcd.auth.Permission;
-import io.etcd.jetcd.data.ByteSequence;
-import io.etcd.jetcd.internal.impl.CloseableClient;
 import java.util.concurrent.CompletableFuture;
 
 /**

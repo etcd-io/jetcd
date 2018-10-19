@@ -16,7 +16,6 @@
 
 package io.etcd.jetcd;
 
-import io.etcd.jetcd.internal.impl.CloseableClient;
 import io.etcd.jetcd.lease.LeaseGrantResponse;
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
 import io.etcd.jetcd.lease.LeaseRevokeResponse;

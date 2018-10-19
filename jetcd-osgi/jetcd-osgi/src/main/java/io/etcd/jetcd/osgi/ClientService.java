@@ -17,6 +17,7 @@
 package io.etcd.jetcd.osgi;
 
 import io.etcd.jetcd.Auth;
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.Cluster;
@@ -25,7 +26,6 @@ import io.etcd.jetcd.Lease;
 import io.etcd.jetcd.Lock;
 import io.etcd.jetcd.Maintenance;
 import io.etcd.jetcd.Watch;
-import io.etcd.jetcd.data.ByteSequence;
 import io.etcd.jetcd.resolver.URIResolver;
 import java.nio.charset.Charset;
 import java.util.HashSet;

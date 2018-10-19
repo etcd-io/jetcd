@@ -16,7 +16,7 @@
 
 package io.etcd.jetcd.lease;
 
-import io.etcd.jetcd.data.AbstractResponse;
+import io.etcd.jetcd.AbstractResponse;
 
 public class LeaseGrantResponse extends AbstractResponse<io.etcd.jetcd.api.LeaseGrantResponse> {
 
