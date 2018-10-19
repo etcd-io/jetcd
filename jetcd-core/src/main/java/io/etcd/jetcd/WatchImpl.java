@@ -17,39 +17,26 @@
 package io.etcd.jetcd;
 
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newClosedWatchClientException;
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newClosedWatcherException;
+import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newCompactedException;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.protobuf.ByteString;
-import io.etcd.jetcd.api.WatchCancelRequest;
 import io.etcd.jetcd.api.WatchCreateRequest;
 import io.etcd.jetcd.api.WatchGrpc;
 import io.etcd.jetcd.api.WatchRequest;
 import io.etcd.jetcd.api.WatchResponse;
 import io.etcd.jetcd.common.exception.ErrorCode;
-import io.etcd.jetcd.common.exception.EtcdException;
-import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.etcd.jetcd.options.WatchOption;
-import io.etcd.jetcd.watch.WatchResponseWithError;
 import io.grpc.Status;
-import io.grpc.Status.Code;
 import io.grpc.stub.StreamObserver;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,9 +45,196 @@ import org.slf4j.LoggerFactory;
  * watch Implementation.
  */
 final class WatchImpl implements Watch {
-
   private static final Logger LOG = LoggerFactory.getLogger(WatchImpl.class);
 
+  private final Object lock;
+  private final ClientConnectionManager connectionManager;
+  private final WatchGrpc.WatchStub stub;
+  private final ListeningScheduledExecutorService executor;
+  private final AtomicBoolean closed;
+  private final List<WatcherImpl> watchers;
+
+  WatchImpl(ClientConnectionManager connectionManager) {
+    this.lock = new Object();
+    this.connectionManager = connectionManager;
+    this.stub = connectionManager.newStub(WatchGrpc::newStub);
+    this.executor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
+    this.closed = new AtomicBoolean();
+    this.watchers = new ArrayList<>();
+  }
+
+  @Override
+  public Watcher watch(ByteSequence key, WatchOption option, Listener listener) {
+    if (closed.get()) {
+      throw newClosedWatchClientException();
+    }
+
+    WatcherImpl impl;
+
+    synchronized (this.lock) {
+      impl = new WatcherImpl(key, option, listener);
+      impl.resume();
+
+      watchers.add(impl);
+    }
+
+    return impl;
+  }
+
+  @Override
+  public void close() {
+    if (closed.compareAndSet(false, true)) {
+      synchronized (this.lock) {
+        executor.shutdownNow();
+        watchers.forEach(Watcher::close);
+      }
+    }
+  }
+
+  private final class WatcherImpl implements Watcher, StreamObserver<WatchResponse> {
+    private final ByteSequence key;
+    private final WatchOption option;
+    private final Listener listener;
+    private final AtomicBoolean closed;
+
+    private StreamObserver<WatchRequest> stream;
+    private long revision;
+    private long id;
+
+    WatcherImpl(ByteSequence key, WatchOption option, Listener listener) {
+      this.key = key;
+      this.option = option;
+      this.listener = listener;
+      this.closed = new AtomicBoolean();
+
+      this.stream = null;
+      this.id = -1;
+      this.revision = this.option.getRevision();
+    }
+
+    // ************************
+    //
+    // Lifecycle
+    //
+    // ************************
+
+    void resume() {
+      if (this.closed.get() || WatchImpl.this.closed.get()) {
+        return;
+      }
+
+      if (stream == null) {
+        // id is not really useful today but it may be in etcd 3.4
+        id = -1;
+
+        WatchCreateRequest.Builder builder = WatchCreateRequest.newBuilder()
+            .setKey(this.key.getByteString())
+            .setPrevKv(this.option.isPrevKV())
+            .setProgressNotify(option.isProgressNotify())
+            .setStartRevision(this.revision);
+
+        option.getEndKey()
+            .map(ByteSequence::getByteString)
+            .ifPresent(builder::setRangeEnd);
+
+        if (option.isNoDelete()) {
+          builder.addFilters(WatchCreateRequest.FilterType.NODELETE);
+        }
+
+        if (option.isNoPut()) {
+          builder.addFilters(WatchCreateRequest.FilterType.NOPUT);
+        }
+
+        stream = stub.watch(this);
+        stream.onNext(WatchRequest.newBuilder().setCreateRequest(builder).build());
+      }
+    }
+
+    @Override
+    public void close() {
+      if (closed.compareAndSet(false, true)) {
+        if (stream != null) {
+          stream.onCompleted();
+          stream = null;
+        }
+
+        id = -1;
+
+        listener.onCompleted();
+      }
+    }
+
+    // ************************
+    //
+    // StreamObserver
+    //
+    // ************************
+
+    @Override
+    public void onNext(WatchResponse response) {
+      if (response.getCreated()) {
+        if (response.getWatchId() == -1) {
+          listener.onError(newEtcdException(ErrorCode.INTERNAL, "etcd server failed to create watch id"));
+          return;
+        }
+
+        revision = response.getHeader().getRevision();
+        id = response.getWatchId();
+      } else if (response.getCanceled()) {
+        String reason = response.getCancelReason();
+        Throwable error;
+
+        if (Strings.isNullOrEmpty(reason)) {
+          error = newEtcdException(
+            ErrorCode.OUT_OF_RANGE,
+            "etcdserver: mvcc: required revision is a future revision"
+          );
+        } else {
+          error = newEtcdException(
+            ErrorCode.FAILED_PRECONDITION,
+            reason
+          );
+        }
+
+        listener.onError(error);
+      } else {
+        if (response.getCompactRevision() != 0) {
+          listener.onError(newCompactedException(response.getCompactRevision()));
+        } else {
+          listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response));
+          revision = response.getEvents(response.getEventsCount() - 1).getKv().getModRevision() + 1;
+        }
+      }
+    }
+
+    @Override
+    public void onError(Throwable t) {
+      if (this.closed.get() || WatchImpl.this.closed.get()) {
+        return;
+      }
+
+      Status status = Status.fromThrowable(t);
+
+      if (Util.isHaltError(status) || Util.isNoLeaderError(status)) {
+        listener.onError(toEtcdException(status));
+        stream.onCompleted();
+        stream = null;
+      }
+
+      // resume with a delay; avoiding immediate retry on a long connection downtime.
+      Util.addOnFailureLoggingCallback(
+          executor.schedule(this::resume, 500, TimeUnit.MILLISECONDS),
+          LOG,
+          "scheduled resume failed"
+      );
+    }
+
+    @Override
+    public void onCompleted() {
+    }
+  }
+
+  /*
   // watchers stores a mapping between leaseID -> WatchIml.
   private final ConcurrentHashMap<Long, WatcherImpl> watchers = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<WatcherImpl>
@@ -280,9 +454,6 @@ final class WatchImpl implements Watch {
     this.watchers.put(watcher.getWatchID(), watcher);
   }
 
-  /**
-   * chooses the next resuming watcher to register with the grpc stream.
-   */
   private Optional<WatchRequest> nextResume() {
     WatcherImpl pendingWatcher = this.pendingWatchers.peek();
     if (pendingWatcher != null) {
@@ -380,9 +551,6 @@ final class WatchImpl implements Watch {
     return WatchRequest.newBuilder().setCreateRequest(builder).build();
   }
 
-  /**
-   * Watcher class holds watcher information.
-   */
   public static class WatcherImpl implements Watcher {
 
     final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -499,5 +667,6 @@ final class WatchImpl implements Watch {
       });
     }
   }
+  */
 }
 

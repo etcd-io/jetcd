@@ -27,6 +27,7 @@ import io.etcd.jetcd.common.exception.ErrorCode;
 import io.grpc.Status;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -42,7 +43,7 @@ public final class Util {
   private Util() {
   }
 
-  public static List<URI> toURIs(List<String> uris) {
+  public static List<URI> toURIs(Collection<String> uris) {
     return uris.stream().map(uri -> {
       try {
         return new URI(uri);
@@ -202,6 +203,22 @@ public final class Util {
       public void onSuccess(Object result) {
       }
     });
+  }
+
+
+
+  static boolean isNoLeaderError(Status status) {
+    return status.getCode() == Status.Code.UNAVAILABLE
+      && "etcdserver: no leader".equals(status.getDescription());
+  }
+
+  static boolean isHaltError(Status status) {
+    // Unavailable codes mean the system will be right back.
+    // (e.g., can't connect, lost leader)
+    // Treat Internal codes as if something failed, leaving the
+    // system in an inconsistent state, but retrying could make progress.
+    // (e.g., failed in middle of send, corrupted frame)
+    return status.getCode() != Status.Code.UNAVAILABLE && status.getCode() != Status.Code.INTERNAL;
   }
 
 }
