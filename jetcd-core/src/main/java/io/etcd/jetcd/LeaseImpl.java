@@ -204,8 +204,12 @@ final class LeaseImpl implements Lease {
       return;
     }
 
-    Util.addOnFailureLoggingCallback(this.scheduledExecutorService.schedule(() -> reset(), 500, TimeUnit.MILLISECONDS),
-        LOG, "scheduled reset failed");
+    Util.addOnFailureLoggingCallback(
+        this.connectionManager.getExecutorService(),
+        this.scheduledExecutorService.schedule(() -> reset(), 500, TimeUnit.MILLISECONDS),
+        LOG,
+        "scheduled reset failed"
+    );
   }
 
   private synchronized void processKeepAliveResponse(
