@@ -24,6 +24,7 @@ import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdExceptio
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+
 import io.etcd.jetcd.api.WatchCreateRequest;
 import io.etcd.jetcd.api.WatchGrpc;
 import io.etcd.jetcd.api.WatchRequest;
@@ -173,6 +174,11 @@ final class WatchImpl implements Watch {
     @Override
     public void onNext(WatchResponse response) {
       if (response.getCreated()) {
+        
+        //
+        // Created
+        //
+
         if (response.getWatchId() == -1) {
           listener.onError(newEtcdException(ErrorCode.INTERNAL, "etcd server failed to create watch id"));
           return;
@@ -181,6 +187,11 @@ final class WatchImpl implements Watch {
         revision = response.getHeader().getRevision();
         id = response.getWatchId();
       } else if (response.getCanceled()) {
+        
+        //
+        // Cancelled
+        //
+
         String reason = response.getCancelReason();
         Throwable error;
 
@@ -197,13 +208,33 @@ final class WatchImpl implements Watch {
         }
 
         listener.onError(error);
-      } else {
-        if (response.getCompactRevision() != 0) {
-          listener.onError(newCompactedException(response.getCompactRevision()));
-        } else {
-          listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response));
-          revision = response.getEvents(response.getEventsCount() - 1).getKv().getModRevision() + 1;
-        }
+      } else if (response.getCompactRevision() != 0) {
+        
+        //
+        // Compact
+        //
+
+        listener.onError(newCompactedException(response.getCompactRevision()));
+      } else if (response.getEventsCount() > 0) {
+        
+        //
+        // Event
+        //
+        // A response may not contain events, this is in case of "Progress_Notify":
+        //
+        //   the watch will periodically receive a  WatchResponse with no events, 
+        //   if there are no recent events. It is useful when clients wish to 
+        //   recover a disconnected watcher starting from a recent known revision.
+        //
+        //   The etcd server decides how often to send notifications based on current 
+        //   server load.
+        //
+        // For more info:
+        //   https://coreos.com/etcd/docs/latest/learning/api.html#watch-streams
+        //
+
+        listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response));
+        revision = response.getEvents(response.getEventsCount() - 1).getKv().getModRevision() + 1;
       }
     }
 
