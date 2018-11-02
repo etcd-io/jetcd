@@ -215,7 +215,7 @@ final class WatchImpl implements Watch {
         //
 
         listener.onError(newCompactedException(response.getCompactRevision()));
-      } else if (response.getEventsCount() > 0) {
+      } else if (response.getEventsCount() == 0 && option.isProgressNotify()) {
         
         //
         // Event
@@ -233,6 +233,8 @@ final class WatchImpl implements Watch {
         //   https://coreos.com/etcd/docs/latest/learning/api.html#watch-streams
         //
 
+        listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response));
+      } else if (response.getEventsCount() > 0) {
         listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response));
         revision = response.getEvents(response.getEventsCount() - 1).getKv().getModRevision() + 1;
       }
