@@ -195,7 +195,9 @@ final class WatchImpl implements Watch {
         String reason = response.getCancelReason();
         Throwable error;
 
-        if (Strings.isNullOrEmpty(reason)) {
+        if (response.getCompactRevision() != 0) {
+          error = newCompactedException(response.getCompactRevision());
+        } else if (Strings.isNullOrEmpty(reason)) {
           error = newEtcdException(
             ErrorCode.OUT_OF_RANGE,
             "etcdserver: mvcc: required revision is a future revision"
@@ -208,13 +210,6 @@ final class WatchImpl implements Watch {
         }
 
         listener.onError(error);
-      } else if (response.getCompactRevision() != 0) {
-        
-        //
-        // Compact
-        //
-
-        listener.onError(newCompactedException(response.getCompactRevision()));
       } else if (response.getEventsCount() == 0 && option.isProgressNotify()) {
         
         //
@@ -232,7 +227,6 @@ final class WatchImpl implements Watch {
         // For more info:
         //   https://coreos.com/etcd/docs/latest/learning/api.html#watch-streams
         //
-
         listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response));
       } else if (response.getEventsCount() > 0) {
         listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response));
