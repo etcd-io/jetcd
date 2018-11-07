@@ -16,9 +16,9 @@
 
 package io.etcd.jetcd.launcher;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.URI;
 import java.util.List;
-import javax.annotation.Nonnull;
 
 public interface EtcdCluster extends AutoCloseable {
 
@@ -27,9 +27,9 @@ public interface EtcdCluster extends AutoCloseable {
   @Override
   void close();
 
-  @Nonnull
+  @NonNull
   List<URI> getClientEndpoints();
 
-  @Nonnull
+  @NonNull
   List<URI> getPeerEndpoints();
 }

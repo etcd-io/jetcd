@@ -18,17 +18,17 @@ package io.etcd.jetcd.launcher;
 
 import static java.util.stream.Collectors.toList;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
-import javax.annotation.Nonnull;
 import org.testcontainers.containers.Network;
 
 public class EtcdClusterFactory {
 
-  public static EtcdCluster buildCluster(@Nonnull String clusterName, int nodes, boolean ssl) {
+  public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl) {
     final Network network = Network.builder().id(clusterName).build();
     final CountDownLatch latch = new CountDownLatch(nodes);
     final EtcdContainer.LifecycleListener listener = new EtcdContainer.LifecycleListener() {
@@ -66,13 +66,13 @@ public class EtcdClusterFactory {
         containers.forEach(EtcdContainer::close);
       }
 
-      @Nonnull
+      @NonNull
       @Override
       public List<URI> getClientEndpoints() {
         return containers.stream().map(EtcdContainer::clientEndpoint).collect(toList());
       }
 
-      @Nonnull
+      @NonNull
       @Override
       public List<URI> getPeerEndpoints() {
         return containers.stream().map(EtcdContainer::peerEndpoint).collect(toList());
