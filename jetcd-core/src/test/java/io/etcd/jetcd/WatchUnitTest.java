@@ -305,7 +305,7 @@ public class WatchUnitTest {
       WatchResponse createdResponse = createWatchResponse(0);
       responseObserverRef.get().onNext(createdResponse);
 
-      WatchResponse compactedResponse = WatchResponse.newBuilder().setCompactRevision(2).build();
+      WatchResponse compactedResponse = WatchResponse.newBuilder().setCanceled(true).setCompactRevision(2).build();
       responseObserverRef.get().onNext(compactedResponse);
 
       latch.await(4, TimeUnit.SECONDS);

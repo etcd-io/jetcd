@@ -18,7 +18,10 @@ package io.etcd.jetcd;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.etcd.jetcd.Watch.Watcher;
+import io.etcd.jetcd.common.exception.CompactedException;
+import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.watch.WatchEvent;
 import io.etcd.jetcd.watch.WatchEvent.EventType;
 import io.etcd.jetcd.watch.WatchResponse;
@@ -153,6 +156,37 @@ public class WatchTest {
       WatchEvent event = ref.get().getEvents().get(0);
       assertThat(event.getEventType()).isEqualTo(EventType.DELETE);
       assertThat(Arrays.equals(event.getKeyValue().getKey().getBytes(), key.getBytes())).isTrue();
+    } finally {
+      IOUtils.closeQuietly(watcher);
+    }
+  }
+
+  @Test
+  public void testWatchCompacted() throws Exception {
+    ByteSequence key = TestUtil.randomByteSequence();
+    ByteSequence value = TestUtil.randomByteSequence();
+    // Insert key twice to ensure we have at least two revisions
+    kvClient.put(key, value).get();
+    PutResponse putResponse = kvClient.put(key, value).get();
+    // Compact until latest revision
+    kvClient.compact(putResponse.getHeader().getRevision()).get();
+
+    Watcher watcher = null;
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<Throwable> ref = new AtomicReference<>();
+    try {
+      // Try to listen from previous revision on
+      WatchOption watchOption = WatchOption.newBuilder().withRevision(putResponse.getHeader().getRevision() - 1)
+          .build();
+      watcher = watchClient.watch(key, watchOption, Watch.listener(response -> {}, error -> {
+        ref.set(error);
+        latch.countDown();
+      }));
+
+      latch.await(4, TimeUnit.SECONDS);
+      // Expect CompactedException
+      assertThat(ref.get()).isNotNull();
+      assertThat(ref.get().getClass()).isEqualTo(CompactedException.class);
     } finally {
       IOUtils.closeQuietly(watcher);
     }
