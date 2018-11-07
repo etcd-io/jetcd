@@ -228,6 +228,7 @@ final class WatchImpl implements Watch {
         //   https://coreos.com/etcd/docs/latest/learning/api.html#watch-streams
         //
         listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response));
+        revision = response.getHeader().getRevision();
       } else if (response.getEventsCount() > 0) {
         listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response));
         revision = response.getEvents(response.getEventsCount() - 1).getKv().getModRevision() + 1;
