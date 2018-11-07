@@ -36,15 +36,13 @@
 
     <dependencies>
         <dependency>
-          <groupId>com.google.code.findbugs</groupId>
-          <artifactId>annotations</artifactId>
-          <version>3.0.0</version>
-          <scope>provided</scope>
-          <optional>true</optional>
+          <groupId>com.github.spotbugs</groupId>
+          <artifactId>spotbugs-annotations</artifactId>
+          <version>3.1.8</version>
           <exclusions>
             <exclusion>
-              <artifactId>jcip-annotations</artifactId>
-              <groupId>net.jcip</groupId>
+              <groupId>com.google.code.findbugs</groupId>
+              <artifactId>jsr305</artifactId>
             </exclusion>
           </exclusions>
         </dependency>
