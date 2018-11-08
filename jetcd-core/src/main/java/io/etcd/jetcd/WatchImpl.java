@@ -245,9 +245,10 @@ final class WatchImpl implements Watch {
 
       if (Util.isHaltError(status) || Util.isNoLeaderError(status)) {
         listener.onError(toEtcdException(status));
-        stream.onCompleted();
-        stream = null;
       }
+
+      stream.onCompleted();
+      stream = null;
 
       // resume with a delay; avoiding immediate retry on a long connection downtime.
       Util.addOnFailureLoggingCallback(
