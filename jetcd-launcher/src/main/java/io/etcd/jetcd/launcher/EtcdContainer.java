@@ -17,20 +17,27 @@
 package io.etcd.jetcd.launcher;
 
 import com.github.dockerjava.api.DockerClient;
+
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.ContainerLaunchException;
-import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.SelinuxContext;
 import org.testcontainers.containers.output.OutputFrame;
@@ -53,13 +60,16 @@ public class EtcdContainer implements AutoCloseable {
   private static final int ETCD_CLIENT_PORT = 2379;
   private static final int ETCD_PEER_PORT = 2380;
 
+  private static final String ETCD_DATA_DIR = "/data.etcd";
+
   private final String endpoint;
   private final boolean ssl;
-  private final GenericContainer<?> container;
+  private final FixedHostPortGenericContainer<?> container;
   private final LifecycleListener listener;
+  private final Path dataDirectory;
 
   public EtcdContainer(Network network, LifecycleListener listener, boolean ssl, String clusterName,
-            String endpoint, List<String> endpoints) {
+                       String endpoint, List<String> endpoints, boolean restartable) {
     this.endpoint = endpoint;
     this.ssl = ssl;
     this.listener = listener;
@@ -67,7 +77,7 @@ public class EtcdContainer implements AutoCloseable {
     final String name = endpoint;
     final List<String> command = new ArrayList<>();
 
-    this.container = new GenericContainer<>(ETCD_DOCKER_IMAGE_NAME);
+    this.container = new FixedHostPortGenericContainer<>(ETCD_DOCKER_IMAGE_NAME);
     this.container.withExposedPorts(ETCD_CLIENT_PORT, ETCD_PEER_PORT);
     this.container.withNetwork(network);
     this.container.withNetworkAliases(name);
@@ -81,6 +91,15 @@ public class EtcdContainer implements AutoCloseable {
     command.add((ssl ? "https" : "http") + "://0.0.0.0:" + ETCD_CLIENT_PORT);
     command.add("--listen-client-urls");
     command.add((ssl ? "https" : "http") + "://0.0.0.0:" + ETCD_CLIENT_PORT);
+
+    if (restartable) {
+      dataDirectory = createDataDirectory(name);
+      container.withFileSystemBind(dataDirectory.toString(), ETCD_DATA_DIR, BindMode.READ_WRITE);
+      command.add("--data-dir");
+      command.add(ETCD_DATA_DIR);
+    } else {
+      dataDirectory = null;
+    }
 
     if (ssl) {
       this.container.withClasspathResourceMapping(
@@ -120,17 +139,39 @@ public class EtcdContainer implements AutoCloseable {
   }
 
   public void start() {
-    LOGGER.debug("staring etcd container {} with command: {}", endpoint, String.join(" ", container.getCommandParts()));
+    LOGGER.debug("starting etcd container {} with command: {}",
+            endpoint, String.join(" ", container.getCommandParts()));
 
     this.container.start();
     this.listener.started(this);
 
+    if (dataDirectory != null) {
+      // needed in order to properly clean resources during shutdown
+      setDataDirectoryPermissions("o+rwx");
+    }
+  }
+
+  public void restart() {
+    if (dataDirectory == null) {
+      throw new IllegalStateException("Container not restartable, please create it with restartable=true");
+    }
+    LOGGER.debug("restarting etcd container {} with command: {}",
+            endpoint, String.join(" ", container.getCommandParts()));
+
+    final int port = this.container.getMappedPort(ETCD_CLIENT_PORT);
+    this.container.stop();
+    this.container.withExposedPorts(ETCD_PEER_PORT);
+    this.container.withFixedExposedPort(port, ETCD_CLIENT_PORT);
+    this.container.start();
   }
 
   @Override
   public void close() {
     if (this.container != null) {
       this.container.stop();
+    }
+    if (dataDirectory != null && Files.exists(dataDirectory)) {
+      deleteDataDirectory(dataDirectory);
     }
   }
 
@@ -199,5 +240,29 @@ public class EtcdContainer implements AutoCloseable {
           throw new IllegalArgumentException("Unexpected outputType " + outputType);
       }
     };
+  }
+
+  private void setDataDirectoryPermissions(String permissions) {
+    try {
+      this.container.execInContainer("chmod", permissions, "-R", ETCD_DATA_DIR);
+    } catch (Exception e) {
+      throw new ContainerLaunchException("Error changing permission to etcd data directory", e);
+    }
+  }
+
+  private static Path createDataDirectory(String name) {
+    try {
+      return Files.createTempDirectory("jetcd_test_" + name + "_");
+    } catch (IOException e) {
+      throw new ContainerLaunchException("Error creating data directory", e);
+    }
+  }
+
+  private static void deleteDataDirectory(Path dir) {
+    try (Stream<Path> stream = Files.walk(dir)) {
+      stream.sorted(Comparator.reverseOrder()).forEach(p -> p.toFile().delete());
+    } catch (IOException e) {
+      LOGGER.error("Error deleting directory " + dir.toString(), e);
+    }
   }
 }

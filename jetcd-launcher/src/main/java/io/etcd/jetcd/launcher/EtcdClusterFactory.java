@@ -29,6 +29,10 @@ import org.testcontainers.containers.Network;
 public class EtcdClusterFactory {
 
   public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl) {
+    return buildCluster(clusterName, nodes, ssl, false);
+  }
+
+  public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl, boolean restartable) {
     final Network network = Network.builder().id(clusterName).build();
     final CountDownLatch latch = new CountDownLatch(nodes);
     final EtcdContainer.LifecycleListener listener = new EtcdContainer.LifecycleListener() {
@@ -45,7 +49,8 @@ public class EtcdClusterFactory {
     final List<String> endpoints = IntStream.range(0, nodes).mapToObj(i -> "etcd" + i).collect(toList());
 
     final List<EtcdContainer> containers = endpoints.stream()
-                .map(e -> new EtcdContainer(network, listener, ssl, clusterName, e, endpoints)).collect(toList());
+            .map(e -> new EtcdContainer(network, listener, ssl, clusterName, e, endpoints, restartable))
+            .collect(toList());
 
     return new EtcdCluster() {
       @Override
@@ -64,6 +69,10 @@ public class EtcdClusterFactory {
       @Override
       public void close() {
         containers.forEach(EtcdContainer::close);
+      }
+
+      public void restart() {
+        containers.forEach(EtcdContainer::restart);
       }
 
       @NonNull

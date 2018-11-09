@@ -32,7 +32,11 @@ public class EtcdClusterResource extends ExternalResource {
   }
 
   public EtcdClusterResource(String clusterName, int nodes, boolean ssl) {
-    this.cluster = EtcdClusterFactory.buildCluster(clusterName, nodes, ssl);
+    this(clusterName, nodes, ssl, false);
+  }
+
+  public EtcdClusterResource(String clusterName, int nodes, boolean ssl, boolean restartable) {
+    this.cluster = EtcdClusterFactory.buildCluster(clusterName, nodes, ssl, restartable);
   }
 
   public EtcdCluster cluster() {
