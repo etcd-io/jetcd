@@ -24,6 +24,8 @@ public interface EtcdCluster extends AutoCloseable {
 
   void start();
 
+  void restart();
+
   @Override
   void close();
 
