@@ -83,7 +83,7 @@
         <maven-javadoc-plugin.version>3.0.1</maven-javadoc-plugin.version>
         <maven-bundle-plugin.version>4.1.0</maven-bundle-plugin.version>
         <maven-checkstyle-plugin.version>3.0.0</maven-checkstyle-plugin.version>
-        <maven-shade-plugin.version>3.2.0</maven-shade-plugin.version>
+        <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
         <depends-maven-plugin.version>1.4.0</depends-maven-plugin.version>
         <os-maven-plugin.version>1.6.1</os-maven-plugin.version>
