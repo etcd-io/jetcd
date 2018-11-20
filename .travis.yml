@@ -15,7 +15,7 @@ before_install:
   - sdk install java 8.0.192-zulu
 
 script:
-  - sdk use java 8.0.181-zulu
+  - sdk use java 8.0.192-zulu
   - java -version
   - ./mvnw clean install
 
