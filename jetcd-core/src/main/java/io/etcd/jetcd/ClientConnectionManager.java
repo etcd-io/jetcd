@@ -41,6 +41,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
+import io.grpc.internal.PickFirstLoadBalancerProvider;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
@@ -203,6 +204,8 @@ final class ClientConnectionManager {
 
     if (builder.loadBalancerFactory() != null) {
       channelBuilder.loadBalancerFactory(builder.loadBalancerFactory());
+    } else {
+      channelBuilder.loadBalancerFactory(new PickFirstLoadBalancerProvider());
     }
 
     channelBuilder.intercept(new AuthTokenInterceptor());

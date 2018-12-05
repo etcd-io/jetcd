@@ -33,7 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import javax.annotation.concurrent.GuardedBy;
 
 import org.slf4j.Logger;
@@ -52,7 +52,7 @@ public class SmartNameResolver extends NameResolver {
   private volatile boolean resolving;
 
   @GuardedBy("lock")
-  private ExecutorService executor;
+  private Executor executor;
   @GuardedBy("lock")
   private Listener listener;
 

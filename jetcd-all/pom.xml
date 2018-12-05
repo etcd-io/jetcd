@@ -109,7 +109,6 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Name>etcd :: ${project.artifactId}</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <!-- The (shaded) protobuf has to also be exported because it's part of the public API surface of ByteSequence's getByteString() method; see https://github.com/etcd-io/jetcd/issues/393 -->
                         <Export-Package>
                             io.etcd.jetcd.common.exception,
                             io.etcd.jetcd.resolver,
@@ -117,7 +116,6 @@
                             io.etcd.jetcd,
                             io.etcd.jetcd.auth,
                             io.etcd.jetcd.cluster,
-                            io.etcd.jetcd.data,
                             io.etcd.jetcd.kv,
                             io.etcd.jetcd.lease,
                             io.etcd.jetcd.lock,
