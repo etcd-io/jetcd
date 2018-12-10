@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.etcd.jetcd.examples.jetcdctl;
+package io.etcd.jetcd.examples.ctl;
 
 import static com.google.common.base.Charsets.UTF_8;
 

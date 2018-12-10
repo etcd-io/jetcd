@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.etcd.jetcd.examples.jetcdctl;
+package io.etcd.jetcd.examples.ctl;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
