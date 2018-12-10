@@ -94,7 +94,7 @@ public class EtcdContainer implements AutoCloseable {
 
     if (restartable) {
       dataDirectory = createDataDirectory(name);
-      container.withFileSystemBind(dataDirectory.toString(), ETCD_DATA_DIR, BindMode.READ_WRITE);
+      container.addFileSystemBind(dataDirectory.toString(), ETCD_DATA_DIR, BindMode.READ_WRITE, SelinuxContext.SHARED);
       command.add("--data-dir");
       command.add(ETCD_DATA_DIR);
     } else {
