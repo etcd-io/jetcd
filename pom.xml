@@ -116,7 +116,7 @@
         <!-- osgi dependencies -->
         <karaf.version>4.2.1</karaf.version>
         <osgi.ds.version>1.4.0</osgi.ds.version>
-        <pax.exam.version>4.13.0</pax.exam.version>
+        <pax.exam.version>4.13.1</pax.exam.version>
 
         <!-- test dependencies -->
         <testng.version>6.14.3</testng.version>
