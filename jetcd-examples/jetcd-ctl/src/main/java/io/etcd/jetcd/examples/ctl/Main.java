@@ -23,22 +23,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Main {
-
   private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
-  // global options
-  @Parameter(names = {"--endpoints"}, description = "gRPC endpoints ")
-  private String endpoints = "http://127.0.0.1:2379";
-
-  @Parameter(names = {"-h", "--help"}, help = true)
-  private boolean help = false;
 
   public static void main(String[] args) {
-    Main main = new Main();
+    Args global = new Args();
     CommandGet getCmd = new CommandGet();
     CommandPut putCmd = new CommandPut();
     CommandWatch watchCmd = new CommandWatch();
+
     JCommander jc = JCommander.newBuilder()
-        .addObject(main)
+        .addObject(global)
         .addCommand("get", getCmd)
         .addCommand("put", putCmd)
         .addCommand("watch", watchCmd)
@@ -46,29 +40,35 @@ public class Main {
 
     jc.parse(args);
 
-    String parsedCmd = jc.getParsedCommand();
-    if (parsedCmd == null || main.help) {
+    String cmd = jc.getParsedCommand();
+    if (cmd == null || global.help) {
       jc.usage();
       return;
     }
 
-    try (Client client = Client.builder()
-            .endpoints(main.endpoints.split(","))
-            .build()) {
-      switch (parsedCmd) {
+    try (Client client = Client.builder().endpoints(global.endpoints.split(",")).build()) {
+      switch (cmd) {
         case "get":
-          getCmd.get(client);
+          getCmd.accept(client);
           break;
         case "put":
-          putCmd.put(client);
+          putCmd.accept(client);
           break;
         case "watch":
-          watchCmd.watch(client);
+          watchCmd.accept(client);
           break;
       }
     } catch (Exception e) {
-      LOGGER.error(parsedCmd + " Error {}", e);
+      LOGGER.error(cmd + " Error {}", e);
       System.exit(1);
     }
+  }
+
+  public static class Args {
+    @Parameter(names = {"--endpoints"}, description = "gRPC endpoints ")
+    private String endpoints = "http://127.0.0.1:2379";
+
+    @Parameter(names = {"-h", "--help"}, help = true)
+    private boolean help = false;
   }
 }

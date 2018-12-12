@@ -110,6 +110,7 @@
         <error-prone-core.version>2.3.2</error-prone-core.version>
         <log4j2.version>2.11.1</log4j2.version>
         <jcommander.version>1.72</jcommander.version>
+        <jool.version>0.9.14</jool.version>
         <!-- should be in sync with protobuf grpc dependencies -->
         <protobuf.version>3.5.1</protobuf.version>
 
@@ -240,6 +241,11 @@
                 <groupId>com.beust</groupId>
                 <artifactId>jcommander</artifactId>
                 <version>${jcommander.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jooq</groupId>
+                <artifactId>jool-java-8</artifactId>
+                <version>${jool.version}</version>
             </dependency>
 
             <dependency>

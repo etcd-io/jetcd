@@ -26,44 +26,44 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.watch.WatchEvent;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import org.jooq.lambda.fi.util.function.CheckedConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Parameters(separators = "=", commandDescription = "Watches events stream for a key")
-class CommandWatch {
-
+class CommandWatch implements CheckedConsumer<Client> {
   private static final Logger LOGGER = LoggerFactory.getLogger(CommandWatch.class);
 
-  @Parameter(
-    arity = 1,
-    description = "<key>")
+  @Parameter(arity = 1, description = "<key>")
   String key;
 
-  @Parameter(
-    names = "--rev",
-    description = "Revision to start watching")
+  @Parameter(names = "--rev", description = "Revision to start watching")
   Long rev = 0L;
 
-  @Parameter(
-    names = { "-m", "--max-events" },
-    description = "the maximum number of events to receive"
-  )
+  @Parameter(names = { "-m", "--max-events" }, description = "the maximum number of events to receive")
   Integer maxEvents = Integer.MAX_VALUE;
 
-  // watch executes the "watch" command.
-  void watch(Client client) throws Exception {
+  @Override
+  public void accept(Client client) throws Exception {
     CountDownLatch latch = new CountDownLatch(maxEvents);
     Watcher watcher = null;
+
     try {
-      watcher = client.getWatchClient().watch(
-          ByteSequence.from(key, Charsets.UTF_8),
-          WatchOption.newBuilder().withRevision(rev).build(),
-          response -> {
+      ByteSequence watchKey = ByteSequence.from(key, Charsets.UTF_8);
+      WatchOption watchOpts = WatchOption.newBuilder().withRevision(rev).build();
+
+      watcher = client.getWatchClient().watch(watchKey, watchOpts, response -> {
             for (WatchEvent event : response.getEvents()) {
-              LOGGER.info(event.getEventType().toString());
-              LOGGER.info(event.getKeyValue().getKey().toString(UTF_8));
-              LOGGER.info(event.getKeyValue().getValue().toString(UTF_8));
+              LOGGER.info("type={}, key={}, value={}",
+                event.getEventType().toString(),
+                Optional.ofNullable(event.getKeyValue().getKey())
+                  .map(bs -> bs.toString(UTF_8))
+                  .orElse(""),
+                Optional.ofNullable(event.getKeyValue().getValue())
+                  .map(bs -> bs.toString(UTF_8))
+                  .orElse(""));
             }
 
             latch.countDown();
@@ -75,6 +75,7 @@ class CommandWatch {
       if (watcher != null) {
         watcher.close();
       }
+
       throw e;
     }
   }
