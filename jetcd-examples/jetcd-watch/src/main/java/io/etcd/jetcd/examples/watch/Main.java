@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 public class Main {
   private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
     Args cmd = new Args();
 
     JCommander.newBuilder()
@@ -79,24 +79,13 @@ public class Main {
   }
 
   public static class Args {
-    @Parameter(
-        required = true,
-        names = { "-e", "--endpoints" },
-        description = "the etcd endpoints"
-    )
+    @Parameter(required = true, names = { "-e", "--endpoints" }, description = "the etcd endpoints")
     private final List<String> endpoints = new ArrayList<>();
 
-    @Parameter(
-        required = true,
-        names = { "-k", "--key" },
-        description = "the key to watch"
-    )
+    @Parameter(required = true, names = { "-k", "--key" }, description = "the key to watch")
     private String key;
 
-    @Parameter(
-        names = { "-m", "--max-events" },
-        description = "the maximum number of events to receive"
-    )
+    @Parameter(names = { "-m", "--max-events" }, description = "the maximum number of events to receive")
     private final Integer maxEvents = Integer.MAX_VALUE;
   }
 }
