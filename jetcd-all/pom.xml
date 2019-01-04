@@ -41,6 +41,10 @@
         </dependency>
         <dependency>
             <groupId>io.etcd</groupId>
+            <artifactId>jetcd-extensions</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.etcd</groupId>
             <artifactId>jetcd-resolver</artifactId>
         </dependency>
         <dependency>
@@ -122,7 +126,8 @@
                             io.etcd.jetcd.maintenance,
                             io.etcd.jetcd.op,
                             io.etcd.jetcd.options,
-                            io.etcd.jetcd.watch
+                            io.etcd.jetcd.watch,
+                            io.etcd.jetcd.extensions
                         </Export-Package>
                         <Import-Package>
                             org.slf4j;version="[1.7,2)",

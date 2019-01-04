@@ -137,6 +137,7 @@
         <module>jetcd-resolver</module>
         <module>jetcd-resolver-dns-srv</module>
         <module>jetcd-core</module>
+        <module>jetcd-extensions</module>
         <module>jetcd-all</module>
         <module>jetcd-osgi</module>
         <module>jetcd-examples</module>
@@ -152,6 +153,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>jetcd-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>jetcd-extensions</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
