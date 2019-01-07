@@ -67,28 +67,20 @@ final class ClientConnectionManager {
   private final ExecutorService executorService;
 
   ClientConnectionManager(ClientBuilder builder) {
-    this(builder, Executors.newCachedThreadPool(), null);
-  }
-
-  ClientConnectionManager(
-      ClientBuilder builder, ExecutorService executorService) {
-
-    this(builder, executorService, null);
+    this(builder, null);
   }
 
   ClientConnectionManager(
       ClientBuilder builder, ManagedChannel channel) {
 
-    this(builder, Executors.newCachedThreadPool(), channel);
-  }
-
-  ClientConnectionManager(
-      ClientBuilder builder, ExecutorService executorService, ManagedChannel channel) {
-
     this.builder = builder;
     this.channelRef = new AtomicReference<>(channel);
     this.tokenRef = new AtomicReference<>();
-    this.executorService = executorService;
+    if (builder.executorService() == null) {
+      this.executorService = Executors.newCachedThreadPool();
+    } else {
+      this.executorService = builder.executorService();
+    }
   }
 
   ManagedChannel getChannel() {
