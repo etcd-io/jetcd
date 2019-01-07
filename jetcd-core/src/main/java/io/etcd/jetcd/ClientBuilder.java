@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 /**
  * ClientBuilder knows how to create an Client instance.
@@ -47,6 +48,7 @@ public final class ClientBuilder implements Cloneable {
   private final Set<URI> endpoints = new HashSet<>();
   private ByteSequence user;
   private ByteSequence password;
+  private ExecutorService executorService;
   private LoadBalancer.Factory loadBalancerFactory;
   private SslContext sslContext;
   private boolean lazyInitialization = false;
@@ -137,6 +139,23 @@ public final class ClientBuilder implements Cloneable {
   public ClientBuilder password(ByteSequence password) {
     checkNotNull(password, "password can't be null");
     this.password = password;
+    return this;
+  }
+
+  public ExecutorService executorService() {
+    return executorService;
+  }
+
+  /**
+   * config executor service.
+   *
+   * @param executorService executor service
+   * @return this builder
+   * @throws NullPointerException if executorService is <code>null</code>
+   */
+  public ClientBuilder executorService(ExecutorService executorService) {
+    checkNotNull(executorService, "executorService can't be null");
+    this.executorService = executorService;
     return this;
   }
 
