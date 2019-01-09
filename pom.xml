@@ -102,6 +102,7 @@
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
         <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
         <versions-maven-plugin.version>2.7</versions-maven-plugin.version>
+        <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
 
         <!-- dependencies -->
         <grpc.version>1.17.1</grpc.version>
@@ -794,6 +795,14 @@
             <id>release</id>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-release-plugin</artifactId>
+                        <version>${maven-release-plugin.version}</version>
+                        <configuration>
+                            <arguments>-DskipTests=true</arguments>
+                        </configuration>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
