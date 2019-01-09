@@ -22,7 +22,7 @@ script:
 
 deploy:
   provider: script
-  script: ./mvnw deploy --settings etc/mvn-deploy-settings.xml
+  script: ./mvnw deploy -DskipTests --settings etc/mvn-deploy-settings.xml
   skip_cleanup: true 
   on:
     branch: master
