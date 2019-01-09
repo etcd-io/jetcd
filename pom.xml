@@ -64,9 +64,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:https://github.com/etcd-io/jetcd.git</connection>
-        <developerConnection>scm:git:https://github.com/etcd-io/jetcd.git</developerConnection>
         <url>https://github.com/etcd-io/jetcd.git</url>
+        <connection>scm:git:git@github.com:etcd-io/jetcd.git</connection>
+        <developerConnection>scm:git:git@github.com:etcd-io/jetcd.git</developerConnection>
     </scm>
 
     <properties>
