@@ -432,7 +432,8 @@
                             <arg>-Xep:UnnecessaryStaticImport:ERROR</arg>
                             <arg>-Xep:UseBinds:ERROR</arg>
                             <arg>-Xep:WildcardImport:ERROR</arg>
-                            <!-- FutureReturnValueIgnored is better (stronger) than error-prone's own (and FindBug's) @CheckReturnValue annotation, as it checks that ANY return Future are checked, not just those from methods annotated @CheckReturnValue -->
+                            <!-- FutureReturnValueIgnored is better (stronger) than error-prone's own (and FindBug's) @CheckReturnValue annotation, 
+                                 as it checks that ANY return Future are checked, not just those from methods annotated @CheckReturnValue -->
                             <arg>-Xep:FutureReturnValueIgnored:ERROR</arg>
                             <arg>-Xep:IntLongMath:ERROR</arg>
                             <arg>-Xep:FloatCast:ERROR</arg>
