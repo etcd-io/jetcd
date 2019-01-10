@@ -720,7 +720,9 @@
                         <exclude>LICENSE</exclude>
                         <exclude>MAINTAINERS</exclude>
                         <exclude>CONTRIBUTING.md</exclude>
+                        <exclude>README.adoc</exclude>
                         <exclude>README.md</exclude>
+                        <exclude>README.MD</exclude>
                         <exclude>NOTICE</exclude>
                         <exclude>DCO</exclude>
                         <exclude>docs/**</exclude>
@@ -731,6 +733,7 @@
                         <exclude>src/test/resources/ssl/**</exclude>
                         <exclude>external/**</exclude>
                         <exclude>target-ide/**</exclude>
+                        <exclude>.factorypath</exclude>
                     </excludes>
                     <mapping>
                         <proto>DOUBLESLASH_STYLE</proto>

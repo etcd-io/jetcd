@@ -25,6 +25,7 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
+    <groupId>io.etcd.examples</groupId>
     <artifactId>jetcd-examples</artifactId>
     <packaging>pom</packaging>
 
