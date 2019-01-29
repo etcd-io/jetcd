@@ -18,11 +18,15 @@ package io.etcd.jetcd.lock;
 
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.Util;
 
 public class LockResponse extends AbstractResponse<io.etcd.jetcd.api.lock.LockResponse> {
 
-  public LockResponse(io.etcd.jetcd.api.lock.LockResponse response) {
+  private final ByteSequence unprefixedKey;
+
+  public LockResponse(io.etcd.jetcd.api.lock.LockResponse response, ByteSequence namespace) {
     super(response, response.getHeader());
+    this.unprefixedKey = ByteSequence.from(Util.unprefixNamespace(getResponse().getKey(), namespace));
   }
 
   /**
@@ -31,7 +35,7 @@ public class LockResponse extends AbstractResponse<io.etcd.jetcd.api.lock.LockRe
    * undefined behavior.
    */
   public ByteSequence getKey() {
-    return ByteSequence.from(getResponse().getKey());
+    return unprefixedKey;
   }
 
 }

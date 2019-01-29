@@ -46,9 +46,12 @@ final class KVImpl implements KV {
 
   private final KVGrpc.KVFutureStub stub;
 
+  private final ByteSequence namespace;
+
   KVImpl(ClientConnectionManager connectionManager) {
     this.connectionManager = connectionManager;
     this.stub = connectionManager.newStub(KVGrpc::newFutureStub);
+    this.namespace = connectionManager.getNamespace();
   }
 
   @Override
@@ -64,7 +67,7 @@ final class KVImpl implements KV {
     checkNotNull(option, "option should not be null");
 
     PutRequest request = PutRequest.newBuilder()
-        .setKey(key.getByteString())
+        .setKey(Util.prefixNamespace(key.getByteString(), namespace))
         .setValue(value.getByteString())
         .setLease(option.getLeaseId())
         .setPrevKv(option.getPrevKV())
@@ -72,7 +75,7 @@ final class KVImpl implements KV {
 
     return Util.toCompletableFutureWithRetry(
         () -> stub.put(request),
-        PutResponse::new,
+        response -> new PutResponse(response, namespace),
         Util::isRetriable,
         connectionManager.getExecutorService()
     );
@@ -89,7 +92,7 @@ final class KVImpl implements KV {
     checkNotNull(option, "option should not be null");
 
     RangeRequest.Builder builder = RangeRequest.newBuilder()
-        .setKey(key.getByteString())
+        .setKey(Util.prefixNamespace(key.getByteString(), namespace))
         .setCountOnly(option.isCountOnly())
         .setLimit(option.getLimit())
         .setRevision(option.getRevision())
@@ -99,14 +102,15 @@ final class KVImpl implements KV {
         .setSortTarget(toRangeRequestSortTarget(option.getSortField()));
 
     option.getEndKey()
-      .map(ByteSequence::getByteString)
+      .map(endKey -> Util.prefixNamespaceToRangeEnd(key.getByteString(),
+          endKey.getByteString(), namespace))
       .ifPresent(builder::setRangeEnd);
 
     RangeRequest request = builder.build();
 
     return Util.toCompletableFutureWithRetry(
         () -> stub.range(request),
-        GetResponse::new,
+        response -> new GetResponse(response, namespace),
         Util::isRetriable,
         connectionManager.getExecutorService()
     );
@@ -123,18 +127,19 @@ final class KVImpl implements KV {
     checkNotNull(option, "option should not be null");
 
     DeleteRangeRequest.Builder builder = DeleteRangeRequest.newBuilder()
-        .setKey(key.getByteString())
+        .setKey(Util.prefixNamespace(key.getByteString(), namespace))
         .setPrevKv(option.isPrevKV());
 
     option.getEndKey()
-      .map(ByteSequence::getByteString)
+      .map(endKey -> Util.prefixNamespaceToRangeEnd(key.getByteString(),
+          endKey.getByteString(), namespace))
       .ifPresent(builder::setRangeEnd);
 
     DeleteRangeRequest request = builder.build();
 
     return Util.toCompletableFutureWithRetry(
         () -> stub.deleteRange(request),
-        DeleteResponse::new,
+        response -> new DeleteResponse(response, namespace),
         Util::isRetriable,
         connectionManager.getExecutorService()
     );
@@ -166,10 +171,10 @@ final class KVImpl implements KV {
     return TxnImpl.newTxn((request) ->
         Util.toCompletableFutureWithRetry(
             () -> stub.txn(request),
-            TxnResponse::new,
+            response -> new TxnResponse(response, namespace),
             Util::isRetriable,
             connectionManager.getExecutorService()
-        )
-    );
+        ),
+        namespace);
   }
 }

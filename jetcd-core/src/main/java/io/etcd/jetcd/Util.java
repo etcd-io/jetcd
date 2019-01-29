@@ -23,6 +23,7 @@ import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdExceptio
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.ByteString;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.grpc.Status;
 import java.net.URI;
@@ -227,6 +228,41 @@ public final class Util {
     // system in an inconsistent state, but retrying could make progress.
     // (e.g., failed in middle of send, corrupted frame)
     return status.getCode() != Status.Code.UNAVAILABLE && status.getCode() != Status.Code.INTERNAL;
+  }
+
+  public static ByteString prefixNamespace(ByteString key, ByteSequence namespace) {
+    return namespace.isEmpty() ? key : namespace.getByteString().concat(key);
+  }
+
+  public static ByteString prefixNamespaceToRangeEnd(
+      ByteString key, ByteString end, ByteSequence namespace) {
+    if (namespace.isEmpty()) {
+      return end;
+    }
+
+    if (end.size() == 1 && end.toByteArray()[0] == 0) {
+      // range end is '\0', calculate the prefixed range end by (key + 1)
+      byte[] prefixedEndArray = key.toByteArray();
+      boolean ok = false;
+      for (int i = (prefixedEndArray.length - 1); i >= 0; i--) {
+        prefixedEndArray[i]++;
+        if (prefixedEndArray[i] != 0) {
+          ok = true;
+          break;
+        }
+      }
+      if (!ok) {
+        // 0xff..ff => 0x00
+        prefixedEndArray = new byte[] {0};
+      }
+      return ByteString.copyFrom(prefixedEndArray);
+    } else {
+      return namespace.getByteString().concat(end);
+    }
+  }
+
+  public static ByteString unprefixNamespace(ByteString key, ByteSequence namespace) {
+    return namespace.isEmpty() ? key : key.substring(namespace.size());
   }
 
 }

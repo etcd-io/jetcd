@@ -54,6 +54,7 @@ final class WatchImpl implements Watch {
   private final ListeningScheduledExecutorService executor;
   private final AtomicBoolean closed;
   private final List<WatcherImpl> watchers;
+  private final ByteSequence namespace;
 
   WatchImpl(ClientConnectionManager connectionManager) {
     this.lock = new Object();
@@ -62,6 +63,7 @@ final class WatchImpl implements Watch {
     this.executor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
     this.closed = new AtomicBoolean();
     this.watchers = new ArrayList<>();
+    this.namespace = connectionManager.getNamespace();
   }
 
   @Override
@@ -129,13 +131,14 @@ final class WatchImpl implements Watch {
         id = -1;
 
         WatchCreateRequest.Builder builder = WatchCreateRequest.newBuilder()
-            .setKey(this.key.getByteString())
+            .setKey(Util.prefixNamespace(this.key.getByteString(), namespace))
             .setPrevKv(this.option.isPrevKV())
             .setProgressNotify(option.isProgressNotify())
             .setStartRevision(this.revision);
 
         option.getEndKey()
-            .map(ByteSequence::getByteString)
+            .map(endKey -> Util.prefixNamespaceToRangeEnd(this.key.getByteString(),
+                endKey.getByteString(), namespace))
             .ifPresent(builder::setRangeEnd);
 
         if (option.isNoDelete()) {
@@ -227,10 +230,10 @@ final class WatchImpl implements Watch {
         // For more info:
         //   https://coreos.com/etcd/docs/latest/learning/api.html#watch-streams
         //
-        listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response));
+        listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response, namespace));
         revision = response.getHeader().getRevision();
       } else if (response.getEventsCount() > 0) {
-        listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response));
+        listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response, namespace));
         revision = response.getEvents(response.getEventsCount() - 1).getKv().getModRevision() + 1;
       }
     }

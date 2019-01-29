@@ -16,7 +16,9 @@
 
 package io.etcd.jetcd.op;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Txn;
 import io.etcd.jetcd.api.TxnRequest;
 import io.etcd.jetcd.kv.TxnResponse;
@@ -30,9 +32,17 @@ import java.util.function.Function;
  */
 public class TxnImpl implements Txn {
 
-  public static TxnImpl newTxn(Function<TxnRequest, CompletableFuture<TxnResponse>> f) {
-    return new TxnImpl(f);
+  public static TxnImpl newTxn(
+      Function<TxnRequest, CompletableFuture<TxnResponse>> f, ByteSequence namespace) {
+    return new TxnImpl(f, namespace);
   }
+
+  @VisibleForTesting
+  static TxnImpl newTxn(Function<TxnRequest, CompletableFuture<TxnResponse>> f) {
+    return newTxn(f, ByteSequence.EMPTY);
+  }
+
+  private final ByteSequence namespace;
 
   private List<Cmp> cmpList = new ArrayList<>();
   private List<Op> successOpList = new ArrayList<>();
@@ -42,8 +52,9 @@ public class TxnImpl implements Txn {
   private boolean seenThen = false;
   private boolean seenElse = false;
 
-  private TxnImpl(Function<TxnRequest, CompletableFuture<TxnResponse>> f) {
+  private TxnImpl(Function<TxnRequest, CompletableFuture<TxnResponse>> f, ByteSequence namespace) {
     this.requestF = f;
+    this.namespace = namespace;
   }
 
   //CHECKSTYLE:OFF
@@ -108,15 +119,15 @@ public class TxnImpl implements Txn {
     TxnRequest.Builder requestBuilder = TxnRequest.newBuilder();
 
     for (Cmp c : this.cmpList) {
-      requestBuilder.addCompare(c.toCompare());
+      requestBuilder.addCompare(c.toCompare(namespace));
     }
 
     for (Op o : this.successOpList) {
-      requestBuilder.addSuccess(o.toRequestOp());
+      requestBuilder.addSuccess(o.toRequestOp(namespace));
     }
 
     for (Op o : this.failureOpList) {
-      requestBuilder.addFailure(o.toRequestOp());
+      requestBuilder.addFailure(o.toRequestOp(namespace));
     }
 
     return requestBuilder.build();

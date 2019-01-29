@@ -120,6 +120,9 @@ final class ClientConnectionManager {
     }
   }
 
+  ByteSequence getNamespace() {
+    return builder.namespace();
+  }
 
   ExecutorService getExecutorService() {
     return executorService;
