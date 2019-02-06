@@ -267,6 +267,12 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>com.google.truth</groupId>
+                <artifactId>truth</artifactId>
+                <scope>test</scope>
+                <version>0.42</version>
+            </dependency>
+            <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
                 <version>${mockito.version}</version>
@@ -432,7 +438,7 @@
                             <arg>-Xep:UnnecessaryStaticImport:ERROR</arg>
                             <arg>-Xep:UseBinds:ERROR</arg>
                             <arg>-Xep:WildcardImport:ERROR</arg>
-                            <!-- FutureReturnValueIgnored is better (stronger) than error-prone's own (and FindBug's) @CheckReturnValue annotation, 
+                            <!-- FutureReturnValueIgnored is better (stronger) than error-prone's own (and FindBug's) @CheckReturnValue annotation,
                                  as it checks that ANY return Future are checked, not just those from methods annotated @CheckReturnValue -->
                             <arg>-Xep:FutureReturnValueIgnored:ERROR</arg>
                             <arg>-Xep:IntLongMath:ERROR</arg>
