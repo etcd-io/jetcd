@@ -35,4 +35,11 @@ public class EtcdClusterStartTest {
             etcd.start();
         }
     }
+
+    @Test
+    public void testStartEtcdWithAdditionalArguments() throws Exception {
+        try (EtcdCluster etcd = EtcdClusterFactory.buildCluster(getClass().getSimpleName(), 3, false, false, "--max-txn-ops", "1024")) {
+            etcd.start();
+        }
+    }
 }
