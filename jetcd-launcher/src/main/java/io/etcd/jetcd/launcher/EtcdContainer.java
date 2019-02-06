@@ -16,6 +16,9 @@
 
 package io.etcd.jetcd.launcher;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+
 import com.github.dockerjava.api.DockerClient;
 
 import java.io.IOException;
@@ -71,7 +74,17 @@ public class EtcdContainer implements AutoCloseable {
   private final Path dataDirectory;
 
   public EtcdContainer(Network network, LifecycleListener listener, boolean ssl, String clusterName,
-                       String endpoint, List<String> endpoints, boolean restartable) {
+          String endpoint, List<String> endpoints, boolean restartable) {
+    this(network, listener, ssl, clusterName, endpoint, endpoints, restartable, emptyList());
+  }
+
+  public EtcdContainer(Network network, LifecycleListener listener, boolean ssl, String clusterName,
+          String endpoint, List<String> endpoints, boolean restartable, String... additionalArgs) {
+    this(network, listener, ssl, clusterName, endpoint, endpoints, restartable, asList(additionalArgs));
+  }
+
+  public EtcdContainer(Network network, LifecycleListener listener, boolean ssl, String clusterName,
+                       String endpoint, List<String> endpoints, boolean restartable, List<String> additionalArgs) {
     this.endpoint = endpoint;
     this.ssl = ssl;
     this.listener = listener;
@@ -134,6 +147,8 @@ public class EtcdContainer implements AutoCloseable {
       command.add("--initial-cluster-state");
       command.add("new");
     }
+
+    command.addAll(additionalArgs);
 
     if (!command.isEmpty()) {
       this.container.withCommand(command.toArray(new String[command.size()]));
