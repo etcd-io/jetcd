@@ -19,8 +19,13 @@ package io.etcd.jetcd.launcher.junit;
 import io.etcd.jetcd.launcher.EtcdCluster;
 import io.etcd.jetcd.launcher.EtcdClusterFactory;
 import org.junit.rules.ExternalResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EtcdClusterResource extends ExternalResource {
+
+  private static final Logger LOG = LoggerFactory.getLogger(EtcdClusterResource.class);
+
   private final EtcdCluster cluster;
 
   public EtcdClusterResource(String clusterName) {
@@ -50,6 +55,10 @@ public class EtcdClusterResource extends ExternalResource {
 
   @Override
   protected void after() {
-    this.cluster.close();
+    try {
+      this.cluster.close();
+    } catch (RuntimeException e) {
+      LOG.warn("close() failed (but ignoring it)", e);
+    }
   }
 }
