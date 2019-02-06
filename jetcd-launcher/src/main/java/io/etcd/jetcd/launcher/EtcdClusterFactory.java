@@ -38,7 +38,8 @@ public class EtcdClusterFactory {
     return buildCluster(clusterName, nodes, ssl, false);
   }
 
-  public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl, boolean restartable) {
+  public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl, boolean restartable,
+          String... additionalArgs) {
     final Network network = Network.builder().id(clusterName).build();
     final CountDownLatch latch = new CountDownLatch(nodes);
     final AtomicBoolean failedToStart = new AtomicBoolean(false);
@@ -63,7 +64,7 @@ public class EtcdClusterFactory {
     final List<String> endpoints = IntStream.range(0, nodes).mapToObj(i -> "etcd" + i).collect(toList());
 
     final List<EtcdContainer> containers = endpoints.stream()
-            .map(e -> new EtcdContainer(network, listener, ssl, clusterName, e, endpoints, restartable))
+            .map(e -> new EtcdContainer(network, listener, ssl, clusterName, e, endpoints, restartable, additionalArgs))
             .collect(toList());
 
     return new EtcdCluster() {
@@ -88,7 +89,8 @@ public class EtcdClusterFactory {
         containers.forEach(EtcdContainer::close);
       }
 
-      public void restart() {
+      @Override
+    public void restart() {
         containers.forEach(EtcdContainer::restart);
       }
 
