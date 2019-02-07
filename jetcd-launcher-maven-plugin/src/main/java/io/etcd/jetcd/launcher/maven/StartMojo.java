@@ -43,12 +43,21 @@ public class StartMojo extends AbstractMojo {
 
   private static final Logger LOG = LoggerFactory.getLogger(StartMojo.class);
 
+  private static final String[] EMPTY = new String[0];
+
   @Parameter(required = true, defaultValue = "target/jetcd-launcher-maven-plugin/endpoint")
   private File endpointFile;
 
+  /**
+   * <a href="https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md">Additional arguments</a> to pass to etcd.
+   */
+  @Parameter(required = false)
+  private String[] additionalArguments;
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-    Singleton.etcd = EtcdClusterFactory.buildCluster("maven", 1, false);
+    Singleton.etcd = EtcdClusterFactory.buildCluster("maven", 1, false, false,
+            additionalArguments != null ? additionalArguments : EMPTY);
     Singleton.etcd.start();
 
     URI endpoint = Singleton.etcd.getClientEndpoints().get(0);

@@ -48,6 +48,12 @@
                 <groupId>${project.groupId}</groupId>
                 <artifactId>jetcd-launcher-maven-plugin</artifactId>
                 <version>${project.version}</version>
+                <configuration>
+                  <additionalArguments>
+                    <additionalArgument>--max-txn-ops</additionalArgument>
+                    <additionalArgument>1024</additionalArgument>
+                  </additionalArguments>
+                </configuration>
                 <executions>
                   <execution>
                     <id>start-etcd</id>
