@@ -29,17 +29,18 @@ import org.junit.Test;
  */
 public class EtcdClusterStartTest {
 
-    @Test
-    public void testStartEtcd() throws Exception {
-        try (EtcdCluster etcd = EtcdClusterFactory.buildCluster(getClass().getSimpleName(), 3, false, false)) {
-            etcd.start();
-        }
+  @Test
+  public void testStartEtcd() throws Exception {
+    try (EtcdCluster etcd = EtcdClusterFactory.buildCluster(getClass().getSimpleName(), 3, false, false)) {
+      etcd.start();
     }
+  }
 
-    @Test
-    public void testStartEtcdWithAdditionalArguments() throws Exception {
-        try (EtcdCluster etcd = EtcdClusterFactory.buildCluster(getClass().getSimpleName(), 3, false, false, "--max-txn-ops", "1024")) {
-            etcd.start();
-        }
+  @Test
+  public void testStartEtcdWithAdditionalArguments() throws Exception {
+    try (EtcdCluster etcd = EtcdClusterFactory.buildCluster(getClass().getSimpleName(), 3, false, false,
+            "--max-txn-ops", "1024")) {
+      etcd.start();
     }
+  }
 }
