@@ -114,7 +114,7 @@ public abstract class Op {
           .setSortTarget(toRangeRequestSortTarget(this.option.getSortField()));
 
       this.option.getEndKey()
-          .map(endKey -> Util.prefixNamespaceToRangeEnd(this.key,
+          .map(endKey -> Util.prefixNamespaceToRangeEnd(
               ByteString.copyFrom(endKey.getBytes()), namespace))
           .ifPresent(range::setRangeEnd);
 
@@ -137,7 +137,7 @@ public abstract class Op {
           .setPrevKv(this.option.isPrevKV());
 
       this.option.getEndKey()
-          .map(endKey -> Util.prefixNamespaceToRangeEnd(this.key,
+          .map(endKey -> Util.prefixNamespaceToRangeEnd(
               ByteString.copyFrom(endKey.getBytes()), namespace))
           .ifPresent(delete::setRangeEnd);
 

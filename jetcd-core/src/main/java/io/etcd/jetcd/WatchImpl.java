@@ -137,8 +137,7 @@ final class WatchImpl implements Watch {
             .setStartRevision(this.revision);
 
         option.getEndKey()
-            .map(endKey -> Util.prefixNamespaceToRangeEnd(this.key.getByteString(),
-                endKey.getByteString(), namespace))
+            .map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
             .ifPresent(builder::setRangeEnd);
 
         if (option.isNoDelete()) {

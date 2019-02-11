@@ -234,18 +234,17 @@ public final class Util {
     return namespace.isEmpty() ? key : namespace.getByteString().concat(key);
   }
 
-  public static ByteString prefixNamespaceToRangeEnd(
-      ByteString key, ByteString end, ByteSequence namespace) {
+  public static ByteString prefixNamespaceToRangeEnd(ByteString end, ByteSequence namespace) {
     if (namespace.isEmpty()) {
       return end;
     }
 
     if (end.size() == 1 && end.toByteArray()[0] == 0) {
       // range end is '\0', calculate the prefixed range end by (key + 1)
-      byte[] prefixedEndArray = key.toByteArray();
+      byte[] prefixedEndArray = namespace.getByteString().toByteArray();
       boolean ok = false;
       for (int i = (prefixedEndArray.length - 1); i >= 0; i--) {
-        prefixedEndArray[i]++;
+        prefixedEndArray[i] = (byte) (prefixedEndArray[i] + 1);
         if (prefixedEndArray[i] != 0) {
           ok = true;
           break;

@@ -16,11 +16,16 @@
 package io.etcd.jetcd;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
+import com.google.common.base.Charsets;
 import io.grpc.netty.NettyChannelBuilder;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
+
 import org.junit.Test;
 
 public class ClientBuilderTest {
@@ -52,5 +57,46 @@ public class ClientBuilderTest {
     final NettyChannelBuilder channelBuilder = (NettyChannelBuilder)new ClientConnectionManager(builder).defaultChannelBuilder();
 
     assertThat(channelBuilder).hasFieldOrPropertyWithValue("maxInboundMessageSize", value);
+  }
+
+  @Test
+  public void testNamespace() {
+    class TestCase {
+      public ByteSequence namespace;
+      public ByteSequence expectedNamespace;
+
+      public TestCase(ByteSequence namespace, ByteSequence expectedNamespace) {
+        this.namespace = namespace;
+        this.expectedNamespace = expectedNamespace;
+      }
+    }
+    List<TestCase> testCases = Arrays.asList(
+        // namespace setting and expected namespace
+        new TestCase(ByteSequence.EMPTY, ByteSequence.EMPTY),
+        new TestCase(ByteSequence.from("/", Charsets.UTF_8), ByteSequence.EMPTY),
+        new TestCase(ByteSequence.from("/namespace1", Charsets.UTF_8),
+            ByteSequence.from("/namespace1/", Charsets.UTF_8)),
+        new TestCase(ByteSequence.from("/namespace1/", Charsets.UTF_8),
+            ByteSequence.from("/namespace1/", Charsets.UTF_8)),
+        new TestCase(ByteSequence.from("namespace2/", Charsets.UTF_8),
+            ByteSequence.from("namespace2/", Charsets.UTF_8))
+    );
+    testCases.forEach(testCase -> {
+      try {
+        final ClientBuilder builder =  Client.builder().endpoints(new URI("http://127.0.0.1:2379"))
+            .namespace(testCase.namespace);
+        final ClientConnectionManager connectionManager = new ClientConnectionManager(builder);
+        assertEquals(testCase.expectedNamespace, connectionManager.getNamespace());
+      } catch (URISyntaxException e) {
+      }
+    });
+
+    // test default namespace setting
+    try {
+      final ClientBuilder builder =  Client.builder().endpoints(new URI("http://127.0.0.1:2379"));
+      final ClientConnectionManager connectionManager = new ClientConnectionManager(builder);
+      assertEquals(ByteSequence.EMPTY, connectionManager.getNamespace());
+    } catch (URISyntaxException e) {
+    }
   }
 }

@@ -159,7 +159,8 @@ public final class ClientBuilder implements Cloneable {
     checkNotNull(namespace);
     if (namespace.getByteString().isEmpty()) {
       this.namespace = ByteSequence.EMPTY;
-    } else if (namespace.size() == 1 && namespace.getByteString().equals(ByteSequence.NAMESPACE_DELIMITER)) {
+    } else if (namespace.size() == 1
+        && namespace.getByteString().equals(ByteSequence.NAMESPACE_DELIMITER.getByteString())) {
       // treat "/" as no namespace
       this.namespace = ByteSequence.EMPTY;
     } else if (namespace.getByteString().byteAt(namespace.getByteString().size() - 1) == '/') {

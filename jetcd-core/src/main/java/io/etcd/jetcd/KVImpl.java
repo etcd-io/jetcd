@@ -102,8 +102,7 @@ final class KVImpl implements KV {
         .setSortTarget(toRangeRequestSortTarget(option.getSortField()));
 
     option.getEndKey()
-      .map(endKey -> Util.prefixNamespaceToRangeEnd(key.getByteString(),
-          endKey.getByteString(), namespace))
+      .map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
       .ifPresent(builder::setRangeEnd);
 
     RangeRequest request = builder.build();
@@ -131,8 +130,7 @@ final class KVImpl implements KV {
         .setPrevKv(option.isPrevKV());
 
     option.getEndKey()
-      .map(endKey -> Util.prefixNamespaceToRangeEnd(key.getByteString(),
-          endKey.getByteString(), namespace))
+      .map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
       .ifPresent(builder::setRangeEnd);
 
     DeleteRangeRequest request = builder.build();
