@@ -124,6 +124,7 @@
         <mockito.version>2.24.5</mockito.version>
         <assertj.version>3.12.0</assertj.version>
         <junit.version>4.12</junit.version>
+        <junit-jupiter.version>5.2.0</junit-jupiter.version>
         <netty-tcnative.version>2.0.20.Final</netty-tcnative.version>
         <testcontainers.version>1.10.6</testcontainers.version>
         <commons-io.version>2.6</commons-io.version>

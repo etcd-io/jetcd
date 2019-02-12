@@ -21,6 +21,7 @@ import static io.etcd.jetcd.options.OptionsUtil.toRangeRequestSortTarget;
 
 import com.google.protobuf.ByteString;
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.Util;
 import io.etcd.jetcd.api.DeleteRangeRequest;
 import io.etcd.jetcd.api.PutRequest;
 import io.etcd.jetcd.api.RangeRequest;
@@ -50,7 +51,7 @@ public abstract class Op {
     this.key = key;
   }
 
-  abstract RequestOp toRequestOp();
+  abstract RequestOp toRequestOp(ByteSequence namespace);
 
   public static PutOp put(ByteSequence key, ByteSequence value, PutOption option) {
     return new PutOp(ByteString.copyFrom(key.getBytes()), ByteString.copyFrom(value.getBytes()),
@@ -80,9 +81,9 @@ public abstract class Op {
       this.option = option;
     }
 
-    RequestOp toRequestOp() {
+    RequestOp toRequestOp(ByteSequence namespace) {
       PutRequest put = PutRequest.newBuilder()
-          .setKey(this.key)
+          .setKey(Util.prefixNamespace(this.key, namespace))
           .setValue(this.value)
           .setLease(this.option.getLeaseId())
           .setPrevKv(this.option.getPrevKV())
@@ -101,9 +102,9 @@ public abstract class Op {
       this.option = option;
     }
 
-    RequestOp toRequestOp() {
+    RequestOp toRequestOp(ByteSequence namespace) {
       RangeRequest.Builder range = RangeRequest.newBuilder()
-          .setKey(this.key)
+          .setKey(Util.prefixNamespace(this.key, namespace))
           .setCountOnly(this.option.isCountOnly())
           .setLimit(this.option.getLimit())
           .setRevision(this.option.getRevision())
@@ -113,7 +114,9 @@ public abstract class Op {
           .setSortTarget(toRangeRequestSortTarget(this.option.getSortField()));
 
       this.option.getEndKey()
-          .ifPresent(endkey -> range.setRangeEnd(ByteString.copyFrom(endkey.getBytes())));
+          .map(endKey -> Util.prefixNamespaceToRangeEnd(
+              ByteString.copyFrom(endKey.getBytes()), namespace))
+          .ifPresent(range::setRangeEnd);
 
       return RequestOp.newBuilder().setRequestRange(range).build();
     }
@@ -128,14 +131,15 @@ public abstract class Op {
       this.option = option;
     }
 
-    RequestOp toRequestOp() {
+    RequestOp toRequestOp(ByteSequence namespace) {
       DeleteRangeRequest.Builder delete = DeleteRangeRequest.newBuilder()
-          .setKey(this.key)
+          .setKey(Util.prefixNamespace(this.key, namespace))
           .setPrevKv(this.option.isPrevKV());
 
-      if (this.option.getEndKey().isPresent()) {
-        delete.setRangeEnd(ByteString.copyFrom(this.option.getEndKey().get().getBytes()));
-      }
+      this.option.getEndKey()
+          .map(endKey -> Util.prefixNamespaceToRangeEnd(
+              ByteString.copyFrom(endKey.getBytes()), namespace))
+          .ifPresent(delete::setRangeEnd);
 
       return RequestOp.newBuilder().setRequestDeleteRange(delete).build();
     }
@@ -156,24 +160,24 @@ public abstract class Op {
       this.elseOps = elseOps;
     }
 
-    RequestOp toRequestOp() {
+    RequestOp toRequestOp(ByteSequence namespace) {
       TxnRequest.Builder txn = TxnRequest.newBuilder();
 
       if (cmps != null) {
         for (Cmp cmp : cmps) {
-          txn.addCompare(cmp.toCompare());
+          txn.addCompare(cmp.toCompare(namespace));
         }
       }
 
       if (thenOps != null) {
         for (Op thenOp : thenOps) {
-          txn.addSuccess(thenOp.toRequestOp());
+          txn.addSuccess(thenOp.toRequestOp(namespace));
         }
       }
 
       if (elseOps != null) {
         for (Op elseOp : elseOps) {
-          txn.addFailure(elseOp.toRequestOp());
+          txn.addFailure(elseOp.toRequestOp(namespace));
         }
       }
 

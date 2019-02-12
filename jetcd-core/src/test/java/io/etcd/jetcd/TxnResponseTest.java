@@ -40,7 +40,7 @@ public class TxnResponseTest {
             .setResponseRange(RangeResponse.getDefaultInstance()))
         .addResponses(ResponseOp.newBuilder().setResponseTxn(io.etcd.jetcd.api.TxnResponse.getDefaultInstance()))
         .build();
-    txnResponse = new TxnResponse(response);
+    txnResponse = new TxnResponse(response, ByteSequence.EMPTY);
   }
 
   @Test
