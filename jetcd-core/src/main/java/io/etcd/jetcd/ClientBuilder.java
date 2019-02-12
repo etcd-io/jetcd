@@ -57,6 +57,7 @@ public final class ClientBuilder implements Cloneable {
   private Integer maxInboundMessageSize;
   private Map<Metadata.Key, Object> headers;
   private List<ClientInterceptor> interceptors;
+  private ByteSequence namespace = ByteSequence.EMPTY;
 
   ClientBuilder() {
   }
@@ -139,6 +140,24 @@ public final class ClientBuilder implements Cloneable {
   public ClientBuilder password(ByteSequence password) {
     checkNotNull(password, "password can't be null");
     this.password = password;
+    return this;
+  }
+
+  public ByteSequence namespace() {
+    return namespace;
+  }
+
+  /**
+   * config the namespace of keys used in {@code KV}, {@code Txn}, {@code Lock} and {@code Watch}.
+   * "/" will be treated as no namespace.
+   *
+   * @param namespace the namespace of each key used
+   * @return this builder
+   * @throws NullPointerException if namespace is <code>null</code>
+   */
+  public ClientBuilder namespace(ByteSequence namespace) {
+    checkNotNull(namespace, "namespace can't be null");
+    this.namespace = namespace;
     return this;
   }
 

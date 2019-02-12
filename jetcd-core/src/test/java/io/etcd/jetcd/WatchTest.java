@@ -17,6 +17,7 @@ package io.etcd.jetcd;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.base.Charsets;
 import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.common.exception.CompactedException;
 import io.etcd.jetcd.kv.PutResponse;
@@ -39,31 +40,51 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /**
  * watch test case.
  */
+@RunWith(Parameterized.class)
 public class WatchTest {
   @ClassRule
   public static final EtcdClusterResource clusterResource = new EtcdClusterResource("watch", 3);
+  private static final ByteSequence namespace = ByteSequence.from("test-namespace/", Charsets.UTF_8);
 
   private static Client client;
-  private static Watch watchClient;
+  private static Client clientWithNamespace;
   private static KV kvClient;
+
+  private boolean useNamespace;
+  private Watch watchClient;
 
   @Rule
   public Timeout timeout = Timeout.seconds(10);
 
+  public WatchTest(boolean useNamespace) {
+    this.useNamespace = useNamespace;
+    this.watchClient = useNamespace ? clientWithNamespace.getWatchClient()
+        : client.getWatchClient();
+  }
+
+  @Parameterized.Parameters(name = "UseNamespace = {0}")
+  public static List<Boolean> parameters() {
+    return Arrays.asList(new Boolean[] {true, false});
+  }
+
   @BeforeClass
   public static void setUp() {
     client = Client.builder().endpoints(clusterResource.cluster().getClientEndpoints()).build();
-    watchClient = client.getWatchClient();
+    clientWithNamespace = Client.builder().endpoints(clusterResource.cluster()
+        .getClientEndpoints()).namespace(namespace).build();
     kvClient = client.getKVClient();
   }
 
   @AfterClass
   public static void tearDown() {
     client.close();
+    clientWithNamespace.close();
   }
 
   @Test
@@ -81,7 +102,7 @@ public class WatchTest {
         latch.countDown();
       });
 
-      kvClient.put(key, value).get();
+      putKV(key, value);
       latch.await(4, TimeUnit.SECONDS);
 
       assertThat(ref.get()).isNotNull();
@@ -114,7 +135,7 @@ public class WatchTest {
         latch.countDown();
       });
 
-      kvClient.put(key, value).get();
+      putKV(key, value);
       latch.await(4, TimeUnit.SECONDS);
 
       assertThat(res).hasSize(2);
@@ -143,10 +164,10 @@ public class WatchTest {
         latch.countDown();
       });
 
-      kvClient.put(key, value).get();
+      putKV(key, value);
 
       watcher = watchClient.watch(key, listener);
-      kvClient.delete(key).get();
+      deleteKey(key);
 
       latch.await(4, TimeUnit.SECONDS);
 
@@ -189,6 +210,24 @@ public class WatchTest {
       assertThat(ref.get().getClass()).isEqualTo(CompactedException.class);
     } finally {
       IOUtils.closeQuietly(watcher);
+    }
+  }
+
+  private void putKV(ByteSequence key, ByteSequence value) throws Exception{
+    if (useNamespace) {
+      ByteSequence wKey = ByteSequence.from(namespace.getByteString().concat(key.getByteString()));
+      kvClient.put(wKey, value).get();
+    } else {
+      kvClient.put(key, value).get();
+    }
+  }
+
+  private void deleteKey(ByteSequence key) throws Exception {
+    if (useNamespace) {
+      ByteSequence wKey = ByteSequence.from(namespace.getByteString().concat(key.getByteString()));
+      kvClient.delete(wKey).get();
+    } else {
+      kvClient.delete(key).get();
     }
   }
 }

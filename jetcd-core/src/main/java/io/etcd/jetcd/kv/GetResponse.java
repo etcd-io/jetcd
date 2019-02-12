@@ -17,6 +17,7 @@
 package io.etcd.jetcd.kv;
 
 import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.api.RangeResponse;
 import java.util.List;
@@ -24,10 +25,13 @@ import java.util.stream.Collectors;
 
 public class GetResponse extends AbstractResponse<RangeResponse> {
 
+  private final ByteSequence namespace;
+
   private List<KeyValue> kvs;
 
-  public GetResponse(RangeResponse rangeResponse) {
+  public GetResponse(RangeResponse rangeResponse, ByteSequence namespace) {
     super(rangeResponse, rangeResponse.getHeader());
+    this.namespace = namespace;
   }
 
   /**
@@ -36,7 +40,7 @@ public class GetResponse extends AbstractResponse<RangeResponse> {
   public synchronized List<KeyValue> getKvs() {
     if (kvs == null) {
       kvs = getResponse().getKvsList().stream()
-          .map(KeyValue::new)
+          .map(kv -> new KeyValue(kv, namespace))
           .collect(Collectors.toList());
     }
 

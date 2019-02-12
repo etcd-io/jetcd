@@ -18,10 +18,11 @@ package io.etcd.jetcd.op;
 
 import com.google.protobuf.ByteString;
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.Util;
 import io.etcd.jetcd.api.Compare;
 
 /**
- * The compare predicate in {@link Txn}.
+ * The compare predicate in {@link io.etcd.jetcd.Txn}.
  */
 public class Cmp {
 
@@ -39,8 +40,9 @@ public class Cmp {
     this.target = target;
   }
 
-  Compare toCompare() {
-    Compare.Builder compareBuilder = Compare.newBuilder().setKey(this.key);
+  Compare toCompare(ByteSequence namespace) {
+    Compare.Builder compareBuilder = Compare.newBuilder().setKey(
+        Util.prefixNamespace(this.key, namespace));
     switch (this.op) {
       case EQUAL:
         compareBuilder.setResult(Compare.CompareResult.EQUAL);

@@ -31,22 +31,25 @@ final class LockImpl implements Lock {
 
   private final LockGrpc.LockFutureStub stub;
 
+  private final ByteSequence namespace;
+
   LockImpl(ClientConnectionManager connectionManager) {
     this.connectionManager = connectionManager;
     this.stub = connectionManager.newStub(LockGrpc::newFutureStub);
+    this.namespace = connectionManager.getNamespace();
   }
 
   @Override
   public CompletableFuture<LockResponse> lock(ByteSequence name, long leaseId) {
     checkNotNull(name);
     LockRequest request = LockRequest.newBuilder()
-        .setName(name.getByteString())
+        .setName(Util.prefixNamespace(name.getByteString(), namespace))
         .setLease(leaseId)
         .build();
 
     return Util.toCompletableFutureWithRetry(
         () -> stub.lock(request),
-        LockResponse::new,
+        (response) -> new LockResponse(response, namespace),
         Util::isRetriable,
         connectionManager.getExecutorService()
     );
@@ -56,7 +59,7 @@ final class LockImpl implements Lock {
   public CompletableFuture<UnlockResponse> unlock(ByteSequence lockKey) {
     checkNotNull(lockKey);
     UnlockRequest request = UnlockRequest.newBuilder()
-        .setKey(lockKey.getByteString())
+        .setKey(Util.prefixNamespace(lockKey.getByteString(), namespace))
         .build();
 
     return Util.toCompletableFutureWithRetry(

@@ -23,6 +23,9 @@ import java.nio.charset.Charset;
  * Etcd binary bytes, easy to convert between byte[], String and ByteString.
  */
 public final class ByteSequence {
+  public static final ByteSequence EMPTY = new ByteSequence(ByteString.EMPTY);
+  public static final ByteSequence NAMESPACE_DELIMITER = ByteSequence.from(new byte[] {'/'});
+
   private final int hashVal;
   private final ByteString byteString;
 
@@ -68,6 +71,14 @@ public final class ByteSequence {
 
   public byte[] getBytes() {
     return byteString.toByteArray();
+  }
+
+  public boolean isEmpty() {
+    return byteString.isEmpty();
+  }
+
+  public int size() {
+    return byteString.size();
   }
 
   /**

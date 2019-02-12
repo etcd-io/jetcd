@@ -21,18 +21,23 @@ package io.etcd.jetcd;
  */
 public class KeyValue {
 
-  private io.etcd.jetcd.api.KeyValue kv;
+  private final io.etcd.jetcd.api.KeyValue kv;
+  private final ByteSequence unprefixedKey;
+  private final ByteSequence value;
 
-  public KeyValue(io.etcd.jetcd.api.KeyValue kv) {
+  public KeyValue(io.etcd.jetcd.api.KeyValue kv, ByteSequence namespace) {
     this.kv = kv;
+    this.unprefixedKey = ByteSequence.from(kv.getKey().isEmpty() ? kv.getKey()
+        : Util.unprefixNamespace(kv.getKey(), namespace));
+    this.value = ByteSequence.from(kv.getValue());
   }
 
   public ByteSequence getKey() {
-    return ByteSequence.from(kv.getKey());
+    return unprefixedKey;
   }
 
   public ByteSequence getValue() {
-    return ByteSequence.from(kv.getValue());
+    return value;
   }
 
   public long getCreateRevision() {

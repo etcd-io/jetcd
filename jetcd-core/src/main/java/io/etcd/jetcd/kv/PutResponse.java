@@ -17,19 +17,23 @@
 package io.etcd.jetcd.kv;
 
 import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
 
 public class PutResponse extends AbstractResponse<io.etcd.jetcd.api.PutResponse> {
 
-  public PutResponse(io.etcd.jetcd.api.PutResponse putResponse) {
+  private final ByteSequence namespace;
+
+  public PutResponse(io.etcd.jetcd.api.PutResponse putResponse, ByteSequence namespace) {
     super(putResponse, putResponse.getHeader());
+    this.namespace = namespace;
   }
 
   /**
    * return previous key-value pair.
    */
   public KeyValue getPrevKv() {
-    return new KeyValue(getResponse().getPrevKv());
+    return new KeyValue(getResponse().getPrevKv(), namespace);
   }
 
   public boolean hasPrevKv() {
