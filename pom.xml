@@ -122,7 +122,7 @@
         <!-- test dependencies -->
         <testng.version>6.14.3</testng.version>
         <mockito.version>2.24.0</mockito.version>
-        <assertj.version>3.11.1</assertj.version>
+        <assertj.version>3.12.0</assertj.version>
         <junit.version>4.12</junit.version>
         <netty-tcnative.version>2.0.20.Final</netty-tcnative.version>
         <testcontainers.version>1.10.6</testcontainers.version>
