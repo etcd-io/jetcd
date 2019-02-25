@@ -107,7 +107,7 @@
         <grpc.version>1.18.0</grpc.version>
         <slf4j.version>1.7.26</slf4j.version>
         <plexus-compiler-javac-errorprone.version>2.8.5</plexus-compiler-javac-errorprone.version>
-        <error-prone-core.version>2.3.2</error-prone-core.version>
+        <error-prone-core.version>2.3.3</error-prone-core.version>
         <log4j2.version>2.11.2</log4j2.version>
         <jcommander.version>1.72</jcommander.version>
         <jool.version>0.9.14</jool.version>
