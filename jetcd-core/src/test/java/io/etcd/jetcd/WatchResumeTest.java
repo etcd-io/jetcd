@@ -15,23 +15,21 @@
  */
 package io.etcd.jetcd;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
 import io.etcd.jetcd.watch.WatchEvent.EventType;
 import io.etcd.jetcd.watch.WatchResponse;
-import org.apache.commons.io.IOUtils;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * watch resume test case.
@@ -84,7 +82,7 @@ public class WatchResumeTest {
       assertThat(ref.get().getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
       assertThat(ref.get().getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
     } finally {
-      IOUtils.closeQuietly(watcher);
+      TestUtil.closeQuietly(watcher);
     }
   }
 }

@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import org.apache.commons.io.IOUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -110,7 +109,7 @@ public class WatchTest {
       assertThat(ref.get().getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
       assertThat(ref.get().getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
     } finally {
-      IOUtils.closeQuietly(watcher);
+      TestUtil.closeQuietly(watcher);
     }
   }
 
@@ -144,8 +143,8 @@ public class WatchTest {
       assertThat(res.get(0).getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
       assertThat(res.get(0).getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
     } finally {
-      IOUtils.closeQuietly(w1);
-      IOUtils.closeQuietly(w2);
+      TestUtil.closeQuietly(w1);
+      TestUtil.closeQuietly(w2);
     }
   }
 
@@ -178,7 +177,7 @@ public class WatchTest {
       assertThat(event.getEventType()).isEqualTo(EventType.DELETE);
       assertThat(Arrays.equals(event.getKeyValue().getKey().getBytes(), key.getBytes())).isTrue();
     } finally {
-      IOUtils.closeQuietly(watcher);
+      TestUtil.closeQuietly(watcher);
     }
   }
 
@@ -209,7 +208,7 @@ public class WatchTest {
       assertThat(ref.get()).isNotNull();
       assertThat(ref.get().getClass()).isEqualTo(CompactedException.class);
     } finally {
-      IOUtils.closeQuietly(watcher);
+      TestUtil.closeQuietly(watcher);
     }
   }
 
