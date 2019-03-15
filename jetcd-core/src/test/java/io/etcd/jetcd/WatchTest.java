@@ -213,6 +213,39 @@ public class WatchTest {
     }
   }
 
+  @Test
+  public void testWatchClose() throws Exception {
+    CountDownLatch latch = new CountDownLatch(2);
+    ByteSequence key = TestUtil.randomByteSequence();
+    ByteSequence value = TestUtil.randomByteSequence();
+    AtomicReference<WatchResponse> ref = new AtomicReference<>();
+
+    Watcher watcher = null;
+
+    try {
+      watcher = watchClient.watch(key, response -> {
+        ref.set(response);
+        latch.countDown();
+      });
+
+      putKV(key, value);
+      latch.await(4, TimeUnit.SECONDS);
+
+      IOUtils.closeQuietly(watcher);
+      putKV(key, value);
+
+      latch.await(4, TimeUnit.SECONDS);
+
+      assertThat(ref.get()).isNotNull();
+      assertThat(ref.get().getEvents().size()).isEqualTo(1);
+      assertThat(ref.get().getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
+      assertThat(ref.get().getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
+      assertThat(latch.getCount()).isEqualTo(1);
+    } finally {
+      IOUtils.closeQuietly(watcher);
+    }
+  }
+
   private void putKV(ByteSequence key, ByteSequence value) throws Exception{
     if (useNamespace) {
       ByteSequence wKey = ByteSequence.from(namespace.getByteString().concat(key.getByteString()));
