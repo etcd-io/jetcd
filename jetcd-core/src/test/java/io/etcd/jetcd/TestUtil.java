@@ -16,6 +16,7 @@
 package io.etcd.jetcd;
 
 import com.google.common.base.Charsets;
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.ServerSocket;
 
@@ -32,6 +33,16 @@ public class TestUtil {
   public static int findNextAvailablePort() throws IOException {
     try (ServerSocket socket = new ServerSocket(0)) {
       return socket.getLocalPort();
+    }
+  }
+
+  public static void closeQuietly(final Closeable closeable) {
+    try {
+      if (closeable != null) {
+        closeable.close();
+      }
+    } catch (final IOException ioe) {
+      // ignore
     }
   }
 }

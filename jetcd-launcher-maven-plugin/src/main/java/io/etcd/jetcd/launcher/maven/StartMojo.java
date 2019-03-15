@@ -54,7 +54,7 @@ public class StartMojo extends AbstractMojo {
     URI endpoint = Singleton.etcd.getClientEndpoints().get(0);
     try {
       endpointFile.getParentFile().mkdirs();
-      Files.write(endpoint.toString(), endpointFile, US_ASCII);
+      Files.asCharSink(endpointFile, US_ASCII).write(endpoint.toString());
       LOG.info("{} = {}", endpointFile, endpoint);
     } catch (IOException e) {
       throw new MojoFailureException("writing file failed", e);

@@ -17,9 +17,7 @@
 package io.etcd.jetcd.resolver;
 
 import com.google.common.base.Preconditions;
-import io.grpc.Attributes;
 import io.grpc.NameResolver;
-
 import java.net.URI;
 import java.util.Collection;
 import javax.annotation.Nullable;
@@ -42,7 +40,7 @@ public class SmartNameResolverFactory extends NameResolver.Factory {
 
   @Nullable
   @Override
-  public NameResolver newNameResolver(URI targetUri, Attributes params) {
+  public NameResolver newNameResolver(URI targetUri,NameResolver.Helper helper) {
     if ("etcd".equals(targetUri.getScheme())) {
       return new SmartNameResolver(this.authority , this.uris, this.loader);
     } else {
