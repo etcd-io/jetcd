@@ -24,7 +24,7 @@ import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdExceptio
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-
+import io.etcd.jetcd.api.WatchCancelRequest;
 import io.etcd.jetcd.api.WatchCreateRequest;
 import io.etcd.jetcd.api.WatchGrpc;
 import io.etcd.jetcd.api.WatchRequest;
@@ -157,6 +157,12 @@ final class WatchImpl implements Watch {
     public void close() {
       if (closed.compareAndSet(false, true)) {
         if (stream != null) {
+          WatchCancelRequest watchCancelRequest = WatchCancelRequest.newBuilder().setWatchId(this.id).build();
+
+          if (id != -1) {
+            stream.onNext(WatchRequest.newBuilder().setCancelRequest(watchCancelRequest).build());
+          }
+
           stream.onCompleted();
           stream = null;
         }
@@ -175,8 +181,14 @@ final class WatchImpl implements Watch {
 
     @Override
     public void onNext(WatchResponse response) {
+      if (closed.get()) {
+        // events eventually received when the client is closed should
+        // not be propagated to the listener
+        return;
+      }
+
       if (response.getCreated()) {
-        
+
         //
         // Created
         //
@@ -189,7 +201,7 @@ final class WatchImpl implements Watch {
         revision = response.getHeader().getRevision();
         id = response.getWatchId();
       } else if (response.getCanceled()) {
-        
+
         //
         // Cancelled
         //
@@ -213,17 +225,17 @@ final class WatchImpl implements Watch {
 
         listener.onError(error);
       } else if (response.getEventsCount() == 0 && option.isProgressNotify()) {
-        
+
         //
         // Event
         //
         // A response may not contain events, this is in case of "Progress_Notify":
         //
-        //   the watch will periodically receive a  WatchResponse with no events, 
-        //   if there are no recent events. It is useful when clients wish to 
+        //   the watch will periodically receive a  WatchResponse with no events,
+        //   if there are no recent events. It is useful when clients wish to
         //   recover a disconnected watcher starting from a recent known revision.
         //
-        //   The etcd server decides how often to send notifications based on current 
+        //   The etcd server decides how often to send notifications based on current
         //   server load.
         //
         // For more info:
