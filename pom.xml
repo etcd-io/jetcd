@@ -398,86 +398,86 @@
                         <source>${jdk.version}</source>
                         <target>${jdk.version}</target>
                         <encoding>UTF-8</encoding>
-                        <compilerId>javac-with-errorprone</compilerId>
-                        <forceJavacCompilerUse>true</forceJavacCompilerUse>
-                        <compilerArgs>
-                            <arg>-Xlint:all</arg>
-                            <!-- TODO <arg>-Werror</arg> -->
-                            <!-- There are lots of disabled goodies in error-prone which only emit warnings (which nobody will ever look at!),
-                                 so let us enable them all as least as warnings, and then selectively turn some of them into ERROR, and suppress
-                                 those we really don't want (or can't enforce for whatever reason) with OFF. -->
-                            <arg>-XepExcludedPaths:.*/target/.*</arg>
+                        <!--<compilerId>javac-with-errorprone</compilerId>-->
+                        <!--<forceJavacCompilerUse>true</forceJavacCompilerUse>-->
+                        <!--<compilerArgs>-->
+                            <!--<arg>-Xlint:all</arg>-->
+                            <!--&lt;!&ndash; TODO <arg>-Werror</arg> &ndash;&gt;-->
+                            <!--&lt;!&ndash; There are lots of disabled goodies in error-prone which only emit warnings (which nobody will ever look at!),-->
+                                 <!--so let us enable them all as least as warnings, and then selectively turn some of them into ERROR, and suppress-->
+                                 <!--those we really don't want (or can't enforce for whatever reason) with OFF. &ndash;&gt;-->
+                            <!--<arg>-XepExcludedPaths:.*/target/.*</arg>-->
 
-                            <!-- https://github.com/google/error-prone/issues/1138 -->
-                            <!-- <arg>-XepAllDisabledChecksAsWarnings</arg> -->
-                            -Xep:NullableDereference:OFF
+                            <!--&lt;!&ndash; https://github.com/google/error-prone/issues/1138 &ndash;&gt;-->
+                            <!--&lt;!&ndash; <arg>-XepAllDisabledChecksAsWarnings</arg> &ndash;&gt;-->
+                            <!-- -Xep:NullableDereference:OFF-->
 
-                            <!-- StaticOrDefaultInterfaceMethod is an Android specific warning which we don't care about -->
-                            <arg>-Xep:StaticOrDefaultInterfaceMethod:OFF</arg>
-                            <!-- FieldMissingNullable is badly broken :( https://github.com/google/error-prone/issues/708 -->
-                            <arg>-Xep:FieldMissingNullable:OFF</arg>
-                            <!-- To "Use parameter comments to document ambiguous literals" is unrealistic on a large existing code base -->
-                            <arg>-Xep:BooleanParameter:OFF</arg>
-                            <arg>-Xep:ReturnMissingNullable:ERROR</arg>
-                            <arg>-Xep:MethodCanBeStatic:ERROR</arg>
-                            <arg>-Xep:TestExceptionChecker:ERROR</arg>
-                            <arg>-Xep:RedundantThrows:ERROR</arg>
-                            <arg>-Xep:ConstantField:ERROR</arg>
-                            <arg>-Xep:EmptySetMultibindingContributions:ERROR</arg>
-                            <arg>-Xep:MixedArrayDimensions:ERROR</arg>
-                            <arg>-Xep:MultipleTopLevelClasses:ERROR</arg>
-                            <arg>-Xep:MultiVariableDeclaration:ERROR</arg>
-                            <arg>-Xep:PackageLocation:ERROR</arg>
-                            <arg>-Xep:PrivateConstructorForNoninstantiableModule:ERROR</arg>
-                            <arg>-Xep:RemoveUnusedImports:ERROR</arg>
-                            <arg>-Xep:UnnecessaryStaticImport:ERROR</arg>
-                            <arg>-Xep:UseBinds:ERROR</arg>
-                            <arg>-Xep:WildcardImport:ERROR</arg>
-                            <!-- FutureReturnValueIgnored is better (stronger) than error-prone's own (and FindBug's) @CheckReturnValue annotation, 
-                                 as it checks that ANY return Future are checked, not just those from methods annotated @CheckReturnValue -->
-                            <arg>-Xep:FutureReturnValueIgnored:ERROR</arg>
-                            <arg>-Xep:IntLongMath:ERROR</arg>
-                            <arg>-Xep:FloatCast:ERROR</arg>
-                            <arg>-Xep:ClassNewInstance:ERROR</arg>
-                            <arg>-Xep:ConstructorInvokesOverridable:ERROR</arg>
-                            <arg>-Xep:ThreeLetterTimeZoneID:ERROR</arg>
-                            <arg>-Xep:UnsafeFinalization:ERROR</arg>
-                            <arg>-Xep:MutableMethodReturnType:ERROR</arg>
-                            <arg>-Xep:SynchronizeOnNonFinalField:ERROR</arg>
-                            <arg>-Xep:WaitNotInLoop:ERROR</arg>
-                            <arg>-Xep:SwitchDefault:ERROR</arg>
-                            <arg>-Xep:ReachabilityFenceUsage:ERROR</arg>
-                            <arg>-Xep:BoxedPrimitiveConstructor:ERROR</arg>
-                            <arg>-Xep:InjectOnConstructorOfAbstractClass:ERROR</arg>
-                            <arg>-Xep:StringSplitter:ERROR</arg>
-                            <arg>-Xep:DefaultCharset:ERROR</arg>
-                            <arg>-Xep:StreamResourceLeak:ERROR</arg>
-                            <arg>-Xep:InconsistentCapitalization:ERROR</arg>
-                            <arg>-Xep:TruthIncompatibleType:ERROR</arg>
-                            <arg>-Xep:ByteBufferBackingArray:ERROR</arg>
-                            <arg>-Xep:OrphanedFormatString:ERROR</arg>
-                            <arg>-Xep:CatchAndPrintStackTrace:ERROR</arg>
-                            <arg>-Xep:VarTypeName:ERROR</arg>
-                            <arg>-Xep:ObjectToString:ERROR</arg>
-                            <arg>-Xep:AssertThrowsMultipleStatements:ERROR</arg>
-                        </compilerArgs>
+                            <!--&lt;!&ndash; StaticOrDefaultInterfaceMethod is an Android specific warning which we don't care about &ndash;&gt;-->
+                            <!--<arg>-Xep:StaticOrDefaultInterfaceMethod:OFF</arg>-->
+                            <!--&lt;!&ndash; FieldMissingNullable is badly broken :( https://github.com/google/error-prone/issues/708 &ndash;&gt;-->
+                            <!--<arg>-Xep:FieldMissingNullable:OFF</arg>-->
+                            <!--&lt;!&ndash; To "Use parameter comments to document ambiguous literals" is unrealistic on a large existing code base &ndash;&gt;-->
+                            <!--<arg>-Xep:BooleanParameter:OFF</arg>-->
+                            <!--<arg>-Xep:ReturnMissingNullable:ERROR</arg>-->
+                            <!--<arg>-Xep:MethodCanBeStatic:ERROR</arg>-->
+                            <!--<arg>-Xep:TestExceptionChecker:ERROR</arg>-->
+                            <!--<arg>-Xep:RedundantThrows:ERROR</arg>-->
+                            <!--<arg>-Xep:ConstantField:ERROR</arg>-->
+                            <!--<arg>-Xep:EmptySetMultibindingContributions:ERROR</arg>-->
+                            <!--<arg>-Xep:MixedArrayDimensions:ERROR</arg>-->
+                            <!--<arg>-Xep:MultipleTopLevelClasses:ERROR</arg>-->
+                            <!--<arg>-Xep:MultiVariableDeclaration:ERROR</arg>-->
+                            <!--<arg>-Xep:PackageLocation:ERROR</arg>-->
+                            <!--<arg>-Xep:PrivateConstructorForNoninstantiableModule:ERROR</arg>-->
+                            <!--<arg>-Xep:RemoveUnusedImports:ERROR</arg>-->
+                            <!--<arg>-Xep:UnnecessaryStaticImport:ERROR</arg>-->
+                            <!--<arg>-Xep:UseBinds:ERROR</arg>-->
+                            <!--<arg>-Xep:WildcardImport:ERROR</arg>-->
+                            <!--&lt;!&ndash; FutureReturnValueIgnored is better (stronger) than error-prone's own (and FindBug's) @CheckReturnValue annotation, -->
+                                 <!--as it checks that ANY return Future are checked, not just those from methods annotated @CheckReturnValue &ndash;&gt;-->
+                            <!--<arg>-Xep:FutureReturnValueIgnored:ERROR</arg>-->
+                            <!--<arg>-Xep:IntLongMath:ERROR</arg>-->
+                            <!--<arg>-Xep:FloatCast:ERROR</arg>-->
+                            <!--<arg>-Xep:ClassNewInstance:ERROR</arg>-->
+                            <!--<arg>-Xep:ConstructorInvokesOverridable:ERROR</arg>-->
+                            <!--<arg>-Xep:ThreeLetterTimeZoneID:ERROR</arg>-->
+                            <!--<arg>-Xep:UnsafeFinalization:ERROR</arg>-->
+                            <!--<arg>-Xep:MutableMethodReturnType:ERROR</arg>-->
+                            <!--<arg>-Xep:SynchronizeOnNonFinalField:ERROR</arg>-->
+                            <!--<arg>-Xep:WaitNotInLoop:ERROR</arg>-->
+                            <!--<arg>-Xep:SwitchDefault:ERROR</arg>-->
+                            <!--<arg>-Xep:ReachabilityFenceUsage:ERROR</arg>-->
+                            <!--<arg>-Xep:BoxedPrimitiveConstructor:ERROR</arg>-->
+                            <!--<arg>-Xep:InjectOnConstructorOfAbstractClass:ERROR</arg>-->
+                            <!--<arg>-Xep:StringSplitter:ERROR</arg>-->
+                            <!--<arg>-Xep:DefaultCharset:ERROR</arg>-->
+                            <!--<arg>-Xep:StreamResourceLeak:ERROR</arg>-->
+                            <!--<arg>-Xep:InconsistentCapitalization:ERROR</arg>-->
+                            <!--<arg>-Xep:TruthIncompatibleType:ERROR</arg>-->
+                            <!--<arg>-Xep:ByteBufferBackingArray:ERROR</arg>-->
+                            <!--<arg>-Xep:OrphanedFormatString:ERROR</arg>-->
+                            <!--<arg>-Xep:CatchAndPrintStackTrace:ERROR</arg>-->
+                            <!--<arg>-Xep:VarTypeName:ERROR</arg>-->
+                            <!--<arg>-Xep:ObjectToString:ERROR</arg>-->
+                            <!--<arg>-Xep:AssertThrowsMultipleStatements:ERROR</arg>-->
+                        <!--</compilerArgs>-->
                     </configuration>
-                    <dependencies>
-                        <dependency>
-                          <groupId>org.codehaus.plexus</groupId>
-                          <artifactId>plexus-compiler-javac-errorprone</artifactId>
-                          <version>${plexus-compiler-javac-errorprone.version}</version>
-                        </dependency>
-                        <!--
-                            override plexus-compiler-javac-errorprone's dependency on
-                            Error Prone with the latest version
-                        -->
-                        <dependency>
-                          <groupId>com.google.errorprone</groupId>
-                          <artifactId>error_prone_core</artifactId>
-                          <version>${error-prone-core.version}</version>
-                        </dependency>
-                  </dependencies>
+                    <!--<dependencies>-->
+                        <!--<dependency>-->
+                          <!--<groupId>org.codehaus.plexus</groupId>-->
+                          <!--<artifactId>plexus-compiler-javac-errorprone</artifactId>-->
+                          <!--<version>${plexus-compiler-javac-errorprone.version}</version>-->
+                        <!--</dependency>-->
+                        <!--&lt;!&ndash;-->
+                            <!--override plexus-compiler-javac-errorprone's dependency on-->
+                            <!--Error Prone with the latest version-->
+                        <!--&ndash;&gt;-->
+                        <!--<dependency>-->
+                          <!--<groupId>com.google.errorprone</groupId>-->
+                          <!--<artifactId>error_prone_core</artifactId>-->
+                          <!--<version>${error-prone-core.version}</version>-->
+                        <!--</dependency>-->
+                  <!--</dependencies>-->
                 </plugin>
 
                 <plugin>
