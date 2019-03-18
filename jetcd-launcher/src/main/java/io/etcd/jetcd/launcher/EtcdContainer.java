@@ -252,7 +252,10 @@ public class EtcdContainer implements AutoCloseable {
 
   private static Path createDataDirectory(String name) {
     try {
-      return Files.createTempDirectory("jetcd_test_" + name + "_");
+      final Path path = Files.createTempDirectory("jetcd_test_" + name + "_");
+      // https://github.com/etcd-io/jetcd/issues/489
+      // Resolve symlink (/var -> /private/var) to don't fail for Mac OS because of docker thing with /var/folders
+      return path.toRealPath();
     } catch (IOException e) {
       throw new ContainerLaunchException("Error creating data directory", e);
     }
