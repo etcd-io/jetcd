@@ -51,6 +51,8 @@ public class EtcdContainer implements AutoCloseable {
   interface LifecycleListener {
     void started(EtcdContainer container);
 
+    void failedToStart(EtcdContainer container, Exception exception);
+
     void stopped(EtcdContainer container);
   }
 
@@ -142,12 +144,16 @@ public class EtcdContainer implements AutoCloseable {
     LOGGER.debug("starting etcd container {} with command: {}",
             endpoint, String.join(" ", container.getCommandParts()));
 
-    this.container.start();
-    this.listener.started(this);
+    try {
+      this.container.start();
+      this.listener.started(this);
 
-    if (dataDirectory != null) {
-      // needed in order to properly clean resources during shutdown
-      setDataDirectoryPermissions("o+rwx");
+      if (dataDirectory != null) {
+        // needed in order to properly clean resources during shutdown
+        setDataDirectoryPermissions("o+rwx");
+      }
+    } catch (Exception exception) {
+      this.listener.failedToStart(this, exception);
     }
   }
 

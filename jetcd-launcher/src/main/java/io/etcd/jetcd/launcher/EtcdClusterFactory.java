@@ -19,14 +19,20 @@ package io.etcd.jetcd.launcher;
 import static java.util.stream.Collectors.toList;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Network;
 
 public class EtcdClusterFactory {
+  private static final Logger LOGGER = LoggerFactory.getLogger(EtcdClusterFactory.class);
 
   public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl) {
     return buildCluster(clusterName, nodes, ssl, false);
@@ -35,9 +41,17 @@ public class EtcdClusterFactory {
   public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl, boolean restartable) {
     final Network network = Network.builder().id(clusterName).build();
     final CountDownLatch latch = new CountDownLatch(nodes);
+    final AtomicBoolean failedToStart = new AtomicBoolean(false);
     final EtcdContainer.LifecycleListener listener = new EtcdContainer.LifecycleListener() {
       @Override
       public void started(EtcdContainer container) {
+        latch.countDown();
+      }
+
+      @Override
+      public void failedToStart(EtcdContainer container, Exception exception) {
+        LOGGER.error("Exception while starting etcd container: ", exception);
+        failedToStart.set(true);
         latch.countDown();
       }
 
@@ -63,6 +77,9 @@ public class EtcdClusterFactory {
           latch.await(1, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
           throw new RuntimeException(e);
+        }
+        if (failedToStart.get()) {
+          throw new IllegalStateException("Cluster failed to start");
         }
       }
 
