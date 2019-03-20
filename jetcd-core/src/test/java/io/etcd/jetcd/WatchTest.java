@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -69,7 +70,7 @@ public class WatchTest {
 
   @Parameterized.Parameters(name = "UseNamespace = {0}")
   public static List<Boolean> parameters() {
-    return Arrays.asList(new Boolean[] {true, false});
+    return Arrays.asList(true, false);
   }
 
   @BeforeClass
@@ -219,30 +220,23 @@ public class WatchTest {
     ByteSequence value = TestUtil.randomByteSequence();
     AtomicReference<WatchResponse> ref = new AtomicReference<>();
 
-    Watcher watcher = null;
-
-    try {
-      watcher = watchClient.watch(key, response -> {
-        ref.set(response);
-        latch.countDown();
-      });
-
+    try (Watcher watcher = watchClient.watch(key, response -> {
+      ref.set(response);
+      latch.countDown();
+    })){
       putKV(key, value);
       latch.await(4, TimeUnit.SECONDS);
-
-      IOUtils.closeQuietly(watcher);
-      putKV(key, value);
-
-      latch.await(4, TimeUnit.SECONDS);
-
-      assertThat(ref.get()).isNotNull();
-      assertThat(ref.get().getEvents().size()).isEqualTo(1);
-      assertThat(ref.get().getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
-      assertThat(ref.get().getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
-      assertThat(latch.getCount()).isEqualTo(1);
-    } finally {
-      IOUtils.closeQuietly(watcher);
     }
+
+    putKV(key, value);
+
+    latch.await(4, TimeUnit.SECONDS);
+
+    assertThat(ref.get()).isNotNull();
+    assertThat(ref.get().getEvents()).hasSize(1);
+    assertThat(ref.get().getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
+    assertThat(ref.get().getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
+    assertThat(latch.getCount()).isEqualTo(1);
   }
 
   private void putKV(ByteSequence key, ByteSequence value) throws Exception{
