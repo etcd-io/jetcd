@@ -15,12 +15,24 @@
  */
 package io.etcd.jetcd;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.google.common.base.Charsets;
+import com.google.protobuf.ByteString;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.ServerSocket;
 
 public class TestUtil {
+
+  public static ByteSequence bytesOf(final String string) {
+    return ByteSequence.from(string, UTF_8);
+  }
+
+  public static ByteString byteStringOf(final String string) {
+    return ByteString.copyFrom(string.getBytes(UTF_8));
+  }
 
   public static String randomString() {
     return java.util.UUID.randomUUID().toString();

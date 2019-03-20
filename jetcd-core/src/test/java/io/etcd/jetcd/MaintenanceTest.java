@@ -18,8 +18,7 @@ package io.etcd.jetcd;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
-import io.etcd.jetcd.launcher.EtcdCluster;
-import io.etcd.jetcd.launcher.EtcdClusterFactory;
+import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
 import io.etcd.jetcd.maintenance.SnapshotResponse;
 import io.etcd.jetcd.maintenance.StatusResponse;
 import io.grpc.stub.StreamObserver;
@@ -36,9 +35,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.io.output.NullOutputStream;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -47,7 +45,8 @@ import org.junit.rules.TemporaryFolder;
  * Maintenance test.
  */
 public class MaintenanceTest {
-  private static EtcdCluster cluster;
+  @ClassRule
+  public static EtcdClusterResource clusterResource = new EtcdClusterResource("etcd-maintenance", 3 ,false);
 
   private Client client;
   private Maintenance maintenance;
@@ -56,21 +55,9 @@ public class MaintenanceTest {
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @BeforeClass
-  public static void beforeClass() {
-    cluster = EtcdClusterFactory.buildCluster("etcd-maintenance", 3 ,false);
-    cluster.start();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    cluster.close();
-  }
-
-
   @Before
   public void setUp() {
-    this.endpoints = cluster.getClientEndpoints();
+    this.endpoints = clusterResource.cluster().getClientEndpoints();
     this.client = Client.builder().endpoints(endpoints).build();
     this.maintenance = client.getMaintenanceClient();
   }

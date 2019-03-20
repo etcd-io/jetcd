@@ -16,15 +16,14 @@
 package io.etcd.jetcd;
 
 import static com.google.common.base.Charsets.UTF_8;
+import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.google.common.base.Charsets;
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
-import io.etcd.jetcd.launcher.EtcdCluster;
-import io.etcd.jetcd.launcher.EtcdClusterFactory;
+import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
 import io.etcd.jetcd.op.Cmp;
 import io.etcd.jetcd.op.CmpTarget;
 import io.etcd.jetcd.op.Op;
@@ -33,12 +32,11 @@ import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.GetOption.SortOrder;
 import io.etcd.jetcd.options.GetOption.SortTarget;
 import io.etcd.jetcd.options.PutOption;
-import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.assertj.core.api.Assertions;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
@@ -46,20 +44,19 @@ import org.junit.Test;
  */
 public class KVTest {
 
-  private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("etcd-kv", 3 ,false);
+  @ClassRule
+  public static EtcdClusterResource clusterResource = new EtcdClusterResource("etcd-kv", 3 ,false);
   private static KV kvClient;
 
-  private static final ByteSequence SAMPLE_KEY = ByteSequence.from("sample_key", Charsets.UTF_8);
-  private static final ByteSequence SAMPLE_VALUE = ByteSequence.from("sample_value", Charsets.UTF_8);
-  private static final ByteSequence SAMPLE_KEY_2 = ByteSequence.from("sample_key2", Charsets.UTF_8);
-  private static final ByteSequence SAMPLE_VALUE_2 = ByteSequence.from("sample_value2", Charsets.UTF_8);
-  private static final ByteSequence SAMPLE_KEY_3 = ByteSequence.from("sample_key3", Charsets.UTF_8);
+  private static final ByteSequence SAMPLE_KEY = bytesOf("sample_key");
+  private static final ByteSequence SAMPLE_VALUE = bytesOf("sample_value");
+  private static final ByteSequence SAMPLE_KEY_2 = bytesOf("sample_key2");
+  private static final ByteSequence SAMPLE_VALUE_2 = bytesOf("sample_value2");
+  private static final ByteSequence SAMPLE_KEY_3 = bytesOf("sample_key3");
 
   @BeforeClass
   public static void setUp() throws Exception {
-    CLUSTER.start();
-
-    kvClient = Client.builder().endpoints(CLUSTER.getClientEndpoints()).build().getKVClient();
+    kvClient = Client.builder().endpoints(clusterResource.cluster().getClientEndpoints()).build().getKVClient();
   }
 
   @Test
@@ -111,10 +108,10 @@ public class KVTest {
     GetOption option = GetOption.newBuilder()
         .withSortField(SortTarget.KEY)
         .withSortOrder(SortOrder.DESCEND)
-        .withPrefix(ByteSequence.from(prefix, Charsets.UTF_8))
+        .withPrefix(bytesOf(prefix))
         .build();
     CompletableFuture<GetResponse> getFeature = kvClient
-        .get(ByteSequence.from(prefix, Charsets.UTF_8), option);
+        .get(bytesOf(prefix), option);
     GetResponse response = getFeature.get();
 
     assertEquals(numPrefix, response.getKvs().size());
@@ -144,7 +141,7 @@ public class KVTest {
   @Test
   public void testGetAndDeleteWithPrefix() throws Exception {
     String prefix = TestUtil.randomString();
-    ByteSequence key = ByteSequence.from(prefix, Charsets.UTF_8);
+    ByteSequence key = bytesOf(prefix);
     int numPrefixes = 10;
 
     putKeysWithPrefix(prefix, numPrefixes);
@@ -166,19 +163,19 @@ public class KVTest {
   private static void putKeysWithPrefix(String prefix, int numPrefixes)
       throws ExecutionException, InterruptedException {
     for (int i = 0; i < numPrefixes; i++) {
-      ByteSequence key = ByteSequence.from(prefix + i, Charsets.UTF_8);
-      ByteSequence value = ByteSequence.from("" + i, Charsets.UTF_8);
+      ByteSequence key = bytesOf(prefix + i);
+      ByteSequence value = bytesOf("" + i);
       kvClient.put(key, value).get();
     }
   }
 
   @Test
   public void testTxn() throws Exception {
-    ByteSequence sampleKey = ByteSequence.from("txn_key", Charsets.UTF_8);
-    ByteSequence sampleValue = ByteSequence.from("xyz", Charsets.UTF_8);
-    ByteSequence cmpValue = ByteSequence.from("abc", Charsets.UTF_8);
-    ByteSequence putValue = ByteSequence.from("XYZ", Charsets.UTF_8);
-    ByteSequence putValueNew = ByteSequence.from("ABC", Charsets.UTF_8);
+    ByteSequence sampleKey = bytesOf("txn_key");
+    ByteSequence sampleValue = bytesOf("xyz");
+    ByteSequence cmpValue = bytesOf("abc");
+    ByteSequence putValue = bytesOf("XYZ");
+    ByteSequence putValueNew = bytesOf("ABC");
     // put the original txn key value pair
     kvClient.put(sampleKey, sampleValue).get();
 
@@ -198,11 +195,11 @@ public class KVTest {
 
   @Test
   public void testNestedTxn() throws Exception {
-    ByteSequence foo = ByteSequence.from("txn_foo", Charsets.UTF_8);
-    ByteSequence bar = ByteSequence.from("txn_bar", Charsets.UTF_8);
-    ByteSequence barz = ByteSequence.from("txn_barz", Charsets.UTF_8);
-    ByteSequence abc = ByteSequence.from("txn_abc", Charsets.UTF_8);
-    ByteSequence oneTwoThree = ByteSequence.from("txn_123", Charsets.UTF_8);
+    ByteSequence foo = bytesOf("txn_foo");
+    ByteSequence bar = bytesOf("txn_bar");
+    ByteSequence barz = bytesOf("txn_barz");
+    ByteSequence abc = bytesOf("txn_abc");
+    ByteSequence oneTwoThree = bytesOf("txn_123");
 
     Txn txn = kvClient.txn();
     Cmp cmp = new Cmp(foo, Cmp.Op.EQUAL, CmpTarget.version(0));
@@ -221,10 +218,5 @@ public class KVTest {
     GetResponse getResp2 = kvClient.get(abc).get();
     assertEquals(1, getResp2.getKvs().size());
     assertEquals(oneTwoThree.toString(UTF_8), getResp2.getKvs().get(0).getValue().toString(UTF_8));
-  }
-
-  @AfterClass
-  public static void tearDown() throws IOException {
-    CLUSTER.close();
   }
 }

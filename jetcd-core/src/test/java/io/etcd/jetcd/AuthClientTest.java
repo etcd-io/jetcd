@@ -15,262 +15,158 @@
  */
 package io.etcd.jetcd;
 
-import static com.google.common.base.Charsets.UTF_8;
+import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.etcd.jetcd.auth.AuthRoleGetResponse;
 import io.etcd.jetcd.auth.AuthRoleListResponse;
 import io.etcd.jetcd.auth.Permission;
 import io.etcd.jetcd.auth.Permission.Type;
-import io.etcd.jetcd.launcher.EtcdCluster;
-import io.etcd.jetcd.launcher.EtcdClusterFactory;
-import java.io.IOException;
+import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+
 import java.net.URI;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 /**
  * test etcd auth
  */
 public class AuthClientTest {
 
-  private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("auth-etcd", 1, false);
+  @ClassRule
+  public static final EtcdClusterResource clusterResource = new EtcdClusterResource("auth-etcd", 1, false);
 
-  private final ByteSequence rootRolekeyRangeBegin = ByteSequence.from("root", UTF_8);
-  private final ByteSequence rootkeyRangeEnd = ByteSequence.from("root1", UTF_8);
+  private final ByteSequence rootRoleKey = bytesOf("root");
+  private final ByteSequence rootRoleValue = bytesOf("b");
+  private final ByteSequence rootRoleKeyRangeBegin = bytesOf("root");
+  private final ByteSequence rootRoleKeyRangeEnd = bytesOf("root1");
 
-  private final ByteSequence userRolekeyRangeBegin = ByteSequence.from("foo", UTF_8);
-  private final ByteSequence userRolekeyRangeEnd = ByteSequence.from("foo1", UTF_8);
+  private final ByteSequence userRoleKey = bytesOf("foo");
+  private final ByteSequence userRoleValue = bytesOf("bar");
+  private final ByteSequence userRoleKeyRangeBegin = bytesOf("foo");
+  private final ByteSequence userRoleKeyRangeEnd = bytesOf("foo1");
 
-  private final ByteSequence rootRoleKey = ByteSequence.from("root", UTF_8);
-  private final ByteSequence rootRoleValue = ByteSequence.from("b", UTF_8);
+  private final String rootString = "root";
+  private final ByteSequence root = bytesOf(rootString);
+  private final ByteSequence rootPass = bytesOf("123");
+  private final String rootRoleString = "root";
+  private final ByteSequence rootRole = bytesOf(rootRoleString);
 
-  private final ByteSequence userRoleKey = ByteSequence.from("foo", UTF_8);
-  private final ByteSequence userRoleValue = ByteSequence.from("bar", UTF_8);
+  private final String userString = "user";
+  private final ByteSequence user = bytesOf(userString);
+  private final ByteSequence userPass = bytesOf("userPass");
+  private final ByteSequence userNewPass = bytesOf("newUserPass");
+  private final String userRoleString = "userRole";
+  private final ByteSequence userRole = bytesOf(userRoleString);
 
+  private static Auth authDisabledAuthClient;
+  private static KV authDisabledKVClient;
 
-  private final ByteSequence root = ByteSequence.from("root", UTF_8);
-  private final ByteSequence rootPass = ByteSequence.from("123", UTF_8);
-  private final ByteSequence rootRole = ByteSequence.from("root", UTF_8);
-
-
-  private final ByteSequence user = ByteSequence.from("user", UTF_8);
-  private final ByteSequence userPass = ByteSequence.from("userPass", UTF_8);
-  private final ByteSequence userNewPass = ByteSequence.from("newUserPass", UTF_8);
-  private final ByteSequence userRole = ByteSequence.from("userRole", UTF_8);
-
-  private Client userClient;
-  private Client rootClient;
-
-  private Auth authDisabledAuthClient;
-  private KV authDisabledKVClient;
-
-  private List<URI> endpoints;
+  private static List<URI> endpoints;
 
   /**
    * Build etcd client to create role, permission
    */
-  @BeforeTest
-  public void setupEnv() {
-    CLUSTER.start();
-    endpoints = CLUSTER.getClientEndpoints();
-    Client client = Client.builder()
-        .endpoints(endpoints)
-        .build();
+  @BeforeClass
+  public static void setupEnv() {
+    endpoints = clusterResource.cluster().getClientEndpoints();
+    Client client = Client.builder().endpoints(endpoints).build();
 
-    this.authDisabledKVClient = client.getKVClient();
-    this.authDisabledAuthClient = client.getAuthClient();
+    authDisabledKVClient = client.getKVClient();
+    authDisabledAuthClient = client.getAuthClient();
   }
 
-  /**
-   * create role with un-auth etcd client
-   */
-  @Test(groups = "role", priority = 1)
-  public void testRoleAdd() throws ExecutionException, InterruptedException {
-    this.authDisabledAuthClient.roleAdd(rootRole).get();
-    this.authDisabledAuthClient.roleAdd(userRole).get();
-  }
+  @Test
+  public void testAuth() throws Exception {
+    authDisabledAuthClient.roleAdd(rootRole).get();
+    authDisabledAuthClient.roleAdd(userRole).get();
 
-  @Test(dependsOnMethods = "testRoleAdd", groups = "role", priority = 1)
-  public void testRoleList() throws ExecutionException, InterruptedException {
-    AuthRoleListResponse response = this.authDisabledAuthClient.roleList().get();
-    assertThat(response.getRoles().get(0)).isEqualTo(this.rootRole.toString(UTF_8));
-  }
+    final AuthRoleListResponse response = authDisabledAuthClient.roleList().get();
+    assertThat(response.getRoles()).containsOnly(rootRoleString, userRoleString);
 
-
-  /**
-   * grant permission to role
-   */
-  @Test(dependsOnMethods = "testRoleAdd", groups = "role", priority = 1)
-  public void testRoleGrantPermission() throws ExecutionException, InterruptedException {
-    this.authDisabledAuthClient
-        .roleGrantPermission(rootRole, rootRolekeyRangeBegin, rootkeyRangeEnd,
-            Permission.Type.READWRITE).get();
-    this.authDisabledAuthClient
-        .roleGrantPermission(userRole, userRolekeyRangeBegin, userRolekeyRangeEnd, Type.READWRITE)
+    authDisabledAuthClient
+        .roleGrantPermission(rootRole, rootRoleKeyRangeBegin, rootRoleKeyRangeEnd, Permission.Type.READWRITE)
         .get();
-  }
+    authDisabledAuthClient
+        .roleGrantPermission(userRole, userRoleKeyRangeBegin, userRoleKeyRangeEnd, Type.READWRITE)
+        .get();
 
-  /**
-   * add user with rootPass and username
-   */
-  @Test(groups = "user", priority = 1)
-  public void testUserAdd() throws ExecutionException, InterruptedException {
-    this.authDisabledAuthClient.userAdd(root, rootPass).get();
-    this.authDisabledAuthClient.userAdd(user, userPass).get();
-  }
+    authDisabledAuthClient.userAdd(root, rootPass).get();
+    authDisabledAuthClient.userAdd(user, userPass).get();
 
-  @Test(dependsOnMethods = "testUserAdd", groups = "user", priority = 1)
-  public void testUserChangePassword() throws ExecutionException, InterruptedException {
-    this.authDisabledAuthClient.userChangePassword(user, userNewPass).get();
-  }
+    authDisabledAuthClient.userChangePassword(user, userNewPass).get();
 
+    List<String> users = authDisabledAuthClient.userList().get().getUsers();
+    assertThat(users).containsOnly(rootString, userString);
 
-  @Test(dependsOnMethods = "testUserAdd", groups = "user", priority = 1)
-  public void testUserList() throws ExecutionException, InterruptedException {
-    List<String> users = this.authDisabledAuthClient.userList().get().getUsers();
-    assertThat(users.get(0)).isEqualTo(this.root.toString(UTF_8));
-    assertThat(users.get(1)).isEqualTo(this.user.toString(UTF_8));
-  }
+    authDisabledAuthClient.userGrantRole(root, rootRole).get();
+    authDisabledAuthClient.userGrantRole(user, rootRole).get();
+    authDisabledAuthClient.userGrantRole(user, userRole).get();
 
-  /**
-   * grant user role
-   */
-  @Test(dependsOnMethods = {"testUserAdd",
-      "testRoleGrantPermission"}, groups = "user", priority = 1)
-  public void testUserGrantRole() throws ExecutionException, InterruptedException {
-    this.authDisabledAuthClient.userGrantRole(root, rootRole).get();
-    this.authDisabledAuthClient.userGrantRole(user, rootRole).get();
-    this.authDisabledAuthClient.userGrantRole(user, userRole).get();
-  }
+    assertThat(authDisabledAuthClient.userGet(root).get().getRoles()).containsOnly(
+        rootRoleString);
+    assertThat(authDisabledAuthClient.userGet(user).get().getRoles()).containsOnly(
+        rootRoleString, userRoleString);
 
-  @Test(dependsOnMethods = "testUserGrantRole", groups = "user", priority = 1)
-  public void testUserGet() throws ExecutionException, InterruptedException {
-    assertThat(this.authDisabledAuthClient.userGet(root).get().getRoles().get(0))
-        .isEqualTo(rootRole.toString(UTF_8));
-    assertThat(this.authDisabledAuthClient.userGet(user).get().getRoles().get(0))
-        .isEqualTo(rootRole.toString(UTF_8));
-    assertThat(this.authDisabledAuthClient.userGet(user).get().getRoles().get(1))
-        .isEqualTo(userRole.toString(UTF_8));
-  }
+    authDisabledAuthClient.authEnable().get();
 
-  /**
-   * enable etcd auth
-   */
-  @Test(dependsOnGroups = "user", groups = "authEnable", priority = 1)
-  public void testEnableAuth() throws ExecutionException, InterruptedException {
-    this.authDisabledAuthClient.authEnable().get();
-  }
-
-  /**
-   * auth client with rootPass and user name
-   */
-  @Test(dependsOnMethods = "testEnableAuth", groups = "authEnable", priority = 1)
-  public void setupAuthClient() {
-    this.userClient = Client.builder()
+    final Client userClient = Client.builder()
         .endpoints(endpoints)
         .user(user)
         .password(userNewPass).build();
-    this.rootClient = Client.builder()
+    final Client rootClient = Client.builder()
         .endpoints(endpoints)
         .user(root)
         .password(rootPass).build();
-  }
 
-  /**
-   * put and range with auth client
-   */
-  @Test(groups = "testAuth", dependsOnGroups = "authEnable", priority = 1)
-  public void testKVWithAuth() throws ExecutionException, InterruptedException {
-    this.userClient.getKVClient().put(rootRoleKey, rootRoleValue).get();
-    this.userClient.getKVClient().put(userRoleKey, userRoleValue).get();
-    this.userClient.getKVClient().get(rootRoleKey).get();
-    this.userClient.getKVClient().get(userRoleKey).get();
-  }
+    userClient.getKVClient().put(rootRoleKey, rootRoleValue).get();
+    userClient.getKVClient().put(userRoleKey, userRoleValue).get();
+    userClient.getKVClient().get(rootRoleKey).get();
+    userClient.getKVClient().get(userRoleKey).get();
 
-  /**
-   * put and range with non auth client
-   */
-  @Test(groups = "testAuth", dependsOnGroups = "authEnable", priority = 1)
-  public void testKVWithoutAuth() throws InterruptedException {
-    assertThatThrownBy(() -> this.authDisabledKVClient.put(rootRoleKey, rootRoleValue).get())
+    assertThatThrownBy(() -> authDisabledKVClient.put(rootRoleKey, rootRoleValue).get())
         .hasMessageContaining("etcdserver: user name is empty");
-    assertThatThrownBy(() -> this.authDisabledKVClient.put(userRoleKey, rootRoleValue).get())
+    assertThatThrownBy(() -> authDisabledKVClient.put(userRoleKey, rootRoleValue).get())
         .hasMessageContaining("etcdserver: user name is empty");
-    assertThatThrownBy(() -> this.authDisabledKVClient.get(rootRoleKey).get())
+    assertThatThrownBy(() -> authDisabledKVClient.get(rootRoleKey).get())
         .hasMessageContaining("etcdserver: user name is empty");
-    assertThatThrownBy(() -> this.authDisabledKVClient.get(userRoleKey).get())
+    assertThatThrownBy(() -> authDisabledKVClient.get(userRoleKey).get())
         .hasMessageContaining("etcdserver: user name is empty");
-  }
 
-  /**
-   * get auth's permission
-   */
-  @Test(groups = "testAuth", dependsOnGroups = "authEnable", priority = 1)
-  public void testRoleGet() throws ExecutionException, InterruptedException {
-    AuthRoleGetResponse roleGetResponse = this.userClient.getAuthClient()
+    AuthRoleGetResponse roleGetResponse = userClient.getAuthClient()
         .roleGet(rootRole)
         .get();
     assertThat(roleGetResponse.getPermissions().size()).isNotEqualTo(0);
 
-    roleGetResponse = this.userClient.getAuthClient()
+    roleGetResponse = userClient.getAuthClient()
         .roleGet(userRole)
         .get();
     assertThat(roleGetResponse.getPermissions().size()).isNotEqualTo(0);
-  }
 
-  @Test(groups = "testAuth", dependsOnMethods = "testKVWithAuth", priority = 1)
-  public void testUserRevokeRole() throws ExecutionException, InterruptedException {
-    this.rootClient.getAuthClient().userRevokeRole(user, rootRole).get();
+    rootClient.getAuthClient().userRevokeRole(user, rootRole).get();
 
-    KV kvClient = this.userClient.getKVClient();
+    final KV kvClient = userClient.getKVClient();
     // verify the access to root role is revoked for user.
     assertThatThrownBy(() -> kvClient.get(rootRoleKey).get()).isNotNull();
     // verify userRole is still valid.
     assertThat(kvClient.get(userRoleKey).get().getCount()).isNotEqualTo(0);
-  }
 
-  @Test(groups = "testAuth", dependsOnMethods = {"testUserRevokeRole", "testRoleGet"}, priority = 1)
-  public void testRoleRevokePermission() throws ExecutionException, InterruptedException {
-    this.rootClient.getAuthClient()
-        .roleRevokePermission(userRole, userRolekeyRangeBegin, userRolekeyRangeEnd).get();
+    rootClient.getAuthClient()
+        .roleRevokePermission(userRole, userRoleKeyRangeBegin, userRoleKeyRangeEnd).get();
 
     // verify the access to foo is revoked for user.
-    assertThatThrownBy(() -> this.userClient.getKVClient().get(userRoleKey).get()).isNotNull();
-  }
+    assertThatThrownBy(() -> userClient.getKVClient().get(userRoleKey).get()).isNotNull();
 
-  /**
-   * disable etcd auth
-   */
-  @Test(dependsOnGroups = "testAuth", groups = "disableAuth", priority = 1)
-  public void testDisableAuth() throws ExecutionException, InterruptedException {
-    this.rootClient.getAuthClient().authDisable().get();
-  }
+    rootClient.getAuthClient().authDisable().get();
 
-  /**
-   * delete user
-   */
-  @Test(dependsOnGroups = "disableAuth", groups = "clearEnv", priority = 1)
-  public void delUser() throws ExecutionException, InterruptedException {
-    this.authDisabledAuthClient.userDelete(root).get();
-    this.authDisabledAuthClient.userDelete(user).get();
-  }
+    authDisabledAuthClient.userDelete(root).get();
+    authDisabledAuthClient.userDelete(user).get();
 
-  /**
-   * delete role
-   */
-  @Test(dependsOnGroups = "disableAuth", groups = "clearEnv", priority = 1)
-  public void delRole() throws ExecutionException, InterruptedException {
-    this.authDisabledAuthClient.roleDelete(rootRole).get();
-    this.authDisabledAuthClient.roleDelete(userRole).get();
-  }
-
-  @AfterTest
-  public void tearDown() throws IOException {
-    CLUSTER.close();
+    authDisabledAuthClient.roleDelete(rootRole).get();
+    authDisabledAuthClient.roleDelete(userRole).get();
   }
 }

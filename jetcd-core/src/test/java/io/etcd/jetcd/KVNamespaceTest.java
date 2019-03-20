@@ -15,7 +15,6 @@
  */
 package io.etcd.jetcd;
 
-import com.google.common.base.Charsets;
 import com.google.protobuf.ByteString;
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
@@ -43,6 +42,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
+import static io.etcd.jetcd.TestUtil.byteStringOf;
+import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -90,29 +91,29 @@ public class KVNamespaceTest {
         // namespace, key, end, wKey, wEnd
         // 1. single key
         Arguments.of(
-            ByteSequence.from("pfx/", Charsets.UTF_8),
-            ByteString.copyFrom("a".getBytes(Charsets.UTF_8)),
+            bytesOf("pfx/"),
+            byteStringOf("a"),
             null,
-            ByteString.copyFrom("pfx/a".getBytes(Charsets.UTF_8)),
+            byteStringOf("pfx/a"),
             null),
         // 2. range
         Arguments.of(
-            ByteSequence.from("pfx/", Charsets.UTF_8),
-            ByteString.copyFrom("abc".getBytes(Charsets.UTF_8)),
-            ByteString.copyFrom("def".getBytes(Charsets.UTF_8)),
-            ByteString.copyFrom("pfx/abc".getBytes(Charsets.UTF_8)),
-            ByteString.copyFrom("pfx/def".getBytes(Charsets.UTF_8))),
+            bytesOf("pfx/"),
+            byteStringOf("abc"),
+            byteStringOf("def"),
+            byteStringOf("pfx/abc"),
+            byteStringOf("pfx/def")),
         // 3. one-sided range
         Arguments.of(
-            ByteSequence.from("pfx/", Charsets.UTF_8),
-            ByteString.copyFrom("abc".getBytes(Charsets.UTF_8)),
+            bytesOf("pfx/"),
+            byteStringOf("abc"),
             ByteString.copyFrom(new byte[] {0}),
-            ByteString.copyFrom("pfx/abc".getBytes(Charsets.UTF_8)),
-            ByteString.copyFrom("pfx0".getBytes(Charsets.UTF_8))),
+            byteStringOf("pfx/abc"),
+            byteStringOf("pfx0")),
         // 4. one-sided range, end of key space
         Arguments.of(
             ByteSequence.from(new byte[] {(byte) 0xff, (byte) 0xff}),
-            ByteString.copyFrom("abc".getBytes(Charsets.UTF_8)),
+            byteStringOf("abc"),
             ByteString.copyFrom(new byte[] {0}),
             ByteString.copyFrom(new byte[] {(byte) 0xff, (byte) 0xff, 'a', 'b', 'c'}),
             ByteString.copyFrom(new byte[] {0}))
@@ -398,7 +399,7 @@ public class KVNamespaceTest {
   private static ByteSequence getNonexistentKey() {
     synchronized (keyIndex) {
       keyIndex++;
-      return ByteSequence.from("sample_key_" + String.format("%05d", keyIndex), Charsets.UTF_8);
+      return bytesOf("sample_key_" + String.format("%05d", keyIndex));
     }
   }
 
