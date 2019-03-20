@@ -15,9 +15,9 @@
  */
 package io.etcd.jetcd;
 
+import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.base.Charsets;
 import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.common.exception.CompactedException;
 import io.etcd.jetcd.kv.PutResponse;
@@ -49,7 +49,7 @@ import org.junit.runners.Parameterized;
 public class WatchTest {
   @ClassRule
   public static final EtcdClusterResource clusterResource = new EtcdClusterResource("watch", 3);
-  private static final ByteSequence namespace = ByteSequence.from("test-namespace/", Charsets.UTF_8);
+  private static final ByteSequence namespace = bytesOf("test-namespace/");
 
   private static Client client;
   private static Client clientWithNamespace;

@@ -15,10 +15,9 @@
  */
 package io.etcd.jetcd;
 
-
+import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.base.Charsets;
 import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
 import io.grpc.CallOptions;
@@ -64,7 +63,7 @@ public class ClientConnectionManagerTest {
       });
 
     try (Client client = builder.build()) {
-      CompletableFuture<PutResponse> future = client.getKVClient().put(ByteSequence.from("sample_key", Charsets.UTF_8), ByteSequence.from("sample_key", Charsets.UTF_8));
+      CompletableFuture<PutResponse> future = client.getKVClient().put(bytesOf("sample_key"), bytesOf("sample_key"));
       latch.await(1, TimeUnit.MINUTES);
       future.get();
     }

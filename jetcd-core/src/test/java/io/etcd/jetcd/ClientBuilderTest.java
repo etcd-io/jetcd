@@ -15,10 +15,10 @@
  */
 package io.etcd.jetcd;
 
+import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.google.common.base.Charsets;
 import io.grpc.netty.NettyChannelBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -75,10 +75,8 @@ public class ClientBuilderTest {
     return Stream.of(
         // namespace setting, expected namespace
         Arguments.of(ByteSequence.EMPTY, ByteSequence.EMPTY),
-        Arguments.of(ByteSequence.from("/namespace1/", Charsets.UTF_8),
-            ByteSequence.from("/namespace1/", Charsets.UTF_8)),
-        Arguments.of(ByteSequence.from("namespace2/", Charsets.UTF_8),
-            ByteSequence.from("namespace2/", Charsets.UTF_8))
+        Arguments.of(bytesOf("/namespace1/"), bytesOf("/namespace1/")),
+        Arguments.of(bytesOf("namespace2/"), bytesOf("namespace2/"))
     );
   }
 

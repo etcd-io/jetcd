@@ -15,7 +15,7 @@
  */
 package io.etcd.jetcd;
 
-import static com.google.common.base.Charsets.UTF_8;
+import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -59,7 +59,7 @@ import org.mockito.junit.MockitoRule;
  */
 public class WatchUnitTest {
 
-  private final static ByteSequence KEY = ByteSequence.from("test_key", UTF_8);
+  private final static ByteSequence KEY = bytesOf("test_key");
   @Rule
   public final GrpcServerRule grpcServerRule = new GrpcServerRule().directExecutor();
   @Rule

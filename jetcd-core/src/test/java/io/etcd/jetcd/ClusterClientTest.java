@@ -15,119 +15,80 @@
  */
 package io.etcd.jetcd;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.etcd.jetcd.cluster.Member;
 import io.etcd.jetcd.cluster.MemberAddResponse;
 import io.etcd.jetcd.cluster.MemberListResponse;
-import io.etcd.jetcd.launcher.EtcdCluster;
-import io.etcd.jetcd.launcher.EtcdClusterFactory;
+import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-import org.testng.asserts.Assertion;
+
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 /**
  * test etcd cluster client
  */
 public class ClusterClientTest {
-  private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("cluster-client", 3 ,false);
 
-  private final Assertion assertion = new Assertion();
-  private Member addedMember;
+  @ClassRule
+  public static EtcdClusterResource clusterResource = new EtcdClusterResource("cluster-client", 3 ,false);
 
-  private List<URI> endpoints;
-  private List<URI> peerUrls;
+  private static List<URI> endpoints;
+  private static List<URI> peerUrls;
 
   /**
    * test list cluster function
    */
 
-  @BeforeTest
-  public void setUp() throws InterruptedException {
-    CLUSTER.start();
-
-    endpoints = CLUSTER.getClientEndpoints();
-    peerUrls = CLUSTER.getPeerEndpoints();
+  @BeforeClass
+  public static void setUp() throws InterruptedException {
+    endpoints = clusterResource.cluster().getClientEndpoints();
+    peerUrls = clusterResource.cluster().getPeerEndpoints();
     TimeUnit.SECONDS.sleep(5);
   }
 
   @Test
-  public void testListCluster()
-      throws ExecutionException, InterruptedException {
+  public void testListCluster() throws ExecutionException, InterruptedException {
     Client client = Client.builder().endpoints(endpoints).build();
     Cluster clusterClient = client.getClusterClient();
     MemberListResponse response = clusterClient.listMember().get();
-    assertion
-        .assertEquals(response.getMembers().size(), 3, "Members: " + response.getMembers().size());
+    assertThat(response.getMembers()).hasSize(3);
   }
 
-  /**
-   * test add cluster function, added member will be removed by testDeleteMember
-   */
-  @Test(dependsOnMethods = "testListCluster")
-  public void testAddMember()
-      throws ExecutionException, InterruptedException, TimeoutException {
-    Client client = Client.builder()
+  @Test
+  public void testMemberManagement() throws ExecutionException, InterruptedException, TimeoutException {
+    final Client client = Client.builder()
         .endpoints(endpoints.subList(0, 2))
         .build();
+    final Cluster clusterClient = client.getClusterClient();
 
-    Cluster clusterClient = client.getClusterClient();
     MemberListResponse response = clusterClient.listMember().get();
-    assertion.assertEquals(response.getMembers().size(), 3);
+    assertThat(response.getMembers()).hasSize(3);
+
     CompletableFuture<MemberAddResponse> responseListenableFuture = clusterClient.addMember(peerUrls.subList(2, 3));
     MemberAddResponse addResponse = responseListenableFuture.get(5, TimeUnit.SECONDS);
-    addedMember = addResponse.getMember();
-    assertion.assertNotNull(addedMember, "added member: " + addedMember.getId());
-  }
+    final Member addedMember = addResponse.getMember();
+    assertThat(addedMember).isNotNull();
+    assertThat(clusterClient.listMember().get().getMembers()).hasSize(4);
 
-  /**
-   * test update peer url for member
-   */
-  @Test(dependsOnMethods = "testAddMember")
-  public void testUpdateMember() {
+    // Test update peer url for member
+    response = clusterClient.listMember().get();
+    List<URI> newPeerUrls = peerUrls.subList(0, 1);
+    clusterClient.updateMember(response.getMembers().get(0).getId(), newPeerUrls).get();
+    response = clusterClient.listMember().get();
+    assertThat(response.getMembers().get(0).getPeerURIs()).containsOnly(newPeerUrls.toArray(new URI[0]));
 
-    Throwable throwable = null;
-    try {
-      Client client = Client.builder()
-          .endpoints(endpoints.subList(1, 3))
-          .build();
-
-      Cluster clusterClient = client.getClusterClient();
-      MemberListResponse response = clusterClient.listMember().get();
-      List<URI> newPeerUrl = peerUrls.subList(0, 1);
-      clusterClient.updateMember(response.getMembers().get(0).getId(), newPeerUrl)
-          .get();
-    } catch (Exception e) {
-      System.out.println(e);
-      throwable = e;
-    }
-    assertion.assertNull(throwable, "update for member");
-  }
-
-  /**
-   * test remove member from cluster, the member is added by testAddMember
-   */
-  @Test(dependsOnMethods = "testUpdateMember")
-  public void testDeleteMember()
-      throws ExecutionException, InterruptedException {
-    Client client = Client.builder()
-        .endpoints(endpoints.subList(0, 2))
-        .build();
-
-    Cluster clusterClient = client.getClusterClient();
+    // Test remove member from cluster, the member is added by testAddMember
     clusterClient.removeMember(addedMember.getId()).get();
-    int newCount = clusterClient.listMember().get().getMembers().size();
-    assertion.assertEquals(newCount, 3,
-        "delete added member(" + addedMember.getId() + "), and left " + newCount + " members");
+    assertThat(clusterClient.listMember().get().getMembers()).hasSize(3);
   }
 
-  @AfterTest
-  public void tearDown() {
-    CLUSTER.close();
-  }
 }

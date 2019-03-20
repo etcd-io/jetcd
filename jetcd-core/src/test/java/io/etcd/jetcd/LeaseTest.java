@@ -18,8 +18,7 @@ package io.etcd.jetcd;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.base.Charsets;
-import io.etcd.jetcd.launcher.EtcdCluster;
-import io.etcd.jetcd.launcher.EtcdClusterFactory;
+import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
 import io.etcd.jetcd.lease.LeaseTimeToLiveResponse;
 import io.etcd.jetcd.options.LeaseOption;
@@ -30,16 +29,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
  * Lease service test cases.
  */
 public class LeaseTest {
-  private static EtcdCluster cluster;
+  @ClassRule
+  public static EtcdClusterResource clusterResource = new EtcdClusterResource("etcd-lease", 3 ,false);
 
   private KV kvClient;
   private Client client;
@@ -49,22 +48,10 @@ public class LeaseTest {
   private static final ByteSequence KEY_2 = ByteSequence.from("foo2", Charsets.UTF_8);
   private static final ByteSequence VALUE = ByteSequence.from("bar", Charsets.UTF_8);
 
-  @BeforeClass
-  public static void beforeClass() {
-    cluster = EtcdClusterFactory.buildCluster("etcd-lease", 3 ,false);
-    cluster.start();
-  }
-
-  @AfterClass
-  public static void afterClass() {
-    cluster.close();
-  }
 
   @Before
   public void setUp() {
-    cluster.start();
-
-    client = Client.builder().endpoints(cluster.getClientEndpoints()).build();
+    client = Client.builder().endpoints(clusterResource.cluster().getClientEndpoints()).build();
     kvClient = client.getKVClient();
     leaseClient = client.getLeaseClient();
   }
