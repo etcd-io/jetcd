@@ -40,17 +40,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.commons.io.output.NullOutputStream;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 // TODO: have separate folders to unit and integration tests.
+// TODO(#548): Add global timeout for tests once JUnit5 supports it
 public class MaintenanceUnitTest {
-
-  @Rule
-  public Timeout timeout = Timeout.seconds(10);
 
   private MutableHandlerRegistry serviceRegistry;
   private BlockingQueue<StreamObserver<SnapshotResponse>> observerQueue;
@@ -59,7 +55,7 @@ public class MaintenanceUnitTest {
   private Client client;
   private Maintenance maintenance;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException, URISyntaxException {
     observerQueue = new LinkedBlockingQueue<>();
     executor = Executors.newFixedThreadPool(2);
@@ -87,7 +83,7 @@ public class MaintenanceUnitTest {
     maintenance = client.getMaintenanceClient();
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     maintenance.close();
     client.close();
@@ -125,4 +121,3 @@ public class MaintenanceUnitTest {
     assertThat(out.toByteArray()).isEqualTo(blob.toByteArray());
   }
 }
-

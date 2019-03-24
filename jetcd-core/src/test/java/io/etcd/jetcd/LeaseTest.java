@@ -18,7 +18,7 @@ package io.etcd.jetcd;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.base.Charsets;
-import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
 import io.etcd.jetcd.lease.LeaseTimeToLiveResponse;
 import io.etcd.jetcd.options.LeaseOption;
@@ -28,17 +28,18 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * Lease service test cases.
  */
 public class LeaseTest {
-  @ClassRule
-  public static EtcdClusterResource clusterResource = new EtcdClusterResource("etcd-lease", 3 ,false);
+
+  @RegisterExtension
+  public static final EtcdClusterExtension cluster = new EtcdClusterExtension("etcd-lease", 3 ,false);
 
   private KV kvClient;
   private Client client;
@@ -49,14 +50,14 @@ public class LeaseTest {
   private static final ByteSequence VALUE = ByteSequence.from("bar", Charsets.UTF_8);
 
 
-  @Before
+  @BeforeEach
   public void setUp() {
-    client = Client.builder().endpoints(clusterResource.cluster().getClientEndpoints()).build();
+    client = Client.builder().endpoints(cluster.getClientEndpoints()).build();
     kvClient = client.getKVClient();
     leaseClient = client.getLeaseClient();
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     if (client != null) {
       client.close();
@@ -74,7 +75,7 @@ public class LeaseTest {
     assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
   }
 
-  @Test//(dependsOnMethods = "testGrant")
+  @Test
   public void testRevoke() throws Exception {
     long leaseID = leaseClient.grant(5).get().getID();
     kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();

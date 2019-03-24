@@ -23,22 +23,22 @@ import io.etcd.jetcd.auth.AuthRoleGetResponse;
 import io.etcd.jetcd.auth.AuthRoleListResponse;
 import io.etcd.jetcd.auth.Permission;
 import io.etcd.jetcd.auth.Permission.Type;
-import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 
 import java.net.URI;
 import java.util.List;
 
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * test etcd auth
  */
 public class AuthClientTest {
 
-  @ClassRule
-  public static final EtcdClusterResource clusterResource = new EtcdClusterResource("auth-etcd", 1, false);
+  @RegisterExtension
+  public static final EtcdClusterExtension cluster = new EtcdClusterExtension("auth-etcd", 1, false);
 
   private final ByteSequence rootRoleKey = bytesOf("root");
   private final ByteSequence rootRoleValue = bytesOf("b");
@@ -71,9 +71,9 @@ public class AuthClientTest {
   /**
    * Build etcd client to create role, permission
    */
-  @BeforeClass
+  @BeforeAll
   public static void setupEnv() {
-    endpoints = clusterResource.cluster().getClientEndpoints();
+    endpoints = cluster.getClientEndpoints();
     Client client = Client.builder().endpoints(endpoints).build();
 
     authDisabledKVClient = client.getKVClient();

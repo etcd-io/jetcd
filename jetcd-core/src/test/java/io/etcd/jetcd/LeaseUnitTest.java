@@ -32,18 +32,22 @@ import io.grpc.testing.GrpcServerRule;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicReference;
-import org.junit.After;
-import org.junit.Before;
+import java.util.concurrent.atomic.AtomicReference;;
 import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+// TODO(#548): Add global timeout for tests once JUnit5 supports it
+@ExtendWith(MockitoExtension.class)
+// TODO(#549): Remove GrpcServerRule and remove this annotation
+@EnableRuleMigrationSupport
 public class LeaseUnitTest {
 
   private Lease leaseCli;
@@ -54,16 +58,10 @@ public class LeaseUnitTest {
   @Rule
   public final GrpcServerRule grpcServerRule = new GrpcServerRule().directExecutor();
 
-  @Rule
-  public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-  @Rule
-  public Timeout timeout = Timeout.seconds(10);
-
   @Mock
   private StreamObserver<LeaseKeepAliveRequest> requestStreamObserverMock;
 
-  @Before
+  @BeforeEach
   public void setup() throws IOException {
     this.responseObserverRef = new AtomicReference<>();
     this.grpcServerRule.getServiceRegistry().addService(
@@ -74,7 +72,7 @@ public class LeaseUnitTest {
     );
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws InterruptedException {
     this.leaseCli.close();
     this.grpcServerRule.getServer().shutdownNow();

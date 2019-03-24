@@ -22,14 +22,14 @@ import io.etcd.jetcd.api.PutResponse;
 import io.etcd.jetcd.api.RangeResponse;
 import io.etcd.jetcd.api.ResponseOp;
 import io.etcd.jetcd.kv.TxnResponse;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TxnResponseTest {
 
   private TxnResponse txnResponse;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     io.etcd.jetcd.api.TxnResponse response = io.etcd.jetcd.api.TxnResponse.newBuilder()
         .addResponses(ResponseOp.newBuilder()

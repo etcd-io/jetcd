@@ -19,7 +19,7 @@ import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.etcd.jetcd.kv.PutResponse;
-import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -31,19 +31,21 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import org.junit.Rule;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 public class ClientConnectionManagerTest {
-  @Rule
-  public final EtcdClusterResource clusterResource = new EtcdClusterResource("connection-manager-etcd", 1);
+
+  @RegisterExtension
+  public static final EtcdClusterExtension cluster = new EtcdClusterExtension("connection-manager-etcd", 1);
 
   @Test
   public void test() throws InterruptedException, ExecutionException {
     final CountDownLatch latch = new CountDownLatch(1);
 
     final ClientBuilder builder = Client.builder()
-      .endpoints(clusterResource.cluster().getClientEndpoints())
+      .endpoints(cluster.getClientEndpoints())
       .header("MyHeader1", "MyHeaderVal1")
       .header("MyHeader2", "MyHeaderVal2")
       .interceptor(new ClientInterceptor() {
