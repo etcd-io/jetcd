@@ -14,15 +14,23 @@
  * limitations under the License.
  */
 
-package io.etcd.jetcd.launcher.junit;
+package io.etcd.jetcd.launcher.junit4;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.etcd.jetcd.launcher.EtcdCluster;
 import io.etcd.jetcd.launcher.EtcdClusterFactory;
+
+import java.net.URI;
+import java.util.List;
+
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EtcdClusterResource extends ExternalResource {
+/**
+ * JUnit4 ExternalResource to have etcd cluster in tests.
+ */
+public class EtcdClusterResource extends ExternalResource implements EtcdCluster {
 
   private static final Logger LOG = LoggerFactory.getLogger(EtcdClusterResource.class);
 
@@ -44,9 +52,7 @@ public class EtcdClusterResource extends ExternalResource {
     this.cluster = EtcdClusterFactory.buildCluster(clusterName, nodes, ssl, restartable);
   }
 
-  public EtcdCluster cluster() {
-    return cluster;
-  }
+  // Test framework methods
 
   @Override
   protected void before() throws Throwable {
@@ -60,5 +66,34 @@ public class EtcdClusterResource extends ExternalResource {
     } catch (RuntimeException e) {
       LOG.warn("close() failed (but ignoring it)", e);
     }
+  }
+
+  // Relay cluster methods to cluster
+
+  @Override
+  public void start() {
+    this.cluster.start();
+  }
+
+  @Override
+  public void restart() {
+    this.cluster.restart();
+  }
+
+  @Override
+  public void close() {
+    this.cluster.close();
+  }
+
+  @NonNull
+  @Override
+  public List<URI> getClientEndpoints() {
+    return this.cluster.getClientEndpoints();
+  }
+
+  @NonNull
+  @Override
+  public List<URI> getPeerEndpoints() {
+    return this.cluster.getPeerEndpoints();
   }
 }

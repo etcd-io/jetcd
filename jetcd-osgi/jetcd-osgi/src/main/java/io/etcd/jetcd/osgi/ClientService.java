@@ -158,7 +158,8 @@ public class ClientService implements Client {
     @AttributeDefinition(required = false, type = AttributeType.PASSWORD)
     String password();
 
-    @AttributeDefinition(required = false, type = AttributeType.STRING, defaultValue = "UTF-8", description = "Character Set used for user and password")
+    @AttributeDefinition(required = false, type = AttributeType.STRING, defaultValue = "UTF-8",
+        description = "Character Set used for user and password")
     String charset();
   }
 }

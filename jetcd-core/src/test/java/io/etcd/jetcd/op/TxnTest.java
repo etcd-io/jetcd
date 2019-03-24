@@ -15,20 +15,18 @@
  */
 package io.etcd.jetcd.op;
 
-import static com.google.common.base.Charsets.UTF_8;
+import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.options.PutOption;
 import java.util.concurrent.ExecutionException;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 public class TxnTest {
 
-  final static Cmp CMP = new Cmp(ByteSequence.from("key", UTF_8), Cmp.Op.GREATER,
-      CmpTarget.value(ByteSequence.from("value", UTF_8)));
-  final static Op OP = Op
-      .put(ByteSequence.from("key2", UTF_8), ByteSequence.from("value2", UTF_8), PutOption.DEFAULT);
+  private static final Cmp CMP = new Cmp(bytesOf("key"), Cmp.Op.GREATER, CmpTarget.value(bytesOf("value")));
+  private static final Op OP = Op.put(bytesOf("key2"), bytesOf("value2"), PutOption.DEFAULT);
 
   @Test
   @SuppressWarnings("FutureReturnValueIgnored") // CompletableFuture is null

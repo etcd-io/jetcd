@@ -15,38 +15,42 @@
  */
 package io.etcd.jetcd;
 
+import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-import com.google.common.base.Charsets;
-import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import io.grpc.netty.GrpcSslContexts;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Objects;
-import org.junit.Rule;
-import org.junit.Test;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
+// TODO(#548): Add global timeout for tests once JUnit5 supports it
 public class SslTest {
 
-  @Rule
-  public final EtcdClusterResource clusterResource = new EtcdClusterResource("etcd-ssl", 1, true);
+  @RegisterExtension
+  public static final EtcdClusterExtension cluster = new EtcdClusterExtension("etcd-ssl", 1, true);
 
   private static final String DEFAULT_SSL_AUTHORITY = "etcd0";
   private static final String DEFAULT_SSL_CA_PATH = "/ssl/cert/ca.pem";
 
-  @Test(timeout = 5000)
+  @Test
   public void testSimpleSllSetup() throws Exception {
-    final ByteSequence key = ByteSequence.from(TestUtil.randomString(), Charsets.UTF_8);
-    final ByteSequence val = ByteSequence.from(TestUtil.randomString(), Charsets.UTF_8);
+    final ByteSequence key = bytesOf(TestUtil.randomString());
+    final ByteSequence val = bytesOf(TestUtil.randomString());
     final String capath = System.getProperty("ssl.cert.capath");
     final String authority = System.getProperty("ssl.cert.authority", DEFAULT_SSL_AUTHORITY);
-    final URI endpoint = new URI(System.getProperty("ssl.cert.endpoints", clusterResource.cluster().getClientEndpoints().get(0).toString()));
+    final URI endpoint = new URI(System.getProperty("ssl.cert.endpoints",
+        cluster.getClientEndpoints().get(0).toString()));
 
     try (InputStream is = Objects.nonNull(capath)
-          ? new FileInputStream(new File(capath))
-          : getClass().getResourceAsStream(DEFAULT_SSL_CA_PATH)) {
+        ? new FileInputStream(new File(capath))
+        : getClass().getResourceAsStream(DEFAULT_SSL_CA_PATH)) {
 
       Client client = Client.builder()
           .endpoints(endpoint)

@@ -16,20 +16,18 @@
 package io.etcd.jetcd;
 
 import com.google.common.base.Charsets;
-import io.etcd.jetcd.launcher.EtcdCluster;
-import io.etcd.jetcd.launcher.EtcdClusterFactory;
+import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import io.etcd.jetcd.lease.LeaseGrantResponse;
 import io.etcd.jetcd.lock.LockResponse;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -43,7 +41,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Lock service test cases.
  */
 public class LockTest {
-  private static final EtcdCluster CLUSTER = EtcdClusterFactory.buildCluster("etcd-lock", 3 ,false);
+
+  @RegisterExtension
+  public static final EtcdClusterExtension cluster = new EtcdClusterExtension("etcd-lock", 3 ,false);
 
   private Lock lockClient;
   private static Lease leaseClient;
@@ -55,9 +55,7 @@ public class LockTest {
 
   @BeforeAll
   public static void setUp() throws Exception {
-    CLUSTER.start();
-
-    Client client = Client.builder().endpoints(CLUSTER.getClientEndpoints()).build();
+    Client client = Client.builder().endpoints(cluster.getClientEndpoints()).build();
 
     leaseClient = client.getLeaseClient();
   }
@@ -76,8 +74,8 @@ public class LockTest {
 
   private void initializeLockCLient(boolean useNamespace) {
     Client client = useNamespace
-        ? Client.builder().endpoints(CLUSTER.getClientEndpoints()).namespace(namespace).build()
-        : Client.builder().endpoints(CLUSTER.getClientEndpoints()).build();
+        ? Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace).build()
+        : Client.builder().endpoints(cluster.getClientEndpoints()).build();
     this.lockClient = client.getLockClient();
   }
 
@@ -162,11 +160,11 @@ public class LockTest {
 
     // prepare two LockClients with different namespaces, lock operations on one LockClient
     // should have no effect on the other client.
-    Client clientWithNamespace = Client.builder().endpoints(CLUSTER.getClientEndpoints())
+    Client clientWithNamespace = Client.builder().endpoints(cluster.getClientEndpoints())
         .namespace(namespace).build();
     Lock lockClientWithNamespace = clientWithNamespace.getLockClient();
 
-    Client clientWithNamespace2 = Client.builder().endpoints(CLUSTER.getClientEndpoints())
+    Client clientWithNamespace2 = Client.builder().endpoints(cluster.getClientEndpoints())
         .namespace(namespace2).build();
     Lock lockClientWithNamespace2 = clientWithNamespace2.getLockClient();
 
@@ -218,10 +216,5 @@ public class LockTest {
     CompletableFuture<LeaseGrantResponse> feature = leaseClient.grant(ttl);
     LeaseGrantResponse response = feature.get();
     return response.getID();
-  }
-
-  @AfterAll
-  public static void tearDown() throws IOException {
-    CLUSTER.close();
   }
 }

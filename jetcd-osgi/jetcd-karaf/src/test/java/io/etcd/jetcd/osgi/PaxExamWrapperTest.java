@@ -16,7 +16,7 @@
 
 package io.etcd.jetcd.osgi;
 
-import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+import io.etcd.jetcd.launcher.junit4.EtcdClusterResource;
 import java.net.URI;
 import java.util.Optional;
 import org.junit.Rule;
@@ -43,11 +43,11 @@ public class PaxExamWrapperTest {
     private static final String ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME = "etcd.endpoint";
 
     @Rule
-    public final EtcdClusterResource etcd = new EtcdClusterResource("karaf");
+    public final EtcdClusterResource cluster = new EtcdClusterResource("karaf");
 
     @Test
     public void testClientServiceChecks() throws Throwable {
-        URI endpoint = etcd.cluster().getClientEndpoints().get(0);
+        URI endpoint = cluster.getClientEndpoints().get(0);
         System.setProperty(ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME, endpoint.toString());
 
         Optional<Failure> failure = JUnitCore.runClasses(ClientServiceChecks.class).getFailures().stream().findFirst();

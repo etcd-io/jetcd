@@ -18,41 +18,39 @@ package io.etcd.jetcd;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.etcd.jetcd.Watch.Watcher;
-import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import io.etcd.jetcd.watch.WatchEvent.EventType;
 import io.etcd.jetcd.watch.WatchResponse;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * watch resume test case.
  */
+// TODO(#548): Add global timeout for tests once JUnit5 supports it
 public class WatchResumeTest {
-  @ClassRule
-  public static final EtcdClusterResource clusterResource = new EtcdClusterResource("watch_resume", 3, false, true);
+
+  @RegisterExtension
+  public static final EtcdClusterExtension cluster = new EtcdClusterExtension("watch_resume", 3, false, true);
 
   private static Client client;
   private static Watch watchClient;
   private static KV kvClient;
 
-  @Rule
-  public Timeout timeout = Timeout.seconds(30);
-
-  @BeforeClass
+  @BeforeAll
   public static void setUp() {
-    client = Client.builder().endpoints(clusterResource.cluster().getClientEndpoints()).build();
+    client = Client.builder().endpoints(cluster.getClientEndpoints()).build();
     watchClient = client.getWatchClient();
     kvClient = client.getKVClient();
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() {
     client.close();
   }
@@ -64,15 +62,12 @@ public class WatchResumeTest {
     ByteSequence value = TestUtil.randomByteSequence();
     AtomicReference<WatchResponse> ref = new AtomicReference<>();
 
-    Watcher watcher = null;
-
-    try {
-      watcher = watchClient.watch(key, response -> {
+    try (Watcher watcher = watchClient.watch(key, response -> {
         ref.set(response);
         latch.countDown();
-      });
+      })) {
 
-      clusterResource.cluster().restart();
+      cluster.restart();
 
       kvClient.put(key, value).get(1, TimeUnit.SECONDS);
       latch.await(4, TimeUnit.SECONDS);
@@ -81,8 +76,6 @@ public class WatchResumeTest {
       assertThat(ref.get().getEvents().size()).isEqualTo(1);
       assertThat(ref.get().getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
       assertThat(ref.get().getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
-    } finally {
-      TestUtil.closeQuietly(watcher);
     }
   }
 }

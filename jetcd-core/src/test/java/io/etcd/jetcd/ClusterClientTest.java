@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.etcd.jetcd.cluster.Member;
 import io.etcd.jetcd.cluster.MemberAddResponse;
 import io.etcd.jetcd.cluster.MemberListResponse;
-import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 
 import java.net.URI;
 import java.util.List;
@@ -29,17 +29,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * test etcd cluster client
  */
 public class ClusterClientTest {
 
-  @ClassRule
-  public static EtcdClusterResource clusterResource = new EtcdClusterResource("cluster-client", 3 ,false);
+  @RegisterExtension
+  public static EtcdClusterExtension cluster = new EtcdClusterExtension("cluster-client", 3 ,false);
 
   private static List<URI> endpoints;
   private static List<URI> peerUrls;
@@ -48,10 +48,10 @@ public class ClusterClientTest {
    * test list cluster function
    */
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() throws InterruptedException {
-    endpoints = clusterResource.cluster().getClientEndpoints();
-    peerUrls = clusterResource.cluster().getPeerEndpoints();
+    endpoints = cluster.getClientEndpoints();
+    peerUrls = cluster.getPeerEndpoints();
     TimeUnit.SECONDS.sleep(5);
   }
 

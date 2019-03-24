@@ -22,7 +22,8 @@ import io.etcd.jetcd.resolver.SmartNameResolver;
 import io.etcd.jetcd.resolver.URIResolverLoader;
 import java.net.URI;
 import java.util.Collections;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 public class NameResolverTest {
   private static final String[] DNSSRV_SCHEMES = new String[] { "dns+srv", "dnssrv", "srv" };

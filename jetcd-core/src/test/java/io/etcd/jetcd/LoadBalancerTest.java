@@ -18,28 +18,28 @@ package io.etcd.jetcd;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.etcd.jetcd.kv.PutResponse;
-import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import io.grpc.PickFirstBalancerFactory;
 import io.grpc.util.RoundRobinLoadBalancerFactory;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * KV service test cases.
  */
+// TODO(#548): Add global timeout for tests once JUnit5 supports it
 public class LoadBalancerTest {
-  @Rule
-  public final EtcdClusterResource clusterResource = new EtcdClusterResource("load-balancer-etcd", 3);
-  @Rule
-  public Timeout timeout = Timeout.seconds(10);
+
+  @RegisterExtension
+  public static final EtcdClusterExtension cluster = new EtcdClusterExtension("load-balancer-etcd", 3);
 
   @Test
   public void testPickFirstBalancerFactory() throws Exception {
-    final List<URI> endpoints = clusterResource.cluster().getClientEndpoints();
+    final List<URI> endpoints = cluster.getClientEndpoints();
 
     try (Client client = Client.builder()
             .endpoints(endpoints)
@@ -64,7 +64,7 @@ public class LoadBalancerTest {
 
   @Test
   public void testRoundRobinLoadBalancerFactory() throws Exception {
-    final List<URI> endpoints = clusterResource.cluster().getClientEndpoints();
+    final List<URI> endpoints = cluster.getClientEndpoints();
 
     try (Client client = Client.builder()
             .endpoints(endpoints)

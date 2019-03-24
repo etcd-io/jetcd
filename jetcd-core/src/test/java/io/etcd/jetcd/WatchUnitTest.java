@@ -44,35 +44,36 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * watch test case.
  */
+// TODO(#548): Add global timeout for tests once JUnit5 supports it
+@ExtendWith(MockitoExtension.class)
+// TODO(#549): Remove GrpcServerRule and remove this annotation
+@EnableRuleMigrationSupport
 public class WatchUnitTest {
 
   private final static ByteSequence KEY = bytesOf("test_key");
   @Rule
   public final GrpcServerRule grpcServerRule = new GrpcServerRule().directExecutor();
-  @Rule
-  public MockitoRule mockitoRule = MockitoJUnit.rule();
-  @Rule
-  public Timeout timeout = Timeout.seconds(10);
+
   private Watch watchClient;
   private ExecutorService executor = Executors.newFixedThreadPool(2);
   private AtomicReference<StreamObserver<WatchResponse>> responseObserverRef;
   @Mock
   private StreamObserver<WatchRequest> requestStreamObserverMock;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     this.executor = Executors.newSingleThreadExecutor();
     this.responseObserverRef = new AtomicReference<>();
@@ -86,7 +87,7 @@ public class WatchUnitTest {
   }
 
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     watchClient.close();
     grpcServerRule.getChannel().shutdownNow();

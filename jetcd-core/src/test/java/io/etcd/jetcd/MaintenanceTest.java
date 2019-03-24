@@ -18,7 +18,7 @@ package io.etcd.jetcd;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
-import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import io.etcd.jetcd.maintenance.SnapshotResponse;
 import io.etcd.jetcd.maintenance.StatusResponse;
 import io.grpc.stub.StreamObserver;
@@ -34,36 +34,31 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.io.output.NullOutputStream;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Maintenance test.
  */
 public class MaintenanceTest {
-  @ClassRule
-  public static EtcdClusterResource clusterResource = new EtcdClusterResource("etcd-maintenance", 3 ,false);
 
-  private Client client;
-  private Maintenance maintenance;
-  private List<URI> endpoints;
+  @RegisterExtension
+  public static EtcdClusterExtension cluster = new EtcdClusterExtension("etcd-maintenance", 3 ,false);
 
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  private static Client client;
+  private static Maintenance maintenance;
+  private static List<URI> endpoints;
 
-  @Before
-  public void setUp() {
-    this.endpoints = clusterResource.cluster().getClientEndpoints();
-    this.client = Client.builder().endpoints(endpoints).build();
-    this.maintenance = client.getMaintenanceClient();
-  }
+  @TempDir
+  static Path tempDir;
 
-  @After
-  public void tearDown() {
+  @BeforeAll
+  public static void setUp() {
+    endpoints = cluster.getClientEndpoints();
+    client = Client.builder().endpoints(endpoints).build();
+    maintenance = client.getMaintenanceClient();
   }
 
   /**
@@ -78,7 +73,7 @@ public class MaintenanceTest {
   @Test
   public void testSnapshotToOutputStream() throws ExecutionException, InterruptedException, IOException {
     // create a snapshot file current folder.
-    final Path snapfile = temporaryFolder.newFile().toPath();
+    final Path snapfile = tempDir.resolve("snap");
 
     // leverage try-with-resources
     try (OutputStream stream = Files.newOutputStream(snapfile)) {

@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
-import io.etcd.jetcd.launcher.junit.EtcdClusterResource;
+import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import io.etcd.jetcd.op.Cmp;
 import io.etcd.jetcd.op.CmpTarget;
 import io.etcd.jetcd.op.Op;
@@ -35,17 +35,18 @@ import io.etcd.jetcd.options.PutOption;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.assertj.core.api.Assertions;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * KV service test cases.
  */
 public class KVTest {
 
-  @ClassRule
-  public static EtcdClusterResource clusterResource = new EtcdClusterResource("etcd-kv", 3 ,false);
+  @RegisterExtension
+  public static EtcdClusterExtension cluster = new EtcdClusterExtension("etcd-kv", 3 ,false);
   private static KV kvClient;
 
   private static final ByteSequence SAMPLE_KEY = bytesOf("sample_key");
@@ -54,9 +55,9 @@ public class KVTest {
   private static final ByteSequence SAMPLE_VALUE_2 = bytesOf("sample_value2");
   private static final ByteSequence SAMPLE_KEY_3 = bytesOf("sample_key3");
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() throws Exception {
-    kvClient = Client.builder().endpoints(clusterResource.cluster().getClientEndpoints()).build().getKVClient();
+    kvClient = Client.builder().endpoints(cluster.getClientEndpoints()).build().getKVClient();
   }
 
   @Test

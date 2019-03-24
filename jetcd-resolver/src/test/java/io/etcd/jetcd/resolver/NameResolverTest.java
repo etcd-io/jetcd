@@ -17,7 +17,7 @@ package io.etcd.jetcd.resolver;
 
 import io.etcd.jetcd.common.exception.EtcdException;
 import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.util.Collections;
