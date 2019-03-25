@@ -125,7 +125,7 @@
         <junit.version>4.12</junit.version>
         <junit-jupiter.version>5.4.1</junit-jupiter.version>
         <netty-tcnative.version>2.0.23.Final</netty-tcnative.version>
-        <testcontainers.version>1.10.7</testcontainers.version>
+        <testcontainers.version>1.11.0</testcontainers.version>
         <commons-io.version>2.6</commons-io.version>
     </properties>
 
