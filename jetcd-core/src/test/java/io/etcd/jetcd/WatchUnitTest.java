@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
@@ -54,16 +55,13 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-/**
- * watch test case.
- */
 // TODO(#548): Add global timeout for tests once JUnit5 supports it
 @ExtendWith(MockitoExtension.class)
 // TODO(#549): Remove GrpcServerRule and remove this annotation
 @EnableRuleMigrationSupport
 public class WatchUnitTest {
 
-  private final static ByteSequence KEY = bytesOf("test_key");
+  private static final ByteSequence KEY = bytesOf("test_key");
   @Rule
   public final GrpcServerRule grpcServerRule = new GrpcServerRule().directExecutor();
 
@@ -99,12 +97,12 @@ public class WatchUnitTest {
     watchClient.close();
 
     assertThatExceptionOfType(ClosedClientException.class)
-        .isThrownBy(() -> watchClient.watch(KEY, Watch.listener(r -> {})));
+        .isThrownBy(() -> watchClient.watch(KEY, Watch.listener(r -> { })));
   }
 
   @Test
   public void testWatchOnSendingWatchCreateRequest() {
-    try (Watch.Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT, Watch.listener(r -> {}))) {
+    try (Watch.Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT, Watch.listener(r -> { }))) {
       // expects a WatchCreateRequest is created.
       verify(this.requestStreamObserverMock, timeout(100).times(1)).onNext(argThat(hasCreateKey(KEY)));
     }
@@ -124,9 +122,9 @@ public class WatchUnitTest {
       responseObserverRef.get().onNext(createdResponse);
 
       io.etcd.jetcd.api.WatchResponse putResponse = io.etcd.jetcd.api.WatchResponse
-              .newBuilder()
-              .setWatchId(0)
-              .addEvents(Event.newBuilder().setType(EventType.PUT).build()).build();
+          .newBuilder()
+          .setWatchId(0)
+          .addEvents(Event.newBuilder().setType(EventType.PUT).build()).build();
       responseObserverRef.get().onNext(putResponse);
 
       latch.await(4, TimeUnit.SECONDS);
@@ -142,11 +140,11 @@ public class WatchUnitTest {
     CountDownLatch latch = new CountDownLatch(1);
     AtomicBoolean ref = new AtomicBoolean();
     Watch.Listener listener = Watch.listener(
-      r -> {},
-      () -> {
-        ref.set(true);
-        latch.countDown();
-      }
+        r -> { },
+        () -> {
+          ref.set(true);
+          latch.countDown();
+        }
     );
 
     Watch.Watcher watcher = watchClient.watch(KEY, listener);
@@ -170,11 +168,11 @@ public class WatchUnitTest {
     CountDownLatch latch = new CountDownLatch(1);
     AtomicBoolean ref = new AtomicBoolean();
     Watch.Listener listener = Watch.listener(
-      r -> {},
-      () -> {
-        ref.set(true);
-        latch.countDown();
-      }
+        r -> { },
+        () -> {
+          ref.set(true);
+          latch.countDown();
+        }
     );
 
     Watch.Watcher watcher = watchClient.watch(KEY, listener);
@@ -199,10 +197,10 @@ public class WatchUnitTest {
     List<io.etcd.jetcd.watch.WatchResponse> responses = new ArrayList<>();
 
     Watch.Listener listener = Watch.listener(
-      r -> {
-        responses.add(r);
-        latch.countDown();
-      }
+        r -> {
+          responses.add(r);
+          latch.countDown();
+        }
     );
 
     try (Watch.Watcher watcher = watchClient.watch(KEY, listener)) {
@@ -210,24 +208,24 @@ public class WatchUnitTest {
       responseObserverRef.get().onNext(createdResponse);
 
       io.etcd.jetcd.api.WatchResponse resp1 = io.etcd.jetcd.api.WatchResponse.newBuilder()
-        .setWatchId(0)
-        .addEvents(Event.newBuilder()
-          .setType(EventType.PUT)
-          .setKv(io.etcd.jetcd.api.KeyValue.newBuilder()
-            .setModRevision(2)
+          .setWatchId(0)
+          .addEvents(Event.newBuilder()
+            .setType(EventType.PUT)
+            .setKv(io.etcd.jetcd.api.KeyValue.newBuilder()
+              .setModRevision(2)
+              .build())
             .build())
-          .build())
-        .build();
+          .build();
 
       io.etcd.jetcd.api.WatchResponse resp2 = WatchResponse.newBuilder()
-        .setWatchId(0)
-        .addEvents(Event.newBuilder()
-          .setType(EventType.PUT)
-          .setKv(io.etcd.jetcd.api.KeyValue.newBuilder()
-            .setModRevision(3)
+          .setWatchId(0)
+          .addEvents(Event.newBuilder()
+            .setType(EventType.PUT)
+            .setKv(io.etcd.jetcd.api.KeyValue.newBuilder()
+              .setModRevision(3)
+              .build())
             .build())
-          .build())
-        .build();
+          .build();
 
       responseObserverRef.get().onNext(resp1);
       responseObserverRef.get().onNext(resp2);
@@ -271,11 +269,12 @@ public class WatchUnitTest {
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<Throwable> ref = new AtomicReference<>();
     Watch.Listener listener = Watch.listener(
-      r -> {},
-      t -> {
-      ref.set(t);
-      latch.countDown();
-    });
+        r -> { },
+        t -> {
+          ref.set(t);
+          latch.countDown();
+        }
+    );
 
     try (Watch.Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT, listener)) {
       WatchResponse createdResponse = createWatchResponse(0);
@@ -295,11 +294,11 @@ public class WatchUnitTest {
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<Throwable> ref = new AtomicReference<>();
     Watch.Listener listener = Watch.listener(
-      r -> {},
-      t -> {
-        ref.set(t);
-        latch.countDown();
-      }
+        r -> { },
+        t -> {
+          ref.set(t);
+          latch.countDown();
+        }
     );
 
     try (Watch.Watcher watcher = watchClient.watch(KEY, listener)) {
@@ -321,11 +320,11 @@ public class WatchUnitTest {
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<Throwable> ref = new AtomicReference<>();
     Watch.Listener listener = Watch.listener(
-      r -> {},
-      t -> {
-        ref.set(t);
-        latch.countDown();
-      }
+        r -> { },
+        t -> {
+          ref.set(t);
+          latch.countDown();
+        }
     );
 
     try (Watch.Watcher watcher = watchClient.watch(KEY, listener)) {
@@ -333,16 +332,16 @@ public class WatchUnitTest {
       responseObserverRef.get().onNext(createdResponse);
 
       WatchResponse canceledResponse = WatchResponse
-              .newBuilder()
-              .setCanceled(true)
-              .build();
+          .newBuilder()
+          .setCanceled(true)
+          .build();
       responseObserverRef.get().onNext(canceledResponse);
 
       latch.await(4, TimeUnit.SECONDS);
 
       assertThat(ref.get()).isNotNull();
       assertThat(ref.get()).isInstanceOf(EtcdException.class)
-        .hasMessageContaining("etcdserver: mvcc: required revision is a future revision");
+          .hasMessageContaining("etcdserver: mvcc: required revision is a future revision");
     }
   }
 
@@ -351,11 +350,11 @@ public class WatchUnitTest {
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<Throwable> ref = new AtomicReference<>();
     Watch.Listener listener = Watch.listener(
-      r -> {},
-      t -> {
-        ref.set(t);
-        latch.countDown();
-      }
+        r -> { },
+        t -> {
+          ref.set(t);
+          latch.countDown();
+        }
     );
 
     try (Watch.Watcher watcher = watchClient.watch(KEY, listener)) {
@@ -363,17 +362,17 @@ public class WatchUnitTest {
       responseObserverRef.get().onNext(createdResponse);
 
       WatchResponse canceledResponse = WatchResponse
-              .newBuilder()
-              .setCanceled(true)
-              .setCancelReason("bad reason")
-              .build();
+          .newBuilder()
+          .setCanceled(true)
+          .setCancelReason("bad reason")
+          .build();
       responseObserverRef.get().onNext(canceledResponse);
 
       latch.await(4, TimeUnit.SECONDS);
 
       assertThat(ref.get()).isNotNull();
       assertThat(ref.get()).isInstanceOf(EtcdException.class)
-        .hasMessageContaining(canceledResponse.getCancelReason());
+          .hasMessageContaining(canceledResponse.getCancelReason());
     }
   }
 
@@ -382,11 +381,11 @@ public class WatchUnitTest {
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<Throwable> ref = new AtomicReference<>();
     Watch.Listener listener = Watch.listener(
-      r -> {},
-      t -> {
-        ref.set(t);
-        latch.countDown();
-      }
+        r -> { },
+        t -> {
+          ref.set(t);
+          latch.countDown();
+        }
     );
 
     try (Watch.Watcher watcher = watchClient.watch(KEY, listener)) {
@@ -446,8 +445,8 @@ public class WatchUnitTest {
 
   private static WatchResponse createWatchResponse(int id, Event... events) {
     WatchResponse.Builder builder = WatchResponse.newBuilder()
-      .setCreated(true)
-      .setWatchId(id);
+        .setCreated(true)
+        .setWatchId(id);
 
     for (Event event: events) {
       builder.addEvents(event);

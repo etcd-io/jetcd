@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd.resolver.dnssrv;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,7 +23,6 @@ import io.etcd.jetcd.resolver.SmartNameResolver;
 import io.etcd.jetcd.resolver.URIResolverLoader;
 import java.net.URI;
 import java.util.Collections;
-
 import org.junit.jupiter.api.Test;
 
 public class NameResolverTest {

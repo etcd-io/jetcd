@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
 
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
@@ -32,7 +33,7 @@ import io.grpc.testing.GrpcServerRule;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicReference;;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Rule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -140,7 +141,7 @@ public class LeaseUnitTest {
 
   @Test
   public void testKeepAliveOnSendingKeepAliveRequests() {
-    final StreamObserver<io.etcd.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> {});
+    final StreamObserver<io.etcd.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> { });
 
     try (CloseableClient listener = this.leaseCli.keepAlive(LEASE_ID_1, observer)) {
       // expect more than one KeepAlive requests are sent within 1100 ms.
@@ -150,7 +151,7 @@ public class LeaseUnitTest {
 
   @Test
   public void testKeepAliveAfterFirstKeepAliveTimeout() throws InterruptedException {
-    final StreamObserver<io.etcd.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> {});
+    final StreamObserver<io.etcd.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> { });
 
     try (CloseableClient listener = this.leaseCli.keepAlive(LEASE_ID_1, observer)) {
       // expect at least some KeepAlive requests are sent within
@@ -175,7 +176,7 @@ public class LeaseUnitTest {
 
   @Test
   public void testKeepAliveCloseOnlyListener() {
-    final StreamObserver<io.etcd.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> {});
+    final StreamObserver<io.etcd.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> { });
     final CloseableClient client = this.leaseCli.keepAlive(LEASE_ID_1, observer);
 
     client.close();
@@ -188,7 +189,7 @@ public class LeaseUnitTest {
 
   @Test
   public void testKeepAliveCloseSomeListeners() {
-    final StreamObserver<io.etcd.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> {});
+    final StreamObserver<io.etcd.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> { });
     final CloseableClient client1 = this.leaseCli.keepAlive(LEASE_ID_2, observer);
     final CloseableClient client2 = this.leaseCli.keepAlive(LEASE_ID_1, observer);
 
@@ -228,7 +229,7 @@ public class LeaseUnitTest {
 
   @Test
   public void testKeepAliveResetOnStreamErrors() {
-    final StreamObserver<io.etcd.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> {});
+    final StreamObserver<io.etcd.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> { });
 
     try (CloseableClient client = this.leaseCli.keepAlive(LEASE_ID_1, observer)) {
       Throwable t = Status.ABORTED.asRuntimeException();

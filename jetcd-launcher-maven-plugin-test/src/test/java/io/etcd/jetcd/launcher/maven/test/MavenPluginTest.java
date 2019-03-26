@@ -24,7 +24,7 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Constants;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test etcd server started by jetcd-launcher-maven-plugin.
@@ -33,11 +33,12 @@ import org.junit.Test;
  */
 public class MavenPluginTest {
 
-    @Test
-    public void testEtcdServerStarted() throws Exception {
-        String endpoint = Files.readFirstLine(new File("target/jetcd-launcher-maven-plugin/endpoint"), US_ASCII);
-        try (Client client = Client.builder().endpoints(endpoint).build()) {
-            assertEquals(0, client.getKVClient().get(Constants.NULL_KEY).get(7, TimeUnit.SECONDS).getCount());
-        }
+  @Test
+  public void testEtcdServerStarted() throws Exception {
+    final String filePath = "target/jetcd-launcher-maven-plugin/endpoint";
+    String endpoint = Files.readFirstLine(new File(filePath), US_ASCII);
+    try (Client client = Client.builder().endpoints(endpoint).build()) {
+      assertEquals(0, client.getKVClient().get(Constants.NULL_KEY).get(7, TimeUnit.SECONDS).getCount());
     }
+  }
 }

@@ -40,23 +40,23 @@ import org.junit.runner.notification.Failure;
  */
 public class PaxExamWrapperTest {
 
-    private static final String ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME = "etcd.endpoint";
+  private static final String ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME = "etcd.endpoint";
 
-    @Rule
-    public final EtcdClusterResource cluster = new EtcdClusterResource("karaf");
+  @Rule
+  public final EtcdClusterResource cluster = new EtcdClusterResource("karaf");
 
-    @Test
-    public void testClientServiceChecks() throws Throwable {
-        URI endpoint = cluster.getClientEndpoints().get(0);
-        System.setProperty(ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME, endpoint.toString());
+  @Test
+  public void testClientServiceChecks() throws Throwable {
+    URI endpoint = cluster.getClientEndpoints().get(0);
+    System.setProperty(ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME, endpoint.toString());
 
-        Optional<Failure> failure = JUnitCore.runClasses(ClientServiceChecks.class).getFailures().stream().findFirst();
-        if (failure.isPresent()) {
-            throw failure.get().getException();
-        }
+    Optional<Failure> failure = JUnitCore.runClasses(ClientServiceChecks.class).getFailures().stream().findFirst();
+    if (failure.isPresent()) {
+      throw failure.get().getException();
     }
+  }
 
-    static String getClientEndpoints() {
-        return System.getProperty(ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME);
-    }
+  static String getClientEndpoints() {
+    return System.getProperty(ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME);
+  }
 }

@@ -13,12 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.base.Charsets;
 import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import io.etcd.jetcd.lease.LeaseGrantResponse;
 import io.etcd.jetcd.lock.LockResponse;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,18 +37,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-/**
- * Lock service test cases.
- */
 public class LockTest {
 
   @RegisterExtension
@@ -164,29 +161,24 @@ public class LockTest {
         .namespace(namespace).build();
     Lock lockClientWithNamespace = clientWithNamespace.getLockClient();
 
-    Client clientWithNamespace2 = Client.builder().endpoints(cluster.getClientEndpoints())
-        .namespace(namespace2).build();
-    Lock lockClientWithNamespace2 = clientWithNamespace2.getLockClient();
-
     long lease = grantLease(5);
     CompletableFuture<LockResponse> feature = lockClientWithNamespace.lock(SAMPLE_NAME, lease);
     LockResponse response = feature.get();
-
-    long startTime = System.currentTimeMillis();
 
     assertThat(response.getKey().startsWith(SAMPLE_NAME)).isTrue();
 
     // Unlock by full key name using LockClient without namespace, thus it should not take
     // much time to lock the same key again.
-    ByteSequence wKey = ByteSequence.from(namespace.getByteString().concat(
+    ByteSequence nsKey = ByteSequence.from(namespace.getByteString().concat(
         response.getKey().getByteString()));
-    lockClient.unlock(wKey).get();
+    lockClient.unlock(nsKey).get();
     lease = grantLease(30);
     CompletableFuture<LockResponse> feature2 = lockClientWithNamespace.lock(SAMPLE_NAME, lease);
     LockResponse response2 = feature2.get();
 
     long timestamp2 = System.currentTimeMillis();
 
+    long startTime = System.currentTimeMillis();
     assertThat(response2.getKey().startsWith(SAMPLE_NAME)).isTrue();
     assertThat(response2.getKey()).isNotEqualTo(response.getKey());
     assertThat((timestamp2 - startTime) <= 1000).withFailMessage(String.format(
@@ -197,6 +189,9 @@ public class LockTest {
 
     // Lock the same key using LockClient with another namespace, it also should not take much time.
     lease = grantLease(5);
+    Client clientWithNamespace2 = Client.builder().endpoints(cluster.getClientEndpoints())
+        .namespace(namespace2).build();
+    Lock lockClientWithNamespace2 = clientWithNamespace2.getLockClient();
     CompletableFuture<LockResponse> feature3 = lockClientWithNamespace2.lock(SAMPLE_NAME, lease);
     LockResponse response3 = feature3.get();
 

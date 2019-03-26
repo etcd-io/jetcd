@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,9 +34,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-/**
- * test etcd cluster client
- */
 public class ClusterClientTest {
 
   @RegisterExtension
@@ -43,10 +41,6 @@ public class ClusterClientTest {
 
   private static List<URI> endpoints;
   private static List<URI> peerUrls;
-
-  /**
-   * test list cluster function
-   */
 
   @BeforeAll
   public static void setUp() throws InterruptedException {

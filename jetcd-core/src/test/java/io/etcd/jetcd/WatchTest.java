@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
@@ -44,9 +45,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-/**
- * watch test case.
- */
 // TODO(#548): Add global timeout for tests once JUnit5 supports it
 public class WatchTest {
 
@@ -186,12 +184,10 @@ public class WatchTest {
     // Try to listen from previous revision on
     final WatchOption watchOption = WatchOption.newBuilder().withRevision(putResponse.getHeader().getRevision() - 1)
         .build();
-    try (Watcher watcher = client.getWatchClient().watch(key, watchOption, Watch.listener(response -> {
-    }, error -> {
+    try (Watcher watcher = client.getWatchClient().watch(key, watchOption, Watch.listener(response -> { }, error -> {
       ref.set(error);
       latch.countDown();
     }))) {
-
       latch.await(4, TimeUnit.SECONDS);
       // Expect CompactedException
       assertThat(ref.get()).isNotNull();

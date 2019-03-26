@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,9 +34,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-/**
- * Lease service test cases.
- */
 public class LeaseTest {
 
   @RegisterExtension
@@ -101,14 +99,12 @@ public class LeaseTest {
 
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<LeaseKeepAliveResponse> responseRef = new AtomicReference<>();
-    StreamObserver<LeaseKeepAliveResponse> observer = Observers.observer(
-      response -> {
-        responseRef.set(response);
-        latch.countDown();
-      }
-    );
+    StreamObserver<LeaseKeepAliveResponse> observer = Observers.observer(response -> {
+      responseRef.set(response);
+      latch.countDown();
+    });
 
-    try(CloseableClient c = leaseClient.keepAlive(leaseID, observer)) {
+    try (CloseableClient c = leaseClient.keepAlive(leaseID, observer)) {
       latch.await(5, TimeUnit.SECONDS);
       LeaseKeepAliveResponse response = responseRef.get();
       assertThat(response.getTTL()).isGreaterThan(0);

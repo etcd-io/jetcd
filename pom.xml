@@ -600,6 +600,7 @@
                         </execution>
                     </executions>
                     <configuration>
+                        <includeTestSourceDirectory>true</includeTestSourceDirectory>
                         <encoding>UTF-8</encoding>
                         <consoleOutput>true</consoleOutput>
                         <failsOnError>true</failsOnError>

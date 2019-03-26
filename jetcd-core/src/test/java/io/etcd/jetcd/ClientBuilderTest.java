@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
@@ -20,16 +21,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.grpc.netty.NettyChannelBuilder;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Random;
 import java.util.stream.Stream;
-
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class ClientBuilderTest {
 
@@ -57,8 +56,10 @@ public class ClientBuilderTest {
   @Test
   public void testMaxInboundMessageSize() throws URISyntaxException {
     final int value = 1024 * 1 + new Random().nextInt(10);
-    final ClientBuilder builder =  Client.builder().endpoints(new URI("http://127.0.0.1:2379")).maxInboundMessageSize(value);
-    final NettyChannelBuilder channelBuilder = (NettyChannelBuilder)new ClientConnectionManager(builder).defaultChannelBuilder();
+    final ClientBuilder builder =  Client.builder().endpoints(new URI("http://127.0.0.1:2379"))
+        .maxInboundMessageSize(value);
+    final NettyChannelBuilder channelBuilder = (NettyChannelBuilder) new ClientConnectionManager(builder)
+        .defaultChannelBuilder();
 
     assertThat(channelBuilder).hasFieldOrPropertyWithValue("maxInboundMessageSize", value);
   }
@@ -84,10 +85,10 @@ public class ClientBuilderTest {
   @MethodSource("namespaceProvider")
   public void testNamespace(ByteSequence namespaceSetting, ByteSequence expectedNamespace)
       throws URISyntaxException {
-      final ClientBuilder builder =  Client.builder().endpoints(new URI("http://127.0.0.1:2379"))
-          .namespace(namespaceSetting);
-      final ClientConnectionManager connectionManager = new ClientConnectionManager(builder);
-      assertThat(connectionManager.getNamespace()).isEqualTo(expectedNamespace);
+    final ClientBuilder builder =  Client.builder().endpoints(new URI("http://127.0.0.1:2379"))
+        .namespace(namespaceSetting);
+    final ClientConnectionManager connectionManager = new ClientConnectionManager(builder);
+    assertThat(connectionManager.getNamespace()).isEqualTo(expectedNamespace);
   }
 
 }

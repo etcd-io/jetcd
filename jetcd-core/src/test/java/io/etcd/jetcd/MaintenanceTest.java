@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,9 +40,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
 
-/**
- * Maintenance test.
- */
 public class MaintenanceTest {
 
   @RegisterExtension
@@ -61,9 +59,6 @@ public class MaintenanceTest {
     maintenance = client.getMaintenanceClient();
   }
 
-  /**
-   * test status member function
-   */
   @Test
   public void testStatusMember() throws ExecutionException, InterruptedException {
     StatusResponse statusResponse = maintenance.statusMember(endpoints.get(0)).get();
@@ -120,19 +115,14 @@ public class MaintenanceTest {
     maintenance.hashKV(endpoints.get(0), 0).get();
   }
 
-  /**
-   * test alarm list function
-   * TODO trigger alarm, valid whether listAlarms will work.
-   * TODO disarm the alarm member, valid whether disarm will work with listAlarms.
-   */
+
+  // TODO trigger alarm, valid whether listAlarms will work.
+  // TODO disarm the alarm member, valid whether disarm will work with listAlarms.
   @Test
   public void testAlarmList() throws ExecutionException, InterruptedException {
     maintenance.listAlarms().get();
   }
 
-  /**
-   * test defragmentMember function
-   */
   @Test
   public void testDefragment() throws ExecutionException, InterruptedException {
     maintenance.defragmentMember(endpoints.get(0)).get();
@@ -142,7 +132,7 @@ public class MaintenanceTest {
   public void testMoveLeader() throws ExecutionException, InterruptedException {
     URI leaderEndpoint = null;
     List<Long> followers = new ArrayList<>();
-    for(URI ep : endpoints){
+    for (URI ep : endpoints) {
       StatusResponse statusResponse = maintenance.statusMember(ep).get();
       long memberId = statusResponse.getHeader().getMemberId();
       if (memberId == statusResponse.getLeader()) {
@@ -155,7 +145,7 @@ public class MaintenanceTest {
       fail("leader not found");
     }
 
-    try(Client client = Client.builder().endpoints(leaderEndpoint).build()) {
+    try (Client client = Client.builder().endpoints(leaderEndpoint).build()) {
       client.getMaintenanceClient().moveLeader(followers.get(0)).get();
     }
   }
