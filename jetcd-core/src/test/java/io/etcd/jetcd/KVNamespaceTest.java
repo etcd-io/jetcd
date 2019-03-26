@@ -13,7 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
+
+import static io.etcd.jetcd.TestUtil.byteStringOf;
+import static io.etcd.jetcd.TestUtil.bytesOf;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.protobuf.ByteString;
 import io.etcd.jetcd.kv.DeleteResponse;
@@ -27,21 +32,16 @@ import io.etcd.jetcd.op.Op;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Stream;
-
-import static io.etcd.jetcd.TestUtil.byteStringOf;
-import static io.etcd.jetcd.TestUtil.bytesOf;
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test cases focusing on using KVClient and TxnClient with non-empty namespace.
@@ -110,15 +110,14 @@ public class KVNamespaceTest {
 
   @ParameterizedTest
   @MethodSource("namespaceProvider")
-  public void testPrefixNamespace(
-      ByteSequence namespace, ByteString key, ByteString end,
-      ByteString expectedWKey, ByteString expectedWEnd) {
-      ByteString wKey = Util.prefixNamespace(key, namespace);
-      assertThat(wKey).isEqualTo(expectedWKey);
-      if (end != null) {
-        ByteString wEnd = Util.prefixNamespaceToRangeEnd(end, namespace);
-        assertThat(wEnd).isEqualTo(expectedWEnd);
-      }
+  public void testPrefixNamespace(ByteSequence namespace, ByteString key, ByteString end,
+      ByteString expectedNsKey, ByteString expectedNsEnd) {
+    ByteString nsKey = Util.prefixNamespace(key, namespace);
+    assertThat(nsKey).isEqualTo(expectedNsKey);
+    if (end != null) {
+      ByteString nsEnd = Util.prefixNamespaceToRangeEnd(end, namespace);
+      assertThat(nsEnd).isEqualTo(expectedNsEnd);
+    }
   }
 
   @Test
@@ -139,11 +138,10 @@ public class KVNamespaceTest {
     // test single key
     {
       ByteSequence key = getNonexistentKey();
-      ByteSequence wKey = ByteSequence.from(namespace.getByteString().concat(key.getByteString()));
+      ByteSequence nsKey = ByteSequence.from(namespace.getByteString().concat(key.getByteString()));
       ByteSequence value = null;
-      ByteSequence prevValue = null;
 
-      assertNonexistentKey(kvClient, wKey);
+      assertNonexistentKey(kvClient, nsKey);
       assertNonexistentKey(kvClientWithNamespace, key);
       assertNonexistentKey(kvClientWithNamespace2, key);
 
@@ -157,16 +155,16 @@ public class KVNamespaceTest {
 
       // 2. kvClient with namespace should see keys with such prefix
       value = TestUtil.randomByteSequence();
-      assertThat(putKVWithAssertion(kvClient, wKey, value, null)).isFalse();
-      assertExistentKey(kvClient, wKey, value);
+      assertThat(putKVWithAssertion(kvClient, nsKey, value, null)).isFalse();
+      assertExistentKey(kvClient, nsKey, value);
       assertExistentKey(kvClientWithNamespace, key, value);
       assertNonexistentKey(kvClientWithNamespace2, key);
 
       // 3. put the same key using the client with namespace
-      prevValue = value;
+      ByteSequence prevValue = value;
       value = TestUtil.randomByteSequence();
       assertThat(putKVWithAssertion(kvClientWithNamespace, key, value, prevValue)).isTrue();
-      assertExistentKey(kvClient, wKey, value);
+      assertExistentKey(kvClient, nsKey, value);
       assertExistentKey(kvClientWithNamespace, key, value);
       assertNonexistentKey(kvClientWithNamespace2, key);
 
@@ -372,7 +370,7 @@ public class KVNamespaceTest {
     }
   }
 
-  /********************************* Internal Test Utilities ******************************/
+  /********************************* Internal Test Utilities. ******************************/
 
   class TestKeyValue {
     ByteSequence key;

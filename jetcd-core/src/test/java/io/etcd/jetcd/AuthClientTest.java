@@ -13,28 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.etcd.jetcd.auth.AuthRoleGetResponse;
 import io.etcd.jetcd.auth.AuthRoleListResponse;
 import io.etcd.jetcd.auth.Permission;
 import io.etcd.jetcd.auth.Permission.Type;
 import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
-
 import java.net.URI;
 import java.util.List;
-
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-/**
- * test etcd auth
- */
 public class AuthClientTest {
 
   @RegisterExtension
@@ -69,7 +65,7 @@ public class AuthClientTest {
   private static List<URI> endpoints;
 
   /**
-   * Build etcd client to create role, permission
+   * Build etcd client to create role, permission.
    */
   @BeforeAll
   public static void setupEnv() {

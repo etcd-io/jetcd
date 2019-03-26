@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,9 +29,6 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-/**
- * KV service test cases.
- */
 // TODO(#548): Add global timeout for tests once JUnit5 supports it
 public class LoadBalancerTest {
 
@@ -50,7 +48,8 @@ public class LoadBalancerTest {
 
       long lastMemberId = 0;
 
-      for (int i = 0; i < endpoints.stream().map(uri -> uri.toString()).collect(Collectors.joining(",")).length() * 2; i++) {
+      final String allEndpoints = endpoints.stream().map(URI::toString).collect(Collectors.joining(","));
+      for (int i = 0; i < allEndpoints.length() * 2; i++) {
         Response response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
 
         if (i == 0) {
@@ -75,7 +74,8 @@ public class LoadBalancerTest {
       long lastMemberId = 0;
       long differences = 0;
 
-      for (int i = 0; i < endpoints.stream().map(uri -> uri.toString()).collect(Collectors.joining(",")).length(); i++) {
+      final String allEndpoints = endpoints.stream().map(URI::toString).collect(Collectors.joining(","));
+      for (int i = 0; i < allEndpoints.length(); i++) {
         PutResponse response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
 
         if (i > 0 && lastMemberId != response.getHeader().getMemberId()) {

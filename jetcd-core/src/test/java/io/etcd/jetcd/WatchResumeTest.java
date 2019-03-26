@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,7 +22,6 @@ import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import io.etcd.jetcd.watch.WatchEvent.EventType;
 import io.etcd.jetcd.watch.WatchResponse;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -30,9 +30,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-/**
- * watch resume test case.
- */
 // TODO(#548): Add global timeout for tests once JUnit5 supports it
 public class WatchResumeTest {
 
@@ -63,9 +60,9 @@ public class WatchResumeTest {
     AtomicReference<WatchResponse> ref = new AtomicReference<>();
 
     try (Watcher watcher = watchClient.watch(key, response -> {
-        ref.set(response);
-        latch.countDown();
-      })) {
+      ref.set(response);
+      latch.countDown();
+    })) {
 
       cluster.restart();
 

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,16 +63,15 @@ public class MaintenanceUnitTest {
 
     serviceRegistry = new MutableHandlerRegistry();
     serviceRegistry.addService(new MaintenanceImplBase() {
-       @Override
-       public void snapshot(SnapshotRequest request, StreamObserver<SnapshotResponse> observer) {
-         try {
-           observerQueue.put(observer);
-         } catch (InterruptedException e) {
-           throw new RuntimeException(e);
-         }
-       }
-     }
-    );
+      @Override
+      public void snapshot(SnapshotRequest request, StreamObserver<SnapshotResponse> observer) {
+        try {
+          observerQueue.put(observer);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
 
     fakeServer = NettyServerBuilder.forPort(TestUtil.findNextAvailablePort())
         .fallbackHandlerRegistry(serviceRegistry)

@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd.resolver;
 
 import io.etcd.jetcd.common.exception.EtcdException;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import java.net.URI;
 import java.util.Collections;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class NameResolverTest {
   private static final String[] DIRECT_SCHEMES = new String[] { "http", "https" };

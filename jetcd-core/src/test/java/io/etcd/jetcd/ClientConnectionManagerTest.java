@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
@@ -45,24 +46,27 @@ public class ClientConnectionManagerTest {
     final CountDownLatch latch = new CountDownLatch(1);
 
     final ClientBuilder builder = Client.builder()
-      .endpoints(cluster.getClientEndpoints())
-      .header("MyHeader1", "MyHeaderVal1")
-      .header("MyHeader2", "MyHeaderVal2")
-      .interceptor(new ClientInterceptor() {
-        @Override
-        public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
-          return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
-            @Override
-            public void start(Listener<RespT> responseListener, Metadata headers) {
-              super.start(responseListener, headers);
-              assertThat(headers.get(Metadata.Key.of("MyHeader1", Metadata.ASCII_STRING_MARSHALLER))).isEqualTo("MyHeaderVal1");
-              assertThat(headers.get(Metadata.Key.of("MyHeader2", Metadata.ASCII_STRING_MARSHALLER))).isEqualTo("MyHeaderVal2");
+        .endpoints(cluster.getClientEndpoints())
+        .header("MyHeader1", "MyHeaderVal1")
+        .header("MyHeader2", "MyHeaderVal2")
+        .interceptor(new ClientInterceptor() {
+          @Override
+          public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
+                                                                     CallOptions callOptions, Channel next) {
+            return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+              @Override
+              public void start(Listener<RespT> responseListener, Metadata headers) {
+                super.start(responseListener, headers);
+                assertThat(headers.get(Metadata.Key.of("MyHeader1", Metadata.ASCII_STRING_MARSHALLER)))
+                    .isEqualTo("MyHeaderVal1");
+                assertThat(headers.get(Metadata.Key.of("MyHeader2", Metadata.ASCII_STRING_MARSHALLER)))
+                    .isEqualTo("MyHeaderVal2");
 
-              latch.countDown();
-            }
-          };
-        }
-      });
+                latch.countDown();
+              }
+            };
+          }
+        });
 
     try (Client client = builder.build()) {
       CompletableFuture<PutResponse> future = client.getKVClient().put(bytesOf("sample_key"), bytesOf("sample_key"));
