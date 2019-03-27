@@ -21,6 +21,7 @@ This is a rough outline of what a contributor's workflow looks like:
 
 - Create a topic branch from where to base the contribution. This is usually master.
 - Make commits of logical units.
+- Run `license:format` to make sure license headers are properly formatted (see below).
 - Make sure commit messages are in the proper format (see below).
 - Push changes in a topic branch to a personal fork of the repository.
 - Submit a pull request to etcd-io/jetcd.
@@ -33,6 +34,16 @@ Thanks for contributing!
 The coding style follows Google Java Style. See the [style doc](https://google.github.io/styleguide/javaguide.html) for details.
 
 Please follow this style to make jetcd easy to review, maintain, and develop.
+
+### License headers
+
+To make sure CI checks would pass please run
+
+```bash
+./mvnw license:format
+```
+
+and including any changes in PR before opening it.
 
 ### Format of the commit message
 
