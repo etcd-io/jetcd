@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2017 The jetcd authors
+    Copyright 2016-2019 The jetcd authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -708,6 +708,9 @@
                 <artifactId>license-maven-plugin</artifactId>
                 <version>${license-maven-plugin.version}</version>
                 <configuration>
+                    <properties>
+                        <project.inceptionYear>2016</project.inceptionYear>
+                    </properties>
                     <header>${jetcd.project.root}/etc/license.txt</header>
                     <excludes>
                         <exclude>**/ErrorCode.java</exclude>
@@ -729,10 +732,22 @@
                         <exclude>target-ide/**</exclude>
                         <exclude>.factorypath</exclude>
                     </excludes>
+                    <headerDefinitions>
+                        <headerDefinition>${jetcd.project.root}/etc/license-formatting.xml</headerDefinition>
+                    </headerDefinitions>
                     <mapping>
                         <proto>DOUBLESLASH_STYLE</proto>
+                        <java>SLASHSTART_WITH_BLANKLINE_STYLE</java>
                     </mapping>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.mycila</groupId>
+                        <artifactId>license-maven-plugin-git</artifactId>
+                        <!-- make sure you use the same version as license-maven-plugin -->
+                        <version>${license-maven-plugin.version}</version>
+                    </dependency>
+                </dependencies>
                 <executions>
                     <execution>
                         <goals>
