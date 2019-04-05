@@ -41,8 +41,8 @@ dependencies {
 Client client = Client.builder().endpoints("http://localhost:2379").build();
 KV kvClient = client.getKVClient();
 
-ByteSequence key = ByteSequence.fromString("test_key");
-ByteSequence value = ByteSequence.fromString("test_value");
+ByteSequence key = ByteSequence.from("test_key".getBytes());
+ByteSequence value = ByteSequence.from("test_value".getBytes());
 
 // put the key-value
 kvClient.put(key, value).get();
