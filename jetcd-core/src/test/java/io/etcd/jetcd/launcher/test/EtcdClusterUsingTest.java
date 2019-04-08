@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.etcd.jetcd.launcher.test;
 
-import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.assertEquals;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
@@ -38,26 +39,26 @@ import org.junit.Test;
  */
 public class EtcdClusterUsingTest {
 
-    @Test
-    public void testUseEtcd() throws Exception {
-        try (EtcdCluster etcd = EtcdClusterFactory.buildCluster(getClass().getSimpleName(), 3, false, false)) {
-            etcd.start();
-            try (Client client = Client.builder().endpoints(etcd.getClientEndpoints()).build()) {
-                try (KV kvClient = client.getKVClient()) {
+  @Test
+  public void testUseEtcd() throws Exception {
+    try (EtcdCluster etcd = EtcdClusterFactory.buildCluster(getClass().getSimpleName(), 3, false, false)) {
+      etcd.start();
+      try (Client client = Client.builder().endpoints(etcd.getClientEndpoints()).build()) {
+        try (KV kvClient = client.getKVClient()) {
 
-                    ByteSequence key = ByteSequence.from("test_key", UTF_8);
-                    ByteSequence value = ByteSequence.from("test_value", UTF_8);
-                    kvClient.put(key, value).get();
+          ByteSequence key = ByteSequence.from("test_key", UTF_8);
+          ByteSequence value = ByteSequence.from("test_value", UTF_8);
+          kvClient.put(key, value).get();
 
-                    CompletableFuture<GetResponse> getFuture = kvClient.get(key);
-                    GetResponse response = getFuture.get();
-                    List<KeyValue> values = response.getKvs();
-                    assertThat(values).hasSize(1);
-                    KeyValue value1 = values.get(0);
-                    assertThat(value1.getValue()).isEqualTo(value);
-                    assertThat(value1.getKey()).isEqualTo(key);
-                }
-            }
+          CompletableFuture<GetResponse> getFuture = kvClient.get(key);
+          GetResponse response = getFuture.get();
+          List<KeyValue> values = response.getKvs();
+          assertEquals(1, values.size());
+          KeyValue value1 = values.get(0);
+          assertEquals(value, value1.getValue());
+          assertEquals(key, value1.getKey());
         }
+      }
     }
+  }
 }
