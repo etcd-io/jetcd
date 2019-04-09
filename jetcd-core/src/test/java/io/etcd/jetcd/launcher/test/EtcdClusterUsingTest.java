@@ -16,7 +16,7 @@
 
 package io.etcd.jetcd.launcher.test;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.junit.Assert.assertEquals;
 
 import io.etcd.jetcd.ByteSequence;
@@ -46,8 +46,8 @@ public class EtcdClusterUsingTest {
       try (Client client = Client.builder().endpoints(etcd.getClientEndpoints()).build()) {
         try (KV kvClient = client.getKVClient()) {
 
-          ByteSequence key = ByteSequence.from("test_key", UTF_8);
-          ByteSequence value = ByteSequence.from("test_value", UTF_8);
+          ByteSequence key = bytesOf("test_key");
+          ByteSequence value = bytesOf("test_value");
           kvClient.put(key, value).get();
 
           CompletableFuture<GetResponse> getFuture = kvClient.get(key);
