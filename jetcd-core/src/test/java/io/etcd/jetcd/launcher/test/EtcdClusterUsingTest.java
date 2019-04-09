@@ -17,7 +17,7 @@
 package io.etcd.jetcd.launcher.test;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
@@ -53,10 +53,10 @@ public class EtcdClusterUsingTest {
           CompletableFuture<GetResponse> getFuture = kvClient.get(key);
           GetResponse response = getFuture.get();
           List<KeyValue> values = response.getKvs();
-          assertEquals(1, values.size());
+          assertThat(values.size()).isEqualTo(1);
           KeyValue value1 = values.get(0);
-          assertEquals(value, value1.getValue());
-          assertEquals(key, value1.getKey());
+          assertThat(value1.getValue()).isEqualTo(value);
+          assertThat(value1.getKey()).isEqualTo(key);
         }
       }
     }
