@@ -21,6 +21,8 @@ import static java.util.stream.Collectors.toList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -35,11 +37,18 @@ public class EtcdClusterFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(EtcdClusterFactory.class);
 
   public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl) {
-    return buildCluster(clusterName, nodes, ssl, false);
+    return buildCluster(clusterName, nodes, ssl, false, EtcdContainer.ETCD_DOCKER_IMAGE_NAME,
+        Collections.emptyList());
   }
 
-  public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl, boolean restartable,
-          String... additionalArgs) {
+  public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl,
+      boolean restartable, String... additionalArgs) {
+    return buildCluster(clusterName, nodes, ssl, restartable, EtcdContainer.ETCD_DOCKER_IMAGE_NAME,
+        Arrays.asList(additionalArgs));
+  }
+
+  public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl,
+      boolean restartable, @NonNull String image, List<String> additionalArgs) {
     final Network network = Network.builder().id(clusterName).build();
     final CountDownLatch latch = new CountDownLatch(nodes);
     final AtomicBoolean failedToStart = new AtomicBoolean(false);
@@ -64,7 +73,8 @@ public class EtcdClusterFactory {
     final List<String> endpoints = IntStream.range(0, nodes).mapToObj(i -> "etcd" + i).collect(toList());
 
     final List<EtcdContainer> containers = endpoints.stream()
-            .map(e -> new EtcdContainer(network, listener, ssl, clusterName, e, endpoints, restartable, additionalArgs))
+            .map(e -> new EtcdContainer(network, listener, ssl, clusterName, e,
+                endpoints, restartable, image, additionalArgs))
             .collect(toList());
 
     return new EtcdCluster() {
