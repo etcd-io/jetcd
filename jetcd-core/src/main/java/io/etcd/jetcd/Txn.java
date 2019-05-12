@@ -82,7 +82,7 @@ public interface Txn {
    */
   //CHECKSTYLE:OFF
   Txn Else(Op... ops);
-  //CHECKSTYLE:OFF
+  //CHECKSTYLE:ON
 
   /**
    * tries to commit the transaction.
