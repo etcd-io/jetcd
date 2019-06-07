@@ -142,7 +142,7 @@ final class ClientConnectionManager {
   synchronized void close() {
     ManagedChannel channel = channelRef.get();
     if (channel != null) {
-      channel.shutdown();
+      channel.shutdownNow();
     }
 
     executorService.shutdownNow();
