@@ -36,6 +36,7 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
@@ -115,15 +116,17 @@ public class ClientServiceChecks extends TestSupport {
             .artifactId("assertj-core")
             .versionAsInProject()
             .start(),
-        editConfigurationFilePut("etc/io.etcd.jetcd.cfg", "endpoints",
-            PaxExamWrapperTest.getClientEndpoints()),
-        editConfigurationFilePut("etc/io.etcd.jetcd.resolver.dnssrv.cfg", "foo", "bar"),
+        editConfigurationFilePut(
+          "etc/io.etcd.jetcd.cfg", "endpoints", PaxExamWrapperTest.getClientEndpoints()),
+        editConfigurationFilePut(
+          "etc/io.etcd.jetcd.resolver.dnssrv.cfg", "foo", "bar"),
         keepRuntimeFolder(),
         cleanCaches(),
         logLevel(LogLevelOption.LogLevel.INFO)
     };
   }
 
+  @Ignore("https://github.com/grpc/grpc-java/issues/6020")
   @Test
   public void testServiceAvailability() throws Exception {
     assertThat(bundleContext).isNotNull();
@@ -136,7 +139,7 @@ public class ClientServiceChecks extends TestSupport {
     } catch (Throwable t) {
       // Pax Exam's WrappedTestContainerException unfortunately only includes the message, not the cause,
       // so the real reason for failures needs to be searched for in target/exam/*/data/log/karaf.log ...
-      // Just for convenience in local debugging, and to eastily understand failures on CI, we dump
+      // Just for convenience in local debugging, and to easily understand failures on CI, we dump
       // the failure's stack trace to STDOUT; like that it's easy to see in maven-surefire-plugin,
       // or when running in the IDE, like for any other non-OSGi test failure.
       t.printStackTrace();

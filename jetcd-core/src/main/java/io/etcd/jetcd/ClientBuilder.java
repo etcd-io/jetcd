@@ -24,7 +24,6 @@ import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.etcd.jetcd.resolver.URIResolverLoader;
 import io.grpc.ClientInterceptor;
-import io.grpc.LoadBalancer;
 import io.grpc.Metadata;
 import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
@@ -49,7 +48,7 @@ public final class ClientBuilder implements Cloneable {
   private ByteSequence user;
   private ByteSequence password;
   private ExecutorService executorService;
-  private LoadBalancer.Factory loadBalancerFactory;
+  private String loadBalancerPolicy;
   private SslContext sslContext;
   private boolean lazyInitialization = false;
   private String authority;
@@ -179,25 +178,25 @@ public final class ClientBuilder implements Cloneable {
   }
 
   /**
-   * config LoadBalancer factory.
+   * config load balancer policy.
    *
-   * @param loadBalancerFactory etcd LoadBalancer.Factory
+   * @param loadBalancerPolicy etcd load balancer policy
    * @return this builder
-   * @throws NullPointerException if loadBalancerFactory is <code>null</code>
+   * @throws NullPointerException if loadBalancerPolicy is <code>null</code>
    */
-  public ClientBuilder loadBalancerFactory(LoadBalancer.Factory loadBalancerFactory) {
-    checkNotNull(loadBalancerFactory, "loadBalancerFactory can't be null");
-    this.loadBalancerFactory = loadBalancerFactory;
+  public ClientBuilder loadBalancerPolicy(String loadBalancerPolicy) {
+    checkNotNull(loadBalancerPolicy, "loadBalancerPolicy can't be null");
+    this.loadBalancerPolicy = loadBalancerPolicy;
     return this;
   }
 
   /**
-   * get LoadBalancer.Factory for etcd client.
+   * get the load balancer policy for etcd client.
    *
    * @return loadBalancerFactory
    */
-  public LoadBalancer.Factory loadBalancerFactory() {
-    return loadBalancerFactory;
+  public String loadBalancerPolicy() {
+    return loadBalancerPolicy;
   }
 
   public boolean lazyInitialization() {

@@ -20,12 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
-import io.grpc.PickFirstBalancerFactory;
-import io.grpc.util.RoundRobinLoadBalancerFactory;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -38,12 +35,9 @@ public class LoadBalancerTest {
   @Test
   public void testPickFirstBalancerFactory() throws Exception {
     final List<URI> endpoints = cluster.getClientEndpoints();
+    final ClientBuilder builder = Client.builder().endpoints(endpoints).loadBalancerPolicy("pick_first");
 
-    try (Client client = Client.builder()
-            .endpoints(endpoints)
-            .loadBalancerFactory(PickFirstBalancerFactory.getInstance())
-            .build();
-
+    try (Client client = builder.build();
          KV kv = client.getKVClient()) {
 
       long lastMemberId = 0;
@@ -64,11 +58,9 @@ public class LoadBalancerTest {
   @Test
   public void testRoundRobinLoadBalancerFactory() throws Exception {
     final List<URI> endpoints = cluster.getClientEndpoints();
+    final ClientBuilder builder = Client.builder().endpoints(endpoints).loadBalancerPolicy("round_robin");
 
-    try (Client client = Client.builder()
-            .endpoints(endpoints)
-            .loadBalancerFactory(RoundRobinLoadBalancerFactory.getInstance())
-            .build();
+    try (Client client = builder.build();
          KV kv = client.getKVClient()) {
 
       long lastMemberId = 0;
