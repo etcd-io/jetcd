@@ -21,11 +21,11 @@ before_install:
 script:
   - sdk use java 8.0.222.hs-adpt
   - java -version
-  - ./mvnw $MAVEN_OPTS clean install 
+  - ./mvnw clean install $MAVEN_OPTS
 
 deploy:
   provider: script
-  script: ./mvnw $MAVEN_OPTS clean deploy -DskipTests --settings etc/mvn-deploy-settings.xml
+  script: ./mvnw clean deploy $MAVEN_OPTS -DskipTests --settings etc/mvn-deploy-settings.xml
   skip_cleanup: true 
   on:
     branch: master
