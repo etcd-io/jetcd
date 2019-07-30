@@ -36,13 +36,11 @@ import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
-import io.grpc.LoadBalancerRegistry;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
-import io.grpc.internal.PickFirstLoadBalancerProvider;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
@@ -201,11 +199,6 @@ final class ClientConnectionManager {
     if (builder.loadBalancerPolicy() != null) {
       channelBuilder.defaultLoadBalancingPolicy(builder.loadBalancerPolicy());
     } else {
-
-      if (LoadBalancerRegistry.getDefaultRegistry().getProvider("pick_first") == null) {
-        LoadBalancerRegistry.getDefaultRegistry().register(new PickFirstLoadBalancerProvider());
-      }
-
       channelBuilder.defaultLoadBalancingPolicy("pick_first");
     }
 
