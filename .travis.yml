@@ -6,23 +6,26 @@ dist: xenial
 services:
   - docker
 
+env:
+  - MAVEN_OPTS=""-B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
+
 before_install:
   - curl -s "https://get.sdkman.io" | bash
   - source "$HOME/.sdkman/bin/sdkman-init.sh"
-  - sdk version
   - mkdir -p "$HOME/.sdkman/etc"
   - echo "sdkman_auto_answer=true" > "$HOME/.sdkman/etc/config"
   - echo "sdkman_auto_selfupdate=true" >> "$HOME/.sdkman/etc/config"
+  - sdk version
   - sdk install java 8.0.222.hs-adpt
 
 script:
   - sdk use java 8.0.222.hs-adpt
   - java -version
-  - ./mvnw clean install -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+  - ./mvnw $MAVEN_OPTS clean install 
 
 deploy:
   provider: script
-  script: ./mvnw deploy -DskipTests --settings etc/mvn-deploy-settings.xml
+  script: ./mvnw $MAVEN_OPTS clean deploy -DskipTests --settings etc/mvn-deploy-settings.xml
   skip_cleanup: true 
   on:
     branch: master
