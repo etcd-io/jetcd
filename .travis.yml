@@ -13,10 +13,10 @@ before_install:
   - mkdir -p "$HOME/.sdkman/etc"
   - echo "sdkman_auto_answer=true" > "$HOME/.sdkman/etc/config"
   - echo "sdkman_auto_selfupdate=true" >> "$HOME/.sdkman/etc/config"
-  - sdk install java 8.0.212.hs-adpt
+  - sdk install java 8.0.222.hs
 
 script:
-  - sdk use java 8.0.212.hs-adpt
+  - sdk use java 8.0.222.hs
   - java -version
   - ./mvnw clean install
 
