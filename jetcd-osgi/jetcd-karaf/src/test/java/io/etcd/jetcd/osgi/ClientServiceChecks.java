@@ -36,7 +36,6 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
@@ -126,7 +125,6 @@ public class ClientServiceChecks extends TestSupport {
     };
   }
 
-  @Ignore("https://github.com/grpc/grpc-java/issues/6020")
   @Test
   public void testServiceAvailability() throws Exception {
     assertThat(bundleContext).isNotNull();
