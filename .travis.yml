@@ -7,7 +7,7 @@ services:
   - docker
 
 env:
-  - MAVEN_OPTS="-B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
+  - MAVEN_COMMON_OPTS="-B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn"
 
 before_install:
   - curl -s "https://get.sdkman.io" | bash
@@ -21,11 +21,11 @@ before_install:
 script:
   - sdk use java 8.0.222.hs-adpt
   - java -version
-  - ./mvnw clean install $MAVEN_OPTS
+  - ./mvnw clean install $MAVEN_COMMON_OPTS
 
 deploy:
   provider: script
-  script: ./mvnw clean deploy $MAVEN_OPTS -DskipTests --settings etc/mvn-deploy-settings.xml
+  script: ./mvnw clean deploy $MAVEN_COMMON_OPTS -DskipTests --settings etc/mvn-deploy-settings.xml
   skip_cleanup: true 
   on:
     branch: master
