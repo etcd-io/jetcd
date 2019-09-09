@@ -40,7 +40,7 @@ public class SmartNameResolverFactory extends NameResolver.Factory {
 
   @Nullable
   @Override
-  public NameResolver newNameResolver(URI targetUri,NameResolver.Helper helper) {
+  public NameResolver newNameResolver(URI targetUri, NameResolver.Args args) {
     if ("etcd".equals(targetUri.getScheme())) {
       return new SmartNameResolver(this.authority , this.uris, this.loader);
     } else {
