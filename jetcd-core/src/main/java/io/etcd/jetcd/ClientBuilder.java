@@ -28,6 +28,7 @@ import io.grpc.Metadata;
 import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
 import java.net.URI;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,6 +58,10 @@ public final class ClientBuilder implements Cloneable {
   private Map<Metadata.Key, Object> headers;
   private List<ClientInterceptor> interceptors;
   private ByteSequence namespace = ByteSequence.EMPTY;
+  private long retryDelay = 500;
+  private long retryMaxDelay = 2500;
+  private ChronoUnit retryChronoUnit = ChronoUnit.MILLIS;
+  private String retryMaxDuration;
 
   ClientBuilder() {
   }
@@ -318,6 +323,55 @@ public final class ClientBuilder implements Cloneable {
       this.interceptors.add(i);
     }
 
+    return this;
+  }
+
+
+  public long retryDelay() {
+    return retryDelay;
+  }
+
+  /**
+   * The delay between retries.
+   */
+  public ClientBuilder retryDelay(long retryDelay) {
+    this.retryDelay = retryDelay;
+    return this;
+  }
+
+  public long retryMaxDelay() {
+    return retryMaxDelay;
+  }
+
+  /**
+   * The max backing off delay between retries.
+   */
+  public ClientBuilder retryMaxDelay(long retryMaxDelay) {
+    this.retryMaxDelay = retryMaxDelay;
+    return this;
+  }
+
+  public ChronoUnit retryChronoUnit() {
+    return retryChronoUnit;
+  }
+
+  /**
+   * the retries period unit.
+   */
+  public ClientBuilder retryChronoUnit(ChronoUnit retryChronoUnit) {
+    this.retryChronoUnit = retryChronoUnit;
+    return this;
+  }
+
+  public String retryMaxDuration() {
+    return retryMaxDuration;
+  }
+
+  /**
+   * the retries max duration.
+   */
+  public ClientBuilder retryMaxDuration(String retryMaxDuration) {
+    this.retryMaxDuration = retryMaxDuration;
     return this;
   }
 

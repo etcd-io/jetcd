@@ -21,6 +21,8 @@ import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newClosedLease
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.etcd.jetcd.api.LeaseGrantRequest;
@@ -97,21 +99,17 @@ final class LeaseImpl implements Lease {
 
   @Override
   public CompletableFuture<LeaseGrantResponse> grant(long ttl) {
-    LeaseGrantRequest leaseGrantRequest = LeaseGrantRequest.newBuilder().setTTL(ttl).build();
-    return Util.toCompletableFutureWithRetry(
-        () -> this.stub.leaseGrant(leaseGrantRequest),
-        LeaseGrantResponse::new,
-        connectionManager.getExecutorService()
+    return connectionManager.execute(
+        () -> this.stub.leaseGrant(LeaseGrantRequest.newBuilder().setTTL(ttl).build()),
+        LeaseGrantResponse::new
     );
   }
 
   @Override
   public CompletableFuture<LeaseRevokeResponse> revoke(long leaseId) {
-    LeaseRevokeRequest leaseRevokeRequest = LeaseRevokeRequest.newBuilder().setID(leaseId).build();
-    return Util.toCompletableFutureWithRetry(
-        () -> this.stub.leaseRevoke(leaseRevokeRequest),
-        LeaseRevokeResponse::new,
-        connectionManager.getExecutorService()
+    return connectionManager.execute(
+        () -> this.stub.leaseRevoke(LeaseRevokeRequest.newBuilder().setID(leaseId).build()),
+        LeaseRevokeResponse::new
     );
   }
 
@@ -204,11 +202,19 @@ final class LeaseImpl implements Lease {
       return;
     }
 
-    Util.addOnFailureLoggingCallback(
-        this.connectionManager.getExecutorService(),
-        this.scheduledExecutorService.schedule(() -> reset(), 500, TimeUnit.MILLISECONDS),
-        LOG,
-        "scheduled reset failed"
+    Futures.addCallback(
+        this.scheduledExecutorService.schedule(this::reset, 500, TimeUnit.MILLISECONDS),
+        new FutureCallback<Object>() {
+          @Override
+          public void onFailure(Throwable throwable) {
+            LOG.error("scheduled reset failed", throwable);
+          }
+
+          @Override
+          public void onSuccess(Object result) {
+          }
+        },
+        this.scheduledExecutorService
     );
   }
 
@@ -293,10 +299,10 @@ final class LeaseImpl implements Lease {
         .setKeys(option.isAttachedKeys())
         .build();
 
-    return Util.toCompletableFutureWithRetry(
+    return connectionManager.execute(
         () -> this.stub.leaseTimeToLive(leaseTimeToLiveRequest),
-        LeaseTimeToLiveResponse::new,
-        connectionManager.getExecutorService());
+        LeaseTimeToLiveResponse::new
+    );
   }
 
   /**

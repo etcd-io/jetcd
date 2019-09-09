@@ -104,8 +104,7 @@
                             <relocations>
                                 <relocation>
                                     <pattern>com.google</pattern>
-                                    <shadedPattern>io.etcd.jetcd.shaded.com.google
-                                    </shadedPattern>
+                                    <shadedPattern>io.etcd.jetcd.shaded.com.google</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>io.grpc</pattern>
@@ -117,12 +116,18 @@
                                 </relocation>
                                 <relocation>
                                     <pattern>javax.annotation</pattern>
-                                    <shadedPattern>io.etcd.jetcd.shaded.javax.annotation</shadedPattern>
+                                    <shadedPattern>io.etcd.jetcd.shaded.javax.annotation</shadedPattern></relocation>
+                                <relocation>
+                                    <pattern>io.opencensus</pattern>
+                                    <shadedPattern>io.etcd.jetcd.shaded.io.opencensus</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>io.opencensus</pattern>
-                                    <shadedPattern>io.etcd.jetcd.shaded.io.opencensus
-                                    </shadedPattern>
+                                    <shadedPattern>io.etcd.jetcd.shaded.io.opencensus</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>net.jodah</pattern>
+                                    <shadedPattern>io.etcd.jetcd.shaded.net.jodah</shadedPattern>
                                 </relocation>
                             </relocations>
                             <transformers>

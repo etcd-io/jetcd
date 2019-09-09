@@ -73,11 +73,10 @@ final class KVImpl implements KV {
         .setPrevKv(option.getPrevKV())
         .build();
 
-    return Util.toCompletableFutureWithRetry(
+    return connectionManager.execute(
         () -> stub.put(request),
         response -> new PutResponse(response, namespace),
-        Util::isRetriable,
-        connectionManager.getExecutorService()
+        Util::isRetryable
     );
   }
 
@@ -107,11 +106,10 @@ final class KVImpl implements KV {
 
     RangeRequest request = builder.build();
 
-    return Util.toCompletableFutureWithRetry(
+    return connectionManager.execute(
         () -> stub.range(request),
         response -> new GetResponse(response, namespace),
-        Util::isRetriable,
-        connectionManager.getExecutorService()
+        Util::isRetryable
     );
   }
 
@@ -135,11 +133,10 @@ final class KVImpl implements KV {
 
     DeleteRangeRequest request = builder.build();
 
-    return Util.toCompletableFutureWithRetry(
+    return connectionManager.execute(
         () -> stub.deleteRange(request),
         response -> new DeleteResponse(response, namespace),
-        Util::isRetriable,
-        connectionManager.getExecutorService()
+        Util::isRetryable
     );
   }
 
@@ -157,21 +154,19 @@ final class KVImpl implements KV {
         .setPhysical(option.isPhysical())
         .build();
 
-    return Util.toCompletableFutureWithRetry(
+    return connectionManager.execute(
         () -> stub.compact(request),
         CompactResponse::new,
-        Util::isRetriable,
-        connectionManager.getExecutorService()
+        Util::isRetryable
     );
   }
 
   public Txn txn() {
     return TxnImpl.newTxn((request) ->
-        Util.toCompletableFutureWithRetry(
+        connectionManager.execute(
             () -> stub.txn(request),
             response -> new TxnResponse(response, namespace),
-            Util::isRetriable,
-            connectionManager.getExecutorService()
+            Util::isRetryable
         ),
         namespace);
   }

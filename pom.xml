@@ -113,6 +113,7 @@
         <jool.version>0.9.14</jool.version>
         <!-- should be in sync with protobuf grpc dependencies -->
         <protobuf.version>3.5.1</protobuf.version>
+        <failsafe.version>2.3.1</failsafe.version>
 
         <!-- osgi dependencies -->
         <karaf.version>4.2.6</karaf.version>
@@ -216,6 +217,13 @@
                 <artifactId>grpc-grpclb</artifactId>
                 <version>${grpc.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>net.jodah</groupId>
+                <artifactId>failsafe</artifactId>
+                <version>${failsafe.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
