@@ -29,7 +29,6 @@ import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.watch.WatchEvent;
 import io.etcd.jetcd.watch.WatchEvent.EventType;
 import io.etcd.jetcd.watch.WatchResponse;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,19 +37,19 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
-
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-// TODO(#548): Add global timeout for tests once JUnit5 supports it
+@Timeout(value = 30)
 public class WatchTest {
 
   @RegisterExtension
   public static final EtcdClusterExtension cluster = new EtcdClusterExtension("watch", 3);
-  private static final ByteSequence namespace = bytesOf("test-namespace/");
+  public static final ByteSequence namespace = bytesOf("test-namespace/");
 
   static Stream<Arguments> parameters() {
     return Stream.of(
@@ -132,7 +131,7 @@ public class WatchTest {
         latch.await(4, TimeUnit.SECONDS);
 
         assertThat(res).hasSize(2);
-        assertThat(res.get(0)).isEqualToComparingFieldByFieldRecursively(res.get(1));
+        assertThat(res.get(0)).usingRecursiveComparison().isEqualTo(res.get(1));
         assertThat(res.get(0).getEvents().size()).isEqualTo(1);
         assertThat(res.get(0).getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
         assertThat(res.get(0).getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
@@ -199,26 +198,27 @@ public class WatchTest {
   @MethodSource("parameters")
   public void testWatchClose(final Client client) throws Exception {
     final ByteSequence key = randomByteSequence();
-    final CountDownLatch latch = new CountDownLatch(2);
     final ByteSequence value = randomByteSequence();
-    final AtomicReference<WatchResponse> ref = new AtomicReference<>();
+    final List<WatchResponse> events = new ArrayList<>();
+
+    final CountDownLatch l1 = new CountDownLatch(1);
+    final CountDownLatch l2 = new CountDownLatch(1);
 
     try (Watcher watcher = client.getWatchClient().watch(key, response -> {
-      ref.set(response);
-      latch.countDown();
+      events.add(response);
+      l1.countDown();
     })) {
       client.getKVClient().put(key, value).get();
-      latch.await(4, TimeUnit.SECONDS);
+      l1.await();
     }
 
-    client.getKVClient().put(key, value).get();
+    client.getKVClient().put(key, randomByteSequence()).get();
+    l2.await(4, TimeUnit.SECONDS);
 
-    latch.await(4, TimeUnit.SECONDS);
-
-    assertThat(ref.get()).isNotNull();
-    assertThat(ref.get().getEvents()).hasSize(1);
-    assertThat(ref.get().getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
-    assertThat(ref.get().getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
-    assertThat(latch.getCount()).isEqualTo(1);
+    assertThat(events).hasSize(1);
+    assertThat(events.get(0).getEvents()).hasSize(1);
+    assertThat(events.get(0).getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
+    assertThat(events.get(0).getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
+    assertThat(events.get(0).getEvents().get(0).getKeyValue().getValue()).isEqualTo(value);
   }
 }
