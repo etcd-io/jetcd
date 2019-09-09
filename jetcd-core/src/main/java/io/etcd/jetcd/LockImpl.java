@@ -47,11 +47,10 @@ final class LockImpl implements Lock {
         .setLease(leaseId)
         .build();
 
-    return Util.toCompletableFutureWithRetry(
+    return connectionManager.execute(
         () -> stub.lock(request),
         (response) -> new LockResponse(response, namespace),
-        Util::isRetriable,
-        connectionManager.getExecutorService()
+        Util::isRetryable
     );
   }
 
@@ -62,11 +61,10 @@ final class LockImpl implements Lock {
         .setKey(Util.prefixNamespace(lockKey.getByteString(), namespace))
         .build();
 
-    return Util.toCompletableFutureWithRetry(
+    return connectionManager.execute(
         () -> stub.unlock(request),
         UnlockResponse::new,
-        Util::isRetriable,
-        connectionManager.getExecutorService()
+        Util::isRetryable
     );
   }
 }

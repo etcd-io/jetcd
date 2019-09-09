@@ -19,6 +19,7 @@ package io.etcd.jetcd;
 import static com.google.common.base.Preconditions.checkArgument;
 import static io.etcd.jetcd.Util.isInvalidTokenError;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.handleInterrupt;
+import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 import static io.etcd.jetcd.resolver.SmartNameResolverFactory.forEndpoints;
 
@@ -28,6 +29,7 @@ import com.google.protobuf.ByteString;
 import io.etcd.jetcd.api.AuthGrpc;
 import io.etcd.jetcd.api.AuthenticateRequest;
 import io.etcd.jetcd.api.AuthenticateResponse;
+import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.etcd.jetcd.resolver.URIResolverLoader;
 import io.grpc.CallOptions;
@@ -45,15 +47,20 @@ import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import javax.annotation.Nonnull;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 
 final class ClientConnectionManager {
 
@@ -307,5 +314,51 @@ final class ClientConnectionManager {
         }
       };
     }
+  }
+
+
+
+  /**
+   * execute the task and retry it in case of failure.
+   *
+   * @param task a function that returns a new ListenableFuture.
+   * @param resultConvert a function that converts Type S to Type T.
+   * @param <S> Source type
+   * @param <T> Converted Type.
+   * @return a CompletableFuture with type T.
+   */
+  public <S, T> CompletableFuture<T> execute(
+      Callable<ListenableFuture<S>> task,
+      Function<S, T> resultConvert) {
+    return execute(task, resultConvert, Util::isRetryable);
+  }
+
+  /**
+   * execute the task and retry it in case of failure.
+   *
+   * @param task a function that returns a new SourceFuture.
+   * @param resultConvert a function that converts Type S to Type T.
+   * @param doRetry a function that determines the retry condition base on SourceFuture error.
+   * @param <S> Source type
+   * @param <T> Converted Type.
+   * @return a CompletableFuture with type T.
+   */
+  public <S, T> CompletableFuture<T> execute(
+      Callable<ListenableFuture<S>> task,
+      Function<S, T> resultConvert,
+      Predicate<Throwable> doRetry) {
+
+    RetryPolicy<S> retryPolicy = new RetryPolicy<S>()
+        .handleIf(doRetry::test)
+        .onRetriesExceeded(e -> newEtcdException(ErrorCode.ABORTED, "maximum number of auto retries reached"))
+        .withBackoff(builder.retryDelay(), builder.retryMaxDelay(), builder.retryChronoUnit());
+
+    if (builder.retryMaxDuration() != null) {
+      retryPolicy = retryPolicy.withMaxDuration(Duration.parse(builder.retryMaxDuration()));
+    }
+
+    return Failsafe.with(retryPolicy).with(executorService)
+        .getAsync(() -> task.call().get())
+        .thenApply(resultConvert);
   }
 }
