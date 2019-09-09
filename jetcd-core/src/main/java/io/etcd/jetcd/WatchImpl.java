@@ -22,6 +22,8 @@ import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdExcepti
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.etcd.jetcd.api.WatchCancelRequest;
@@ -163,8 +165,10 @@ final class WatchImpl implements Watch {
             stream.onNext(WatchRequest.newBuilder().setCancelRequest(watchCancelRequest).build());
           }
 
-          stream.onCompleted();
-          stream = null;
+          if (stream != null) {
+            stream.onCompleted();
+            stream = null;
+          }
         }
 
         id = -1;
@@ -251,25 +255,29 @@ final class WatchImpl implements Watch {
 
     @Override
     public void onError(Throwable t) {
-      if (this.closed.get() || WatchImpl.this.closed.get()) {
+      if (WatcherImpl.this.closed.get() || WatchImpl.this.closed.get()) {
         return;
       }
 
       Status status = Status.fromThrowable(t);
-
-      if (Util.isHaltError(status) || Util.isNoLeaderError(status)) {
-        listener.onError(toEtcdException(status));
-      }
+      listener.onError(toEtcdException(status));
 
       stream.onCompleted();
       stream = null;
 
-      // resume with a delay; avoiding immediate retry on a long connection downtime.
-      Util.addOnFailureLoggingCallback(
-          WatchImpl.this.connectionManager.getExecutorService(),
+      Futures.addCallback(
           executor.schedule(this::resume, 500, TimeUnit.MILLISECONDS),
-          LOG,
-          "scheduled resume failed"
+          new FutureCallback<Object>() {
+            @Override
+            public void onFailure(Throwable throwable) {
+              LOG.error("scheduled resume failed", throwable);
+            }
+
+            @Override
+            public void onSuccess(Object result) {
+            }
+          },
+          executor
       );
     }
 

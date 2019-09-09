@@ -28,9 +28,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-// TODO(#548): Add global timeout for tests once JUnit5 supports it
+@Timeout(value = 30)
 public class WatchResumeTest {
 
   @RegisterExtension

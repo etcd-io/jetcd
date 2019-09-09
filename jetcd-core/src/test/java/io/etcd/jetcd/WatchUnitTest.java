@@ -49,13 +49,14 @@ import org.junit.Rule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-// TODO(#548): Add global timeout for tests once JUnit5 supports it
+@Timeout(value = 30)
 @ExtendWith(MockitoExtension.class)
 // TODO(#549): Remove GrpcServerRule and remove this annotation
 @EnableRuleMigrationSupport
