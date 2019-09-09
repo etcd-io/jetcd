@@ -20,15 +20,17 @@ import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import io.grpc.netty.NettyChannelBuilder;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Random;
 import java.util.stream.Stream;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 
 public class ClientBuilderTest {
 

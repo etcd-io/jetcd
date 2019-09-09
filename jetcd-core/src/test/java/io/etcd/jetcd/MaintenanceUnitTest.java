@@ -20,16 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Fail.fail;
 
-import com.google.protobuf.ByteString;
-import io.etcd.jetcd.api.MaintenanceGrpc.MaintenanceImplBase;
-import io.etcd.jetcd.api.SnapshotRequest;
-import io.etcd.jetcd.api.SnapshotResponse;
-import io.etcd.jetcd.common.exception.EtcdException;
-import io.grpc.Server;
-import io.grpc.Status;
-import io.grpc.netty.NettyServerBuilder;
-import io.grpc.stub.StreamObserver;
-import io.grpc.util.MutableHandlerRegistry;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -40,10 +30,23 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+
 import org.apache.commons.io.output.NullOutputStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.google.protobuf.ByteString;
+
+import io.etcd.jetcd.api.MaintenanceGrpc.MaintenanceImplBase;
+import io.etcd.jetcd.api.SnapshotRequest;
+import io.etcd.jetcd.api.SnapshotResponse;
+import io.etcd.jetcd.common.exception.EtcdException;
+import io.grpc.Server;
+import io.grpc.Status;
+import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
+import io.grpc.stub.StreamObserver;
+import io.grpc.util.MutableHandlerRegistry;
 
 // TODO: have separate folders to unit and integration tests.
 // TODO(#548): Add global timeout for tests once JUnit5 supports it

@@ -20,13 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import io.etcd.jetcd.common.exception.EtcdException;
-import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
-import io.etcd.jetcd.resolver.URIResolverLoader;
-import io.grpc.ClientInterceptor;
-import io.grpc.Metadata;
-import io.grpc.netty.GrpcSslContexts;
-import io.netty.handler.ssl.SslContext;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +31,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+
+import io.etcd.jetcd.common.exception.EtcdException;
+import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
+import io.etcd.jetcd.resolver.URIResolverLoader;
+import io.grpc.ClientInterceptor;
+import io.grpc.Metadata;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 
 /**
  * ClientBuilder knows how to create an Client instance.
