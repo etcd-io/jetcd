@@ -60,12 +60,11 @@ public class EtcdContainer implements AutoCloseable {
   }
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EtcdCluster.class);
-
-  public static final String ETCD_DOCKER_IMAGE_NAME = "gcr.io/etcd-development/etcd:v3.3";
   private static final int ETCD_CLIENT_PORT = 2379;
   private static final int ETCD_PEER_PORT = 2380;
-
   private static final String ETCD_DATA_DIR = "/data.etcd";
+
+  public static final String ETCD_DOCKER_IMAGE_NAME = "gcr.io/etcd-development/etcd:v3.3";
 
   private final String endpoint;
   private final boolean ssl;
@@ -73,21 +72,61 @@ public class EtcdContainer implements AutoCloseable {
   private final LifecycleListener listener;
   private final Path dataDirectory;
 
-  public EtcdContainer(Network network, LifecycleListener listener, boolean ssl, String clusterName,
-      String endpoint, List<String> endpoints, boolean restartable) {
-    this(network, listener, ssl, clusterName, endpoint, endpoints, restartable,
-        ETCD_DOCKER_IMAGE_NAME, emptyList());
+  public EtcdContainer(
+      Network network,
+      LifecycleListener listener,
+      boolean ssl,
+      String clusterName,
+      String endpoint,
+      List<String> endpoints,
+      boolean restartable) {
+
+    this(
+        network,
+        listener,
+        ssl,
+        clusterName,
+        endpoint,
+        endpoints,
+        restartable,
+        ETCD_DOCKER_IMAGE_NAME,
+        emptyList()
+    );
   }
 
-  public EtcdContainer(Network network, LifecycleListener listener, boolean ssl, String clusterName,
-      String endpoint, List<String> endpoints, boolean restartable, String... additionalArgs) {
-    this(network, listener, ssl, clusterName, endpoint, endpoints, restartable,
-        ETCD_DOCKER_IMAGE_NAME, asList(additionalArgs));
+  public EtcdContainer(
+      Network network,
+      LifecycleListener listener,
+      boolean ssl,
+      String clusterName,
+      String endpoint,
+      List<String> endpoints,
+      boolean restartable,
+      String... additionalArgs) {
+
+    this(
+        network,
+        listener,
+        ssl,
+        clusterName,
+        endpoint,
+        endpoints,
+        restartable,
+        ETCD_DOCKER_IMAGE_NAME,
+        asList(additionalArgs)
+    );
   }
 
-  public EtcdContainer(Network network, LifecycleListener listener, boolean ssl, String clusterName,
-      String endpoint, List<String> endpoints, boolean restartable, String image,
+  public EtcdContainer(
+      Network network,
+      LifecycleListener listener,
+      boolean ssl,
+      String clusterName,
+      String endpoint,
+      List<String> endpoints,
+      boolean restartable, String image,
       List<String> additionalArgs) {
+
     this.endpoint = endpoint;
     this.ssl = ssl;
     this.listener = listener;
