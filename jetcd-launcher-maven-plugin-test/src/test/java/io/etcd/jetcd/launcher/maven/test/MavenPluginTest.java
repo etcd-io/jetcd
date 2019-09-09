@@ -17,7 +17,7 @@
 package io.etcd.jetcd.launcher.maven.test;
 
 import static com.google.common.base.Charsets.US_ASCII;
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.io.Files;
 import io.etcd.jetcd.Client;
@@ -38,7 +38,7 @@ public class MavenPluginTest {
     final String filePath = "target/jetcd-launcher-maven-plugin/endpoint";
     String endpoint = Files.readFirstLine(new File(filePath), US_ASCII);
     try (Client client = Client.builder().endpoints(endpoint).build()) {
-      assertEquals(0, client.getKVClient().get(Constants.NULL_KEY).get(7, TimeUnit.SECONDS).getCount());
+      assertThat(client.getKVClient().get(Constants.NULL_KEY).get(7, TimeUnit.SECONDS).getCount()).isEqualTo(0);
     }
   }
 }
