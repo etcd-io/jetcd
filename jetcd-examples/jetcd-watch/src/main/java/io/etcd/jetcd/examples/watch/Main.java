@@ -16,7 +16,6 @@
 
 package io.etcd.jetcd.examples.watch;
 
-import static com.google.common.base.Charsets.UTF_8;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -26,6 +25,7 @@ import io.etcd.jetcd.Util;
 import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.watch.WatchEvent;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -46,7 +46,7 @@ public class Main {
         .parse(args);
 
     CountDownLatch latch = new CountDownLatch(cmd.maxEvents);
-    ByteSequence key = ByteSequence.from(cmd.key, UTF_8);
+    ByteSequence key = ByteSequence.from(cmd.key, StandardCharsets.UTF_8);
     Collection<URI> endpoints = Util.toURIs(cmd.endpoints);
 
     Watch.Listener listener = Watch.listener(response -> {
@@ -56,10 +56,10 @@ public class Main {
         LOGGER.info("type={}, key={}, value={}",
           event.getEventType(),
           Optional.ofNullable(event.getKeyValue().getKey())
-            .map(bs -> bs.toString(UTF_8))
+            .map(bs -> bs.toString(StandardCharsets.UTF_8))
             .orElse(""),
           Optional.ofNullable(event.getKeyValue().getValue())
-            .map(bs -> bs.toString(UTF_8))
+            .map(bs -> bs.toString(StandardCharsets.UTF_8))
             .orElse("")
         );
       }
@@ -80,12 +80,12 @@ public class Main {
 
   public static class Args {
     @Parameter(required = true, names = { "-e", "--endpoints" }, description = "the etcd endpoints")
-    private final List<String> endpoints = new ArrayList<>();
+    private List<String> endpoints = new ArrayList<>();
 
     @Parameter(required = true, names = { "-k", "--key" }, description = "the key to watch")
     private String key;
 
     @Parameter(names = { "-m", "--max-events" }, description = "the maximum number of events to receive")
-    private final Integer maxEvents = Integer.MAX_VALUE;
+    private Integer maxEvents = Integer.MAX_VALUE;
   }
 }

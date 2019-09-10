@@ -31,7 +31,7 @@
     <dependencies>
         <dependency>
             <groupId>io.etcd</groupId>
-            <artifactId>jetcd-core</artifactId>
+            <artifactId>jetcd-all</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -84,23 +84,6 @@
                         <argument>-k</argument>
                         <argument>watch-key</argument>
                     </arguments>
-                </configuration>
-            </plugin>
-
-            <!-- do not run checkstyle -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
-            <!-- do not deploy example -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>

@@ -14,3 +14,4 @@ logs/
 # Created by './scripts/run_etcd.sh'
 /external/
 bin/
+/jetcd-all/dependency-reduced-pom.xml
