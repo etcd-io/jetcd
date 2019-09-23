@@ -91,28 +91,28 @@ public abstract class CmpTarget<T> {
     return targetValue;
   }
 
-  private static final class VersionCmpTarget extends CmpTarget<Long> {
+  public static final class VersionCmpTarget extends CmpTarget<Long> {
 
     VersionCmpTarget(Long targetValue) {
       super(Compare.CompareTarget.VERSION, targetValue);
     }
   }
 
-  private static final class CreateRevisionCmpTarget extends CmpTarget<Long> {
+  public static final class CreateRevisionCmpTarget extends CmpTarget<Long> {
 
     CreateRevisionCmpTarget(Long targetValue) {
       super(Compare.CompareTarget.CREATE, targetValue);
     }
   }
 
-  private static final class ModRevisionCmpTarget extends CmpTarget<Long> {
+  public static final class ModRevisionCmpTarget extends CmpTarget<Long> {
 
     ModRevisionCmpTarget(Long targetValue) {
       super(Compare.CompareTarget.MOD, targetValue);
     }
   }
 
-  private static final class ValueCmpTarget extends CmpTarget<ByteString> {
+  public static final class ValueCmpTarget extends CmpTarget<ByteString> {
 
     ValueCmpTarget(ByteString targetValue) {
       super(Compare.CompareTarget.VALUE, targetValue);
