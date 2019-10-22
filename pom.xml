@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.etcd</groupId>
     <artifactId>jetcd-parent</artifactId>
-    <version>0.4.1</version>
+    <version>0.4.2-SNAPSHOT</version>
     <name>jetcd</name>
     <description>Java Client for etcd V3</description>
     <url>https://github.com/etcd-io/jetcd</url>
@@ -65,7 +65,7 @@
         <url>https://github.com/etcd-io/jetcd.git</url>
         <connection>scm:git:git@github.com:etcd-io/jetcd.git</connection>
         <developerConnection>scm:git:git@github.com:etcd-io/jetcd.git</developerConnection>
-      <tag>jetcd-0.4.1</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <properties>
