@@ -29,7 +29,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -46,7 +48,6 @@ public class LeaseTest {
   private static final ByteSequence KEY = ByteSequence.from("foo", Charsets.UTF_8);
   private static final ByteSequence KEY_2 = ByteSequence.from("foo2", Charsets.UTF_8);
   private static final ByteSequence VALUE = ByteSequence.from("bar", Charsets.UTF_8);
-
 
   @BeforeEach
   public void setUp() {
@@ -71,6 +72,21 @@ public class LeaseTest {
 
     Thread.sleep(6000);
     assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
+  }
+
+  @Test
+  public void testGrantWithTimeout() throws Exception {
+    long leaseID = leaseClient.grant(5,10,TimeUnit.SECONDS).get().getID();
+    kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+    assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
+
+    Thread.sleep(6000L);
+    assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
+
+    tearDown();
+    Assertions.assertThrows(ExecutionException.class,() -> leaseClient.grant(5,2,
+            TimeUnit.SECONDS).get().getID());
+    setUp();
   }
 
   @Test
