@@ -106,6 +106,12 @@ final class LeaseImpl implements Lease {
   }
 
   @Override
+  public CompletableFuture<LeaseGrantResponse> grant(long ttl, long timeout, TimeUnit unit) {
+    return connectionManager.execute(() -> this.stub.withDeadlineAfter(timeout,unit).leaseGrant(LeaseGrantRequest
+            .newBuilder().setTTL(ttl).build()),LeaseGrantResponse::new);
+  }
+
+  @Override
   public CompletableFuture<LeaseRevokeResponse> revoke(long leaseId) {
     return connectionManager.execute(
         () -> this.stub.leaseRevoke(LeaseRevokeRequest.newBuilder().setID(leaseId).build()),

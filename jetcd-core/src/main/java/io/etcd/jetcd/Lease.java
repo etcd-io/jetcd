@@ -23,6 +23,7 @@ import io.etcd.jetcd.lease.LeaseTimeToLiveResponse;
 import io.etcd.jetcd.options.LeaseOption;
 import io.grpc.stub.StreamObserver;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Interface of KeepAlive talking to etcd.
@@ -35,6 +36,17 @@ public interface Lease extends CloseableClient {
    * @param ttl ttl value, unit seconds
    */
   CompletableFuture<LeaseGrantResponse> grant(long ttl);
+
+  /**
+   * New a lease with ttl value.Waits if necessary for at most the given time
+   * if etcd server is available.
+   *
+   * @param ttl ttl value, unit seconds
+   * @param timeout the maximum time to waits
+   * @param unit the time unit of the timeout argument
+   * @return
+   */
+  CompletableFuture<LeaseGrantResponse> grant(long ttl, long timeout, TimeUnit unit);
 
   /**
    * revoke one lease and the key bind to this lease will be removed.
