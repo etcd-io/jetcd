@@ -98,11 +98,15 @@ final class KVImpl implements KV {
         .setKeysOnly(option.isKeysOnly())
         .setSerializable(option.isSerializable())
         .setSortOrder(toRangeRequestSortOrder(option.getSortOrder()))
-        .setSortTarget(toRangeRequestSortTarget(option.getSortField()));
+        .setSortTarget(toRangeRequestSortTarget(option.getSortField()))
+        .setMinCreateRevision(option.getMinCreateRevision())
+        .setMaxCreateRevision(option.getMaxCreateRevision())
+        .setMinModRevision(option.getMinModRevision())
+        .setMaxModRevision(option.getMaxModRevision());
 
     option.getEndKey()
-      .map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
-      .ifPresent(builder::setRangeEnd);
+        .map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
+        .ifPresent(builder::setRangeEnd);
 
     RangeRequest request = builder.build();
 
@@ -128,8 +132,8 @@ final class KVImpl implements KV {
         .setPrevKv(option.isPrevKV());
 
     option.getEndKey()
-      .map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
-      .ifPresent(builder::setRangeEnd);
+        .map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
+        .ifPresent(builder::setRangeEnd);
 
     DeleteRangeRequest request = builder.build();
 
@@ -163,11 +167,11 @@ final class KVImpl implements KV {
 
   public Txn txn() {
     return TxnImpl.newTxn((request) ->
-        connectionManager.execute(
-            () -> stub.txn(request),
-            response -> new TxnResponse(response, namespace),
-            Util::isRetryable
-        ),
+            connectionManager.execute(
+                () -> stub.txn(request),
+                response -> new TxnResponse(response, namespace),
+                Util::isRetryable
+            ),
         namespace);
   }
 }
