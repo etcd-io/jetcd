@@ -48,6 +48,10 @@ public final class GetOption {
     private boolean keysOnly = false;
     private boolean countOnly = false;
     private Optional<ByteSequence> endKey = Optional.empty();
+    private long minCreateRevision = 0L;
+    private long maxCreateRevision = 0L;
+    private long minModRevision = 0L;
+    private long maxModRevision = 0L;
 
     private Builder() {
     }
@@ -143,8 +147,8 @@ public final class GetOption {
      *
      * <p>If end key is '\0', the range is all keys >= key.
      *
-     * <p>If the end key is one bit larger than the given key, then it gets all keys with the prefix
-     * (the given key).
+     * <p>If the end key is one bit larger than the given key, then it gets all keys with the
+     * prefix (the given key).
      *
      * <p>If both key and end key are '\0', it returns all keys.
      *
@@ -160,8 +164,7 @@ public final class GetOption {
      * Enables 'Get' requests to obtain all the keys with matching prefix.
      *
      * <p>You should pass the key that is passed into
-     * {@link KV#get(ByteSequence) KV.get} method
-     * into this method as the given key.
+     * {@link KV#get(ByteSequence) KV.get} method into this method as the given key.
      *
      * @param prefix the common prefix of all the keys that you want to get
      * @return builder
@@ -173,9 +176,59 @@ public final class GetOption {
       return this;
     }
 
+    /**
+     * Limit returned keys to those with create revision greater than the provided value.
+     * min_create_revision is the lower bound for returned key create revisions; all keys with
+     * lesser create revisions will be filtered away.
+     *
+     * @param createRevision create revision
+     * @return builder
+     */
+    public Builder withMinCreateRevision(long createRevision) {
+      this.minCreateRevision = createRevision;
+      return this;
+    }
+
+    /**
+     * Limit returned keys to those with create revision less than the provided value.
+     * max_create_revision is the upper bound for returned key create revisions; all keys with
+     * greater create revisions will be filtered away.
+     *
+     * @param createRevision create revision
+     * @return builder
+     */
+    public Builder withMaxCreateRevision(long createRevision) {
+      this.maxCreateRevision = createRevision;
+      return this;
+    }
+
+    /**
+     * Limit returned keys to those with mod revision greater than the provided value.
+     * min_mod_revision is the lower bound for returned key mod revisions; all keys with lesser mod
+     * revisions will be filtered away.
+     *
+     * @param modRevision mod revision
+     */
+    public Builder withMinModRevision(long modRevision) {
+      this.minModRevision = modRevision;
+      return this;
+    }
+
+    /**
+     * Limit returned keys to those with mod revision less than the provided value. max_mod_revision
+     * is the upper bound for returned key mod revisions; all keys with greater mod revisions will
+     * be filtered away.
+     *
+     * @param modRevision mod revision
+     */
+    public Builder withMaxModRevision(long modRevision) {
+      this.maxModRevision = modRevision;
+      return this;
+    }
+
     public GetOption build() {
       return new GetOption(endKey, limit, revision, sortOrder, sortTarget, serializable, keysOnly,
-          countOnly);
+          countOnly, minCreateRevision, maxCreateRevision, minModRevision, maxModRevision);
     }
 
   }
@@ -188,10 +241,15 @@ public final class GetOption {
   private final boolean serializable;
   private final boolean keysOnly;
   private final boolean countOnly;
+  private final long minCreateRevision;
+  private final long maxCreateRevision;
+  private final long minModRevision;
+  private final long maxModRevision;
 
   private GetOption(Optional<ByteSequence> endKey, long limit, long revision,
       SortOrder sortOrder, SortTarget sortTarget, boolean serializable, boolean keysOnly,
-      boolean countOnly) {
+      boolean countOnly, long minCreateRevision, long maxCreateRevision,
+      long minModRevision, long maxModRevision) {
     this.endKey = endKey;
     this.limit = limit;
     this.revision = revision;
@@ -200,6 +258,10 @@ public final class GetOption {
     this.serializable = serializable;
     this.keysOnly = keysOnly;
     this.countOnly = countOnly;
+    this.minCreateRevision = minCreateRevision;
+    this.maxCreateRevision = maxCreateRevision;
+    this.minModRevision = minModRevision;
+    this.maxModRevision = maxModRevision;
   }
 
   /**
@@ -237,6 +299,22 @@ public final class GetOption {
 
   public boolean isCountOnly() {
     return countOnly;
+  }
+
+  public long getMinCreateRevision() {
+    return this.minCreateRevision;
+  }
+
+  public long getMaxCreateRevision() {
+    return this.maxCreateRevision;
+  }
+
+  public long getMinModRevision() {
+    return this.minModRevision;
+  }
+
+  public long getMaxModRevision() {
+    return this.maxModRevision;
   }
 
   public enum SortOrder {
