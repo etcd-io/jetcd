@@ -69,7 +69,7 @@ The `io.etcd:jetcd-launcher` offers a convenient utility to programmatically sta
 
 ```java
 @Rule public final EtcdClusterResource etcd = new EtcdClusterResource("test-etcd", 1);
-Client client = Client.builder().endpoints(etcd.cluster().getClientEndpoints()).build();
+Client client = Client.builder().endpoints(etcd.getClientEndpoints()).build();
 ```
 
 This launcher uses the Testcontainers framework.
