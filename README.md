@@ -81,6 +81,14 @@ The project follows [Semantic Versioning](http://semver.org/).
 
 The current major version is zero (0.y.z). Anything may change at any time. The public API should not be considered stable.
 
+## Build from source
+
+The project can be built with [Apache Maven](https://maven.apache.org/):
+
+```
+mvn clean install -DskipTests
+```
+
 ## Running tests
 
 The project is tested against a three node `etcd` setup started with the Launcher (above) :
@@ -113,6 +121,10 @@ $ mvn test
 [INFO] Finished at: 2018-02-13T12:51:13-08:00
 [INFO] Final Memory: 84M/443M
 ````
+
+### Troubleshooting
+
+It recommmonds building the project before running tests so that you have artifacts locally. It will solve some problems if the latest snapshot hasn't been uploaded or network issues.
 
 ## Contact
 
