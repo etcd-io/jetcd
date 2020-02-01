@@ -99,6 +99,19 @@ public class LeaseTest {
   }
 
   @Test
+  public void testRevokeWithTimeout() throws Exception {
+    long leaseID = leaseClient.grant(5).get().getID();
+    kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+    assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
+    leaseClient.revoke(leaseID).get();
+    assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
+    tearDown();
+    Assertions.assertThrows(ExecutionException.class,() -> leaseClient.revoke(leaseID,10,TimeUnit.SECONDS).
+            get());
+    setUp();
+  }
+
+  @Test
   public void testKeepAliveOnce() throws ExecutionException, InterruptedException {
     long leaseID = leaseClient.grant(2).get().getID();
     kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();

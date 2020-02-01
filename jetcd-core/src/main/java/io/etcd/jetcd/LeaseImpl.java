@@ -120,6 +120,14 @@ final class LeaseImpl implements Lease {
   }
 
   @Override
+  public CompletableFuture<LeaseRevokeResponse> revoke(long leaseId, long timeout, TimeUnit unit) {
+    return connectionManager.execute(
+            () -> this.stub.withDeadlineAfter(timeout,unit).leaseRevoke(LeaseRevokeRequest.newBuilder().setID(leaseId).
+                    build()), LeaseRevokeResponse::new
+    );
+  }
+
+  @Override
   public synchronized CloseableClient keepAlive(long leaseId, StreamObserver<LeaseKeepAliveResponse> observer) {
     if (this.closed) {
       throw newClosedLeaseClientException();

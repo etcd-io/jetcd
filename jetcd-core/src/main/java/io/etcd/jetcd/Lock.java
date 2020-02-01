@@ -19,6 +19,7 @@ package io.etcd.jetcd;
 import io.etcd.jetcd.lock.LockResponse;
 import io.etcd.jetcd.lock.UnlockResponse;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Interface of Lock talking to etcd.
@@ -40,6 +41,23 @@ public interface Lock extends CloseableClient {
   CompletableFuture<LockResponse> lock(ByteSequence name, long leaseId);
 
   /**
+   * Acquire a lock with the given name.Waits if necessary for at most the given time
+   * if etcd server is available.
+   *
+   * @param name
+   *          the identifier for the distributed shared lock to be acquired.
+   * @param leaseId
+   *          the ID of the lease that will be attached to ownership of the
+   *          lock. If the lease expires or is revoked and currently holds the
+   *          lock, the lock is automatically released. Calls to Lock with the
+   *          same lease will be treated as a single acquistion; locking twice
+   *          with the same lease is a no-op.
+   * @param timeout the maximum time to waits
+   * @param unit the time unit of the timeout argument
+   */
+  CompletableFuture<LockResponse> lock(ByteSequence name, long leaseId, long timeout, TimeUnit unit);
+
+  /**
    * Release the lock identified by the given key.
    *
    * @param lockKey
@@ -47,4 +65,14 @@ public interface Lock extends CloseableClient {
    */
   CompletableFuture<UnlockResponse> unlock(ByteSequence lockKey);
 
+  /**
+   * Release the lock identified by the given key.Waits if necessary for at most the given
+   * time if etcd server is available.
+   *
+   * @param lockKey
+   *          key is the lock ownership key granted by Lock.
+   * @param timeout the maximum time to waits
+   * @param unit the time unit of the timeout argument
+   */
+  CompletableFuture<UnlockResponse> unlock(ByteSequence lockKey, long timeout, TimeUnit unit);
 }

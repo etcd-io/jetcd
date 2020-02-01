@@ -24,6 +24,7 @@ import io.etcd.jetcd.api.lock.UnlockRequest;
 import io.etcd.jetcd.lock.LockResponse;
 import io.etcd.jetcd.lock.UnlockResponse;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 final class LockImpl implements Lock {
 
@@ -55,6 +56,21 @@ final class LockImpl implements Lock {
   }
 
   @Override
+  public CompletableFuture<LockResponse> lock(ByteSequence name, long leaseId, long timeout, TimeUnit unit) {
+    checkNotNull(name);
+    LockRequest request = LockRequest.newBuilder()
+            .setName(Util.prefixNamespace(name.getByteString(), namespace))
+            .setLease(leaseId)
+            .build();
+
+    return connectionManager.execute(
+            () -> stub.withDeadlineAfter(timeout,unit).lock(request),
+            (response) -> new LockResponse(response, namespace),
+            Util::isRetryable
+    );
+  }
+
+  @Override
   public CompletableFuture<UnlockResponse> unlock(ByteSequence lockKey) {
     checkNotNull(lockKey);
     UnlockRequest request = UnlockRequest.newBuilder()
@@ -65,6 +81,20 @@ final class LockImpl implements Lock {
         () -> stub.unlock(request),
         UnlockResponse::new,
         Util::isRetryable
+    );
+  }
+
+  @Override
+  public CompletableFuture<UnlockResponse> unlock(ByteSequence lockKey, long timeout, TimeUnit unit) {
+    checkNotNull(lockKey);
+    UnlockRequest request = UnlockRequest.newBuilder()
+            .setKey(Util.prefixNamespace(lockKey.getByteString(), namespace))
+            .build();
+
+    return connectionManager.execute(
+            () -> stub.withDeadlineAfter(timeout,unit).unlock(request),
+            UnlockResponse::new,
+            Util::isRetryable
     );
   }
 }

@@ -56,6 +56,17 @@ public interface Lease extends CloseableClient {
   CompletableFuture<LeaseRevokeResponse> revoke(long leaseId);
 
   /**
+   * revoke one lease and the key bind to this lease will be removed.Waits if
+   * at most the given time if etcd server is available
+   *
+   * @param leaseId id of the lease to revoke
+   * @param timeout the maximum time to waits
+   * @param unit the time unit of the timeout argument
+   * @return
+   */
+  CompletableFuture<LeaseRevokeResponse> revoke(long leaseId, long timeout, TimeUnit unit);
+
+  /**
    * keep alive one lease only once.
    *
    * @param leaseId id of lease to keep alive once

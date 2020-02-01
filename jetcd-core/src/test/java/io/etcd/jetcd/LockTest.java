@@ -27,8 +27,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+
+import io.etcd.jetcd.lock.UnlockResponse;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -149,6 +153,33 @@ public class LockTest {
     assertThat(response2.getKey()).isNotEqualTo(response.getKey());
     assertThat(time <= 500).withFailMessage(
         String.format("Lease not unlocked, wait time was too long (%dms)", time)).isTrue();
+  }
+
+  @Test
+  public void testLockAndUnlockWithTimeout() throws Exception {
+    initializeLockCLient(false);
+    long lease = grantLease(20);
+    cluster.close();
+    Assertions.assertThrows(ExecutionException.class, () -> lockClient.lock(SAMPLE_NAME, lease,10,
+            TimeUnit.SECONDS));
+    cluster.restart();
+
+    CompletableFuture<LockResponse> feature1 = lockClient.lock(SAMPLE_NAME, lease,10, TimeUnit.SECONDS);
+    LockResponse response1 = feature1.get();
+
+    ByteSequence lockKey = response1.getKey();
+    assertThat(response1.getKey().startsWith(SAMPLE_NAME)).isTrue();
+    cluster.close();
+    Assertions.assertThrows(ExecutionException.class, () -> lockClient.unlock(lockKey,10,
+            TimeUnit.SECONDS));
+    cluster.restart();
+    lockClient.unlock(lockKey,10,TimeUnit.SECONDS);
+    Thread.sleep(5000l);
+    CompletableFuture<LockResponse> feature2 = lockClient.lock(SAMPLE_NAME,lease);
+    ByteSequence lockKey2 = feature2.get().getKey();
+    assertThat(lockKey2).isNotEqualTo(lockKey);
+    lockClient.unlock(lockKey2);
+
   }
 
   @Test
