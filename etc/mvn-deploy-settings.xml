@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2016-2019 The jetcd authors
+    Copyright 2016-2020 The jetcd authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="
-            http://maven.apache.org/SETTINGS/1.0.0 
+            http://maven.apache.org/SETTINGS/1.0.0
             http://maven.apache.org/xsd/settings-1.0.0.xsd">
 
   <servers>
@@ -29,5 +29,5 @@
       <password>${env.OSSRH_PASSWORD}</password>
     </server>
   </servers>
-  
+
 </settings>

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: Deploy SNAPSHOTs
+name: master
 
 on:
   push:
@@ -38,4 +38,4 @@ jobs:
           OSSRH_USERNAME: ${{ secrets. OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets. OSSRH_PASSWORD }}
         run: |
-          ./mvnw -V -ntp clean deploy -DskipTests --settings etc/mvn-deploy-settings.xml
+          ./mvnw -V -ntp clean deploy -DskipTests -Pcheck-format --settings etc/mvn-deploy-settings.xml

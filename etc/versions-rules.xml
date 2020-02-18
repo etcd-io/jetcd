@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2016-2019 The jetcd authors
+    Copyright 2016-2020 The jetcd authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
     limitations under the License.
 
 -->
-<ruleset xmlns="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-    comparisonMethod="maven" 
+<ruleset xmlns="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    comparisonMethod="maven"
     xsi:schemaLocation="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0 http://mojo.codehaus.org/versions-maven-plugin/xsd/rule-2.0.0.xsd">
     <ignoreVersions>
         <!-- Ignore Alpha's, Beta's, release candidates and milestones -->

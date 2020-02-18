@@ -35,5 +35,5 @@ jobs:
           java-version: 1.8
       - name: Build Project
         run: |
-          ./mvnw -V -ntp clean install
+          ./mvnw -V -ntp -Pcheck-format clean install
 
