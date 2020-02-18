@@ -28,7 +28,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0
+            fetch-depth: 0
       - name: Set Up Java
         uses: actions/setup-java@v1
         with:
