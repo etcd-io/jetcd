@@ -34,5 +34,8 @@ jobs:
         with:
           java-version: 1.8
       - name: Build Project
+        env:
+          OSSRH_USERNAME: ${{ secrets. OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets. OSSRH_PASSWORD }}
         run: |
           ./mvnw -V -ntp clean deploy -DskipTests --settings etc/mvn-deploy-settings.xml
