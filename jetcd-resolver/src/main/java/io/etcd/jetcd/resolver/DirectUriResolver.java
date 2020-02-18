@@ -54,11 +54,7 @@ public final class DirectUriResolver implements URIResolver {
             return false;
         }
 
-        if (uri.getPort() == -1) {
-            return false;
-        }
-
-        return true;
+        return uri.getPort() != -1;
     }
 
     @Override

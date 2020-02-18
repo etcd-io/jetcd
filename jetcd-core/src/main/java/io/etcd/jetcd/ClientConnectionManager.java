@@ -16,21 +16,6 @@
 
 package io.etcd.jetcd;
 
-import java.net.URI;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import java.util.function.Predicate;
-
-import javax.annotation.Nonnull;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -54,6 +39,18 @@ import io.grpc.Status;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
+import java.net.URI;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import javax.annotation.Nonnull;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 
@@ -68,20 +65,20 @@ final class ClientConnectionManager {
 
     private static final Metadata.Key<String> TOKEN = Metadata.Key.of("token", Metadata.ASCII_STRING_MARSHALLER);
 
+    private final Object lock;
     private final ClientBuilder builder;
-    private final AtomicReference<ManagedChannel> channelRef;
-    private final AtomicReference<Optional<String>> tokenRef;
     private final ExecutorService executorService;
+
+    private volatile ManagedChannel channelRef;
+    private volatile String tokenRef;
 
     ClientConnectionManager(ClientBuilder builder) {
         this(builder, null);
     }
 
     ClientConnectionManager(ClientBuilder builder, ManagedChannel channel) {
-
+        this.lock = new Object();
         this.builder = builder;
-        this.channelRef = new AtomicReference<>(channel);
-        this.tokenRef = new AtomicReference<>();
         if (builder.executorService() == null) {
             this.executorService = Executors.newCachedThreadPool();
         } else {
@@ -90,39 +87,32 @@ final class ClientConnectionManager {
     }
 
     ManagedChannel getChannel() {
-        ManagedChannel managedChannel = channelRef.get();
-        if (managedChannel == null) {
-            synchronized (channelRef) {
-                managedChannel = channelRef.get();
-                if (managedChannel == null) {
-                    managedChannel = defaultChannelBuilder().build();
-                    channelRef.lazySet(managedChannel);
+        if (channelRef == null) {
+            synchronized (lock) {
+                if (channelRef == null) {
+                    channelRef = defaultChannelBuilder().build();
                 }
             }
         }
 
-        return managedChannel;
+        return channelRef;
     }
 
     private Optional<String> getToken(Channel channel) {
-        Optional<String> tk = tokenRef.get();
-        if (tk == null) {
-            synchronized (tokenRef) {
-                tk = tokenRef.get();
-                if (tk == null) {
-                    tk = generateToken(channel);
-                    tokenRef.lazySet(tk);
+        if (tokenRef == null) {
+            synchronized (lock) {
+                if (tokenRef == null) {
+                    tokenRef = generateToken(channel);
                 }
             }
         }
 
-        return tk;
+        return Optional.ofNullable(tokenRef);
     }
 
     private void refreshToken(Channel channel) {
-        synchronized (tokenRef) {
-            Optional<String> tk = generateToken(channel);
-            tokenRef.lazySet(tk);
+        synchronized (lock) {
+            tokenRef = generateToken(channel);
         }
     }
 
@@ -146,9 +136,11 @@ final class ClientConnectionManager {
     }
 
     synchronized void close() {
-        ManagedChannel channel = channelRef.get();
-        if (channel != null) {
-            channel.shutdownNow();
+        synchronized (lock) {
+            if (channelRef != null) {
+                channelRef.shutdownNow();
+                channelRef = null;
+            }
         }
 
         executorService.shutdownNow();
@@ -172,7 +164,6 @@ final class ClientConnectionManager {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @VisibleForTesting
     protected ManagedChannelBuilder<?> defaultChannelBuilder() {
         final NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget("etcd");
@@ -248,18 +239,18 @@ final class ClientConnectionManager {
      * @return                                              the auth token
      * @throws io.etcd.jetcd.common.exception.EtcdException a exception indicates failure reason.
      */
-    private Optional<String> generateToken(Channel channel) {
-
+    private String generateToken(Channel channel) {
         if (builder.user() != null && builder.password() != null) {
             try {
-                return Optional.of(authenticate(channel, builder.user(), builder.password()).get().getToken());
+                return authenticate(channel, builder.user(), builder.password()).get().getToken();
             } catch (InterruptedException ite) {
                 throw handleInterrupt(ite);
             } catch (ExecutionException exee) {
                 throw toEtcdException(exee);
             }
         }
-        return Optional.empty();
+
+        return null;
     }
 
     /**
@@ -320,7 +311,7 @@ final class ClientConnectionManager {
     public <S, T> CompletableFuture<T> execute(Callable<ListenableFuture<S>> task, Function<S, T> resultConvert,
         Predicate<Throwable> doRetry) {
 
-        RetryPolicy<S> retryPolicy = new RetryPolicy<S>().handleIf(doRetry::test)
+        RetryPolicy<S> retryPolicy = new RetryPolicy<S>().handleIf(doRetry)
             .onRetriesExceeded(e -> newEtcdException(ErrorCode.ABORTED, "maximum number of auto retries reached"))
             .withBackoff(builder.retryDelay(), builder.retryMaxDelay(), builder.retryChronoUnit());
 

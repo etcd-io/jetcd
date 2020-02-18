@@ -64,7 +64,7 @@ public class SmartNameResolver extends NameResolver {
         this.resolvers = new ArrayList<>();
         this.resolvers.add(new DirectUriResolver());
         this.resolvers.addAll(loader.load());
-        this.resolvers.sort(Comparator.comparingInt(r -> r.priority()));
+        this.resolvers.sort(Comparator.comparingInt(URIResolver::priority));
     }
 
     @VisibleForTesting

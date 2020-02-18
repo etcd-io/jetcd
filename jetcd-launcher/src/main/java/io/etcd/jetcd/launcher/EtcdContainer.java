@@ -16,6 +16,8 @@
 
 package io.etcd.jetcd.launcher;
 
+import com.github.dockerjava.api.DockerClient;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,8 +31,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import com.github.dockerjava.api.DockerClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.DockerClientFactory;
@@ -275,7 +275,9 @@ public class EtcdContainer implements AutoCloseable {
 
     private static void deleteDataDirectory(Path dir) {
         try (Stream<Path> stream = Files.walk(dir)) {
-            stream.sorted(Comparator.reverseOrder()).forEach(p -> p.toFile().delete());
+            stream.sorted(Comparator.reverseOrder())
+                .map(Path::toFile)
+                .forEach(File::delete);
         } catch (IOException e) {
             LOGGER.error("Error deleting directory " + dir.toString(), e);
         }

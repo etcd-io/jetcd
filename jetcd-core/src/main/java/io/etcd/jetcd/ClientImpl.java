@@ -16,7 +16,6 @@
 
 package io.etcd.jetcd;
 
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -32,12 +31,11 @@ final class ClientImpl implements Client {
     private final AtomicReference<Lease> leaseClient;
     private final AtomicReference<Watch> watchClient;
     private final AtomicReference<Lock> lockClient;
-    private final ClientBuilder builder;
     private final ClientConnectionManager connectionManager;
 
     public ClientImpl(ClientBuilder clientBuilder) {
         // Copy the builder so external modifications won't affect this client impl.
-        this.builder = clientBuilder.copy();
+        ClientBuilder builder = clientBuilder.copy();
 
         this.kvClient = new AtomicReference<>();
         this.authClient = new AtomicReference<>();
@@ -46,7 +44,7 @@ final class ClientImpl implements Client {
         this.leaseClient = new AtomicReference<>();
         this.watchClient = new AtomicReference<>();
         this.lockClient = new AtomicReference<>();
-        this.connectionManager = new ClientConnectionManager(this.builder);
+        this.connectionManager = new ClientConnectionManager(builder);
 
         // If the client is not configured to be lazy, set up the managed connection and perform
         // authentication
@@ -92,13 +90,13 @@ final class ClientImpl implements Client {
 
     @Override
     public synchronized void close() {
-        Optional.ofNullable(authClient.get()).ifPresent(CloseableClient::close);
-        Optional.ofNullable(kvClient.get()).ifPresent(CloseableClient::close);
-        Optional.ofNullable(clusterClient.get()).ifPresent(CloseableClient::close);
-        Optional.ofNullable(maintenanceClient.get()).ifPresent(CloseableClient::close);
-        Optional.ofNullable(leaseClient.get()).ifPresent(CloseableClient::close);
-        Optional.ofNullable(watchClient.get()).ifPresent(CloseableClient::close);
-        Optional.ofNullable(lockClient.get()).ifPresent(CloseableClient::close);
+        closeClient(authClient);
+        closeClient(kvClient);
+        closeClient(clusterClient);
+        closeClient(maintenanceClient);
+        closeClient(leaseClient);
+        closeClient(watchClient);
+        closeClient(lockClient);
 
         connectionManager.close();
     }
@@ -111,21 +109,28 @@ final class ClientImpl implements Client {
      * @param  <T>       the type of client
      * @return           the client
      */
-    private <T extends CloseableClient> T newClient(AtomicReference<T> reference,
+    private <T extends CloseableClient> T newClient(
+        AtomicReference<T> reference,
         Function<ClientConnectionManager, T> factory) {
 
         T client = reference.get();
 
         if (client == null) {
-            synchronized (reference) {
-                client = reference.get();
-                if (client == null) {
-                    client = factory.apply(connectionManager);
-                    reference.lazySet(client);
-                }
+            client = reference.get();
+            if (client == null) {
+                client = factory.apply(connectionManager);
+                reference.lazySet(client);
             }
         }
 
         return client;
+    }
+
+    private <T extends CloseableClient> void closeClient(AtomicReference<T> ref) {
+        T client = ref.get();
+
+        if (client != null) {
+            client.close();
+        }
     }
 }

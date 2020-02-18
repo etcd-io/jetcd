@@ -64,11 +64,7 @@ public final class DnsSrvUriResolver implements URIResolver {
 
     @Override
     public boolean supports(URI uri) {
-        if (!SCHEMES.contains(uri.getScheme())) {
-            return false;
-        }
-
-        return true;
+        return SCHEMES.contains(uri.getScheme());
     }
 
     @Override
@@ -93,7 +89,8 @@ public final class DnsSrvUriResolver implements URIResolver {
                     String host = split.get(3).trim();
                     String port = split.get(2).trim();
 
-                    SocketAddress address = this.cache.computeIfAbsent(host + ":" + port,
+                    SocketAddress address = this.cache.computeIfAbsent(
+                        host + ":" + port,
                         k -> new InetSocketAddress(host, Integer.parseInt(port)));
 
                     addresses.add(address);

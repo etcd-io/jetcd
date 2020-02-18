@@ -61,7 +61,7 @@ final class ClusterImpl implements Cluster {
     @Override
     public CompletableFuture<MemberAddResponse> addMember(List<URI> peerAddrs) {
         MemberAddRequest memberAddRequest = MemberAddRequest.newBuilder()
-            .addAllPeerURLs(peerAddrs.stream().map(uri -> uri.toString()).collect(Collectors.toList())).build();
+            .addAllPeerURLs(peerAddrs.stream().map(URI::toString).collect(Collectors.toList())).build();
         return Util.toCompletableFuture(this.stub.memberAdd(memberAddRequest), MemberAddResponse::new,
             this.connectionManager.getExecutorService());
     }
@@ -87,7 +87,7 @@ final class ClusterImpl implements Cluster {
     @Override
     public CompletableFuture<MemberUpdateResponse> updateMember(long memberID, List<URI> peerAddrs) {
         MemberUpdateRequest memberUpdateRequest = MemberUpdateRequest.newBuilder()
-            .addAllPeerURLs(peerAddrs.stream().map(uri -> uri.toString()).collect(Collectors.toList())).setID(memberID)
+            .addAllPeerURLs(peerAddrs.stream().map(URI::toString).collect(Collectors.toList())).setID(memberID)
             .build();
         return Util.toCompletableFuture(this.stub.memberUpdate(memberUpdateRequest), MemberUpdateResponse::new,
             this.connectionManager.getExecutorService());
