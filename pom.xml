@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.etcd</groupId>
     <artifactId>jetcd-parent</artifactId>
-    <version>0.4.2-SNAPSHOT</version>
+    <version>0.5.0</version>
     <name>jetcd</name>
     <description>Java Client for etcd V3</description>
     <url>https://github.com/etcd-io/jetcd</url>
@@ -65,7 +65,7 @@
         <url>https://github.com/etcd-io/jetcd.git</url>
         <connection>scm:git:git@github.com:etcd-io/jetcd.git</connection>
         <developerConnection>scm:git:git@github.com:etcd-io/jetcd.git</developerConnection>
-      <tag>HEAD</tag>
+      <tag>jetcd-0.5.0</tag>
   </scm>
 
     <properties>
@@ -836,7 +836,7 @@
                         <executions>
                             <execution>
                                 <id>format</id>
-                                <phase/>
+                                <phase />
                             </execution>
                             <execution>
                                 <id>validate</id>
@@ -853,7 +853,7 @@
                         <executions>
                             <execution>
                                 <id>sort-imports</id>
-                                <phase/>
+                                <phase />
                             </execution>
                             <execution>
                                 <id>check</id>
