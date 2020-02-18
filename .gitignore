@@ -1,6 +1,7 @@
 .*
 !.gitignore
 !.travis.yml
+!.github
 target/
 target-ide/
 *.iml
