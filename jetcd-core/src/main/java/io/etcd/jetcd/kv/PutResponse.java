@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,21 +22,21 @@ import io.etcd.jetcd.KeyValue;
 
 public class PutResponse extends AbstractResponse<io.etcd.jetcd.api.PutResponse> {
 
-  private final ByteSequence namespace;
+    private final ByteSequence namespace;
 
-  public PutResponse(io.etcd.jetcd.api.PutResponse putResponse, ByteSequence namespace) {
-    super(putResponse, putResponse.getHeader());
-    this.namespace = namespace;
-  }
+    public PutResponse(io.etcd.jetcd.api.PutResponse putResponse, ByteSequence namespace) {
+        super(putResponse, putResponse.getHeader());
+        this.namespace = namespace;
+    }
 
-  /**
-   * return previous key-value pair.
-   */
-  public KeyValue getPrevKv() {
-    return new KeyValue(getResponse().getPrevKv(), namespace);
-  }
+    /**
+     * return previous key-value pair.
+     */
+    public KeyValue getPrevKv() {
+        return new KeyValue(getResponse().getPrevKv(), namespace);
+    }
 
-  public boolean hasPrevKv() {
-    return getResponse().hasPrevKv();
-  }
+    public boolean hasPrevKv() {
+        return getResponse().hasPrevKv();
+    }
 }

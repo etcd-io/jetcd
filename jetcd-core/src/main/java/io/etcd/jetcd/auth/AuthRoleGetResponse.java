@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,55 +16,54 @@
 
 package io.etcd.jetcd.auth;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.api.Auth;
 import io.etcd.jetcd.auth.Permission.Type;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * AuthRoleGetResponse returned by {@link Auth#roleGet(ByteSequence)} contains
  * a header and a list of permissions.
  */
-public class AuthRoleGetResponse extends
-    AbstractResponse<io.etcd.jetcd.api.AuthRoleGetResponse> {
+public class AuthRoleGetResponse extends AbstractResponse<io.etcd.jetcd.api.AuthRoleGetResponse> {
 
-  private List<Permission> permissions;
+    private List<Permission> permissions;
 
-  public AuthRoleGetResponse(io.etcd.jetcd.api.AuthRoleGetResponse response) {
-    super(response, response.getHeader());
-  }
-
-  private static Permission toPermission(io.etcd.jetcd.api.Permission perm) {
-    ByteSequence key = ByteSequence.from(perm.getKey());
-    ByteSequence rangeEnd = ByteSequence.from(perm.getRangeEnd());
-
-    Permission.Type type;
-    switch (perm.getPermType()) {
-      case READ:
-        type = Type.READ;
-        break;
-      case WRITE:
-        type = Type.WRITE;
-        break;
-      case READWRITE:
-        type = Type.READWRITE;
-        break;
-      default:
-        type = Type.UNRECOGNIZED;
+    public AuthRoleGetResponse(io.etcd.jetcd.api.AuthRoleGetResponse response) {
+        super(response, response.getHeader());
     }
 
-    return new Permission(type, key, rangeEnd);
-  }
+    private static Permission toPermission(io.etcd.jetcd.api.Permission perm) {
+        ByteSequence key = ByteSequence.from(perm.getKey());
+        ByteSequence rangeEnd = ByteSequence.from(perm.getRangeEnd());
 
-  public synchronized List<Permission> getPermissions() {
-    if (permissions == null) {
-      permissions = getResponse().getPermList().stream()
-          .map(AuthRoleGetResponse::toPermission)
-          .collect(Collectors.toList());
+        Permission.Type type;
+        switch (perm.getPermType()) {
+            case READ:
+                type = Type.READ;
+                break;
+            case WRITE:
+                type = Type.WRITE;
+                break;
+            case READWRITE:
+                type = Type.READWRITE;
+                break;
+            default:
+                type = Type.UNRECOGNIZED;
+        }
+
+        return new Permission(type, key, rangeEnd);
     }
 
-    return permissions;
-  }
+    public synchronized List<Permission> getPermissions() {
+        if (permissions == null) {
+            permissions = getResponse().getPermList().stream().map(AuthRoleGetResponse::toPermission)
+                .collect(Collectors.toList());
+        }
+
+        return permissions;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,38 +21,38 @@ package io.etcd.jetcd;
  */
 public class KeyValue {
 
-  private final io.etcd.jetcd.api.KeyValue kv;
-  private final ByteSequence unprefixedKey;
-  private final ByteSequence value;
+    private final io.etcd.jetcd.api.KeyValue kv;
+    private final ByteSequence unprefixedKey;
+    private final ByteSequence value;
 
-  public KeyValue(io.etcd.jetcd.api.KeyValue kv, ByteSequence namespace) {
-    this.kv = kv;
-    this.unprefixedKey = ByteSequence.from(kv.getKey().isEmpty() ? kv.getKey()
-        : Util.unprefixNamespace(kv.getKey(), namespace));
-    this.value = ByteSequence.from(kv.getValue());
-  }
+    public KeyValue(io.etcd.jetcd.api.KeyValue kv, ByteSequence namespace) {
+        this.kv = kv;
+        this.unprefixedKey = ByteSequence
+            .from(kv.getKey().isEmpty() ? kv.getKey() : Util.unprefixNamespace(kv.getKey(), namespace));
+        this.value = ByteSequence.from(kv.getValue());
+    }
 
-  public ByteSequence getKey() {
-    return unprefixedKey;
-  }
+    public ByteSequence getKey() {
+        return unprefixedKey;
+    }
 
-  public ByteSequence getValue() {
-    return value;
-  }
+    public ByteSequence getValue() {
+        return value;
+    }
 
-  public long getCreateRevision() {
-    return kv.getCreateRevision();
-  }
+    public long getCreateRevision() {
+        return kv.getCreateRevision();
+    }
 
-  public long getModRevision() {
-    return kv.getModRevision();
-  }
+    public long getModRevision() {
+        return kv.getModRevision();
+    }
 
-  public long getVersion() {
-    return kv.getVersion();
-  }
+    public long getVersion() {
+        return kv.getVersion();
+    }
 
-  public long getLease() {
-    return kv.getLease();
-  }
+    public long getLease() {
+        return kv.getLease();
+    }
 }

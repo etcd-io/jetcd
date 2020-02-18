@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 package io.etcd.jetcd.osgi;
 
-import io.etcd.jetcd.launcher.junit4.EtcdClusterResource;
 import java.net.URI;
 import java.util.Optional;
+
+import io.etcd.jetcd.launcher.junit4.EtcdClusterResource;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.JUnitCore;
@@ -40,23 +41,23 @@ import org.junit.runner.notification.Failure;
  */
 public class PaxExamWrapperTest {
 
-  private static final String ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME = "etcd.endpoint";
+    private static final String ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME = "etcd.endpoint";
 
-  @Rule
-  public final EtcdClusterResource cluster = new EtcdClusterResource("karaf");
+    @Rule
+    public final EtcdClusterResource cluster = new EtcdClusterResource("karaf");
 
-  @Test
-  public void testClientServiceChecks() throws Throwable {
-    URI endpoint = cluster.getClientEndpoints().get(0);
-    System.setProperty(ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME, endpoint.toString());
+    @Test
+    public void testClientServiceChecks() throws Throwable {
+        URI endpoint = cluster.getClientEndpoints().get(0);
+        System.setProperty(ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME, endpoint.toString());
 
-    Optional<Failure> failure = JUnitCore.runClasses(ClientServiceChecks.class).getFailures().stream().findFirst();
-    if (failure.isPresent()) {
-      throw failure.get().getException();
+        Optional<Failure> failure = JUnitCore.runClasses(ClientServiceChecks.class).getFailures().stream().findFirst();
+        if (failure.isPresent()) {
+            throw failure.get().getException();
+        }
     }
-  }
 
-  static String getClientEndpoints() {
-    return System.getProperty(ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME);
-  }
+    static String getClientEndpoints() {
+        return System.getProperty(ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME);
+    }
 }

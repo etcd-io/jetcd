@@ -20,27 +20,26 @@ import io.etcd.jetcd.common.exception.EtcdException;
 
 public class WatchResponseWithError {
 
-  private WatchResponse watchResponse;
-  private EtcdException exception;
+    private WatchResponse watchResponse;
+    private EtcdException exception;
 
-  private WatchResponseWithError() {
+    private WatchResponseWithError() {
 
-  }
+    }
 
-  public WatchResponseWithError(WatchResponse watchResponse) {
-    this.watchResponse = watchResponse;
-  }
+    public WatchResponseWithError(WatchResponse watchResponse) {
+        this.watchResponse = watchResponse;
+    }
 
-  public WatchResponseWithError(EtcdException e) {
-    this.exception = e;
-  }
+    public WatchResponseWithError(EtcdException e) {
+        this.exception = e;
+    }
 
+    public WatchResponse getWatchResponse() {
+        return watchResponse;
+    }
 
-  public WatchResponse getWatchResponse() {
-    return watchResponse;
-  }
-
-  public EtcdException getException() {
-    return exception;
-  }
+    public EtcdException getException() {
+        return exception;
+    }
 }

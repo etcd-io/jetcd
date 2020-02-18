@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,68 +16,69 @@
 
 package io.etcd.jetcd;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import io.etcd.jetcd.kv.PutResponse;
-import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import io.etcd.jetcd.kv.PutResponse;
+import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 // TODO(#548): Add global timeout for tests once JUnit5 supports it
 public class LoadBalancerTest {
 
-  @RegisterExtension
-  public static final EtcdClusterExtension cluster = new EtcdClusterExtension("load-balancer-etcd", 3);
+    @RegisterExtension
+    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("load-balancer-etcd", 3);
 
-  @Test
-  public void testPickFirstBalancerFactory() throws Exception {
-    final List<URI> endpoints = cluster.getClientEndpoints();
-    final ClientBuilder builder = Client.builder().endpoints(endpoints).loadBalancerPolicy("pick_first");
+    @Test
+    public void testPickFirstBalancerFactory() throws Exception {
+        final List<URI> endpoints = cluster.getClientEndpoints();
+        final ClientBuilder builder = Client.builder().endpoints(endpoints).loadBalancerPolicy("pick_first");
 
-    try (Client client = builder.build();
-         KV kv = client.getKVClient()) {
+        try (Client client = builder.build();
+            KV kv = client.getKVClient()) {
 
-      long lastMemberId = 0;
+            long lastMemberId = 0;
 
-      final String allEndpoints = endpoints.stream().map(URI::toString).collect(Collectors.joining(","));
-      for (int i = 0; i < allEndpoints.length() * 2; i++) {
-        Response response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
+            final String allEndpoints = endpoints.stream().map(URI::toString).collect(Collectors.joining(","));
+            for (int i = 0; i < allEndpoints.length() * 2; i++) {
+                Response response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
 
-        if (i == 0) {
-          lastMemberId = response.getHeader().getMemberId();
+                if (i == 0) {
+                    lastMemberId = response.getHeader().getMemberId();
+                }
+
+                assertThat(response.getHeader().getMemberId()).isEqualTo(lastMemberId);
+            }
         }
-
-        assertThat(response.getHeader().getMemberId()).isEqualTo(lastMemberId);
-      }
     }
-  }
 
-  @Test
-  public void testRoundRobinLoadBalancerFactory() throws Exception {
-    final List<URI> endpoints = cluster.getClientEndpoints();
-    final ClientBuilder builder = Client.builder().endpoints(endpoints).loadBalancerPolicy("round_robin");
+    @Test
+    public void testRoundRobinLoadBalancerFactory() throws Exception {
+        final List<URI> endpoints = cluster.getClientEndpoints();
+        final ClientBuilder builder = Client.builder().endpoints(endpoints).loadBalancerPolicy("round_robin");
 
-    try (Client client = builder.build();
-         KV kv = client.getKVClient()) {
+        try (Client client = builder.build();
+            KV kv = client.getKVClient()) {
 
-      long lastMemberId = 0;
-      long differences = 0;
+            long lastMemberId = 0;
+            long differences = 0;
 
-      final String allEndpoints = endpoints.stream().map(URI::toString).collect(Collectors.joining(","));
-      for (int i = 0; i < allEndpoints.length(); i++) {
-        PutResponse response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
+            final String allEndpoints = endpoints.stream().map(URI::toString).collect(Collectors.joining(","));
+            for (int i = 0; i < allEndpoints.length(); i++) {
+                PutResponse response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
 
-        if (i > 0 && lastMemberId != response.getHeader().getMemberId()) {
-          differences++;
+                if (i > 0 && lastMemberId != response.getHeader().getMemberId()) {
+                    differences++;
+                }
+
+                lastMemberId = response.getHeader().getMemberId();
+            }
+
+            assertThat(differences).isNotEqualTo(lastMemberId);
         }
-
-        lastMemberId = response.getHeader().getMemberId();
-      }
-
-      assertThat(differences).isNotEqualTo(lastMemberId);
     }
-  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,24 +18,23 @@ package io.etcd.jetcd.lease;
 
 import io.etcd.jetcd.AbstractResponse;
 
-public class LeaseKeepAliveResponse extends
-    AbstractResponse<io.etcd.jetcd.api.LeaseKeepAliveResponse> {
+public class LeaseKeepAliveResponse extends AbstractResponse<io.etcd.jetcd.api.LeaseKeepAliveResponse> {
 
-  public LeaseKeepAliveResponse(io.etcd.jetcd.api.LeaseKeepAliveResponse response) {
-    super(response, response.getHeader());
-  }
+    public LeaseKeepAliveResponse(io.etcd.jetcd.api.LeaseKeepAliveResponse response) {
+        super(response, response.getHeader());
+    }
 
-  /**
-   * ID is the lease ID from the keep alive request.
-   */
-  public long getID() {
-    return getResponse().getID();
-  }
+    /**
+     * ID is the lease ID from the keep alive request.
+     */
+    public long getID() {
+        return getResponse().getID();
+    }
 
-  /**
-   * TTL is the new time-to-live for the lease.
-   */
-  public long getTTL() {
-    return getResponse().getTTL();
-  }
+    /**
+     * TTL is the new time-to-live for the lease.
+     */
+    public long getTTL() {
+        return getResponse().getTTL();
+    }
 }

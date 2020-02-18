@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,14 @@ import io.etcd.jetcd.common.exception.EtcdException;
 
 public class LeaseKeepAliveResponseWithError {
 
-  public LeaseKeepAliveResponse leaseKeepAliveResponse;
-  public EtcdException error;
+    public LeaseKeepAliveResponse leaseKeepAliveResponse;
+    public EtcdException error;
 
-  public LeaseKeepAliveResponseWithError(LeaseKeepAliveResponse leaseKeepAliveResponse) {
-    this.leaseKeepAliveResponse = leaseKeepAliveResponse;
-  }
+    public LeaseKeepAliveResponseWithError(LeaseKeepAliveResponse leaseKeepAliveResponse) {
+        this.leaseKeepAliveResponse = leaseKeepAliveResponse;
+    }
 
-  public LeaseKeepAliveResponseWithError(EtcdException e) {
-    this.error = e;
-  }
+    public LeaseKeepAliveResponseWithError(EtcdException e) {
+        this.error = e;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,9 @@ import io.etcd.jetcd.api.Auth;
  * AuthUserChangePasswordResponse returned by {@link Auth#userChangePassword(ByteSequence,
  * ByteSequence)} contains a header.
  */
-public class AuthUserChangePasswordResponse extends
-    AbstractResponse<io.etcd.jetcd.api.AuthUserChangePasswordResponse> {
+public class AuthUserChangePasswordResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserChangePasswordResponse> {
 
-  public AuthUserChangePasswordResponse(
-      io.etcd.jetcd.api.AuthUserChangePasswordResponse response) {
-    super(response, response.getHeader());
-  }
+    public AuthUserChangePasswordResponse(io.etcd.jetcd.api.AuthUserChangePasswordResponse response) {
+        super(response, response.getHeader());
+    }
 }

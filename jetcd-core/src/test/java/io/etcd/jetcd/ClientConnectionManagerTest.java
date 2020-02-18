@@ -16,8 +16,10 @@
 
 package io.etcd.jetcd;
 
-import static io.etcd.jetcd.TestUtil.bytesOf;
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
@@ -28,49 +30,46 @@ import io.grpc.ClientInterceptor;
 import io.grpc.ForwardingClientCall;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import static io.etcd.jetcd.TestUtil.bytesOf;
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class ClientConnectionManagerTest {
 
-  @RegisterExtension
-  public static final EtcdClusterExtension cluster = new EtcdClusterExtension("connection-manager-etcd", 1);
+    @RegisterExtension
+    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("connection-manager-etcd", 1);
 
-  @Test
-  public void test() throws InterruptedException, ExecutionException {
-    final CountDownLatch latch = new CountDownLatch(1);
+    @Test
+    public void test() throws InterruptedException, ExecutionException {
+        final CountDownLatch latch = new CountDownLatch(1);
 
-    final ClientBuilder builder = Client.builder()
-        .endpoints(cluster.getClientEndpoints())
-        .header("MyHeader1", "MyHeaderVal1")
-        .header("MyHeader2", "MyHeaderVal2")
-        .interceptor(new ClientInterceptor() {
-          @Override
-          public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-                                                                     CallOptions callOptions, Channel next) {
-            return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
-              @Override
-              public void start(Listener<RespT> responseListener, Metadata headers) {
-                super.start(responseListener, headers);
-                assertThat(headers.get(Metadata.Key.of("MyHeader1", Metadata.ASCII_STRING_MARSHALLER)))
-                    .isEqualTo("MyHeaderVal1");
-                assertThat(headers.get(Metadata.Key.of("MyHeader2", Metadata.ASCII_STRING_MARSHALLER)))
-                    .isEqualTo("MyHeaderVal2");
+        final ClientBuilder builder = Client.builder().endpoints(cluster.getClientEndpoints())
+            .header("MyHeader1", "MyHeaderVal1").header("MyHeader2", "MyHeaderVal2").interceptor(new ClientInterceptor() {
+                @Override
+                public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
+                    CallOptions callOptions, Channel next) {
+                    return new ForwardingClientCall.SimpleForwardingClientCall<ReqT, RespT>(
+                        next.newCall(method, callOptions)) {
+                        @Override
+                        public void start(Listener<RespT> responseListener, Metadata headers) {
+                            super.start(responseListener, headers);
+                            assertThat(headers.get(Metadata.Key.of("MyHeader1", Metadata.ASCII_STRING_MARSHALLER)))
+                                .isEqualTo("MyHeaderVal1");
+                            assertThat(headers.get(Metadata.Key.of("MyHeader2", Metadata.ASCII_STRING_MARSHALLER)))
+                                .isEqualTo("MyHeaderVal2");
 
-                latch.countDown();
-              }
-            };
-          }
-        });
+                            latch.countDown();
+                        }
+                    };
+                }
+            });
 
-    try (Client client = builder.build()) {
-      CompletableFuture<PutResponse> future = client.getKVClient().put(bytesOf("sample_key"), bytesOf("sample_key"));
-      latch.await(1, TimeUnit.MINUTES);
-      future.get();
+        try (Client client = builder.build()) {
+            CompletableFuture<PutResponse> future = client.getKVClient().put(bytesOf("sample_key"), bytesOf("sample_key"));
+            latch.await(1, TimeUnit.MINUTES);
+            future.get();
+        }
     }
-  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,9 @@ import io.etcd.jetcd.api.Auth;
  * AuthRoleDeleteResponse returned by {@link Auth#roleDelete(ByteSequence)}
  * contains a header.
  */
-public class AuthRoleDeleteResponse extends
-    AbstractResponse<io.etcd.jetcd.api.AuthRoleDeleteResponse> {
+public class AuthRoleDeleteResponse extends AbstractResponse<io.etcd.jetcd.api.AuthRoleDeleteResponse> {
 
-  public AuthRoleDeleteResponse(io.etcd.jetcd.api.AuthRoleDeleteResponse response) {
-    super(response, response.getHeader());
-  }
+    public AuthRoleDeleteResponse(io.etcd.jetcd.api.AuthRoleDeleteResponse response) {
+        super(response, response.getHeader());
+    }
 }

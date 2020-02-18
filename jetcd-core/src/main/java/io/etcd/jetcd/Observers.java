@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,111 +16,108 @@
 
 package io.etcd.jetcd;
 
-import io.grpc.stub.StreamObserver;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import io.grpc.stub.StreamObserver;
+
 public final class Observers {
-  private Observers() {
-  }
-
-  public static <V> StreamObserver<V> observer(Consumer<V> onNext) {
-    return new StreamObserver<V>() {
-      @Override
-      public void onNext(V value) {
-        onNext.accept(value);
-      }
-
-      @Override
-      public void onError(Throwable throwable) {
-      }
-
-      @Override
-      public void onCompleted() {
-      }
-    };
-  }
-
-  public static <V> StreamObserver<V> observer(Consumer<V> onNext, Consumer<Throwable> onError) {
-    return new StreamObserver<V>() {
-      @Override
-      public void onNext(V value) {
-        onNext.accept(value);
-      }
-
-      @Override
-      public void onError(Throwable throwable) {
-        onError.accept(throwable);
-      }
-
-      @Override
-      public void onCompleted() {
-      }
-    };
-  }
-
-  public static <T, V> StreamObserver<T> observe(
-      Function<StreamObserver<V>, StreamObserver<T>> consumer,
-      Consumer<V> onNext,
-      Consumer<Throwable> onError) {
-
-    return consumer.apply(
-      observer(onNext, onError)
-    );
-  }
-
-  public static <T> Builder<T> builder() {
-    return new Builder<>();
-  }
-
-  public static final class Builder<V> {
-    private Consumer<V> onNext;
-    private Consumer<Throwable> onError;
-    private Runnable onCompleted;
-
-    public Builder<V> onNext(Consumer<V> onNext) {
-      this.onNext = onNext;
-      return this;
+    private Observers() {
     }
 
-    public Builder<V> onError(Consumer<Throwable> onError) {
-      this.onError = onError;
-      return this;
+    public static <V> StreamObserver<V> observer(Consumer<V> onNext) {
+        return new StreamObserver<V>() {
+            @Override
+            public void onNext(V value) {
+                onNext.accept(value);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+            }
+
+            @Override
+            public void onCompleted() {
+            }
+        };
     }
 
-    public Builder<V> onCompleted(Runnable onCompleted) {
-      this.onCompleted = onCompleted;
-      return this;
+    public static <V> StreamObserver<V> observer(Consumer<V> onNext, Consumer<Throwable> onError) {
+        return new StreamObserver<V>() {
+            @Override
+            public void onNext(V value) {
+                onNext.accept(value);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                onError.accept(throwable);
+            }
+
+            @Override
+            public void onCompleted() {
+            }
+        };
     }
 
-    public StreamObserver<V> build() {
-      final Consumer<V> doOnNext = this.onNext;
-      final Consumer<Throwable> doOnnError = this.onError;
-      final Runnable doOnnCompleted = this.onCompleted;
+    public static <T, V> StreamObserver<T> observe(Function<StreamObserver<V>, StreamObserver<T>> consumer, Consumer<V> onNext,
+        Consumer<Throwable> onError) {
 
-      return new StreamObserver<V>() {
-        @Override
-        public void onNext(V value) {
-          if (onNext != null) {
-            doOnNext.accept(value);
-          }
+        return consumer.apply(observer(onNext, onError));
+    }
+
+    public static <T> Builder<T> builder() {
+        return new Builder<>();
+    }
+
+    public static final class Builder<V> {
+        private Consumer<V> onNext;
+        private Consumer<Throwable> onError;
+        private Runnable onCompleted;
+
+        public Builder<V> onNext(Consumer<V> onNext) {
+            this.onNext = onNext;
+            return this;
         }
 
-        @Override
-        public void onError(Throwable throwable) {
-          if (doOnnError != null) {
-            doOnnError.accept(throwable);
-          }
+        public Builder<V> onError(Consumer<Throwable> onError) {
+            this.onError = onError;
+            return this;
         }
 
-        @Override
-        public void onCompleted() {
-          if (doOnnCompleted != null) {
-            doOnnCompleted.run();
-          }
+        public Builder<V> onCompleted(Runnable onCompleted) {
+            this.onCompleted = onCompleted;
+            return this;
         }
-      };
+
+        public StreamObserver<V> build() {
+            final Consumer<V> doOnNext = this.onNext;
+            final Consumer<Throwable> doOnnError = this.onError;
+            final Runnable doOnnCompleted = this.onCompleted;
+
+            return new StreamObserver<V>() {
+                @Override
+                public void onNext(V value) {
+                    if (onNext != null) {
+                        doOnNext.accept(value);
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable) {
+                    if (doOnnError != null) {
+                        doOnnError.accept(throwable);
+                    }
+                }
+
+                @Override
+                public void onCompleted() {
+                    if (doOnnCompleted != null) {
+                        doOnnCompleted.run();
+                    }
+                }
+            };
+        }
+
     }
-
-  }
 }

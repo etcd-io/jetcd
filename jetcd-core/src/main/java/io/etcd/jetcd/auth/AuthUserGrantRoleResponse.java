@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,9 @@ import io.etcd.jetcd.api.Auth;
  * AuthUserGrantRoleResponse returned by {@link Auth#userGrantRole(ByteSequence,
  * ByteSequence)} contains a header.
  */
-public class AuthUserGrantRoleResponse extends
-    AbstractResponse<io.etcd.jetcd.api.AuthUserGrantRoleResponse> {
+public class AuthUserGrantRoleResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserGrantRoleResponse> {
 
-  public AuthUserGrantRoleResponse(io.etcd.jetcd.api.AuthUserGrantRoleResponse response) {
-    super(response, response.getHeader());
-  }
+    public AuthUserGrantRoleResponse(io.etcd.jetcd.api.AuthUserGrantRoleResponse response) {
+        super(response, response.getHeader());
+    }
 }

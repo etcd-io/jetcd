@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ package io.etcd.jetcd;
 
 public interface CloseableClient extends AutoCloseable {
 
-  /**
-   * close the client and release its resources.
-   */
-  @Override
-  default void close() {
-    // noop
-  }
+    /**
+     * close the client and release its resources.
+     */
+    @Override
+    default void close() {
+        // noop
+    }
 
 }

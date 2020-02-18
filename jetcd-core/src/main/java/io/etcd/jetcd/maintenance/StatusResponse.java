@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 package io.etcd.jetcd.maintenance;
 
+import java.net.URI;
+
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.Maintenance;
-import java.net.URI;
 
 /**
  * StatusResponse returned by {@link Maintenance#statusMember(URI)} contains
@@ -26,42 +27,42 @@ import java.net.URI;
  */
 public class StatusResponse extends AbstractResponse<io.etcd.jetcd.api.StatusResponse> {
 
-  public StatusResponse(io.etcd.jetcd.api.StatusResponse response) {
-    super(response, response.getHeader());
-  }
+    public StatusResponse(io.etcd.jetcd.api.StatusResponse response) {
+        super(response, response.getHeader());
+    }
 
-  /**
-   * returns the cluster protocol version used by the responding member.
-   */
-  public String getVersion() {
-    return getResponse().getVersion();
-  }
+    /**
+     * returns the cluster protocol version used by the responding member.
+     */
+    public String getVersion() {
+        return getResponse().getVersion();
+    }
 
-  /**
-   * return the size of the backend database, in bytes, of the responding member.
-   */
-  public long getDbSize() {
-    return getResponse().getDbSize();
-  }
+    /**
+     * return the size of the backend database, in bytes, of the responding member.
+     */
+    public long getDbSize() {
+        return getResponse().getDbSize();
+    }
 
-  /**
-   * return the the member ID which the responding member believes is the current leader.
-   */
-  public long getLeader() {
-    return getResponse().getLeader();
-  }
+    /**
+     * return the the member ID which the responding member believes is the current leader.
+     */
+    public long getLeader() {
+        return getResponse().getLeader();
+    }
 
-  /**
-   * the current raft index of the responding member.
-   */
-  public long getRaftIndex() {
-    return getResponse().getRaftIndex();
-  }
+    /**
+     * the current raft index of the responding member.
+     */
+    public long getRaftIndex() {
+        return getResponse().getRaftIndex();
+    }
 
-  /**
-   * the current raft term of the responding member.
-   */
-  public long getRaftTerm() {
-    return getResponse().getRaftTerm();
-  }
+    /**
+     * the current raft term of the responding member.
+     */
+    public long getRaftTerm() {
+        return getResponse().getRaftTerm();
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,14 @@ package io.etcd.jetcd.maintenance;
 
 public class SnapshotReaderResponseWithError {
 
-  public SnapshotResponse snapshotResponse;
-  public Exception error;
+    public SnapshotResponse snapshotResponse;
+    public Exception error;
 
-  public SnapshotReaderResponseWithError(SnapshotResponse snapshotResponse) {
-    this.snapshotResponse = snapshotResponse;
-  }
+    public SnapshotReaderResponseWithError(SnapshotResponse snapshotResponse) {
+        this.snapshotResponse = snapshotResponse;
+    }
 
-  public SnapshotReaderResponseWithError(Exception e) {
-    this.error = e;
-  }
+    public SnapshotReaderResponseWithError(Exception e) {
+        this.error = e;
+    }
 }

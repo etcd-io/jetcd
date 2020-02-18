@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,11 @@ import org.apache.maven.plugins.annotations.Mojo;
  *
  * @author Michael Vorburger.ch
  */
-@Mojo(name = "stop", requiresProject = false,
-      defaultPhase = LifecyclePhase.POST_INTEGRATION_TEST)
+@Mojo(name = "stop", requiresProject = false, defaultPhase = LifecyclePhase.POST_INTEGRATION_TEST)
 public class StopMojo extends AbstractMojo {
 
-  @Override
-  public void execute() throws MojoExecutionException, MojoFailureException {
-    Singleton.etcd.close();
-  }
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        Singleton.etcd.close();
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,55 +16,46 @@
 
 package io.etcd.jetcd;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.concurrent.CompletableFuture;
 
 import io.etcd.jetcd.api.lock.LockGrpc;
 import io.etcd.jetcd.api.lock.LockRequest;
 import io.etcd.jetcd.api.lock.UnlockRequest;
 import io.etcd.jetcd.lock.LockResponse;
 import io.etcd.jetcd.lock.UnlockResponse;
-import java.util.concurrent.CompletableFuture;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 final class LockImpl implements Lock {
 
-  private final ClientConnectionManager connectionManager;
+    private final ClientConnectionManager connectionManager;
 
-  private final LockGrpc.LockFutureStub stub;
+    private final LockGrpc.LockFutureStub stub;
 
-  private final ByteSequence namespace;
+    private final ByteSequence namespace;
 
-  LockImpl(ClientConnectionManager connectionManager) {
-    this.connectionManager = connectionManager;
-    this.stub = connectionManager.newStub(LockGrpc::newFutureStub);
-    this.namespace = connectionManager.getNamespace();
-  }
+    LockImpl(ClientConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
+        this.stub = connectionManager.newStub(LockGrpc::newFutureStub);
+        this.namespace = connectionManager.getNamespace();
+    }
 
-  @Override
-  public CompletableFuture<LockResponse> lock(ByteSequence name, long leaseId) {
-    checkNotNull(name);
-    LockRequest request = LockRequest.newBuilder()
-        .setName(Util.prefixNamespace(name.getByteString(), namespace))
-        .setLease(leaseId)
-        .build();
+    @Override
+    public CompletableFuture<LockResponse> lock(ByteSequence name, long leaseId) {
+        checkNotNull(name);
+        LockRequest request = LockRequest.newBuilder().setName(Util.prefixNamespace(name.getByteString(), namespace))
+            .setLease(leaseId).build();
 
-    return connectionManager.execute(
-        () -> stub.lock(request),
-        (response) -> new LockResponse(response, namespace),
-        Util::isRetryable
-    );
-  }
+        return connectionManager.execute(() -> stub.lock(request), (response) -> new LockResponse(response, namespace),
+            Util::isRetryable);
+    }
 
-  @Override
-  public CompletableFuture<UnlockResponse> unlock(ByteSequence lockKey) {
-    checkNotNull(lockKey);
-    UnlockRequest request = UnlockRequest.newBuilder()
-        .setKey(Util.prefixNamespace(lockKey.getByteString(), namespace))
-        .build();
+    @Override
+    public CompletableFuture<UnlockResponse> unlock(ByteSequence lockKey) {
+        checkNotNull(lockKey);
+        UnlockRequest request = UnlockRequest.newBuilder().setKey(Util.prefixNamespace(lockKey.getByteString(), namespace))
+            .build();
 
-    return connectionManager.execute(
-        () -> stub.unlock(request),
-        UnlockResponse::new,
-        Util::isRetryable
-    );
-  }
+        return connectionManager.execute(() -> stub.unlock(request), UnlockResponse::new, Util::isRetryable);
+    }
 }

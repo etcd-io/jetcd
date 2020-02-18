@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,48 +16,47 @@
 
 package io.etcd.jetcd.kv;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.api.RangeResponse;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class GetResponse extends AbstractResponse<RangeResponse> {
 
-  private final ByteSequence namespace;
+    private final ByteSequence namespace;
 
-  private List<KeyValue> kvs;
+    private List<KeyValue> kvs;
 
-  public GetResponse(RangeResponse rangeResponse, ByteSequence namespace) {
-    super(rangeResponse, rangeResponse.getHeader());
-    this.namespace = namespace;
-  }
-
-  /**
-   * return a list of key-value pairs matched by the range request.
-   */
-  public synchronized List<KeyValue> getKvs() {
-    if (kvs == null) {
-      kvs = getResponse().getKvsList().stream()
-          .map(kv -> new KeyValue(kv, namespace))
-          .collect(Collectors.toList());
+    public GetResponse(RangeResponse rangeResponse, ByteSequence namespace) {
+        super(rangeResponse, rangeResponse.getHeader());
+        this.namespace = namespace;
     }
 
-    return kvs;
-  }
+    /**
+     * return a list of key-value pairs matched by the range request.
+     */
+    public synchronized List<KeyValue> getKvs() {
+        if (kvs == null) {
+            kvs = getResponse().getKvsList().stream().map(kv -> new KeyValue(kv, namespace)).collect(Collectors.toList());
+        }
 
-  /**
-   * more indicates if there are more keys to return in the requested range.
-   */
-  public boolean isMore() {
-    return getResponse().getMore();
-  }
+        return kvs;
+    }
 
-  /**
-   * return the number of keys within the range when requested.
-   */
-  public long getCount() {
-    return getResponse().getCount();
-  }
+    /**
+     * more indicates if there are more keys to return in the requested range.
+     */
+    public boolean isMore() {
+        return getResponse().getMore();
+    }
+
+    /**
+     * return the number of keys within the range when requested.
+     */
+    public long getCount() {
+        return getResponse().getCount();
+    }
 }

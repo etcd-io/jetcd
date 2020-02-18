@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,46 +16,46 @@
 
 package io.etcd.jetcd.resolver;
 
-import com.google.common.base.Preconditions;
-import io.grpc.NameResolver;
 import java.net.URI;
 import java.util.Collection;
+
 import javax.annotation.Nullable;
 
+import com.google.common.base.Preconditions;
+import io.grpc.NameResolver;
+
 public class SmartNameResolverFactory extends NameResolver.Factory {
-  private final String authority;
-  private final Collection<URI> uris;
-  private final URIResolverLoader loader;
+    private final String authority;
+    private final Collection<URI> uris;
+    private final URIResolverLoader loader;
 
-  private SmartNameResolverFactory(
-      String authority, Collection<URI> uris, URIResolverLoader loader) {
+    private SmartNameResolverFactory(String authority, Collection<URI> uris, URIResolverLoader loader) {
 
-    Preconditions.checkNotNull(loader, "URIResolverLoader should not be null");
-    Preconditions.checkNotNull(authority, "Authority should not be null");
+        Preconditions.checkNotNull(loader, "URIResolverLoader should not be null");
+        Preconditions.checkNotNull(authority, "Authority should not be null");
 
-    this.authority = authority;
-    this.uris = uris;
-    this.loader = loader;
-  }
-
-  @Nullable
-  @Override
-  public NameResolver newNameResolver(URI targetUri, NameResolver.Args args) {
-    if ("etcd".equals(targetUri.getScheme())) {
-      return new SmartNameResolver(this.authority , this.uris, this.loader);
-    } else {
-      return null;
+        this.authority = authority;
+        this.uris = uris;
+        this.loader = loader;
     }
-  }
 
-  @Override
-  public String getDefaultScheme() {
-    return "etcd";
-  }
+    @Nullable
+    @Override
+    public NameResolver newNameResolver(URI targetUri, NameResolver.Args args) {
+        if ("etcd".equals(targetUri.getScheme())) {
+            return new SmartNameResolver(this.authority, this.uris, this.loader);
+        } else {
+            return null;
+        }
+    }
 
-  public static NameResolver.Factory forEndpoints(
-      String authority, Collection<URI> endpoints, URIResolverLoader loader) {
+    @Override
+    public String getDefaultScheme() {
+        return "etcd";
+    }
 
-    return new SmartNameResolverFactory(authority, endpoints, loader);
-  }
+    public static NameResolver.Factory forEndpoints(String authority, Collection<URI> endpoints, URIResolverLoader loader) {
+
+        return new SmartNameResolverFactory(authority, endpoints, loader);
+    }
 }

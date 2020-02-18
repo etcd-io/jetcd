@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,15 @@ import io.etcd.jetcd.AbstractResponse;
 
 public class SnapshotResponse extends AbstractResponse<io.etcd.jetcd.api.SnapshotResponse> {
 
-  public SnapshotResponse(io.etcd.jetcd.api.SnapshotResponse response) {
-    super(response, response.getHeader());
-  }
+    public SnapshotResponse(io.etcd.jetcd.api.SnapshotResponse response) {
+        super(response, response.getHeader());
+    }
 
-  public long getRemainingBytes() {
-    return getResponse().getRemainingBytes();
-  }
+    public long getRemainingBytes() {
+        return getResponse().getRemainingBytes();
+    }
 
-  public ByteString getBlob() {
-    return getResponse().getBlob();
-  }
+    public ByteString getBlob() {
+        return getResponse().getBlob();
+    }
 }

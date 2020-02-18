@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,26 @@
 
 package io.etcd.jetcd.auth;
 
+import java.util.List;
+
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.api.Auth;
-import java.util.List;
 
 /**
  * AuthUserGetResponse returned by {@link Auth#userGet(ByteSequence)} contains a header and
  * a list of roles associated with the user.
  */
-public class AuthUserGetResponse extends
-    AbstractResponse<io.etcd.jetcd.api.AuthUserGetResponse> {
+public class AuthUserGetResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserGetResponse> {
 
-  public AuthUserGetResponse(io.etcd.jetcd.api.AuthUserGetResponse response) {
-    super(response, response.getHeader());
-  }
+    public AuthUserGetResponse(io.etcd.jetcd.api.AuthUserGetResponse response) {
+        super(response, response.getHeader());
+    }
 
-  /**
-   * returns a list of roles.
-   */
-  public List<String> getRoles() {
-    return getResponse().getRolesList();
-  }
+    /**
+     * returns a list of roles.
+     */
+    public List<String> getRoles() {
+        return getResponse().getRolesList();
+    }
 }

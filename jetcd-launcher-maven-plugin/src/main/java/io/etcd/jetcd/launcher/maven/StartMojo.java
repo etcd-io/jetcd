@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,12 @@
 
 package io.etcd.jetcd.launcher.maven;
 
-import static com.google.common.base.Charsets.US_ASCII;
-
-import com.google.common.io.Files;
-import io.etcd.jetcd.launcher.EtcdClusterFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+
+import com.google.common.io.Files;
+import io.etcd.jetcd.launcher.EtcdClusterFactory;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -32,41 +31,43 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Charsets.US_ASCII;
+
 /**
  * Starts etcd launcher.
  *
  * @author Michael Vorburger.ch
  */
-@Mojo(name = "start", requiresProject = false,
-      defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST)
+@Mojo(name = "start", requiresProject = false, defaultPhase = LifecyclePhase.PRE_INTEGRATION_TEST)
 public class StartMojo extends AbstractMojo {
 
-  private static final Logger LOG = LoggerFactory.getLogger(StartMojo.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StartMojo.class);
 
-  private static final String[] EMPTY = new String[0];
+    private static final String[] EMPTY = new String[0];
 
-  @Parameter(required = true, defaultValue = "target/jetcd-launcher-maven-plugin/endpoint")
-  private File endpointFile;
+    @Parameter(required = true, defaultValue = "target/jetcd-launcher-maven-plugin/endpoint")
+    private File endpointFile;
 
-  /**
-   * <a href="https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md">Additional arguments</a> to pass to etcd.
-   */
-  @Parameter(required = false)
-  private String[] additionalArguments;
+    /**
+     * <a href="https://github.com/etcd-io/etcd/blob/master/Documentation/op-guide/configuration.md">Additional
+     * arguments</a> to pass to etcd.
+     */
+    @Parameter(required = false)
+    private String[] additionalArguments;
 
-  @Override
-  public void execute() throws MojoExecutionException, MojoFailureException {
-    Singleton.etcd = EtcdClusterFactory.buildCluster("maven", 1, false, false,
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        Singleton.etcd = EtcdClusterFactory.buildCluster("maven", 1, false, false,
             additionalArguments != null ? additionalArguments : EMPTY);
-    Singleton.etcd.start();
+        Singleton.etcd.start();
 
-    URI endpoint = Singleton.etcd.getClientEndpoints().get(0);
-    try {
-      endpointFile.getParentFile().mkdirs();
-      Files.asCharSink(endpointFile, US_ASCII).write(endpoint.toString());
-      LOG.info("{} = {}", endpointFile, endpoint);
-    } catch (IOException e) {
-      throw new MojoFailureException("writing file failed", e);
+        URI endpoint = Singleton.etcd.getClientEndpoints().get(0);
+        try {
+            endpointFile.getParentFile().mkdirs();
+            Files.asCharSink(endpointFile, US_ASCII).write(endpoint.toString());
+            LOG.info("{} = {}", endpointFile, endpoint);
+        } catch (IOException e) {
+            throw new MojoFailureException("writing file failed", e);
+        }
     }
-  }
 }

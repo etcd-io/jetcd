@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,45 +18,45 @@ package io.etcd.jetcd.options;
 
 public final class CompactOption {
 
-  public static final CompactOption DEFAULT = newBuilder().build();
+    public static final CompactOption DEFAULT = newBuilder().build();
 
-  public static Builder newBuilder() {
-    return new Builder();
-  }
-
-  public static class Builder {
-
-    private boolean physical = false;
-
-    private Builder() {
+    public static Builder newBuilder() {
+        return new Builder();
     }
 
-    /**
-     * make compact RPC call wait until
-     * the compaction is physically applied to the local database
-     * such that compacted entries are totally removed from the
-     * backend database.
-     *
-     * @param physical whether the compact should wait until physically applied
-     * @return builder
-     */
-    public Builder withCompactPhysical(boolean physical) {
-      this.physical = physical;
-      return this;
+    public static class Builder {
+
+        private boolean physical = false;
+
+        private Builder() {
+        }
+
+        /**
+         * make compact RPC call wait until
+         * the compaction is physically applied to the local database
+         * such that compacted entries are totally removed from the
+         * backend database.
+         *
+         * @param  physical whether the compact should wait until physically applied
+         * @return          builder
+         */
+        public Builder withCompactPhysical(boolean physical) {
+            this.physical = physical;
+            return this;
+        }
+
+        public CompactOption build() {
+            return new CompactOption(this.physical);
+        }
     }
 
-    public CompactOption build() {
-      return new CompactOption(this.physical);
+    private final boolean physical;
+
+    private CompactOption(boolean physical) {
+        this.physical = physical;
     }
-  }
 
-  private final boolean physical;
-
-  private CompactOption(boolean physical) {
-    this.physical = physical;
-  }
-
-  public boolean isPhysical() {
-    return physical;
-  }
+    public boolean isPhysical() {
+        return physical;
+    }
 }

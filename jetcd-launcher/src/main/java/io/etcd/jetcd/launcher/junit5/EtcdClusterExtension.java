@@ -16,11 +16,12 @@
 
 package io.etcd.jetcd.launcher.junit5;
 
+import java.net.URI;
+import java.util.List;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.etcd.jetcd.launcher.EtcdCluster;
 import io.etcd.jetcd.launcher.EtcdClusterFactory;
-import java.net.URI;
-import java.util.List;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -32,64 +33,64 @@ import org.slf4j.LoggerFactory;
  */
 public class EtcdClusterExtension implements EtcdCluster, BeforeAllCallback, AfterAllCallback {
 
-  private static final Logger LOG = LoggerFactory.getLogger(EtcdClusterExtension.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EtcdClusterExtension.class);
 
-  private final EtcdCluster cluster;
+    private final EtcdCluster cluster;
 
-  public EtcdClusterExtension(String clusterName, int nodes) {
-    this(clusterName, nodes, false);
-  }
-
-  public EtcdClusterExtension(String clusterName, int nodes, boolean ssl) {
-    this(clusterName, nodes, ssl, false);
-  }
-
-  public EtcdClusterExtension(String clusterName, int nodes, boolean ssl, boolean restartable) {
-    this.cluster = EtcdClusterFactory.buildCluster(clusterName, nodes, ssl, restartable);
-  }
-
-  // Test framework methods
-
-  @Override
-  public void beforeAll(final ExtensionContext context) throws Exception {
-    this.cluster.start();
-  }
-
-  @Override
-  public void afterAll(final ExtensionContext extensionContext) throws Exception {
-    try {
-      this.cluster.close();
-    } catch (RuntimeException e) {
-      LOG.warn("close() failed (but ignoring it)", e);
+    public EtcdClusterExtension(String clusterName, int nodes) {
+        this(clusterName, nodes, false);
     }
-  }
 
-  // Relay cluster methods to cluster
+    public EtcdClusterExtension(String clusterName, int nodes, boolean ssl) {
+        this(clusterName, nodes, ssl, false);
+    }
 
-  @Override
-  public void start() {
-    this.cluster.start();
-  }
+    public EtcdClusterExtension(String clusterName, int nodes, boolean ssl, boolean restartable) {
+        this.cluster = EtcdClusterFactory.buildCluster(clusterName, nodes, ssl, restartable);
+    }
 
-  @Override
-  public void restart() {
-    this.cluster.restart();
-  }
+    // Test framework methods
 
-  @Override
-  public void close() {
-    this.cluster.close();
-  }
+    @Override
+    public void beforeAll(final ExtensionContext context) throws Exception {
+        this.cluster.start();
+    }
 
-  @NonNull
-  @Override
-  public List<URI> getClientEndpoints() {
-    return this.cluster.getClientEndpoints();
-  }
+    @Override
+    public void afterAll(final ExtensionContext extensionContext) throws Exception {
+        try {
+            this.cluster.close();
+        } catch (RuntimeException e) {
+            LOG.warn("close() failed (but ignoring it)", e);
+        }
+    }
 
-  @NonNull
-  @Override
-  public List<URI> getPeerEndpoints() {
-    return this.cluster.getPeerEndpoints();
-  }
+    // Relay cluster methods to cluster
+
+    @Override
+    public void start() {
+        this.cluster.start();
+    }
+
+    @Override
+    public void restart() {
+        this.cluster.restart();
+    }
+
+    @Override
+    public void close() {
+        this.cluster.close();
+    }
+
+    @NonNull
+    @Override
+    public List<URI> getClientEndpoints() {
+        return this.cluster.getClientEndpoints();
+    }
+
+    @NonNull
+    @Override
+    public List<URI> getPeerEndpoints() {
+        return this.cluster.getPeerEndpoints();
+    }
 }

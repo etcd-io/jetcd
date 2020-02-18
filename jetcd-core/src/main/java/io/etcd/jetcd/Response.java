@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,21 @@
 
 package io.etcd.jetcd;
 
-
 /**
  * represents a generic Jetcd response.
  */
 public interface Response {
 
-  Header getHeader();
+    Header getHeader();
 
-  interface Header {
+    interface Header {
 
-    long getClusterId();
+        long getClusterId();
 
-    long getMemberId();
+        long getMemberId();
 
-    long getRevision();
+        long getRevision();
 
-    long getRaftTerm();
-  }
+        long getRaftTerm();
+    }
 }

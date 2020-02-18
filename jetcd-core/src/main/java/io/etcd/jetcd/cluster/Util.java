@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,11 @@ import java.util.stream.Collectors;
  */
 public class Util {
 
-  /**
-   * Converts a list of API member to a List of client side member.
-   */
-  static List<io.etcd.jetcd.cluster.Member> toMembers(
-      List<io.etcd.jetcd.api.Member> members) {
+    /**
+     * Converts a list of API member to a List of client side member.
+     */
+    static List<io.etcd.jetcd.cluster.Member> toMembers(List<io.etcd.jetcd.api.Member> members) {
 
-    return members.stream()
-        .map(io.etcd.jetcd.cluster.Member::new)
-        .collect(Collectors.toList());
-  }
+        return members.stream().map(io.etcd.jetcd.cluster.Member::new).collect(Collectors.toList());
+    }
 }

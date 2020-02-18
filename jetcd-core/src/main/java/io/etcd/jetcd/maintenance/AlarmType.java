@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package io.etcd.jetcd.maintenance;
  * represents type of alarm which can be raised.
  */
 public enum AlarmType {
-  NONE, // default, used to query if any alarm is active
-  NOSPACE, // space quota is exhausted
-  UNRECOGNIZED,
+    NONE, // default, used to query if any alarm is active
+    NOSPACE, // space quota is exhausted
+    UNRECOGNIZED,
 }

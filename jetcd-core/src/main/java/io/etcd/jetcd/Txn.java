@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,19 @@
 
 package io.etcd.jetcd;
 
+import java.util.concurrent.CompletableFuture;
+
 import io.etcd.jetcd.kv.TxnResponse;
 import io.etcd.jetcd.op.Cmp;
 import io.etcd.jetcd.op.Op;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Txn is the interface that wraps mini-transactions.
  *
  * <h3>Usage examples</h3>
  *
- * <pre>{@code
+ * <pre>
+ * {@code
  * txn.If(
  *    new Cmp(KEY, Cmp.Op.GREATER, CmpTarget.value(VALUE)),
  *    new Cmp(KEY, cmp.Op.EQUAL, CmpTarget.version(2))
@@ -37,11 +39,14 @@ import java.util.concurrent.CompletableFuture;
  *    Op.put(KEY4, VALUE4, PutOption.DEFAULT),
  *    Op.put(KEY4, VALUE4, PutOption.DEFAULT)
  * ).commit();
- * }</pre>
+ * }
+ * </pre>
  *
- * <p>Txn also supports If, Then, and Else chaining. e.g.
-
- * <pre>{@code
+ * <p>
+ * Txn also supports If, Then, and Else chaining. e.g.
+ *
+ * <pre>
+ * {@code
  * txn.If(
  *    new Cmp(KEY, Cmp.Op.GREATER, CmpTarget.value(VALUE))
  * ).If(
@@ -55,39 +60,40 @@ import java.util.concurrent.CompletableFuture;
  * ).Else(
  *    Op.put(KEY4, VALUE4, PutOption.DEFAULT)
  * ).commit();
- * }</pre>
+ * }
+ * </pre>
  */
 public interface Txn {
 
-  /**
-   * takes a list of comparison. If all comparisons passed in succeed,
-   * the operations passed into Then() will be executed. Or the operations
-   * passed into Else() will be executed.
-   */
+    /**
+     * takes a list of comparison. If all comparisons passed in succeed,
+     * the operations passed into Then() will be executed. Or the operations
+     * passed into Else() will be executed.
+     */
   //CHECKSTYLE:OFF
   Txn If(Cmp... cmps);
   //CHECKSTYLE:ON
 
-  /**
-   * takes a list of operations. The Ops list will be executed, if the
-   * comparisons passed in If() succeed.
-   */
+    /**
+     * takes a list of operations. The Ops list will be executed, if the
+     * comparisons passed in If() succeed.
+     */
   //CHECKSTYLE:OFF
   Txn Then(Op... ops);
   //CHECKSTYLE:ON
 
-  /**
-   * takes a list of operations. The Ops list will be executed, if the
-   * comparisons passed in If() fail.
-   */
+    /**
+     * takes a list of operations. The Ops list will be executed, if the
+     * comparisons passed in If() fail.
+     */
   //CHECKSTYLE:OFF
   Txn Else(Op... ops);
   //CHECKSTYLE:ON
 
-  /**
-   * tries to commit the transaction.
-   *
-   * @return a TxnResponse wrapped in CompletableFuture
-   */
-  CompletableFuture<TxnResponse> commit();
+    /**
+     * tries to commit the transaction.
+     *
+     * @return a TxnResponse wrapped in CompletableFuture
+     */
+    CompletableFuture<TxnResponse> commit();
 }

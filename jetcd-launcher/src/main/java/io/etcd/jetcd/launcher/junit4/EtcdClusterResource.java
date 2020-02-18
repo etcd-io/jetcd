@@ -16,11 +16,12 @@
 
 package io.etcd.jetcd.launcher.junit4;
 
+import java.net.URI;
+import java.util.List;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.etcd.jetcd.launcher.EtcdCluster;
 import io.etcd.jetcd.launcher.EtcdClusterFactory;
-import java.net.URI;
-import java.util.List;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,68 +31,68 @@ import org.slf4j.LoggerFactory;
  */
 public class EtcdClusterResource extends ExternalResource implements EtcdCluster {
 
-  private static final Logger LOG = LoggerFactory.getLogger(EtcdClusterResource.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EtcdClusterResource.class);
 
-  private final EtcdCluster cluster;
+    private final EtcdCluster cluster;
 
-  public EtcdClusterResource(String clusterName) {
-    this(clusterName, 1, false);
-  }
-
-  public EtcdClusterResource(String clusterName, int nodes) {
-    this(clusterName, nodes, false);
-  }
-
-  public EtcdClusterResource(String clusterName, int nodes, boolean ssl) {
-    this(clusterName, nodes, ssl, false);
-  }
-
-  public EtcdClusterResource(String clusterName, int nodes, boolean ssl, boolean restartable) {
-    this.cluster = EtcdClusterFactory.buildCluster(clusterName, nodes, ssl, restartable);
-  }
-
-  // Test framework methods
-
-  @Override
-  protected void before() throws Throwable {
-    this.cluster.start();
-  }
-
-  @Override
-  protected void after() {
-    try {
-      this.cluster.close();
-    } catch (RuntimeException e) {
-      LOG.warn("close() failed (but ignoring it)", e);
+    public EtcdClusterResource(String clusterName) {
+        this(clusterName, 1, false);
     }
-  }
 
-  // Relay cluster methods to cluster
+    public EtcdClusterResource(String clusterName, int nodes) {
+        this(clusterName, nodes, false);
+    }
 
-  @Override
-  public void start() {
-    this.cluster.start();
-  }
+    public EtcdClusterResource(String clusterName, int nodes, boolean ssl) {
+        this(clusterName, nodes, ssl, false);
+    }
 
-  @Override
-  public void restart() {
-    this.cluster.restart();
-  }
+    public EtcdClusterResource(String clusterName, int nodes, boolean ssl, boolean restartable) {
+        this.cluster = EtcdClusterFactory.buildCluster(clusterName, nodes, ssl, restartable);
+    }
 
-  @Override
-  public void close() {
-    this.cluster.close();
-  }
+    // Test framework methods
 
-  @NonNull
-  @Override
-  public List<URI> getClientEndpoints() {
-    return this.cluster.getClientEndpoints();
-  }
+    @Override
+    protected void before() throws Throwable {
+        this.cluster.start();
+    }
 
-  @NonNull
-  @Override
-  public List<URI> getPeerEndpoints() {
-    return this.cluster.getPeerEndpoints();
-  }
+    @Override
+    protected void after() {
+        try {
+            this.cluster.close();
+        } catch (RuntimeException e) {
+            LOG.warn("close() failed (but ignoring it)", e);
+        }
+    }
+
+    // Relay cluster methods to cluster
+
+    @Override
+    public void start() {
+        this.cluster.start();
+    }
+
+    @Override
+    public void restart() {
+        this.cluster.restart();
+    }
+
+    @Override
+    public void close() {
+        this.cluster.close();
+    }
+
+    @NonNull
+    @Override
+    public List<URI> getClientEndpoints() {
+        return this.cluster.getClientEndpoints();
+    }
+
+    @NonNull
+    @Override
+    public List<URI> getPeerEndpoints() {
+        return this.cluster.getPeerEndpoints();
+    }
 }

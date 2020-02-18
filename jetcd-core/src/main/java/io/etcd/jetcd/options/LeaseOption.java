@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,42 +18,42 @@ package io.etcd.jetcd.options;
 
 public class LeaseOption {
 
-  public static final LeaseOption DEFAULT = newBuilder().build();
+    public static final LeaseOption DEFAULT = newBuilder().build();
 
-  public static Builder newBuilder() {
-    return new Builder();
-  }
-
-  public static class Builder {
-
-    private boolean attachedKeys;
-
-    private Builder() {
+    public static Builder newBuilder() {
+        return new Builder();
     }
 
-    /**
-     * requests lease timeToLive API to return attached keys of given lease ID.
-     *
-     * @return builder.
-     */
-    public Builder withAttachedKeys() {
-      this.attachedKeys = true;
-      return this;
+    public static class Builder {
+
+        private boolean attachedKeys;
+
+        private Builder() {
+        }
+
+        /**
+         * requests lease timeToLive API to return attached keys of given lease ID.
+         *
+         * @return builder.
+         */
+        public Builder withAttachedKeys() {
+            this.attachedKeys = true;
+            return this;
+        }
+
+        public LeaseOption build() {
+            return new LeaseOption(this.attachedKeys);
+        }
     }
 
-    public LeaseOption build() {
-      return new LeaseOption(this.attachedKeys);
+    private final boolean attachedKeys;
+
+    private LeaseOption(boolean attachedKeys) {
+        this.attachedKeys = attachedKeys;
     }
-  }
 
-  private final boolean attachedKeys;
-
-  private LeaseOption(boolean attachedKeys) {
-    this.attachedKeys = attachedKeys;
-  }
-
-  public boolean isAttachedKeys() {
-    return attachedKeys;
-  }
+    public boolean isAttachedKeys() {
+        return attachedKeys;
+    }
 
 }
