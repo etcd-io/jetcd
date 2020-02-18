@@ -121,7 +121,7 @@
         <pax.exam.version>4.13.1</pax.exam.version>
 
         <!-- test dependencies -->
-        <mockito.version>3.2.0</mockito.version>
+        <mockito.version>3.2.4</mockito.version>
         <assertj.version>3.13.2</assertj.version>
         <junit.version>4.12</junit.version>
         <junit-jupiter.version>5.5.2</junit-jupiter.version>
