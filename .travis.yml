@@ -16,10 +16,10 @@ before_install:
   - echo "sdkman_auto_answer=true" > "$HOME/.sdkman/etc/config"
   - echo "sdkman_auto_selfupdate=true" >> "$HOME/.sdkman/etc/config"
   - sdk version
-  - sdk install java 8.0.232.hs-adpt
+  - sdk install java 8.0.242.hs-adpt
 
 script:
-  - sdk use java 8.0.232.hs-adpt
+  - sdk use java 8.0.242.hs-adpt
   - java -version
   - ./mvnw clean install $MAVEN_COMMON_OPTS
 
