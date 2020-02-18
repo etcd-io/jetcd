@@ -105,7 +105,7 @@
         <impsort-maven-plugin.version>1.3.2</impsort-maven-plugin.version>
 
         <!-- dependencies -->
-        <grpc.version>1.26.0</grpc.version>
+        <grpc.version>1.27.1</grpc.version>
         <slf4j.version>1.7.30</slf4j.version>
         <plexus-compiler-javac-errorprone.version>2.8.5</plexus-compiler-javac-errorprone.version>
         <error-prone-core.version>2.3.4</error-prone-core.version>
@@ -113,7 +113,7 @@
         <jcommander.version>1.78</jcommander.version>
         <jool.version>0.9.14</jool.version>
         <!-- should be in sync with protobuf grpc dependencies -->
-        <protobuf.version>3.5.1</protobuf.version>
+        <protobuf.version>3.11.4</protobuf.version>
         <failsafe.version>2.3.3</failsafe.version>
 
         <!-- osgi dependencies -->
