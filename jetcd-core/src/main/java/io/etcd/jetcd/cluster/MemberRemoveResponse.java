@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,30 @@
 
 package io.etcd.jetcd.cluster;
 
-import io.etcd.jetcd.AbstractResponse;
 import java.util.List;
+
+import io.etcd.jetcd.AbstractResponse;
 
 /**
  * MemberRemoveResponse returned by {@link io.etcd.jetcd.Cluster#removeMember(long)}
  * contains a header and a list of member the removal of the member.
  */
-public class MemberRemoveResponse extends
-    AbstractResponse<io.etcd.jetcd.api.MemberRemoveResponse> {
+public class MemberRemoveResponse extends AbstractResponse<io.etcd.jetcd.api.MemberRemoveResponse> {
 
-  private List<Member> members;
+    private List<Member> members;
 
-  public MemberRemoveResponse(io.etcd.jetcd.api.MemberRemoveResponse response) {
-    super(response, response.getHeader());
-  }
-
-
-  /**
-   * returns a list of all members after removing the member.
-   */
-  public synchronized List<Member> getMembers() {
-    if (members == null) {
-      members = Util.toMembers(getResponse().getMembersList());
+    public MemberRemoveResponse(io.etcd.jetcd.api.MemberRemoveResponse response) {
+        super(response, response.getHeader());
     }
 
-    return members;
-  }
+    /**
+     * returns a list of all members after removing the member.
+     */
+    public synchronized List<Member> getMembers() {
+        if (members == null) {
+            members = Util.toMembers(getResponse().getMembersList());
+        }
+
+        return members;
+    }
 }

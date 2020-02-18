@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +23,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class EtcdException extends RuntimeException {
 
-  private final ErrorCode code;
+    private final ErrorCode code;
 
-  EtcdException(ErrorCode code, String message, Throwable cause) {
-    super(message, cause);
-    this.code = checkNotNull(code);
-  }
+    EtcdException(ErrorCode code, String message, Throwable cause) {
+        super(message, cause);
+        this.code = checkNotNull(code);
+    }
 
-  /**
-   * Returns the error code associated with this exception.
-   */
-  public ErrorCode getErrorCode() {
-    return code;
-  }
+    /**
+     * Returns the error code associated with this exception.
+     */
+    public ErrorCode getErrorCode() {
+        return code;
+    }
 }

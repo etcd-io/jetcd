@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,10 @@
 
 package io.etcd.jetcd;
 
+import java.io.OutputStream;
+import java.net.URI;
+import java.util.concurrent.CompletableFuture;
+
 import io.etcd.jetcd.maintenance.AlarmMember;
 import io.etcd.jetcd.maintenance.AlarmResponse;
 import io.etcd.jetcd.maintenance.DefragmentResponse;
@@ -24,19 +28,18 @@ import io.etcd.jetcd.maintenance.MoveLeaderResponse;
 import io.etcd.jetcd.maintenance.SnapshotResponse;
 import io.etcd.jetcd.maintenance.StatusResponse;
 import io.grpc.stub.StreamObserver;
-import java.io.OutputStream;
-import java.net.URI;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Interface of maintenance talking to etcd.
  *
- * <p>An etcd cluster needs periodic maintenance to remain reliable. Depending
+ * <p>
+ * An etcd cluster needs periodic maintenance to remain reliable. Depending
  * on an etcd application's needs, this maintenance can usually be
  * automated and performed without downtime or significantly degraded
  * performance.
  *
- * <p>All etcd maintenance manages storage resources consumed by the etcd
+ * <p>
+ * All etcd maintenance manages storage resources consumed by the etcd
  * keyspace. Failure to adequately control the keyspace size is guarded by
  * storage space quotas; if an etcd member runs low on space, a quota will
  * trigger cluster-wide alarms which will put the system into a
@@ -49,68 +52,69 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface Maintenance extends CloseableClient {
 
-  /**
-   * get all active keyspace alarm.
-   */
-  CompletableFuture<AlarmResponse> listAlarms();
+    /**
+     * get all active keyspace alarm.
+     */
+    CompletableFuture<AlarmResponse> listAlarms();
 
-  /**
-   * disarms a given alarm.
-   *
-   * @param member the alarm
-   * @return the response result
-   */
-  CompletableFuture<AlarmResponse> alarmDisarm(AlarmMember member);
+    /**
+     * disarms a given alarm.
+     *
+     * @param  member the alarm
+     * @return        the response result
+     */
+    CompletableFuture<AlarmResponse> alarmDisarm(AlarmMember member);
 
-  /**
-   * defragment one member of the cluster by its endpoint.
-   *
-   * <p>After compacting the keyspace, the backend database may exhibit internal
-   * fragmentation. Any internal fragmentation is space that is free to use
-   * by the backend but still consumes storage space. The process of
-   * defragmentation releases this storage space back to the file system.
-   * Defragmentation is issued on a per-member so that cluster-wide latency
-   * spikes may be avoided.
-   *
-   * <p>Defragment is an expensive operation. User should avoid defragmenting
-   * multiple members at the same time.
-   * To defragment multiple members in the cluster, user need to call defragment
-   * multiple times with different endpoints.
-   */
-  CompletableFuture<DefragmentResponse> defragmentMember(URI endpoint);
+    /**
+     * defragment one member of the cluster by its endpoint.
+     *
+     * <p>
+     * After compacting the keyspace, the backend database may exhibit internal
+     * fragmentation. Any internal fragmentation is space that is free to use
+     * by the backend but still consumes storage space. The process of
+     * defragmentation releases this storage space back to the file system.
+     * Defragmentation is issued on a per-member so that cluster-wide latency
+     * spikes may be avoided.
+     *
+     * <p>
+     * Defragment is an expensive operation. User should avoid defragmenting
+     * multiple members at the same time.
+     * To defragment multiple members in the cluster, user need to call defragment
+     * multiple times with different endpoints.
+     */
+    CompletableFuture<DefragmentResponse> defragmentMember(URI endpoint);
 
-  /**
-   * get the status of a member by its endpoint.
-   */
-  CompletableFuture<StatusResponse> statusMember(URI endpoint);
+    /**
+     * get the status of a member by its endpoint.
+     */
+    CompletableFuture<StatusResponse> statusMember(URI endpoint);
 
+    /**
+     * returns a hash of the KV state at the time of the RPC.
+     * If revision is zero, the hash is computed on all keys. If the revision
+     * is non-zero, the hash is computed on all keys at or below the given revision.
+     */
+    CompletableFuture<HashKVResponse> hashKV(URI endpoint, long rev);
 
-  /**
-   * returns a hash of the KV state at the time of the RPC.
-   * If revision is zero, the hash is computed on all keys. If the revision
-   * is non-zero, the hash is computed on all keys at or below the given revision.
-   */
-  CompletableFuture<HashKVResponse> hashKV(URI endpoint, long rev);
+    /**
+     * retrieves backend snapshot.
+     *
+     * @param  output the output stream to write the snapshot content.
+     *
+     * @return        a Snapshot for retrieving backend snapshot.
+     */
+    CompletableFuture<Long> snapshot(OutputStream output);
 
-  /**
-   * retrieves backend snapshot.
-   *
-   * @param output the output stream to write the snapshot content.
-   *
-   * @return a Snapshot for retrieving backend snapshot.
-   */
-  CompletableFuture<Long> snapshot(OutputStream output);
+    /**
+     * retrieves backend snapshot as as stream of chunks.
+     *
+     * @param observer a stream of data chunks
+     */
+    void snapshot(StreamObserver<SnapshotResponse> observer);
 
-  /**
-   * retrieves backend snapshot as as stream of chunks.
-   *
-   * @param  observer a stream of data chunks
-   */
-  void snapshot(StreamObserver<SnapshotResponse> observer);
-
-  /**
-   * moveLeader requests current leader to transfer its leadership to the transferee.
-   * Request must be made to the leader.
-   */
-  CompletableFuture<MoveLeaderResponse> moveLeader(long transfereeID);
+    /**
+     * moveLeader requests current leader to transfer its leadership to the transferee.
+     * Request must be made to the leader.
+     */
+    CompletableFuture<MoveLeaderResponse> moveLeader(long transfereeID);
 }

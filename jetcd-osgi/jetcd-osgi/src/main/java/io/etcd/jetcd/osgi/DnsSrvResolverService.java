@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 
 package io.etcd.jetcd.osgi;
 
-import io.etcd.jetcd.resolver.URIResolver;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+
+import io.etcd.jetcd.resolver.URIResolver;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -28,47 +29,41 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@Component(
-    immediate = true,
-    service = URIResolver.class,
-    configurationPolicy = ConfigurationPolicy.REQUIRE,
-    configurationPid = "io.etcd.jetcd.resolver.dnssrv",
-    property = {
+@Component(immediate = true, service = URIResolver.class, configurationPolicy = ConfigurationPolicy.REQUIRE, configurationPid = "io.etcd.jetcd.resolver.dnssrv", property = {
         "jetcd.resolver.type=dnssrv"
-    }
-)
+})
 @Designate(ocd = ClientService.Configuration.class)
 public class DnsSrvResolverService implements URIResolver {
-  private URIResolver delegate;
+    private URIResolver delegate;
 
-  @Override
-  public boolean supports(URI uri) {
-    return delegate != null ? delegate.supports(uri) : false;
-  }
+    @Override
+    public boolean supports(URI uri) {
+        return delegate != null ? delegate.supports(uri) : false;
+    }
 
-  @Override
-  public List<SocketAddress> resolve(URI uri) {
-    return delegate != null ? delegate.resolve(uri) : Collections.emptyList();
-  }
+    @Override
+    public List<SocketAddress> resolve(URI uri) {
+        return delegate != null ? delegate.resolve(uri) : Collections.emptyList();
+    }
 
-  // **********************
-  // Lifecycle
-  // **********************
+    // **********************
+    // Lifecycle
+    // **********************
 
-  @Activate
-  protected void activate(ClientService.Configuration config) {
-    this.delegate = new DnsSrvResolverService();
-  }
+    @Activate
+    protected void activate(ClientService.Configuration config) {
+        this.delegate = new DnsSrvResolverService();
+    }
 
-  @Deactivate
-  protected void deactivate() {
-  }
+    @Deactivate
+    protected void deactivate() {
+    }
 
-  // **********************
-  // Configuration
-  // **********************
+    // **********************
+    // Configuration
+    // **********************
 
-  @ObjectClassDefinition
-  public @interface Configuration {
-  }
+    @ObjectClassDefinition
+    public @interface Configuration {
+    }
 }

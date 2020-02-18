@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,58 +26,57 @@ import io.etcd.jetcd.api.Compare;
  */
 public class Cmp {
 
-  public enum Op {
-    EQUAL, GREATER, LESS
-  }
-
-  private final ByteString key;
-  private final Op op;
-  private final CmpTarget<?> target;
-
-  public Cmp(ByteSequence key, Op compareOp, CmpTarget<?> target) {
-    this.key = ByteString.copyFrom(key.getBytes());
-    this.op = compareOp;
-    this.target = target;
-  }
-
-  Compare toCompare(ByteSequence namespace) {
-    Compare.Builder compareBuilder = Compare.newBuilder().setKey(
-        Util.prefixNamespace(this.key, namespace));
-    switch (this.op) {
-      case EQUAL:
-        compareBuilder.setResult(Compare.CompareResult.EQUAL);
-        break;
-      case GREATER:
-        compareBuilder.setResult(Compare.CompareResult.GREATER);
-        break;
-      case LESS:
-        compareBuilder.setResult(Compare.CompareResult.LESS);
-        break;
-      default:
-        throw new IllegalArgumentException("Unexpected compare type (" + this.op + ")");
+    public enum Op {
+        EQUAL, GREATER, LESS
     }
 
-    Compare.CompareTarget target = this.target.getTarget();
-    Object value = this.target.getTargetValue();
+    private final ByteString key;
+    private final Op op;
+    private final CmpTarget<?> target;
 
-    compareBuilder.setTarget(target);
-    switch (target) {
-      case VERSION:
-        compareBuilder.setVersion((Long) value);
-        break;
-      case VALUE:
-        compareBuilder.setValue((ByteString) value);
-        break;
-      case MOD:
-        compareBuilder.setModRevision((Long) value);
-        break;
-      case CREATE:
-        compareBuilder.setCreateRevision((Long) value);
-        break;
-      default:
-        throw new IllegalArgumentException("Unexpected target type (" + target + ")");
+    public Cmp(ByteSequence key, Op compareOp, CmpTarget<?> target) {
+        this.key = ByteString.copyFrom(key.getBytes());
+        this.op = compareOp;
+        this.target = target;
     }
 
-    return compareBuilder.build();
-  }
+    Compare toCompare(ByteSequence namespace) {
+        Compare.Builder compareBuilder = Compare.newBuilder().setKey(Util.prefixNamespace(this.key, namespace));
+        switch (this.op) {
+            case EQUAL:
+                compareBuilder.setResult(Compare.CompareResult.EQUAL);
+                break;
+            case GREATER:
+                compareBuilder.setResult(Compare.CompareResult.GREATER);
+                break;
+            case LESS:
+                compareBuilder.setResult(Compare.CompareResult.LESS);
+                break;
+            default:
+                throw new IllegalArgumentException("Unexpected compare type (" + this.op + ")");
+        }
+
+        Compare.CompareTarget target = this.target.getTarget();
+        Object value = this.target.getTargetValue();
+
+        compareBuilder.setTarget(target);
+        switch (target) {
+            case VERSION:
+                compareBuilder.setVersion((Long) value);
+                break;
+            case VALUE:
+                compareBuilder.setValue((ByteString) value);
+                break;
+            case MOD:
+                compareBuilder.setModRevision((Long) value);
+                break;
+            case CREATE:
+                compareBuilder.setCreateRevision((Long) value);
+                break;
+            default:
+                throw new IllegalArgumentException("Unexpected target type (" + target + ")");
+        }
+
+        return compareBuilder.build();
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 
 package io.etcd.jetcd;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URI;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.etcd.jetcd.api.AlarmRequest;
 import io.etcd.jetcd.api.AlarmType;
@@ -34,192 +37,152 @@ import io.etcd.jetcd.maintenance.HashKVResponse;
 import io.etcd.jetcd.maintenance.MoveLeaderResponse;
 import io.etcd.jetcd.maintenance.StatusResponse;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URI;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicLong;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
 /**
  * Implementation of maintenance client.
  */
 final class MaintenanceImpl implements Maintenance {
 
-  private final ClientConnectionManager connectionManager;
-  private final MaintenanceGrpc.MaintenanceFutureStub stub;
-  private final MaintenanceGrpc.MaintenanceStub streamStub;
+    private final ClientConnectionManager connectionManager;
+    private final MaintenanceGrpc.MaintenanceFutureStub stub;
+    private final MaintenanceGrpc.MaintenanceStub streamStub;
 
-  MaintenanceImpl(ClientConnectionManager connectionManager) {
-    this.connectionManager = connectionManager;
-    this.stub = connectionManager.newStub(MaintenanceGrpc::newFutureStub);
-    this.streamStub = connectionManager.newStub(MaintenanceGrpc::newStub);
-  }
+    MaintenanceImpl(ClientConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
+        this.stub = connectionManager.newStub(MaintenanceGrpc::newFutureStub);
+        this.streamStub = connectionManager.newStub(MaintenanceGrpc::newStub);
+    }
 
-  /**
-   * get all active keyspace alarm.
-   *
-   * @return alarm list
-   */
-  @Override
-  public CompletableFuture<AlarmResponse> listAlarms() {
-    AlarmRequest alarmRequest = AlarmRequest.newBuilder()
-        .setAlarm(AlarmType.NONE)
-        .setAction(AlarmRequest.AlarmAction.GET)
-        .setMemberID(0).build();
+    /**
+     * get all active keyspace alarm.
+     *
+     * @return alarm list
+     */
+    @Override
+    public CompletableFuture<AlarmResponse> listAlarms() {
+        AlarmRequest alarmRequest = AlarmRequest.newBuilder().setAlarm(AlarmType.NONE).setAction(AlarmRequest.AlarmAction.GET)
+            .setMemberID(0).build();
 
-    return Util.toCompletableFuture(
-        this.stub.alarm(alarmRequest),
-        AlarmResponse::new,
-        this.connectionManager.getExecutorService()
-    );
-  }
+        return Util.toCompletableFuture(this.stub.alarm(alarmRequest), AlarmResponse::new,
+            this.connectionManager.getExecutorService());
+    }
 
-  /**
-   * disarms a given alarm.
-   *
-   * @param member the alarm
-   * @return the response result
-   */
-  @Override
-  public CompletableFuture<AlarmResponse> alarmDisarm(
-      io.etcd.jetcd.maintenance.AlarmMember member) {
-    checkArgument(member.getMemberId() != 0, "the member id can not be 0");
-    checkArgument(member.getAlarmType() != io.etcd.jetcd.maintenance.AlarmType.NONE,
-        "alarm type can not be NONE");
+    /**
+     * disarms a given alarm.
+     *
+     * @param  member the alarm
+     * @return        the response result
+     */
+    @Override
+    public CompletableFuture<AlarmResponse> alarmDisarm(io.etcd.jetcd.maintenance.AlarmMember member) {
+        checkArgument(member.getMemberId() != 0, "the member id can not be 0");
+        checkArgument(member.getAlarmType() != io.etcd.jetcd.maintenance.AlarmType.NONE, "alarm type can not be NONE");
 
-    AlarmRequest alarmRequest = AlarmRequest.newBuilder()
-        .setAlarm(AlarmType.NOSPACE)
-        .setAction(AlarmRequest.AlarmAction.DEACTIVATE)
-        .setMemberID(member.getMemberId())
-        .build();
+        AlarmRequest alarmRequest = AlarmRequest.newBuilder().setAlarm(AlarmType.NOSPACE)
+            .setAction(AlarmRequest.AlarmAction.DEACTIVATE).setMemberID(member.getMemberId()).build();
 
-    return Util.toCompletableFuture(
-        this.stub.alarm(alarmRequest),
-        AlarmResponse::new,
-        this.connectionManager.getExecutorService()
-    );
-  }
+        return Util.toCompletableFuture(this.stub.alarm(alarmRequest), AlarmResponse::new,
+            this.connectionManager.getExecutorService());
+    }
 
-  /**
-   * defragment one member of the cluster.
-   *
-   * <p>After compacting the keyspace, the backend database may exhibit internal
-   * fragmentation. Any internal fragmentation is space that is free to use
-   * by the backend but still consumes storage space. The process of
-   * defragmentation releases this storage space back to the file system.
-   * Defragmentation is issued on a per-member so that cluster-wide latency
-   * spikes may be avoided.
-   *
-   * <p>Defragment is an expensive operation. User should avoid defragmenting
-   * multiple members at the same time.
-   * To defragment multiple members in the cluster, user need to call defragment
-   * multiple times with different endpoints.
-   */
-  @Override
-  public CompletableFuture<DefragmentResponse> defragmentMember(
-      URI endpoint) {
-    return this.connectionManager.withNewChannel(
-        endpoint,
-        MaintenanceGrpc::newFutureStub,
-        stub -> Util.toCompletableFuture(
-            stub.defragment(DefragmentRequest.getDefaultInstance()),
-            DefragmentResponse::new,
-            this.connectionManager.getExecutorService()
-        )
-    );
-  }
+    /**
+     * defragment one member of the cluster.
+     *
+     * <p>
+     * After compacting the keyspace, the backend database may exhibit internal
+     * fragmentation. Any internal fragmentation is space that is free to use
+     * by the backend but still consumes storage space. The process of
+     * defragmentation releases this storage space back to the file system.
+     * Defragmentation is issued on a per-member so that cluster-wide latency
+     * spikes may be avoided.
+     *
+     * <p>
+     * Defragment is an expensive operation. User should avoid defragmenting
+     * multiple members at the same time.
+     * To defragment multiple members in the cluster, user need to call defragment
+     * multiple times with different endpoints.
+     */
+    @Override
+    public CompletableFuture<DefragmentResponse> defragmentMember(URI endpoint) {
+        return this.connectionManager.withNewChannel(endpoint, MaintenanceGrpc::newFutureStub,
+            stub -> Util.toCompletableFuture(stub.defragment(DefragmentRequest.getDefaultInstance()),
+                DefragmentResponse::new, this.connectionManager.getExecutorService()));
+    }
 
-  /**
-   * get the status of one member.
-   */
-  @Override
-  public CompletableFuture<StatusResponse> statusMember(
-      URI endpoint) {
-    return this.connectionManager.withNewChannel(
-        endpoint,
-        MaintenanceGrpc::newFutureStub,
-        stub -> Util.toCompletableFuture(
-            stub.status(StatusRequest.getDefaultInstance()),
-            StatusResponse::new,
-            this.connectionManager.getExecutorService()
-        )
-    );
-  }
+    /**
+     * get the status of one member.
+     */
+    @Override
+    public CompletableFuture<StatusResponse> statusMember(URI endpoint) {
+        return this.connectionManager.withNewChannel(endpoint, MaintenanceGrpc::newFutureStub,
+            stub -> Util.toCompletableFuture(stub.status(StatusRequest.getDefaultInstance()), StatusResponse::new,
+                this.connectionManager.getExecutorService()));
+    }
 
-  @Override
-  public CompletableFuture<MoveLeaderResponse> moveLeader(long transfereeID) {
-    return Util.toCompletableFuture(
-      this.stub.moveLeader(
-        MoveLeaderRequest.newBuilder()
-          .setTargetID(transfereeID)
-          .build()
-      ),
-      MoveLeaderResponse::new,
-      this.connectionManager.getExecutorService()
-    );
-  }
+    @Override
+    public CompletableFuture<MoveLeaderResponse> moveLeader(long transfereeID) {
+        return Util.toCompletableFuture(this.stub.moveLeader(MoveLeaderRequest.newBuilder().setTargetID(transfereeID).build()),
+            MoveLeaderResponse::new, this.connectionManager.getExecutorService());
+    }
 
-  @Override
-  public CompletableFuture<HashKVResponse> hashKV(URI endpoint, long rev) {
-    return this.connectionManager.withNewChannel(
-        endpoint,
-        MaintenanceGrpc::newFutureStub,
-        stub -> Util.toCompletableFuture(
-            stub.hashKV(HashKVRequest.newBuilder().setRevision(rev).build()),
-            HashKVResponse::new,
-            this.connectionManager.getExecutorService()
-        )
-    );
-  }
+    @Override
+    public CompletableFuture<HashKVResponse> hashKV(URI endpoint, long rev) {
+        return this.connectionManager.withNewChannel(endpoint, MaintenanceGrpc::newFutureStub,
+            stub -> Util.toCompletableFuture(stub.hashKV(HashKVRequest.newBuilder().setRevision(rev).build()),
+                HashKVResponse::new, this.connectionManager.getExecutorService()));
+    }
 
-  @Override
-  public CompletableFuture<Long> snapshot(OutputStream outputStream) {
-    final CompletableFuture<Long> answer = new CompletableFuture<>();
-    final AtomicLong bytes = new AtomicLong(0);
+    @Override
+    public CompletableFuture<Long> snapshot(OutputStream outputStream) {
+        final CompletableFuture<Long> answer = new CompletableFuture<>();
+        final AtomicLong bytes = new AtomicLong(0);
 
-    this.streamStub.snapshot(SnapshotRequest.getDefaultInstance(),  new StreamObserver<SnapshotResponse>() {
-      @Override
-      public void onNext(SnapshotResponse snapshotResponse) {
-        try {
-          snapshotResponse.getBlob().writeTo(outputStream);
+        this.streamStub.snapshot(SnapshotRequest.getDefaultInstance(), new StreamObserver<SnapshotResponse>() {
+            @Override
+            public void onNext(SnapshotResponse snapshotResponse) {
+                try {
+                    snapshotResponse.getBlob().writeTo(outputStream);
 
-          bytes.addAndGet(snapshotResponse.getBlob().size());
-        } catch (IOException e) {
-          answer.completeExceptionally(toEtcdException(e));
-        }
-      }
+                    bytes.addAndGet(snapshotResponse.getBlob().size());
+                } catch (IOException e) {
+                    answer.completeExceptionally(toEtcdException(e));
+                }
+            }
 
-      @Override
-      public void onError(Throwable throwable) {
-        answer.completeExceptionally(toEtcdException(throwable));
-      }
+            @Override
+            public void onError(Throwable throwable) {
+                answer.completeExceptionally(toEtcdException(throwable));
+            }
 
-      @Override
-      public void onCompleted() {
-        answer.complete(bytes.get());
-      }
-    });
+            @Override
+            public void onCompleted() {
+                answer.complete(bytes.get());
+            }
+        });
 
-    return answer;
-  }
+        return answer;
+    }
 
-  @Override
-  public void snapshot(StreamObserver<io.etcd.jetcd.maintenance.SnapshotResponse> observer) {
-    this.streamStub.snapshot(SnapshotRequest.getDefaultInstance(),  new StreamObserver<SnapshotResponse>() {
-      @Override
-      public void onNext(SnapshotResponse snapshotResponse) {
-        observer.onNext(new io.etcd.jetcd.maintenance.SnapshotResponse(snapshotResponse));
-      }
+    @Override
+    public void snapshot(StreamObserver<io.etcd.jetcd.maintenance.SnapshotResponse> observer) {
+        this.streamStub.snapshot(SnapshotRequest.getDefaultInstance(), new StreamObserver<SnapshotResponse>() {
+            @Override
+            public void onNext(SnapshotResponse snapshotResponse) {
+                observer.onNext(new io.etcd.jetcd.maintenance.SnapshotResponse(snapshotResponse));
+            }
 
-      @Override
-      public void onError(Throwable throwable) {
-        observer.onError(toEtcdException(throwable));
-      }
+            @Override
+            public void onError(Throwable throwable) {
+                observer.onError(toEtcdException(throwable));
+            }
 
-      @Override
-      public void onCompleted() {
-        observer.onCompleted();
-      }
-    });
-  }
+            @Override
+            public void onCompleted() {
+                observer.onCompleted();
+            }
+        });
+    }
 }

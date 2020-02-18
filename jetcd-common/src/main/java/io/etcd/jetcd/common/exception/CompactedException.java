@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,15 @@ package io.etcd.jetcd.common.exception;
  */
 public class CompactedException extends EtcdException {
 
-  private long compactedRevision;
+    private long compactedRevision;
 
-  CompactedException(ErrorCode code, String message, long compactedRev) {
-    super(code, message, null);
-    this.compactedRevision = compactedRev;
-  }
+    CompactedException(ErrorCode code, String message, long compactedRev) {
+        super(code, message, null);
+        this.compactedRevision = compactedRev;
+    }
 
-  // get the current compacted revision of etcd server.
-  public long getCompactedRevision() {
-    return compactedRevision;
-  }
+    // get the current compacted revision of etcd server.
+    public long getCompactedRevision() {
+        return compactedRevision;
+    }
 }

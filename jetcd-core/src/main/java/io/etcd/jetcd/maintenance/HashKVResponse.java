@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,21 +24,21 @@ import io.etcd.jetcd.Maintenance;
  */
 public class HashKVResponse extends AbstractResponse<io.etcd.jetcd.api.HashKVResponse> {
 
-  public HashKVResponse(io.etcd.jetcd.api.HashKVResponse response) {
-    super(response, response.getHeader());
-  }
+    public HashKVResponse(io.etcd.jetcd.api.HashKVResponse response) {
+        super(response, response.getHeader());
+    }
 
-  /**
-   * return the hash value computed from the responding member's MVCC keys up to a given revision.
-   */
-  public int getHash() {
-    return getResponse().getHash();
-  }
+    /**
+     * return the hash value computed from the responding member's MVCC keys up to a given revision.
+     */
+    public int getHash() {
+        return getResponse().getHash();
+    }
 
-  /**
-   * return compact_revision is the compacted revision of key-value store when hash begins.
-   */
-  public long getCompacted() {
-    return getResponse().getCompactRevision();
-  }
+    /**
+     * return compact_revision is the compacted revision of key-value store when hash begins.
+     */
+    public long getCompacted() {
+        return getResponse().getCompactRevision();
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 
 package io.etcd.jetcd.cluster;
 
-import io.etcd.jetcd.AbstractResponse;
 import java.util.List;
+
+import io.etcd.jetcd.AbstractResponse;
 
 /**
  * MemberAddResponse returned by {@link io.etcd.jetcd.Cluster#addMember(List)}
@@ -25,29 +26,29 @@ import java.util.List;
  */
 public class MemberAddResponse extends AbstractResponse<io.etcd.jetcd.api.MemberAddResponse> {
 
-  private final Member member;
-  private List<Member> members;
+    private final Member member;
+    private List<Member> members;
 
-  public MemberAddResponse(io.etcd.jetcd.api.MemberAddResponse response) {
-    super(response, response.getHeader());
-    member = new Member(response.getMember());
-  }
-
-  /**
-   * returns the member information for the added member.
-   */
-  public Member getMember() {
-    return member;
-  }
-
-  /**
-   * returns a list of all members after adding the new member.
-   */
-  public synchronized List<Member> getMembers() {
-    if (members == null) {
-      members = Util.toMembers(getResponse().getMembersList());
+    public MemberAddResponse(io.etcd.jetcd.api.MemberAddResponse response) {
+        super(response, response.getHeader());
+        member = new Member(response.getMember());
     }
 
-    return members;
-  }
+    /**
+     * returns the member information for the added member.
+     */
+    public Member getMember() {
+        return member;
+    }
+
+    /**
+     * returns a list of all members after adding the new member.
+     */
+    public synchronized List<Member> getMembers() {
+        if (members == null) {
+            members = Util.toMembers(getResponse().getMembersList());
+        }
+
+        return members;
+    }
 }

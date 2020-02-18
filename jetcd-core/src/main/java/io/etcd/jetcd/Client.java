@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,29 +19,30 @@ package io.etcd.jetcd;
 /**
  * Etcd Client.
  *
- * <p>The implementation may throw unchecked ConnectException or AuthFailedException on
- *    initialization (or when invoking *Client methods if configured to initialize lazily).
+ * <p>
+ * The implementation may throw unchecked ConnectException or AuthFailedException on
+ * initialization (or when invoking *Client methods if configured to initialize lazily).
  */
 public interface Client extends AutoCloseable {
 
-  Auth getAuthClient();
+    Auth getAuthClient();
 
-  KV getKVClient();
+    KV getKVClient();
 
-  Cluster getClusterClient();
+    Cluster getClusterClient();
 
-  Maintenance getMaintenanceClient();
+    Maintenance getMaintenanceClient();
 
-  Lease getLeaseClient();
+    Lease getLeaseClient();
 
-  Watch getWatchClient();
+    Watch getWatchClient();
 
-  Lock getLockClient();
+    Lock getLockClient();
 
-  @Override
-  void close();
+    @Override
+    void close();
 
-  static ClientBuilder builder() {
-    return new ClientBuilder();
-  }
+    static ClientBuilder builder() {
+        return new ClientBuilder();
+    }
 }

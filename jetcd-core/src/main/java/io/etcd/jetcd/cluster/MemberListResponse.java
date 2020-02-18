@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 package io.etcd.jetcd.cluster;
 
+import java.util.List;
+
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.Cluster;
-import java.util.List;
 
 /**
  * MemberListResponse returned by {@link Cluster#listMember()}
@@ -26,20 +27,20 @@ import java.util.List;
  */
 public class MemberListResponse extends AbstractResponse<io.etcd.jetcd.api.MemberListResponse> {
 
-  private List<Member> members;
+    private List<Member> members;
 
-  public MemberListResponse(io.etcd.jetcd.api.MemberListResponse response) {
-    super(response, response.getHeader());
-  }
-
-  /**
-   * returns a list of members. empty list if none.
-   */
-  public synchronized List<Member> getMembers() {
-    if (members == null) {
-      members = Util.toMembers(getResponse().getMembersList());
+    public MemberListResponse(io.etcd.jetcd.api.MemberListResponse response) {
+        super(response, response.getHeader());
     }
 
-    return members;
-  }
+    /**
+     * returns a list of members. empty list if none.
+     */
+    public synchronized List<Member> getMembers() {
+        if (members == null) {
+            members = Util.toMembers(getResponse().getMembersList());
+        }
+
+        return members;
+    }
 }

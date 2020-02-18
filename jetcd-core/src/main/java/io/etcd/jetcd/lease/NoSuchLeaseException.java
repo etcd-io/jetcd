@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package io.etcd.jetcd.lease;
  */
 public class NoSuchLeaseException extends Exception {
 
-  public NoSuchLeaseException(long leaseId) {
-    super("No such lease: " + leaseId);
-  }
+    public NoSuchLeaseException(long leaseId) {
+        super("No such lease: " + leaseId);
+    }
 }

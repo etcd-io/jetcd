@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package io.etcd.jetcd.launcher.test;
 
-import static io.etcd.jetcd.TestUtil.bytesOf;
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
@@ -26,39 +26,41 @@ import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.launcher.EtcdCluster;
 import io.etcd.jetcd.launcher.EtcdClusterFactory;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import org.junit.Test;
+
+import static io.etcd.jetcd.TestUtil.bytesOf;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Simple test illustrating how to use the {@link EtcdClusterFactory} with the jetcd client.
  *
- * <p>Tests typically would use the EtcdClusterResource JUnit rule instead of the EtcdClusterFactory direct.
+ * <p>
+ * Tests typically would use the EtcdClusterResource JUnit rule instead of the EtcdClusterFactory direct.
  *
  * @author Michael Vorburger.ch
  */
 public class EtcdClusterUsingTest {
 
-  @Test
-  public void testUseEtcd() throws Exception {
-    try (EtcdCluster etcd = EtcdClusterFactory.buildCluster(getClass().getSimpleName(), 3, false, false)) {
-      etcd.start();
-      try (Client client = Client.builder().endpoints(etcd.getClientEndpoints()).build()) {
-        try (KV kvClient = client.getKVClient()) {
+    @Test
+    public void testUseEtcd() throws Exception {
+        try (EtcdCluster etcd = EtcdClusterFactory.buildCluster(getClass().getSimpleName(), 3, false, false)) {
+            etcd.start();
+            try (Client client = Client.builder().endpoints(etcd.getClientEndpoints()).build()) {
+                try (KV kvClient = client.getKVClient()) {
 
-          ByteSequence key = bytesOf("test_key");
-          ByteSequence value = bytesOf("test_value");
-          kvClient.put(key, value).get();
+                    ByteSequence key = bytesOf("test_key");
+                    ByteSequence value = bytesOf("test_value");
+                    kvClient.put(key, value).get();
 
-          CompletableFuture<GetResponse> getFuture = kvClient.get(key);
-          GetResponse response = getFuture.get();
-          List<KeyValue> values = response.getKvs();
-          assertThat(values.size()).isEqualTo(1);
-          KeyValue value1 = values.get(0);
-          assertThat(value1.getValue()).isEqualTo(value);
-          assertThat(value1.getKey()).isEqualTo(key);
+                    CompletableFuture<GetResponse> getFuture = kvClient.get(key);
+                    GetResponse response = getFuture.get();
+                    List<KeyValue> values = response.getKvs();
+                    assertThat(values.size()).isEqualTo(1);
+                    KeyValue value1 = values.get(0);
+                    assertThat(value1.getValue()).isEqualTo(value);
+                    assertThat(value1.getKey()).isEqualTo(key);
+                }
+            }
         }
-      }
     }
-  }
 }

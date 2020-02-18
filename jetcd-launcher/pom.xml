@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2016-2019 The jetcd authors
+    Copyright 2016-2020 The jetcd authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -26,11 +26,6 @@
     </parent>
 
     <artifactId>jetcd-launcher</artifactId>
-
-    <properties>
-        <checkstyle.config.location>${basedir}/../etc/checkstyle.xml</checkstyle.config.location>
-        <checkstyle.header.file>${basedir}../etc/checkstyle-header-java.txt</checkstyle.header.file>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -72,13 +67,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
 </project>

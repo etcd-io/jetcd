@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,9 @@ import io.etcd.jetcd.api.Permission.Type;
  * AuthRoleGrantPermissionResponse returned by {@link Auth#roleGrantPermission(ByteSequence,
  * ByteSequence, ByteSequence, Type)} contains a header.
  */
-public class AuthRoleGrantPermissionResponse extends
-    AbstractResponse<io.etcd.jetcd.api.AuthRoleGrantPermissionResponse> {
+public class AuthRoleGrantPermissionResponse extends AbstractResponse<io.etcd.jetcd.api.AuthRoleGrantPermissionResponse> {
 
-  public AuthRoleGrantPermissionResponse(
-      io.etcd.jetcd.api.AuthRoleGrantPermissionResponse response) {
-    super(response, response.getHeader());
-  }
+    public AuthRoleGrantPermissionResponse(io.etcd.jetcd.api.AuthRoleGrantPermissionResponse response) {
+        super(response, response.getHeader());
+    }
 }

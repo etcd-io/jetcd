@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,9 @@ package io.etcd.jetcd.lease;
 
 import io.etcd.jetcd.AbstractResponse;
 
-public class LeaseRevokeResponse extends
-    AbstractResponse<io.etcd.jetcd.api.LeaseRevokeResponse> {
+public class LeaseRevokeResponse extends AbstractResponse<io.etcd.jetcd.api.LeaseRevokeResponse> {
 
-  public LeaseRevokeResponse(io.etcd.jetcd.api.LeaseRevokeResponse revokeResponse) {
-    super(revokeResponse, revokeResponse.getHeader());
-  }
+    public LeaseRevokeResponse(io.etcd.jetcd.api.LeaseRevokeResponse revokeResponse) {
+        super(revokeResponse, revokeResponse.getHeader());
+    }
 }

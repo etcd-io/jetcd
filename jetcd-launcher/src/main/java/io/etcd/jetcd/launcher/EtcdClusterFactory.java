@@ -16,9 +16,6 @@
 
 package io.etcd.jetcd.launcher;
 
-import static java.util.stream.Collectors.toList;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,118 +24,96 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
+
+import edu.umd.cs.findbugs.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Network;
 
+import static java.util.stream.Collectors.toList;
+
 public class EtcdClusterFactory {
-  private static final Logger LOGGER = LoggerFactory.getLogger(EtcdClusterFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EtcdClusterFactory.class);
 
-  public static EtcdCluster buildCluster(
-      @NonNull String clusterName,
-      int nodes,
-      boolean ssl) {
-    return buildCluster(
-        clusterName,
-        nodes,
-        ssl,
-        false,
-        EtcdContainer.ETCD_DOCKER_IMAGE_NAME,
-        Collections.emptyList()
-    );
-  }
+    public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl) {
+        return buildCluster(clusterName, nodes, ssl, false, EtcdContainer.ETCD_DOCKER_IMAGE_NAME, Collections.emptyList());
+    }
 
-  public static EtcdCluster buildCluster(
-      @NonNull String clusterName,
-      int nodes,
-      boolean ssl,
-      boolean restartable,
-      String... additionalArgs) {
+    public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl, boolean restartable,
+        String... additionalArgs) {
 
-    return buildCluster(
-        clusterName,
-        nodes,
-        ssl,
-        restartable,
-        EtcdContainer.ETCD_DOCKER_IMAGE_NAME,
-        Arrays.asList(additionalArgs)
-    );
-  }
+        return buildCluster(clusterName, nodes, ssl, restartable, EtcdContainer.ETCD_DOCKER_IMAGE_NAME,
+            Arrays.asList(additionalArgs));
+    }
 
-  public static EtcdCluster buildCluster(
-      @NonNull String clusterName,
-      int nodes,
-      boolean ssl,
-      boolean restartable,
-      @NonNull String image,
-      List<String> additionalArgs) {
+    public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl, boolean restartable,
+        @NonNull String image, List<String> additionalArgs) {
 
-    final Network network = Network.builder().id(clusterName).build();
-    final CountDownLatch latch = new CountDownLatch(nodes);
-    final AtomicBoolean failedToStart = new AtomicBoolean(false);
-    final EtcdContainer.LifecycleListener listener = new EtcdContainer.LifecycleListener() {
-      @Override
-      public void started(EtcdContainer container) {
-        latch.countDown();
-      }
+        final Network network = Network.builder().id(clusterName).build();
+        final CountDownLatch latch = new CountDownLatch(nodes);
+        final AtomicBoolean failedToStart = new AtomicBoolean(false);
+        final EtcdContainer.LifecycleListener listener = new EtcdContainer.LifecycleListener() {
+            @Override
+            public void started(EtcdContainer container) {
+                latch.countDown();
+            }
 
-      @Override
-      public void failedToStart(EtcdContainer container, Exception exception) {
-        LOGGER.error("Exception while starting etcd container: ", exception);
-        failedToStart.set(true);
-        latch.countDown();
-      }
+            @Override
+            public void failedToStart(EtcdContainer container, Exception exception) {
+                LOGGER.error("Exception while starting etcd container: ", exception);
+                failedToStart.set(true);
+                latch.countDown();
+            }
 
-      @Override
-      public void stopped(EtcdContainer container) {
-      }
-    };
+            @Override
+            public void stopped(EtcdContainer container) {
+            }
+        };
 
-    final List<String> endpoints = IntStream.range(0, nodes)
-        .mapToObj(i -> "etcd" + i).collect(toList());
+        final List<String> endpoints = IntStream.range(0, nodes).mapToObj(i -> "etcd" + i).collect(toList());
 
-    final List<EtcdContainer> containers = endpoints.stream().map(
-        e -> new EtcdContainer(network, listener, ssl, clusterName, e, endpoints, restartable, image, additionalArgs))
-        .collect(toList());
+        final List<EtcdContainer> containers = endpoints.stream()
+            .map(e -> new EtcdContainer(network, listener, ssl, clusterName, e, endpoints, restartable, image, additionalArgs))
+            .collect(toList());
 
-    return new EtcdCluster() {
-      @Override
-      public void start() {
-        for (EtcdContainer container : containers) {
-          new Thread(container::start).start();
-        }
+        return new EtcdCluster() {
+            @Override
+            public void start() {
+                for (EtcdContainer container : containers) {
+                    new Thread(container::start).start();
+                }
 
-        try {
-          latch.await(1, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-        if (failedToStart.get()) {
-          throw new IllegalStateException("Cluster failed to start");
-        }
-      }
+                try {
+                    latch.await(1, TimeUnit.MINUTES);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                if (failedToStart.get()) {
+                    throw new IllegalStateException("Cluster failed to start");
+                }
+            }
 
-      @Override
-      public void close() {
-        containers.forEach(EtcdContainer::close);
-      }
+            @Override
+            public void close() {
+                containers.forEach(EtcdContainer::close);
+            }
 
-      @Override
-      public void restart() {
-        containers.forEach(EtcdContainer::restart);
-      }
+            @Override
+            public void restart() {
+                containers.forEach(EtcdContainer::restart);
+            }
 
-      @NonNull
-      @Override
-      public List<URI> getClientEndpoints() {
-        return containers.stream().map(EtcdContainer::clientEndpoint).collect(toList());
-      }
+            @NonNull
+            @Override
+            public List<URI> getClientEndpoints() {
+                return containers.stream().map(EtcdContainer::clientEndpoint).collect(toList());
+            }
 
-      @NonNull
-      @Override
-      public List<URI> getPeerEndpoints() {
-        return containers.stream().map(EtcdContainer::peerEndpoint).collect(toList());
-      }
-    };
-  }
+            @NonNull
+            @Override
+            public List<URI> getPeerEndpoints() {
+                return containers.stream().map(EtcdContainer::peerEndpoint).collect(toList());
+            }
+        };
+    }
 }

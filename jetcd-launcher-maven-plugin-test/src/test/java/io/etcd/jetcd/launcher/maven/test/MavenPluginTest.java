@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,16 @@
 
 package io.etcd.jetcd.launcher.maven.test;
 
-import static com.google.common.base.Charsets.US_ASCII;
-import static org.assertj.core.api.Assertions.assertThat;
+import java.io.File;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.io.Files;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Constants;
-import java.io.File;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
+
+import static com.google.common.base.Charsets.US_ASCII;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test etcd server started by jetcd-launcher-maven-plugin.
@@ -33,12 +34,12 @@ import org.junit.jupiter.api.Test;
  */
 public class MavenPluginTest {
 
-  @Test
-  public void testEtcdServerStarted() throws Exception {
-    final String filePath = "target/jetcd-launcher-maven-plugin/endpoint";
-    String endpoint = Files.readFirstLine(new File(filePath), US_ASCII);
-    try (Client client = Client.builder().endpoints(endpoint).build()) {
-      assertThat(client.getKVClient().get(Constants.NULL_KEY).get(7, TimeUnit.SECONDS).getCount()).isEqualTo(0);
+    @Test
+    public void testEtcdServerStarted() throws Exception {
+        final String filePath = "target/jetcd-launcher-maven-plugin/endpoint";
+        String endpoint = Files.readFirstLine(new File(filePath), US_ASCII);
+        try (Client client = Client.builder().endpoints(endpoint).build()) {
+            assertThat(client.getKVClient().get(Constants.NULL_KEY).get(7, TimeUnit.SECONDS).getCount()).isEqualTo(0);
+        }
     }
-  }
 }

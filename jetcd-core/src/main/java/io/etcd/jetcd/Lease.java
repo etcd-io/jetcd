@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,69 +16,69 @@
 
 package io.etcd.jetcd;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 import io.etcd.jetcd.lease.LeaseGrantResponse;
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
 import io.etcd.jetcd.lease.LeaseRevokeResponse;
 import io.etcd.jetcd.lease.LeaseTimeToLiveResponse;
 import io.etcd.jetcd.options.LeaseOption;
 import io.grpc.stub.StreamObserver;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Interface of KeepAlive talking to etcd.
  */
 public interface Lease extends CloseableClient {
 
-  /**
-   * New a lease with ttl value.
-   *
-   * @param ttl ttl value, unit seconds
-   */
-  CompletableFuture<LeaseGrantResponse> grant(long ttl);
+    /**
+     * New a lease with ttl value.
+     *
+     * @param ttl ttl value, unit seconds
+     */
+    CompletableFuture<LeaseGrantResponse> grant(long ttl);
 
-  /**
-   * New a lease with ttl value.Waits if necessary for at most the given time
-   * if etcd server is available.
-   *
-   * @param ttl ttl value, unit seconds
-   * @param timeout the maximum time to waits
-   * @param unit the time unit of the timeout argument
-   * @return
-   */
-  CompletableFuture<LeaseGrantResponse> grant(long ttl, long timeout, TimeUnit unit);
+    /**
+     * New a lease with ttl value.Waits if necessary for at most the given time
+     * if etcd server is available.
+     *
+     * @param  ttl     ttl value, unit seconds
+     * @param  timeout the maximum time to waits
+     * @param  unit    the time unit of the timeout argument
+     * @return
+     */
+    CompletableFuture<LeaseGrantResponse> grant(long ttl, long timeout, TimeUnit unit);
 
-  /**
-   * revoke one lease and the key bind to this lease will be removed.
-   *
-   * @param leaseId id of the lease to revoke
-   */
-  CompletableFuture<LeaseRevokeResponse> revoke(long leaseId);
+    /**
+     * revoke one lease and the key bind to this lease will be removed.
+     *
+     * @param leaseId id of the lease to revoke
+     */
+    CompletableFuture<LeaseRevokeResponse> revoke(long leaseId);
 
-  /**
-   * keep alive one lease only once.
-   *
-   * @param leaseId id of lease to keep alive once
-   * @return The keep alive response
-   */
-  CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId);
+    /**
+     * keep alive one lease only once.
+     *
+     * @param  leaseId id of lease to keep alive once
+     * @return         The keep alive response
+     */
+    CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId);
 
-  /**
-   * retrieves the lease information of the given lease ID.
-   *
-   * @param leaseId id of lease
-   * @param leaseOption LeaseOption
-   * @return LeaseTimeToLiveResponse wrapped in CompletableFuture
-   */
-  CompletableFuture<LeaseTimeToLiveResponse> timeToLive(long leaseId,
-      LeaseOption leaseOption);
+    /**
+     * retrieves the lease information of the given lease ID.
+     *
+     * @param  leaseId     id of lease
+     * @param  leaseOption LeaseOption
+     * @return             LeaseTimeToLiveResponse wrapped in CompletableFuture
+     */
+    CompletableFuture<LeaseTimeToLiveResponse> timeToLive(long leaseId, LeaseOption leaseOption);
 
-  /**
-   * keep the given lease alive forever.
-   *
-   * @param leaseId lease to be keep alive forever.
-   * @param observer the observer
-   * @return a KeepAliveListener that listens for KeepAlive responses.
-   */
-  CloseableClient keepAlive(long leaseId, StreamObserver<LeaseKeepAliveResponse> observer);
+    /**
+     * keep the given lease alive forever.
+     *
+     * @param  leaseId  lease to be keep alive forever.
+     * @param  observer the observer
+     * @return          a KeepAliveListener that listens for KeepAlive responses.
+     */
+    CloseableClient keepAlive(long leaseId, StreamObserver<LeaseKeepAliveResponse> observer);
 }

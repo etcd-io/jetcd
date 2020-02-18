@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,33 @@
 
 package io.etcd.jetcd.osgi;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.io.File;
 import java.net.URL;
+
 import org.ops4j.pax.exam.ConfigurationManager;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class TestSupport {
-  private static final String FEATURES_XML = "/features.xml";
+    private static final String FEATURES_XML = "/features.xml";
 
-  protected File getFeaturesFile() {
-    File featuresFile = getConfigFile(FEATURES_XML);
-    assertThat(featuresFile).exists();
+    protected File getFeaturesFile() {
+        File featuresFile = getConfigFile(FEATURES_XML);
+        assertThat(featuresFile).exists();
 
-    return featuresFile;
-  }
-
-  protected File getConfigFile(String path) {
-    URL res = getClass().getResource(path);
-    if (res == null) {
-      throw new RuntimeException("Config resource " + path + " not found");
+        return featuresFile;
     }
 
-    return new File(res.getFile());
-  }
+    protected File getConfigFile(String path) {
+        URL res = getClass().getResource(path);
+        if (res == null) {
+            throw new RuntimeException("Config resource " + path + " not found");
+        }
 
-  protected String getKarafVersion() {
-    return new ConfigurationManager().getProperty("pax.exam.karaf.version", "4.1.4");
-  }
+        return new File(res.getFile());
+    }
+
+    protected String getKarafVersion() {
+        return new ConfigurationManager().getProperty("pax.exam.karaf.version", "4.1.4");
+    }
 }

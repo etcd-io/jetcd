@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,20 +22,20 @@ import io.etcd.jetcd.Util;
 
 public class LockResponse extends AbstractResponse<io.etcd.jetcd.api.lock.LockResponse> {
 
-  private final ByteSequence unprefixedKey;
+    private final ByteSequence unprefixedKey;
 
-  public LockResponse(io.etcd.jetcd.api.lock.LockResponse response, ByteSequence namespace) {
-    super(response, response.getHeader());
-    this.unprefixedKey = ByteSequence.from(Util.unprefixNamespace(getResponse().getKey(), namespace));
-  }
+    public LockResponse(io.etcd.jetcd.api.lock.LockResponse response, ByteSequence namespace) {
+        super(response, response.getHeader());
+        this.unprefixedKey = ByteSequence.from(Util.unprefixNamespace(getResponse().getKey(), namespace));
+    }
 
-  /**
-   * key is a key that will exist on etcd for the duration that the Lock caller
-   * owns the lock. Users should not modify this key or the lock may exhibit
-   * undefined behavior.
-   */
-  public ByteSequence getKey() {
-    return unprefixedKey;
-  }
+    /**
+     * key is a key that will exist on etcd for the duration that the Lock caller
+     * owns the lock. Users should not modify this key or the lock may exhibit
+     * undefined behavior.
+     */
+    public ByteSequence getKey() {
+        return unprefixedKey;
+    }
 
 }

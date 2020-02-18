@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,31 +23,29 @@ import io.etcd.jetcd.KeyValue;
  */
 public class WatchEvent {
 
-  private final KeyValue keyValue;
-  private final KeyValue prevKV;
-  private final EventType eventType;
+    private final KeyValue keyValue;
+    private final KeyValue prevKV;
+    private final EventType eventType;
 
-  public WatchEvent(KeyValue keyValue, KeyValue prevKV, EventType eventType) {
-    this.keyValue = keyValue;
-    this.prevKV = prevKV;
-    this.eventType = eventType;
-  }
+    public WatchEvent(KeyValue keyValue, KeyValue prevKV, EventType eventType) {
+        this.keyValue = keyValue;
+        this.prevKV = prevKV;
+        this.eventType = eventType;
+    }
 
-  public KeyValue getKeyValue() {
-    return keyValue;
-  }
+    public KeyValue getKeyValue() {
+        return keyValue;
+    }
 
-  public KeyValue getPrevKV() {
-    return prevKV;
-  }
+    public KeyValue getPrevKV() {
+        return prevKV;
+    }
 
-  public EventType getEventType() {
-    return eventType;
-  }
+    public EventType getEventType() {
+        return eventType;
+    }
 
-  public enum EventType {
-    PUT,
-    DELETE,
-    UNRECOGNIZED,
-  }
+    public enum EventType {
+        PUT, DELETE, UNRECOGNIZED,
+    }
 }

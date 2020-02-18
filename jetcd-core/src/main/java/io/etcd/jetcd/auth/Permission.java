@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,35 +23,32 @@ import io.etcd.jetcd.ByteSequence;
  */
 public class Permission {
 
-  private final Type permType;
-  private final ByteSequence key;
-  private final ByteSequence rangeEnd;
+    private final Type permType;
+    private final ByteSequence key;
+    private final ByteSequence rangeEnd;
 
-  public enum Type {
-    READ,
-    WRITE,
-    READWRITE,
-    UNRECOGNIZED,
-  }
+    public enum Type {
+        READ, WRITE, READWRITE, UNRECOGNIZED,
+    }
 
-  public Permission(Type permType, ByteSequence key, ByteSequence rangeEnd) {
-    this.permType = permType;
-    this.key = key;
-    this.rangeEnd = rangeEnd;
-  }
+    public Permission(Type permType, ByteSequence key, ByteSequence rangeEnd) {
+        this.permType = permType;
+        this.key = key;
+        this.rangeEnd = rangeEnd;
+    }
 
-  /**
-   * returns the type of Permission: READ, WRITE, READWRITE, or UNRECOGNIZED.
-   */
-  public Type getPermType() {
-    return permType;
-  }
+    /**
+     * returns the type of Permission: READ, WRITE, READWRITE, or UNRECOGNIZED.
+     */
+    public Type getPermType() {
+        return permType;
+    }
 
-  public ByteSequence getKey() {
-    return key;
-  }
+    public ByteSequence getKey() {
+        return key;
+    }
 
-  public ByteSequence getRangeEnd() {
-    return rangeEnd;
-  }
+    public ByteSequence getRangeEnd() {
+        return rangeEnd;
+    }
 }

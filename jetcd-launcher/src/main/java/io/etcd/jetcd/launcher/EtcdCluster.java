@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,23 @@
 
 package io.etcd.jetcd.launcher;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.URI;
 import java.util.List;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 public interface EtcdCluster extends AutoCloseable {
 
-  void start();
+    void start();
 
-  void restart();
+    void restart();
 
-  @Override
-  void close();
+    @Override
+    void close();
 
-  @NonNull
-  List<URI> getClientEndpoints();
+    @NonNull
+    List<URI> getClientEndpoints();
 
-  @NonNull
-  List<URI> getPeerEndpoints();
+    @NonNull
+    List<URI> getPeerEndpoints();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,41 +16,41 @@
 
 package io.etcd.jetcd.kv;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.api.DeleteRangeResponse;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class DeleteResponse extends AbstractResponse<DeleteRangeResponse> {
 
-  private final ByteSequence namespace;
+    private final ByteSequence namespace;
 
-  private List<KeyValue> prevKvs;
+    private List<KeyValue> prevKvs;
 
-  public DeleteResponse(DeleteRangeResponse deleteRangeResponse, ByteSequence namespace) {
-    super(deleteRangeResponse, deleteRangeResponse.getHeader());
-    this.namespace = namespace;
-  }
-
-  /**
-   * return the number of keys deleted by the delete range request.
-   */
-  public long getDeleted() {
-    return getResponse().getDeleted();
-  }
-
-  /**
-   * return previous key-value pairs.
-   */
-  public synchronized List<KeyValue> getPrevKvs() {
-    if (prevKvs == null) {
-      prevKvs = getResponse().getPrevKvsList().stream()
-          .map(kv -> new KeyValue(kv, namespace))
-          .collect(Collectors.toList());
+    public DeleteResponse(DeleteRangeResponse deleteRangeResponse, ByteSequence namespace) {
+        super(deleteRangeResponse, deleteRangeResponse.getHeader());
+        this.namespace = namespace;
     }
 
-    return prevKvs;
-  }
+    /**
+     * return the number of keys deleted by the delete range request.
+     */
+    public long getDeleted() {
+        return getResponse().getDeleted();
+    }
+
+    /**
+     * return previous key-value pairs.
+     */
+    public synchronized List<KeyValue> getPrevKvs() {
+        if (prevKvs == null) {
+            prevKvs = getResponse().getPrevKvsList().stream().map(kv -> new KeyValue(kv, namespace))
+                .collect(Collectors.toList());
+        }
+
+        return prevKvs;
+    }
 }
