@@ -16,8 +16,8 @@
 
 package io.etcd.jetcd;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -64,7 +64,7 @@ final class WatchImpl implements Watch {
         this.stub = connectionManager.newStub(WatchGrpc::newStub);
         this.executor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
         this.closed = new AtomicBoolean();
-        this.watchers = new ArrayList<>();
+        this.watchers = new CopyOnWriteArrayList<>();
         this.namespace = connectionManager.getNamespace();
     }
 
@@ -163,7 +163,7 @@ final class WatchImpl implements Watch {
                     }
 
                     if (stream != null) {
-                        stream.onCompleted();
+                        stream.onError(Status.CANCELLED.withDescription("shutdown").asException());
                         stream = null;
                     }
                 }
@@ -171,6 +171,11 @@ final class WatchImpl implements Watch {
                 id = -1;
 
                 listener.onCompleted();
+
+                synchronized (WatchImpl.this.lock) {
+                    // remote the watcher from the watchers list
+                    watchers.remove(this);
+                }
             }
         }
 
