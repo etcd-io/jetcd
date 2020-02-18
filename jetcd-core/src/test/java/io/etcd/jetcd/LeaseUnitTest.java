@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,8 +238,7 @@ public class LeaseUnitTest {
       responseObserverRef.get().onError(t);
 
       // expect keep alive requests are still sending even with reset.
-      verify(this.requestStreamObserverMock, timeout(2000).atLeast(3))
-        .onNext(argThat(hasLeaseID(LEASE_ID_1)));
+      verify(this.requestStreamObserverMock, timeout(2000).atLeast(3)).onNext(argThat(hasLeaseID(LEASE_ID_1)));
     }
   }
 

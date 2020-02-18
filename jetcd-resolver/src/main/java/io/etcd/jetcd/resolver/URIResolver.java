@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package io.etcd.jetcd.resolver;
 
 import io.grpc.EquivalentAddressGroup;
-
 import java.net.SocketAddress;
 import java.net.URI;
 import java.util.List;

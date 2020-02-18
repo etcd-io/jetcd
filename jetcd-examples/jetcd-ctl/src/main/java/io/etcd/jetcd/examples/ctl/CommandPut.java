@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The jetcd authors
+ * Copyright 2016-2020 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ package io.etcd.jetcd.examples.ctl;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.google.common.base.Charsets;
-import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.Client;
 import java.util.List;
 import org.jooq.lambda.fi.util.function.CheckedConsumer;
 import org.slf4j.Logger;
