@@ -16,19 +16,18 @@
 
 package io.etcd.jetcd;
 
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.grpc.netty.GrpcSslContexts;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Objects;
-
-import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
-import io.grpc.netty.GrpcSslContexts;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 // TODO(#548): Add global timeout for tests once JUnit5 supports it
 public class SslTest {
