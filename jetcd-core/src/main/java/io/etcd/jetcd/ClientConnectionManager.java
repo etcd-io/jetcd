@@ -176,7 +176,7 @@ final class ClientConnectionManager {
 
         final ManagedChannel channel = defaultChannelBuilder().nameResolverFactory(
             forEndpoints(
-                Util.supplyIfNull(builder.authority(), () -> "etcd"),
+                Util.supplyIfNull(builder.authority(), () -> ""),
                 Collections.singleton(endpoint),
                 Util.supplyIfNull(builder.uriResolverLoader(), URIResolverLoader::defaultLoader)))
             .build();
@@ -207,7 +207,7 @@ final class ClientConnectionManager {
 
         channelBuilder.nameResolverFactory(
             forEndpoints(
-                Util.supplyIfNull(builder.authority(), () -> "etcd"),
+                Util.supplyIfNull(builder.authority(), () -> ""),
                 builder.endpoints(),
                 Util.supplyIfNull(builder.uriResolverLoader(),
                     URIResolverLoader::defaultLoader)));

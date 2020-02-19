@@ -23,7 +23,6 @@ import java.net.URI;
 import java.util.Objects;
 
 import io.etcd.jetcd.test.EtcdClusterExtension;
-import io.grpc.netty.GrpcSslContexts;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -47,11 +46,15 @@ public class SslTest {
         final String authority = System.getProperty("ssl.cert.authority", DEFAULT_SSL_AUTHORITY);
         final URI endpoint = new URI(System.getProperty("ssl.cert.endpoints", cluster.getClientEndpoints().get(0).toString()));
 
-        try (InputStream is = Objects.nonNull(capath) ? new FileInputStream(new File(capath))
+        try (InputStream is = Objects.nonNull(capath)
+            ? new FileInputStream(new File(capath))
             : getClass().getResourceAsStream(DEFAULT_SSL_CA_PATH)) {
 
-            Client client = Client.builder().endpoints(endpoint).authority(authority)
-                .sslContext(GrpcSslContexts.forClient().trustManager(is).build()).build();
+            Client client = Client.builder()
+                .endpoints(endpoint)
+                .authority(authority)
+                .sslContext(b -> b.trustManager(is))
+                .build();
 
             KV kv = client.getKVClient();
             kv.put(key, val).join();

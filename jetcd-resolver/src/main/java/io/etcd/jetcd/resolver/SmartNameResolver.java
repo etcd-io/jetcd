@@ -16,6 +16,7 @@
 
 package io.etcd.jetcd.resolver;
 
+import java.net.SocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,6 +29,7 @@ import javax.annotation.concurrent.GuardedBy;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.grpc.Attributes;
@@ -129,8 +131,24 @@ public class SmartNameResolver extends NameResolver {
             List<EquivalentAddressGroup> groups = new ArrayList<>();
 
             for (URI uri : uris) {
-                resolvers.stream().filter(r -> r.supports(uri)).limit(1).flatMap(r -> r.resolve(uri).stream())
-                    .map(EquivalentAddressGroup::new).forEach(groups::add);
+                resolvers.stream()
+                    .filter(r -> r.supports(uri))
+                    .findFirst()
+                    .ifPresent(resolver -> {
+                        for (SocketAddress address : resolver.resolve(uri)) {
+                            //
+                            // if the authority is not explicit set on the builder
+                            // then it will be computed from the URI
+                            //
+                            groups.add(new EquivalentAddressGroup(
+                                address,
+                                Strings.isNullOrEmpty(authority)
+                                    ? Attributes.newBuilder()
+                                        .set(EquivalentAddressGroup.ATTR_AUTHORITY_OVERRIDE, uri.getAuthority())
+                                        .build()
+                                    : Attributes.EMPTY));
+                        }
+                    });
             }
 
             if (groups.isEmpty()) {

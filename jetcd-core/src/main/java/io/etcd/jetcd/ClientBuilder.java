@@ -28,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
+
+import javax.net.ssl.SSLException;
 
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
@@ -36,6 +39,7 @@ import io.grpc.ClientInterceptor;
 import io.grpc.Metadata;
 import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -236,6 +240,19 @@ public final class ClientBuilder implements Cloneable {
     public ClientBuilder sslContext(SslContext sslContext) {
         this.sslContext = sslContext;
         return this;
+    }
+
+    /**
+     * Configure SSL/TLS context create through {@link GrpcSslContexts#forClient} to use.
+     *
+     * @param  consumer the SslContextBuilder consumer
+     * @return          this builder
+     */
+    public ClientBuilder sslContext(Consumer<SslContextBuilder> consumer) throws SSLException {
+        SslContextBuilder builder = GrpcSslContexts.forClient();
+        consumer.accept(builder);
+
+        return sslContext(builder.build());
     }
 
     public String authority() {

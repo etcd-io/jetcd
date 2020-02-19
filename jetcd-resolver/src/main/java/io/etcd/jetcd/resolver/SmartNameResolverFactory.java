@@ -30,7 +30,6 @@ public class SmartNameResolverFactory extends NameResolver.Factory {
     private final URIResolverLoader loader;
 
     private SmartNameResolverFactory(String authority, Collection<URI> uris, URIResolverLoader loader) {
-
         Preconditions.checkNotNull(loader, "URIResolverLoader should not be null");
         Preconditions.checkNotNull(authority, "Authority should not be null");
 
