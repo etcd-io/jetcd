@@ -27,6 +27,7 @@ import io.etcd.jetcd.maintenance.HashKVResponse;
 import io.etcd.jetcd.maintenance.MoveLeaderResponse;
 import io.etcd.jetcd.maintenance.SnapshotResponse;
 import io.etcd.jetcd.maintenance.StatusResponse;
+import io.etcd.jetcd.support.CloseableClient;
 import io.grpc.stub.StreamObserver;
 
 /**

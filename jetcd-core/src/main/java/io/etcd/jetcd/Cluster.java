@@ -24,6 +24,7 @@ import io.etcd.jetcd.cluster.MemberAddResponse;
 import io.etcd.jetcd.cluster.MemberListResponse;
 import io.etcd.jetcd.cluster.MemberRemoveResponse;
 import io.etcd.jetcd.cluster.MemberUpdateResponse;
+import io.etcd.jetcd.support.CloseableClient;
 
 /**
  * Interface of cluster client talking to etcd.

@@ -16,11 +16,12 @@
 
 package io.etcd.jetcd;
 
-import io.grpc.netty.NettyChannelBuilder;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Random;
 import java.util.stream.Stream;
+
+import io.grpc.netty.NettyChannelBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -34,10 +35,10 @@ public class ClientBuilderTest {
 
     static Stream<Arguments> namespaceProvider() {
         return Stream.of(
-          // namespace setting, expected namespace
-          Arguments.of(ByteSequence.EMPTY, ByteSequence.EMPTY),
-          Arguments.of(bytesOf("/namespace1/"), bytesOf("/namespace1/")),
-          Arguments.of(bytesOf("namespace2/"), bytesOf("namespace2/")));
+            // namespace setting, expected namespace
+            Arguments.of(ByteSequence.EMPTY, ByteSequence.EMPTY),
+            Arguments.of(bytesOf("/namespace1/"), bytesOf("/namespace1/")),
+            Arguments.of(bytesOf("namespace2/"), bytesOf("namespace2/")));
     }
 
     @Test
@@ -52,7 +53,8 @@ public class ClientBuilderTest {
 
     @Test
     public void testEndPoints_Verify_SomeEmpty() throws URISyntaxException {
-        assertThatThrownBy(() -> Client.builder().endpoints(new URI("http://127.0.0.1:2379"), new URI(""))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Client.builder().endpoints(new URI("http://127.0.0.1:2379"), new URI("")))
+            .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -65,7 +67,7 @@ public class ClientBuilderTest {
         final int value = 1024 * 1 + new Random().nextInt(10);
         final ClientBuilder builder = Client.builder().endpoints(new URI("http://127.0.0.1:2379")).maxInboundMessageSize(value);
         final NettyChannelBuilder channelBuilder = (NettyChannelBuilder) new ClientConnectionManager(builder)
-          .defaultChannelBuilder();
+            .defaultChannelBuilder();
 
         assertThat(channelBuilder).hasFieldOrPropertyWithValue("maxInboundMessageSize", value);
     }

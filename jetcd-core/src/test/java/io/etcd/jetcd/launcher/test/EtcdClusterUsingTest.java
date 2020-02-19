@@ -16,6 +16,9 @@
 
 package io.etcd.jetcd.launcher.test;
 
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
@@ -23,8 +26,6 @@ import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.launcher.EtcdCluster;
 import io.etcd.jetcd.launcher.EtcdClusterFactory;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.Test;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
@@ -42,11 +43,10 @@ public class EtcdClusterUsingTest {
 
     @Test
     public void testUseEtcd() throws Exception {
-        try (EtcdCluster etcd = EtcdClusterFactory.buildCluster(getClass().getSimpleName(), 3, false, false)) {
+        try (EtcdCluster etcd = EtcdClusterFactory.buildCluster(getClass().getSimpleName(), 3, false)) {
             etcd.start();
             try (Client client = Client.builder().endpoints(etcd.getClientEndpoints()).build()) {
                 try (KV kvClient = client.getKVClient()) {
-
                     ByteSequence key = bytesOf("test_key");
                     ByteSequence value = bytesOf("test_value");
                     kvClient.put(key, value).get();

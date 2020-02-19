@@ -63,8 +63,11 @@ final class MaintenanceImpl implements Maintenance {
      */
     @Override
     public CompletableFuture<AlarmResponse> listAlarms() {
-        AlarmRequest alarmRequest = AlarmRequest.newBuilder().setAlarm(AlarmType.NONE).setAction(AlarmRequest.AlarmAction.GET)
-            .setMemberID(0).build();
+        AlarmRequest alarmRequest = AlarmRequest.newBuilder()
+            .setAlarm(AlarmType.NONE)
+            .setAction(AlarmRequest.AlarmAction.GET)
+            .setMemberID(0)
+            .build();
 
         return Util.toCompletableFuture(this.stub.alarm(alarmRequest), AlarmResponse::new,
             this.connectionManager.getExecutorService());
@@ -81,8 +84,11 @@ final class MaintenanceImpl implements Maintenance {
         checkArgument(member.getMemberId() != 0, "the member id can not be 0");
         checkArgument(member.getAlarmType() != io.etcd.jetcd.maintenance.AlarmType.NONE, "alarm type can not be NONE");
 
-        AlarmRequest alarmRequest = AlarmRequest.newBuilder().setAlarm(AlarmType.NOSPACE)
-            .setAction(AlarmRequest.AlarmAction.DEACTIVATE).setMemberID(member.getMemberId()).build();
+        AlarmRequest alarmRequest = AlarmRequest.newBuilder()
+            .setAlarm(AlarmType.NOSPACE)
+            .setAction(AlarmRequest.AlarmAction.DEACTIVATE)
+            .setMemberID(member.getMemberId())
+            .build();
 
         return Util.toCompletableFuture(this.stub.alarm(alarmRequest), AlarmResponse::new,
             this.connectionManager.getExecutorService());
@@ -107,9 +113,13 @@ final class MaintenanceImpl implements Maintenance {
      */
     @Override
     public CompletableFuture<DefragmentResponse> defragmentMember(URI endpoint) {
-        return this.connectionManager.withNewChannel(endpoint, MaintenanceGrpc::newFutureStub,
-            stub -> Util.toCompletableFuture(stub.defragment(DefragmentRequest.getDefaultInstance()),
-                DefragmentResponse::new, this.connectionManager.getExecutorService()));
+        return this.connectionManager.withNewChannel(
+            endpoint,
+            MaintenanceGrpc::newFutureStub,
+            stub -> Util.toCompletableFuture(
+                stub.defragment(DefragmentRequest.getDefaultInstance()),
+                DefragmentResponse::new,
+                this.connectionManager.getExecutorService()));
     }
 
     /**
@@ -117,22 +127,32 @@ final class MaintenanceImpl implements Maintenance {
      */
     @Override
     public CompletableFuture<StatusResponse> statusMember(URI endpoint) {
-        return this.connectionManager.withNewChannel(endpoint, MaintenanceGrpc::newFutureStub,
-            stub -> Util.toCompletableFuture(stub.status(StatusRequest.getDefaultInstance()), StatusResponse::new,
+        return this.connectionManager.withNewChannel(
+            endpoint,
+            MaintenanceGrpc::newFutureStub,
+            stub -> Util.toCompletableFuture(
+                stub.status(StatusRequest.getDefaultInstance()),
+                StatusResponse::new,
                 this.connectionManager.getExecutorService()));
     }
 
     @Override
     public CompletableFuture<MoveLeaderResponse> moveLeader(long transfereeID) {
-        return Util.toCompletableFuture(this.stub.moveLeader(MoveLeaderRequest.newBuilder().setTargetID(transfereeID).build()),
-            MoveLeaderResponse::new, this.connectionManager.getExecutorService());
+        return Util.toCompletableFuture(
+            this.stub.moveLeader(MoveLeaderRequest.newBuilder().setTargetID(transfereeID).build()),
+            MoveLeaderResponse::new,
+            this.connectionManager.getExecutorService());
     }
 
     @Override
     public CompletableFuture<HashKVResponse> hashKV(URI endpoint, long rev) {
-        return this.connectionManager.withNewChannel(endpoint, MaintenanceGrpc::newFutureStub,
-            stub -> Util.toCompletableFuture(stub.hashKV(HashKVRequest.newBuilder().setRevision(rev).build()),
-                HashKVResponse::new, this.connectionManager.getExecutorService()));
+        return this.connectionManager.withNewChannel(
+            endpoint,
+            MaintenanceGrpc::newFutureStub,
+            stub -> Util.toCompletableFuture(
+                stub.hashKV(HashKVRequest.newBuilder().setRevision(rev).build()),
+                HashKVResponse::new,
+                this.connectionManager.getExecutorService()));
     }
 
     @Override

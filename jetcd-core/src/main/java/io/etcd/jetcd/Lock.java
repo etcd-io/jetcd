@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 
 import io.etcd.jetcd.lock.LockResponse;
 import io.etcd.jetcd.lock.UnlockResponse;
+import io.etcd.jetcd.support.CloseableClient;
 
 /**
  * Interface of Lock talking to etcd.

@@ -56,7 +56,7 @@ public final class ClientBuilder implements Cloneable {
     private String authority;
     private URIResolverLoader uriResolverLoader;
     private Integer maxInboundMessageSize;
-    private Map<Metadata.Key, Object> headers;
+    private Map<Metadata.Key<?>, Object> headers;
     private List<ClientInterceptor> interceptors;
     private ByteSequence namespace = ByteSequence.EMPTY;
     private long retryDelay = 500;
@@ -271,14 +271,14 @@ public final class ClientBuilder implements Cloneable {
         return this;
     }
 
-    public Map<Metadata.Key, Object> headers() {
+    public Map<Metadata.Key<?>, Object> headers() {
         return headers;
     }
 
     /**
      * Sets headers to be added to http request headers.
      */
-    public ClientBuilder headers(Map<Metadata.Key, Object> headers) {
+    public ClientBuilder headers(Map<Metadata.Key<?>, Object> headers) {
         this.headers = new HashMap<>(headers);
 
         return this;
@@ -319,10 +319,7 @@ public final class ClientBuilder implements Cloneable {
         }
 
         this.interceptors.add(interceptor);
-
-        for (ClientInterceptor i : interceptors) {
-            this.interceptors.add(i);
-        }
+        this.interceptors.addAll(Arrays.asList(interceptors));
 
         return this;
     }

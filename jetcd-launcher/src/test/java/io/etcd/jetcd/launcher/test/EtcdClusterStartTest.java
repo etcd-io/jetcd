@@ -16,10 +16,11 @@
 
 package io.etcd.jetcd.launcher.test;
 
-import org.junit.jupiter.api.Test;
-
 import io.etcd.jetcd.launcher.EtcdCluster;
 import io.etcd.jetcd.launcher.EtcdClusterFactory;
+import org.junit.jupiter.api.Test;
+
+import static io.etcd.jetcd.launcher.EtcdClusterFactory.buildCluster;
 
 /**
  * Tests (just) starting the {@link EtcdClusterFactory}.
@@ -33,15 +34,14 @@ public class EtcdClusterStartTest {
 
     @Test
     public void testStartEtcd() throws Exception {
-        try (EtcdCluster etcd = EtcdClusterFactory.buildCluster(getClass().getSimpleName(), 3, false, false)) {
+        try (EtcdCluster etcd = buildCluster(getClass().getSimpleName(), 3, false)) {
             etcd.start();
         }
     }
 
     @Test
     public void testStartEtcdWithAdditionalArguments() throws Exception {
-        try (EtcdCluster etcd = EtcdClusterFactory.buildCluster(getClass().getSimpleName(), 3, false, false, "--max-txn-ops",
-            "1024")) {
+        try (EtcdCluster etcd = buildCluster(getClass().getSimpleName(), 3, false, "--max-txn-ops", "1024")) {
             etcd.start();
         }
     }

@@ -27,6 +27,7 @@ import io.etcd.jetcd.options.CompactOption;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
+import io.etcd.jetcd.support.CloseableClient;
 
 /**
  * Interface of kv client talking to etcd.

@@ -19,8 +19,10 @@ package io.etcd.jetcd.osgi;
 import java.net.URI;
 import java.util.Optional;
 
-import io.etcd.jetcd.launcher.junit4.EtcdClusterResource;
-import org.junit.Rule;
+import io.etcd.jetcd.launcher.EtcdCluster;
+import io.etcd.jetcd.launcher.EtcdClusterFactory;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.notification.Failure;
@@ -42,9 +44,20 @@ import org.junit.runner.notification.Failure;
 public class PaxExamWrapperTest {
 
     private static final String ETCD_ENDPOINT_SYSTEM_PROPERTY_NAME = "etcd.endpoint";
+    private static EtcdCluster cluster;
 
-    @Rule
-    public final EtcdClusterResource cluster = new EtcdClusterResource("karaf");
+    @BeforeClass
+    public static void beforeClass() {
+        cluster = EtcdClusterFactory.buildCluster("karaf", 1, false);
+        cluster.start();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        if (cluster != null) {
+            cluster.close();
+        }
+    }
 
     @Test
     public void testClientServiceChecks() throws Throwable {

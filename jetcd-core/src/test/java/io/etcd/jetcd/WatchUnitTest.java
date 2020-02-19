@@ -16,6 +16,17 @@
 
 package io.etcd.jetcd;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
 import io.etcd.jetcd.api.Event;
 import io.etcd.jetcd.api.Event.EventType;
 import io.etcd.jetcd.api.WatchGrpc.WatchImplBase;
@@ -28,16 +39,6 @@ import io.etcd.jetcd.test.GrpcServerExtension;
 import io.etcd.jetcd.watch.WatchEvent;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

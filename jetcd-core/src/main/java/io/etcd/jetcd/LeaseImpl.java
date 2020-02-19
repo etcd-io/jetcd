@@ -41,6 +41,8 @@ import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
 import io.etcd.jetcd.lease.LeaseRevokeResponse;
 import io.etcd.jetcd.lease.LeaseTimeToLiveResponse;
 import io.etcd.jetcd.options.LeaseOption;
+import io.etcd.jetcd.support.CloseableClient;
+import io.etcd.jetcd.support.Observers;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -179,9 +181,7 @@ final class LeaseImpl implements Lease {
     }
 
     private void sendKeepAliveExecutor() {
-        this.keepAliveResponseObserver = Observers.observer(response -> processKeepAliveResponse(response),
-            error -> processOnError());
-
+        this.keepAliveResponseObserver = Observers.observer(this::processKeepAliveResponse, error -> processOnError());
         this.keepAliveRequestObserver = this.leaseStub.leaseKeepAlive(this.keepAliveResponseObserver);
         this.keepAliveFuture = scheduledExecutorService.scheduleAtFixedRate(() -> {
             // send keep alive req to the leases whose next keep alive is before now.
@@ -255,7 +255,8 @@ final class LeaseImpl implements Lease {
     public CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId) {
         CompletableFuture<LeaseKeepAliveResponse> future = new CompletableFuture<>();
 
-        StreamObserver<LeaseKeepAliveRequest> requestObserver = Observers.observe(this.leaseStub::leaseKeepAlive,
+        StreamObserver<LeaseKeepAliveRequest> requestObserver = Observers.observe(
+            this.leaseStub::leaseKeepAlive,
             response -> future.complete(new LeaseKeepAliveResponse(response)),
             throwable -> future.completeExceptionally(toEtcdException(throwable)));
 
@@ -272,10 +273,14 @@ final class LeaseImpl implements Lease {
     public CompletableFuture<LeaseTimeToLiveResponse> timeToLive(long leaseId, LeaseOption option) {
         checkNotNull(option, "LeaseOption should not be null");
 
-        LeaseTimeToLiveRequest leaseTimeToLiveRequest = LeaseTimeToLiveRequest.newBuilder().setID(leaseId)
-            .setKeys(option.isAttachedKeys()).build();
+        LeaseTimeToLiveRequest leaseTimeToLiveRequest = LeaseTimeToLiveRequest.newBuilder()
+            .setID(leaseId)
+            .setKeys(option.isAttachedKeys())
+            .build();
 
-        return connectionManager.execute(() -> this.stub.leaseTimeToLive(leaseTimeToLiveRequest), LeaseTimeToLiveResponse::new);
+        return connectionManager.execute(
+            () -> this.stub.leaseTimeToLive(leaseTimeToLiveRequest),
+            LeaseTimeToLiveResponse::new);
     }
 
     /**

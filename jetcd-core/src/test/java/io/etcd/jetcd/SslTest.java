@@ -16,13 +16,14 @@
 
 package io.etcd.jetcd;
 
-import io.etcd.jetcd.test.EtcdClusterExtension;
-import io.grpc.netty.GrpcSslContexts;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Objects;
+
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.grpc.netty.GrpcSslContexts;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 

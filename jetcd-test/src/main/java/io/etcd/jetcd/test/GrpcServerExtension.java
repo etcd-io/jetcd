@@ -16,6 +16,9 @@
 
 package io.etcd.jetcd.test;
 
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
 import io.grpc.BindableService;
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
@@ -23,8 +26,6 @@ import io.grpc.ServerServiceDefinition;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.util.MutableHandlerRegistry;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -113,7 +114,7 @@ public class GrpcServerExtension implements BeforeEachCallback, AfterEachCallbac
         serviceRegistry = new MutableHandlerRegistry();
 
         InProcessServerBuilder serverBuilder = InProcessServerBuilder.forName(serverName)
-          .fallbackHandlerRegistry(serviceRegistry);
+            .fallbackHandlerRegistry(serviceRegistry);
 
         if (useDirectExecutor) {
             serverBuilder.directExecutor();

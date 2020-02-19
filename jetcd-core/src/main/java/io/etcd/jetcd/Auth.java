@@ -34,6 +34,7 @@ import io.etcd.jetcd.auth.AuthUserGrantRoleResponse;
 import io.etcd.jetcd.auth.AuthUserListResponse;
 import io.etcd.jetcd.auth.AuthUserRevokeRoleResponse;
 import io.etcd.jetcd.auth.Permission;
+import io.etcd.jetcd.support.CloseableClient;
 
 /**
  * Interface of auth talking to etcd.

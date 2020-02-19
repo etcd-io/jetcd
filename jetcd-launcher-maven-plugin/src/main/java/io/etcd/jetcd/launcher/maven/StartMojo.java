@@ -57,7 +57,7 @@ public class StartMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        Singleton.etcd = EtcdClusterFactory.buildCluster("maven", 1, false, false,
+        Singleton.etcd = EtcdClusterFactory.buildCluster("maven", 1, false,
             additionalArguments != null ? additionalArguments : EMPTY);
         Singleton.etcd.start();
 

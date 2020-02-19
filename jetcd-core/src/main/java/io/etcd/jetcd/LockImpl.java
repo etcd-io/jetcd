@@ -43,19 +43,29 @@ final class LockImpl implements Lock {
     @Override
     public CompletableFuture<LockResponse> lock(ByteSequence name, long leaseId) {
         checkNotNull(name);
-        LockRequest request = LockRequest.newBuilder().setName(Util.prefixNamespace(name.getByteString(), namespace))
-            .setLease(leaseId).build();
 
-        return connectionManager.execute(() -> stub.lock(request), (response) -> new LockResponse(response, namespace),
+        LockRequest request = LockRequest.newBuilder()
+            .setName(Util.prefixNamespace(name.getByteString(), namespace))
+            .setLease(leaseId)
+            .build();
+
+        return connectionManager.execute(
+            () -> stub.lock(request),
+            response -> new LockResponse(response, namespace),
             Util::isRetryable);
     }
 
     @Override
     public CompletableFuture<UnlockResponse> unlock(ByteSequence lockKey) {
         checkNotNull(lockKey);
-        UnlockRequest request = UnlockRequest.newBuilder().setKey(Util.prefixNamespace(lockKey.getByteString(), namespace))
+
+        UnlockRequest request = UnlockRequest.newBuilder()
+            .setKey(Util.prefixNamespace(lockKey.getByteString(), namespace))
             .build();
 
-        return connectionManager.execute(() -> stub.unlock(request), UnlockResponse::new, Util::isRetryable);
+        return connectionManager.execute(
+            () -> stub.unlock(request),
+            UnlockResponse::new,
+            Util::isRetryable);
     }
 }

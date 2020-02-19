@@ -16,116 +16,85 @@
 
 package io.etcd.jetcd;
 
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
+import io.etcd.jetcd.support.MemoizingClientSupplier;
 
 /**
  * Etcd Client.
  */
 final class ClientImpl implements Client {
 
-    private final AtomicReference<KV> kvClient;
-    private final AtomicReference<Auth> authClient;
-    private final AtomicReference<Maintenance> maintenanceClient;
-    private final AtomicReference<Cluster> clusterClient;
-    private final AtomicReference<Lease> leaseClient;
-    private final AtomicReference<Watch> watchClient;
-    private final AtomicReference<Lock> lockClient;
-    private final ClientBuilder builder;
     private final ClientConnectionManager connectionManager;
+    private final MemoizingClientSupplier<KV> kvClient;
+    private final MemoizingClientSupplier<Auth> authClient;
+    private final MemoizingClientSupplier<Maintenance> maintenanceClient;
+    private final MemoizingClientSupplier<Cluster> clusterClient;
+    private final MemoizingClientSupplier<Lease> leaseClient;
+    private final MemoizingClientSupplier<Watch> watchClient;
+    private final MemoizingClientSupplier<Lock> lockClient;
 
     public ClientImpl(ClientBuilder clientBuilder) {
-        // Copy the builder so external modifications won't affect this client impl.
-        this.builder = clientBuilder.copy();
-
-        this.kvClient = new AtomicReference<>();
-        this.authClient = new AtomicReference<>();
-        this.maintenanceClient = new AtomicReference<>();
-        this.clusterClient = new AtomicReference<>();
-        this.leaseClient = new AtomicReference<>();
-        this.watchClient = new AtomicReference<>();
-        this.lockClient = new AtomicReference<>();
-        this.connectionManager = new ClientConnectionManager(this.builder);
+        this.connectionManager = new ClientConnectionManager(clientBuilder.copy());
 
         // If the client is not configured to be lazy, set up the managed connection and perform
         // authentication
         if (!clientBuilder.lazyInitialization()) {
             this.connectionManager.getChannel();
         }
+
+        this.kvClient = new MemoizingClientSupplier<>(() -> new KVImpl(this.connectionManager));
+        this.authClient = new MemoizingClientSupplier<>(() -> new AuthImpl(this.connectionManager));
+        this.maintenanceClient = new MemoizingClientSupplier<>(() -> new MaintenanceImpl(this.connectionManager));
+        this.clusterClient = new MemoizingClientSupplier<>(() -> new ClusterImpl(this.connectionManager));
+        this.leaseClient = new MemoizingClientSupplier<>(() -> new LeaseImpl(this.connectionManager));
+        this.watchClient = new MemoizingClientSupplier<>(() -> new WatchImpl(this.connectionManager));
+        this.lockClient = new MemoizingClientSupplier<>(() -> new LockImpl(this.connectionManager));
     }
 
     @Override
     public Auth getAuthClient() {
-        return newClient(authClient, AuthImpl::new);
+        return authClient.get();
     }
 
     @Override
     public KV getKVClient() {
-        return newClient(kvClient, KVImpl::new);
+        return kvClient.get();
     }
 
     @Override
     public Cluster getClusterClient() {
-        return newClient(clusterClient, ClusterImpl::new);
+        return clusterClient.get();
     }
 
     @Override
     public Maintenance getMaintenanceClient() {
-        return newClient(maintenanceClient, MaintenanceImpl::new);
+        return maintenanceClient.get();
     }
 
     @Override
     public Lease getLeaseClient() {
-        return newClient(leaseClient, LeaseImpl::new);
+        return leaseClient.get();
     }
 
     @Override
     public Watch getWatchClient() {
-        return newClient(watchClient, WatchImpl::new);
+        return watchClient.get();
     }
 
     @Override
     public Lock getLockClient() {
-        return newClient(lockClient, LockImpl::new);
+        return lockClient.get();
     }
 
     @Override
     public synchronized void close() {
-        Optional.ofNullable(authClient.get()).ifPresent(CloseableClient::close);
-        Optional.ofNullable(kvClient.get()).ifPresent(CloseableClient::close);
-        Optional.ofNullable(clusterClient.get()).ifPresent(CloseableClient::close);
-        Optional.ofNullable(maintenanceClient.get()).ifPresent(CloseableClient::close);
-        Optional.ofNullable(leaseClient.get()).ifPresent(CloseableClient::close);
-        Optional.ofNullable(watchClient.get()).ifPresent(CloseableClient::close);
-        Optional.ofNullable(lockClient.get()).ifPresent(CloseableClient::close);
+        authClient.close();
+        kvClient.close();
+        clusterClient.close();
+        maintenanceClient.close();
+        leaseClient.close();
+        watchClient.close();
+        lockClient.close();
 
         connectionManager.close();
-    }
-
-    /**
-     * Create a new client instance.
-     *
-     * @param  reference the atomic reference holding the instance
-     * @param  factory   the factory to create the client
-     * @param  <T>       the type of client
-     * @return           the client
-     */
-    private <T extends CloseableClient> T newClient(AtomicReference<T> reference,
-        Function<ClientConnectionManager, T> factory) {
-
-        T client = reference.get();
-
-        if (client == null) {
-            synchronized (reference) {
-                client = reference.get();
-                if (client == null) {
-                    client = factory.apply(connectionManager);
-                    reference.lazySet(client);
-                }
-            }
-        }
-
-        return client;
     }
 }

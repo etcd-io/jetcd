@@ -16,6 +16,9 @@
 
 package io.etcd.jetcd;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
@@ -28,8 +31,6 @@ import io.etcd.jetcd.options.GetOption.SortOrder;
 import io.etcd.jetcd.options.GetOption.SortTarget;
 import io.etcd.jetcd.options.PutOption;
 import io.etcd.jetcd.test.EtcdClusterExtension;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -69,7 +70,7 @@ public class KVTest {
         PutOption option = PutOption.newBuilder().withLeaseId(99999).build();
         CompletableFuture<PutResponse> future = kvClient.put(SAMPLE_KEY, SAMPLE_VALUE, option);
         assertThatExceptionOfType(ExecutionException.class)
-          .isThrownBy(() -> future.get()).withMessageEndingWith("etcdserver: requested lease not found");
+            .isThrownBy(() -> future.get()).withMessageEndingWith("etcdserver: requested lease not found");
     }
 
     @Test

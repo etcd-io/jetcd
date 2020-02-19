@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 
 import io.etcd.jetcd.common.exception.ClosedClientException;
 import io.etcd.jetcd.options.WatchOption;
+import io.etcd.jetcd.support.CloseableClient;
 import io.etcd.jetcd.watch.WatchResponse;
 
 /**

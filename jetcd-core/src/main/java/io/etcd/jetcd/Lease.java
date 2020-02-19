@@ -24,6 +24,7 @@ import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
 import io.etcd.jetcd.lease.LeaseRevokeResponse;
 import io.etcd.jetcd.lease.LeaseTimeToLiveResponse;
 import io.etcd.jetcd.options.LeaseOption;
+import io.etcd.jetcd.support.CloseableClient;
 import io.grpc.stub.StreamObserver;
 
 /**
@@ -45,7 +46,7 @@ public interface Lease extends CloseableClient {
      * @param  ttl     ttl value, unit seconds
      * @param  timeout the maximum time to waits
      * @param  unit    the time unit of the timeout argument
-     * @return
+     * @return         The grant response
      */
     CompletableFuture<LeaseGrantResponse> grant(long ttl, long timeout, TimeUnit unit);
 

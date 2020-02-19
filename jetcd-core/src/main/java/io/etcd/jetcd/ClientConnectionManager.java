@@ -19,17 +19,17 @@ package io.etcd.jetcd;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -68,157 +68,26 @@ final class ClientConnectionManager {
 
     private static final Metadata.Key<String> TOKEN = Metadata.Key.of("token", Metadata.ASCII_STRING_MARSHALLER);
 
+    private final Object lock;
     private final ClientBuilder builder;
-    private final AtomicReference<ManagedChannel> channelRef;
-    private final AtomicReference<Optional<String>> tokenRef;
     private final ExecutorService executorService;
+    private volatile ManagedChannel managedChannel;
+    private volatile String token;
 
     ClientConnectionManager(ClientBuilder builder) {
         this(builder, null);
     }
 
-    ClientConnectionManager(ClientBuilder builder, ManagedChannel channel) {
-
+    ClientConnectionManager(ClientBuilder builder, ManagedChannel managedChannel) {
+        this.lock = new Object();
         this.builder = builder;
-        this.channelRef = new AtomicReference<>(channel);
-        this.tokenRef = new AtomicReference<>();
+        this.managedChannel = managedChannel;
+
         if (builder.executorService() == null) {
             this.executorService = Executors.newCachedThreadPool();
         } else {
             this.executorService = builder.executorService();
         }
-    }
-
-    ManagedChannel getChannel() {
-        ManagedChannel managedChannel = channelRef.get();
-        if (managedChannel == null) {
-            synchronized (channelRef) {
-                managedChannel = channelRef.get();
-                if (managedChannel == null) {
-                    managedChannel = defaultChannelBuilder().build();
-                    channelRef.lazySet(managedChannel);
-                }
-            }
-        }
-
-        return managedChannel;
-    }
-
-    private Optional<String> getToken(Channel channel) {
-        Optional<String> tk = tokenRef.get();
-        if (tk == null) {
-            synchronized (tokenRef) {
-                tk = tokenRef.get();
-                if (tk == null) {
-                    tk = generateToken(channel);
-                    tokenRef.lazySet(tk);
-                }
-            }
-        }
-
-        return tk;
-    }
-
-    private void refreshToken(Channel channel) {
-        synchronized (tokenRef) {
-            Optional<String> tk = generateToken(channel);
-            tokenRef.lazySet(tk);
-        }
-    }
-
-    ByteSequence getNamespace() {
-        return builder.namespace();
-    }
-
-    ExecutorService getExecutorService() {
-        return executorService;
-    }
-
-    /**
-     * create stub with saved channel.
-     *
-     * @param  supplier the stub supplier
-     * @param  <T>      the type of stub
-     * @return          the attached stub
-     */
-    <T extends AbstractStub<T>> T newStub(Function<ManagedChannel, T> supplier) {
-        return supplier.apply(getChannel());
-    }
-
-    synchronized void close() {
-        ManagedChannel channel = channelRef.get();
-        if (channel != null) {
-            channel.shutdownNow();
-        }
-
-        executorService.shutdownNow();
-    }
-
-    <T extends AbstractStub<T>, R> CompletableFuture<R> withNewChannel(URI endpoint, Function<ManagedChannel, T> stubCustomizer,
-        Function<T, CompletableFuture<R>> stubConsumer) {
-
-        final ManagedChannel channel = defaultChannelBuilder().nameResolverFactory(
-            forEndpoints(Util.supplyIfNull(builder.authority(), () -> "etcd"), Collections.singleton(endpoint),
-                Util.supplyIfNull(builder.uriResolverLoader(), URIResolverLoader::defaultLoader)))
-            .build();
-
-        try {
-            T stub = stubCustomizer.apply(channel);
-
-            return stubConsumer.apply(stub).whenComplete((r, t) -> channel.shutdown());
-        } catch (Exception e) {
-            channel.shutdown();
-            throw EtcdExceptionFactory.toEtcdException(e);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    @VisibleForTesting
-    protected ManagedChannelBuilder<?> defaultChannelBuilder() {
-        final NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget("etcd");
-
-        if (builder.maxInboundMessageSize() != null) {
-            channelBuilder.maxInboundMessageSize(builder.maxInboundMessageSize());
-        }
-        if (builder.sslContext() != null) {
-            channelBuilder.negotiationType(NegotiationType.TLS);
-            channelBuilder.sslContext(builder.sslContext());
-        } else {
-            channelBuilder.negotiationType(NegotiationType.PLAINTEXT);
-        }
-
-        channelBuilder.nameResolverFactory(forEndpoints(Util.supplyIfNull(builder.authority(), () -> "etcd"),
-            builder.endpoints(), Util.supplyIfNull(builder.uriResolverLoader(), URIResolverLoader::defaultLoader)));
-
-        if (builder.loadBalancerPolicy() != null) {
-            channelBuilder.defaultLoadBalancingPolicy(builder.loadBalancerPolicy());
-        } else {
-            channelBuilder.defaultLoadBalancingPolicy("pick_first");
-        }
-
-        channelBuilder.intercept(new AuthTokenInterceptor());
-
-        if (builder.headers() != null) {
-            channelBuilder.intercept(new ClientInterceptor() {
-                @Override
-                public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-                    CallOptions callOptions, Channel next) {
-                    return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
-                        @Override
-                        public void start(Listener<RespT> responseListener, Metadata headers) {
-                            builder.headers().forEach(headers::put);
-                            super.start(responseListener, headers);
-                        }
-                    };
-                }
-            });
-        }
-
-        if (builder.interceptors() != null) {
-            channelBuilder.intercept(builder.interceptors());
-        }
-
-        return channelBuilder;
     }
 
     /**
@@ -242,56 +111,156 @@ final class ClientConnectionManager {
             .authenticate(AuthenticateRequest.newBuilder().setNameBytes(user).setPasswordBytes(pass).build());
     }
 
+    ManagedChannel getChannel() {
+        if (managedChannel == null) {
+            synchronized (lock) {
+                if (managedChannel == null) {
+                    managedChannel = defaultChannelBuilder().build();
+                }
+            }
+        }
+
+        return managedChannel;
+    }
+
+    @Nullable
+    private String getToken(Channel channel) {
+        if (token == null) {
+            synchronized (lock) {
+                if (token == null) {
+                    token = generateToken(channel);
+                }
+            }
+        }
+
+        return token;
+    }
+
+    private void refreshToken(Channel channel) {
+        synchronized (lock) {
+            token = generateToken(channel);
+        }
+    }
+
+    ByteSequence getNamespace() {
+        return builder.namespace();
+    }
+
+    ExecutorService getExecutorService() {
+        return executorService;
+    }
+
+    /**
+     * create stub with saved channel.
+     *
+     * @param  supplier the stub supplier
+     * @param  <T>      the type of stub
+     * @return          the attached stub
+     */
+    <T extends AbstractStub<T>> T newStub(Function<ManagedChannel, T> supplier) {
+        return supplier.apply(getChannel());
+    }
+
+    void close() {
+        synchronized (lock) {
+            if (managedChannel != null) {
+                managedChannel.shutdownNow();
+            }
+        }
+
+        executorService.shutdownNow();
+    }
+
+    <T extends AbstractStub<T>, R> CompletableFuture<R> withNewChannel(URI endpoint, Function<ManagedChannel, T> stubCustomizer,
+        Function<T, CompletableFuture<R>> stubConsumer) {
+
+        final ManagedChannel channel = defaultChannelBuilder().nameResolverFactory(
+            forEndpoints(
+                Util.supplyIfNull(builder.authority(), () -> "etcd"),
+                Collections.singleton(endpoint),
+                Util.supplyIfNull(builder.uriResolverLoader(), URIResolverLoader::defaultLoader)))
+            .build();
+
+        try {
+            T stub = stubCustomizer.apply(channel);
+
+            return stubConsumer.apply(stub).whenComplete((r, t) -> channel.shutdown());
+        } catch (Exception e) {
+            channel.shutdown();
+            throw EtcdExceptionFactory.toEtcdException(e);
+        }
+    }
+
+    @VisibleForTesting
+    protected ManagedChannelBuilder<?> defaultChannelBuilder() {
+        final NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget("etcd");
+
+        if (builder.maxInboundMessageSize() != null) {
+            channelBuilder.maxInboundMessageSize(builder.maxInboundMessageSize());
+        }
+        if (builder.sslContext() != null) {
+            channelBuilder.negotiationType(NegotiationType.TLS);
+            channelBuilder.sslContext(builder.sslContext());
+        } else {
+            channelBuilder.negotiationType(NegotiationType.PLAINTEXT);
+        }
+
+        channelBuilder.nameResolverFactory(
+            forEndpoints(
+                Util.supplyIfNull(builder.authority(), () -> "etcd"),
+                builder.endpoints(),
+                Util.supplyIfNull(builder.uriResolverLoader(),
+                    URIResolverLoader::defaultLoader)));
+
+        if (builder.loadBalancerPolicy() != null) {
+            channelBuilder.defaultLoadBalancingPolicy(builder.loadBalancerPolicy());
+        } else {
+            channelBuilder.defaultLoadBalancingPolicy("pick_first");
+        }
+
+        channelBuilder.intercept(new AuthTokenInterceptor());
+
+        if (builder.headers() != null) {
+            channelBuilder.intercept(new ClientInterceptor() {
+                @Override
+                public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
+                    CallOptions callOptions, Channel next) {
+                    return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+                        @Override
+                        public void start(Listener<RespT> responseListener, Metadata headers) {
+                            builder.headers().forEach((BiConsumer<Metadata.Key, Object>) headers::put);
+                            super.start(responseListener, headers);
+                        }
+                    };
+                }
+            });
+        }
+
+        if (builder.interceptors() != null) {
+            channelBuilder.intercept(builder.interceptors());
+        }
+
+        return channelBuilder;
+    }
+
     /**
      * get token with ClientBuilder.
      *
      * @return                                              the auth token
      * @throws io.etcd.jetcd.common.exception.EtcdException a exception indicates failure reason.
      */
-    private Optional<String> generateToken(Channel channel) {
-
+    @Nullable
+    private String generateToken(Channel channel) {
         if (builder.user() != null && builder.password() != null) {
             try {
-                return Optional.of(authenticate(channel, builder.user(), builder.password()).get().getToken());
+                return authenticate(channel, builder.user(), builder.password()).get().getToken();
             } catch (InterruptedException ite) {
                 throw handleInterrupt(ite);
             } catch (ExecutionException exee) {
                 throw toEtcdException(exee);
             }
         }
-        return Optional.empty();
-    }
-
-    /**
-     * AuthTokenInterceptor fills header with Auth token of any rpc calls and
-     * refreshes token if the rpc results an invalid Auth token error.
-     */
-    private class AuthTokenInterceptor implements ClientInterceptor {
-
-        @Override
-        public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-            CallOptions callOptions, Channel next) {
-            return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
-                @Override
-                public void start(Listener<RespT> responseListener, Metadata headers) {
-                    getToken(next).ifPresent(t -> headers.put(TOKEN, t));
-                    super.start(new SimpleForwardingClientCallListener<RespT>(responseListener) {
-                        @Override
-                        public void onClose(Status status, Metadata trailers) {
-                            if (isInvalidTokenError(status)) {
-                                try {
-                                    refreshToken(next);
-                                } catch (Exception e) {
-                                    // don't throw any error here.
-                                    // rpc will retry on expired auth token.
-                                }
-                            }
-                            super.onClose(status, trailers);
-                        }
-                    }, headers);
-                }
-            };
-        }
+        return null;
     }
 
     /**
@@ -320,7 +289,7 @@ final class ClientConnectionManager {
     public <S, T> CompletableFuture<T> execute(Callable<ListenableFuture<S>> task, Function<S, T> resultConvert,
         Predicate<Throwable> doRetry) {
 
-        RetryPolicy<S> retryPolicy = new RetryPolicy<S>().handleIf(doRetry::test)
+        RetryPolicy<S> retryPolicy = new RetryPolicy<S>().handleIf(doRetry)
             .onRetriesExceeded(e -> newEtcdException(ErrorCode.ABORTED, "maximum number of auto retries reached"))
             .withBackoff(builder.retryDelay(), builder.retryMaxDelay(), builder.retryChronoUnit());
 
@@ -329,5 +298,40 @@ final class ClientConnectionManager {
         }
 
         return Failsafe.with(retryPolicy).with(executorService).getAsync(() -> task.call().get()).thenApply(resultConvert);
+    }
+
+    /**
+     * AuthTokenInterceptor fills header with Auth token of any rpc calls and
+     * refreshes token if the rpc results an invalid Auth token error.
+     */
+    private class AuthTokenInterceptor implements ClientInterceptor {
+
+        @Override
+        public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
+            CallOptions callOptions, Channel next) {
+            return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+                @Override
+                public void start(Listener<RespT> responseListener, Metadata headers) {
+                    String token = getToken(next);
+                    if (token != null) {
+                        headers.put(TOKEN, token);
+                    }
+                    super.start(new SimpleForwardingClientCallListener<RespT>(responseListener) {
+                        @Override
+                        public void onClose(Status status, Metadata trailers) {
+                            if (isInvalidTokenError(status)) {
+                                try {
+                                    refreshToken(next);
+                                } catch (Exception e) {
+                                    // don't throw any error here.
+                                    // rpc will retry on expired auth token.
+                                }
+                            }
+                            super.onClose(status, trailers);
+                        }
+                    }, headers);
+                }
+            };
+        }
     }
 }

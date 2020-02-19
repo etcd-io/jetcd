@@ -16,14 +16,6 @@
 
 package io.etcd.jetcd;
 
-import io.etcd.jetcd.Watch.Watcher;
-import io.etcd.jetcd.common.exception.CompactedException;
-import io.etcd.jetcd.kv.PutResponse;
-import io.etcd.jetcd.options.WatchOption;
-import io.etcd.jetcd.test.EtcdClusterExtension;
-import io.etcd.jetcd.watch.WatchEvent;
-import io.etcd.jetcd.watch.WatchEvent.EventType;
-import io.etcd.jetcd.watch.WatchResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,6 +24,15 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
+
+import io.etcd.jetcd.Watch.Watcher;
+import io.etcd.jetcd.common.exception.CompactedException;
+import io.etcd.jetcd.kv.PutResponse;
+import io.etcd.jetcd.options.WatchOption;
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.etcd.jetcd.watch.WatchEvent;
+import io.etcd.jetcd.watch.WatchEvent.EventType;
+import io.etcd.jetcd.watch.WatchResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;

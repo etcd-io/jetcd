@@ -66,10 +66,16 @@ final class KVImpl implements KV {
         checkNotNull(value, "value should not be null");
         checkNotNull(option, "option should not be null");
 
-        PutRequest request = PutRequest.newBuilder().setKey(Util.prefixNamespace(key.getByteString(), namespace))
-            .setValue(value.getByteString()).setLease(option.getLeaseId()).setPrevKv(option.getPrevKV()).build();
+        PutRequest request = PutRequest.newBuilder()
+            .setKey(Util.prefixNamespace(key.getByteString(), namespace))
+            .setValue(value.getByteString())
+            .setLease(option.getLeaseId())
+            .setPrevKv(option.getPrevKV())
+            .build();
 
-        return connectionManager.execute(() -> stub.put(request), response -> new PutResponse(response, namespace),
+        return connectionManager.execute(
+            () -> stub.put(request),
+            response -> new PutResponse(response, namespace),
             Util::isRetryable);
     }
 
@@ -83,20 +89,28 @@ final class KVImpl implements KV {
         checkNotNull(key, "key should not be null");
         checkNotNull(option, "option should not be null");
 
-        RangeRequest.Builder builder = RangeRequest.newBuilder().setKey(Util.prefixNamespace(key.getByteString(), namespace))
-            .setCountOnly(option.isCountOnly()).setLimit(option.getLimit()).setRevision(option.getRevision())
-            .setKeysOnly(option.isKeysOnly()).setSerializable(option.isSerializable())
+        RangeRequest.Builder builder = RangeRequest.newBuilder()
+            .setKey(Util.prefixNamespace(key.getByteString(), namespace))
+            .setCountOnly(option.isCountOnly())
+            .setLimit(option.getLimit())
+            .setRevision(option.getRevision())
+            .setKeysOnly(option.isKeysOnly())
+            .setSerializable(option.isSerializable())
             .setSortOrder(toRangeRequestSortOrder(option.getSortOrder()))
             .setSortTarget(toRangeRequestSortTarget(option.getSortField()))
-            .setMinCreateRevision(option.getMinCreateRevision()).setMaxCreateRevision(option.getMaxCreateRevision())
-            .setMinModRevision(option.getMinModRevision()).setMaxModRevision(option.getMaxModRevision());
+            .setMinCreateRevision(option.getMinCreateRevision())
+            .setMaxCreateRevision(option.getMaxCreateRevision())
+            .setMinModRevision(option.getMinModRevision())
+            .setMaxModRevision(option.getMaxModRevision());
 
         option.getEndKey().map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
             .ifPresent(builder::setRangeEnd);
 
         RangeRequest request = builder.build();
 
-        return connectionManager.execute(() -> stub.range(request), response -> new GetResponse(response, namespace),
+        return connectionManager.execute(
+            () -> stub.range(request),
+            response -> new GetResponse(response, namespace),
             Util::isRetryable);
     }
 
@@ -111,14 +125,18 @@ final class KVImpl implements KV {
         checkNotNull(option, "option should not be null");
 
         DeleteRangeRequest.Builder builder = DeleteRangeRequest.newBuilder()
-            .setKey(Util.prefixNamespace(key.getByteString(), namespace)).setPrevKv(option.isPrevKV());
+            .setKey(Util.prefixNamespace(key.getByteString(), namespace))
+            .setPrevKv(option.isPrevKV());
 
-        option.getEndKey().map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
+        option.getEndKey()
+            .map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
             .ifPresent(builder::setRangeEnd);
 
         DeleteRangeRequest request = builder.build();
 
-        return connectionManager.execute(() -> stub.deleteRange(request), response -> new DeleteResponse(response, namespace),
+        return connectionManager.execute(
+            () -> stub.deleteRange(request),
+            response -> new DeleteResponse(response, namespace),
             Util::isRetryable);
     }
 
@@ -131,13 +149,21 @@ final class KVImpl implements KV {
     public CompletableFuture<CompactResponse> compact(long rev, CompactOption option) {
         checkNotNull(option, "option should not be null");
 
-        CompactionRequest request = CompactionRequest.newBuilder().setRevision(rev).setPhysical(option.isPhysical()).build();
+        CompactionRequest request = CompactionRequest.newBuilder()
+            .setRevision(rev).setPhysical(option.isPhysical())
+            .build();
 
-        return connectionManager.execute(() -> stub.compact(request), CompactResponse::new, Util::isRetryable);
+        return connectionManager.execute(
+            () -> stub.compact(request),
+            CompactResponse::new,
+            Util::isRetryable);
     }
 
     public Txn txn() {
-        return TxnImpl.newTxn((request) -> connectionManager.execute(() -> stub.txn(request),
-            response -> new TxnResponse(response, namespace), Util::isRetryable), namespace);
+        return TxnImpl.newTxn(
+            request -> connectionManager.execute(
+                () -> stub.txn(request),
+                response -> new TxnResponse(response, namespace), Util::isRetryable),
+            namespace);
     }
 }

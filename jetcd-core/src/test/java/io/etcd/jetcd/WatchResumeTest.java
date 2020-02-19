@@ -16,13 +16,14 @@
 
 package io.etcd.jetcd;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
 import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 import io.etcd.jetcd.watch.WatchEvent.EventType;
 import io.etcd.jetcd.watch.WatchResponse;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class WatchResumeTest {
 
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("watch_resume", 3, false, true);
+    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("watch_resume", 3, false);
 
     private static Client client;
     private static Watch watchClient;

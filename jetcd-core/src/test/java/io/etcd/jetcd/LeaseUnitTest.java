@@ -16,17 +16,20 @@
 
 package io.etcd.jetcd;
 
-import io.etcd.jetcd.api.LeaseGrpc.LeaseImplBase;
-import io.etcd.jetcd.api.LeaseKeepAliveRequest;
-import io.etcd.jetcd.api.LeaseKeepAliveResponse;
-import io.etcd.jetcd.test.GrpcServerExtension;
-import io.grpc.Status;
-import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import io.etcd.jetcd.api.LeaseGrpc.LeaseImplBase;
+import io.etcd.jetcd.api.LeaseKeepAliveRequest;
+import io.etcd.jetcd.api.LeaseKeepAliveResponse;
+import io.etcd.jetcd.support.CloseableClient;
+import io.etcd.jetcd.support.Observers;
+import io.etcd.jetcd.test.GrpcServerExtension;
+import io.grpc.Status;
+import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -121,11 +124,11 @@ public class LeaseUnitTest {
         .build();
     System.out.println(System.currentTimeMillis() + " responseObserverRef.onNext() ");
     this.responseObserverRef.get().onNext(lrp);
-
+    
     io.etcd.jetcd.lease.LeaseKeepAliveResponse actual = listener.listen();
     assertThat(actual.getID()).isEqualTo(lrp.getID());
     assertThat(actual.getTTL()).isEqualTo(lrp.getTTL());
-
+    
     listener.close();
     }
     */
@@ -206,15 +209,15 @@ public class LeaseUnitTest {
         .setTTL(0)
         .build();
     this.responseObserverRef.get().onNext(lrp);
-
+    
     // expect lease expired exception.
     assertThatThrownBy(() -> listener.listen())
         .hasCause(new IllegalStateException("Lease " + LEASE_ID_1 + " expired"));
-
+    
     // expect no more keep alive requests for LEASE_ID after receiving lease expired response.
     verify(this.requestStreamObserverMock, after(1000).atMost(1))
         .onNext(argThat(hasLeaseID(LEASE_ID_1)));
-
+    
     listener.close();
     }
     */

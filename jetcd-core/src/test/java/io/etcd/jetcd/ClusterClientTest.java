@@ -16,16 +16,17 @@
 
 package io.etcd.jetcd;
 
-import io.etcd.jetcd.cluster.Member;
-import io.etcd.jetcd.cluster.MemberAddResponse;
-import io.etcd.jetcd.cluster.MemberListResponse;
-import io.etcd.jetcd.test.EtcdClusterExtension;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import io.etcd.jetcd.cluster.Member;
+import io.etcd.jetcd.cluster.MemberAddResponse;
+import io.etcd.jetcd.cluster.MemberListResponse;
+import io.etcd.jetcd.test.EtcdClusterExtension;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
