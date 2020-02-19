@@ -21,8 +21,9 @@
 
     <parent>
         <groupId>io.etcd</groupId>
-        <artifactId>jetcd-parent</artifactId>
+        <artifactId>jetcd-launcher-parent</artifactId>
         <version>0.5.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>jetcd-launcher-maven-plugin-test</artifactId>
