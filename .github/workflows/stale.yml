@@ -1,0 +1,24 @@
+name: "Stale"
+on:
+  schedule:
+  - cron: "0 0 * * *"
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/stale@v1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        days-before-stale: 60
+        days-before-close: 7
+        stale-issue-label: stale
+        exempt-issue-label: never-stale
+        stale-pr-label: stale
+        exempt-pr-label: never-stale
+        stale-issue-message: |
+          This issue is stale because it has been open 60 days with no activity. 
+          Remove stale label or comment or this will be closed in 7 days.
+        stale-pr-message: |
+          This PR is stale because it has been open 60 days with no activity.
+          Remove stale label or comment or this will be closed in 7 days.
