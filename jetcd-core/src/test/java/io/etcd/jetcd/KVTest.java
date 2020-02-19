@@ -16,9 +16,6 @@
 
 package io.etcd.jetcd;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
@@ -31,15 +28,16 @@ import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.GetOption.SortOrder;
 import io.etcd.jetcd.options.GetOption.SortTarget;
 import io.etcd.jetcd.options.PutOption;
-import org.assertj.core.api.Assertions;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static io.etcd.jetcd.TestUtil.bytesOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 public class KVTest {
 
@@ -62,16 +60,16 @@ public class KVTest {
     public void testPut() throws Exception {
         CompletableFuture<PutResponse> feature = kvClient.put(SAMPLE_KEY, SAMPLE_VALUE);
         PutResponse response = feature.get();
-        assertTrue(response.getHeader() != null);
-        assertTrue(!response.hasPrevKv());
+        assertThat(response.getHeader()).isNotNull();
+        assertThat(!response.hasPrevKv()).isTrue();
     }
 
     @Test
     public void testPutWithNotExistLease() throws ExecutionException, InterruptedException {
         PutOption option = PutOption.newBuilder().withLeaseId(99999).build();
         CompletableFuture<PutResponse> future = kvClient.put(SAMPLE_KEY, SAMPLE_VALUE, option);
-        Assertions.assertThatExceptionOfType(ExecutionException.class).isThrownBy(() -> future.get())
-            .withMessageEndingWith("etcdserver: requested lease not found");
+        assertThatExceptionOfType(ExecutionException.class)
+          .isThrownBy(() -> future.get()).withMessageEndingWith("etcdserver: requested lease not found");
     }
 
     @Test
@@ -80,9 +78,9 @@ public class KVTest {
         feature.get();
         CompletableFuture<GetResponse> getFeature = kvClient.get(SAMPLE_KEY_2);
         GetResponse response = getFeature.get();
-        assertEquals(1, response.getKvs().size());
-        assertEquals(SAMPLE_VALUE_2.toString(UTF_8), response.getKvs().get(0).getValue().toString(UTF_8));
-        assertTrue(!response.isMore());
+        assertThat(response.getKvs()).hasSize(1);
+        assertThat(response.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(SAMPLE_VALUE_2.toString(UTF_8));
+        assertThat(!response.isMore()).isTrue();
     }
 
     @Test
@@ -93,8 +91,8 @@ public class KVTest {
         GetOption option = GetOption.newBuilder().withRevision(putResp.getHeader().getRevision()).build();
         CompletableFuture<GetResponse> getFeature = kvClient.get(SAMPLE_KEY_3, option);
         GetResponse response = getFeature.get();
-        assertEquals(1, response.getKvs().size());
-        assertEquals(SAMPLE_VALUE.toString(UTF_8), response.getKvs().get(0).getValue().toString(UTF_8));
+        assertThat(response.getKvs()).hasSize(1);
+        assertThat(response.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(SAMPLE_VALUE.toString(UTF_8));
     }
 
     @Test
@@ -108,10 +106,10 @@ public class KVTest {
         CompletableFuture<GetResponse> getFeature = kvClient.get(bytesOf(prefix), option);
         GetResponse response = getFeature.get();
 
-        assertEquals(numPrefix, response.getKvs().size());
+        assertThat(response.getKvs()).hasSize(numPrefix);
         for (int i = 0; i < numPrefix; i++) {
-            assertEquals(prefix + (numPrefix - i - 1), response.getKvs().get(i).getKey().toString(UTF_8));
-            assertEquals(String.valueOf(numPrefix - i - 1), response.getKvs().get(i).getValue().toString(UTF_8));
+            assertThat(response.getKvs().get(i).getKey().toString(UTF_8)).isEqualTo(prefix + (numPrefix - i - 1));
+            assertThat(response.getKvs().get(i).getValue().toString(UTF_8)).isEqualTo(String.valueOf(numPrefix - i - 1));
         }
     }
 
@@ -129,7 +127,7 @@ public class KVTest {
         // delete the keys
         CompletableFuture<DeleteResponse> deleteFuture = kvClient.delete(keyToDelete);
         DeleteResponse delResp = deleteFuture.get();
-        assertEquals(resp.getKvs().size(), delResp.getDeleted());
+        assertThat(delResp.getDeleted()).isEqualTo(resp.getKvs().size());
     }
 
     @Test
@@ -143,13 +141,13 @@ public class KVTest {
         // verify get withPrefix.
         CompletableFuture<GetResponse> getFuture = kvClient.get(key, GetOption.newBuilder().withPrefix(key).build());
         GetResponse getResp = getFuture.get();
-        assertEquals(numPrefixes, getResp.getCount());
+        assertThat(getResp.getCount()).isEqualTo(numPrefixes);
 
         // verify del withPrefix.
         DeleteOption deleteOpt = DeleteOption.newBuilder().withPrefix(key).build();
         CompletableFuture<DeleteResponse> delFuture = kvClient.delete(key, deleteOpt);
         DeleteResponse delResp = delFuture.get();
-        assertEquals(numPrefixes, delResp.getDeleted());
+        assertThat(delResp.getDeleted()).isEqualTo(numPrefixes);
     }
 
     private static void putKeysWithPrefix(String prefix, int numPrefixes) throws ExecutionException, InterruptedException {
@@ -179,8 +177,8 @@ public class KVTest {
         txnResp.get();
         // get the value
         GetResponse getResp = kvClient.get(sampleKey).get();
-        assertEquals(1, getResp.getKvs().size());
-        assertEquals(putValue.toString(UTF_8), getResp.getKvs().get(0).getValue().toString(UTF_8));
+        assertThat(getResp.getKvs()).hasSize(1);
+        assertThat(getResp.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(putValue.toString(UTF_8));
     }
 
     @Test
@@ -200,11 +198,11 @@ public class KVTest {
         txnResp.get();
 
         GetResponse getResp = kvClient.get(foo).get();
-        assertEquals(1, getResp.getKvs().size());
-        assertEquals(bar.toString(UTF_8), getResp.getKvs().get(0).getValue().toString(UTF_8));
+        assertThat(getResp.getKvs()).hasSize(1);
+        assertThat(getResp.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(bar.toString(UTF_8));
 
         GetResponse getResp2 = kvClient.get(abc).get();
-        assertEquals(1, getResp2.getKvs().size());
-        assertEquals(oneTwoThree.toString(UTF_8), getResp2.getKvs().get(0).getValue().toString(UTF_8));
+        assertThat(getResp2.getKvs()).hasSize(1);
+        assertThat(getResp2.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(oneTwoThree.toString(UTF_8));
     }
 }
