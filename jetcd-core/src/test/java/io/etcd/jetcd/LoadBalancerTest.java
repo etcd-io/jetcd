@@ -16,12 +16,11 @@
 
 package io.etcd.jetcd;
 
+import io.etcd.jetcd.kv.PutResponse;
+import io.etcd.jetcd.test.EtcdClusterExtension;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import io.etcd.jetcd.kv.PutResponse;
-import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 

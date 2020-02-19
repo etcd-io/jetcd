@@ -16,6 +16,18 @@
 
 package io.etcd.jetcd;
 
+import io.etcd.jetcd.api.Event;
+import io.etcd.jetcd.api.Event.EventType;
+import io.etcd.jetcd.api.WatchGrpc.WatchImplBase;
+import io.etcd.jetcd.api.WatchRequest;
+import io.etcd.jetcd.api.WatchResponse;
+import io.etcd.jetcd.common.exception.ClosedClientException;
+import io.etcd.jetcd.common.exception.EtcdException;
+import io.etcd.jetcd.options.WatchOption;
+import io.etcd.jetcd.test.GrpcServerExtension;
+import io.etcd.jetcd.watch.WatchEvent;
+import io.grpc.Status;
+import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,26 +38,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-
-import io.etcd.jetcd.api.Event;
-import io.etcd.jetcd.api.Event.EventType;
-import io.etcd.jetcd.api.WatchGrpc.WatchImplBase;
-import io.etcd.jetcd.api.WatchRequest;
-import io.etcd.jetcd.api.WatchResponse;
-import io.etcd.jetcd.common.exception.ClosedClientException;
-import io.etcd.jetcd.common.exception.EtcdException;
-import io.etcd.jetcd.options.WatchOption;
-import io.etcd.jetcd.watch.WatchEvent;
-import io.grpc.Status;
-import io.grpc.stub.StreamObserver;
-import io.grpc.testing.GrpcServerRule;
-import org.junit.Rule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -59,13 +57,11 @@ import static org.mockito.Mockito.verify;
 
 @Timeout(value = 30)
 @ExtendWith(MockitoExtension.class)
-// TODO(#549): Remove GrpcServerRule and remove this annotation
-@EnableRuleMigrationSupport
 public class WatchUnitTest {
 
     private static final ByteSequence KEY = bytesOf("test_key");
-    @Rule
-    public final GrpcServerRule grpcServerRule = new GrpcServerRule().directExecutor();
+    @RegisterExtension
+    public final GrpcServerExtension grpcServerRule = new GrpcServerExtension().directExecutor();
 
     private Watch watchClient;
     private ExecutorService executor = Executors.newFixedThreadPool(2);

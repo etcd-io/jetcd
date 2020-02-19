@@ -132,6 +132,7 @@
     <modules>
         <module>jetcd-launcher</module>
         <module>jetcd-launcher-maven-plugin</module>
+        <module>jetcd-test</module>
         <module>jetcd-common</module>
         <module>jetcd-launcher-maven-plugin-test</module>
         <module>jetcd-resolver</module>
@@ -148,6 +149,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>jetcd-launcher</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>jetcd-test</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

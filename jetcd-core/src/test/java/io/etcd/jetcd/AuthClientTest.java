@@ -16,14 +16,13 @@
 
 package io.etcd.jetcd;
 
-import java.net.URI;
-import java.util.List;
-
 import io.etcd.jetcd.auth.AuthRoleGetResponse;
 import io.etcd.jetcd.auth.AuthRoleListResponse;
 import io.etcd.jetcd.auth.Permission;
 import io.etcd.jetcd.auth.Permission.Type;
-import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import java.net.URI;
+import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;

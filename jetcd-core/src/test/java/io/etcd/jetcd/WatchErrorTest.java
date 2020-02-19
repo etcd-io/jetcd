@@ -16,16 +16,15 @@
 
 package io.etcd.jetcd;
 
+import io.etcd.jetcd.Watch.Watcher;
+import io.etcd.jetcd.common.exception.EtcdException;
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.etcd.jetcd.watch.WatchResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-
-import io.etcd.jetcd.Watch.Watcher;
-import io.etcd.jetcd.common.exception.EtcdException;
-import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
-import io.etcd.jetcd.watch.WatchResponse;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;

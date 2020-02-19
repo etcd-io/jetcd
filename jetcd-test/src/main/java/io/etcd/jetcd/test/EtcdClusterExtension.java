@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.etcd.jetcd.launcher.junit5;
+package io.etcd.jetcd.test;
 
 import java.net.URI;
 import java.util.List;

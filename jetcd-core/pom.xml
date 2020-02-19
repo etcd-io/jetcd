@@ -153,7 +153,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>jetcd-launcher</artifactId>
+            <artifactId>jetcd-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

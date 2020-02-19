@@ -16,23 +16,23 @@
 
 package io.etcd.jetcd;
 
-import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicReference;
-
 import io.etcd.jetcd.api.LeaseGrpc.LeaseImplBase;
 import io.etcd.jetcd.api.LeaseKeepAliveRequest;
 import io.etcd.jetcd.api.LeaseKeepAliveResponse;
+import io.etcd.jetcd.test.GrpcServerExtension;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import io.grpc.testing.GrpcServerRule;
-import org.junit.Rule;
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.migrationsupport.rules.EnableRuleMigrationSupport;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -46,10 +46,8 @@ import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-// TODO(#548): Add global timeout for tests once JUnit5 supports it
+@Timeout(value = 1, unit = TimeUnit.MINUTES)
 @ExtendWith(MockitoExtension.class)
-// TODO(#549): Remove GrpcServerRule and remove this annotation
-@EnableRuleMigrationSupport
 public class LeaseUnitTest {
 
     private Lease leaseCli;
@@ -57,8 +55,8 @@ public class LeaseUnitTest {
     private static final long LEASE_ID_1 = 1;
     private static final long LEASE_ID_2 = 2;
 
-    @Rule
-    public final GrpcServerRule grpcServerRule = new GrpcServerRule().directExecutor();
+    @RegisterExtension
+    public final GrpcServerExtension grpcServerRule = new GrpcServerExtension().directExecutor();
 
     @Mock
     private StreamObserver<LeaseKeepAliveRequest> requestStreamObserverMock;
@@ -123,11 +121,11 @@ public class LeaseUnitTest {
         .build();
     System.out.println(System.currentTimeMillis() + " responseObserverRef.onNext() ");
     this.responseObserverRef.get().onNext(lrp);
-    
+
     io.etcd.jetcd.lease.LeaseKeepAliveResponse actual = listener.listen();
     assertThat(actual.getID()).isEqualTo(lrp.getID());
     assertThat(actual.getTTL()).isEqualTo(lrp.getTTL());
-    
+
     listener.close();
     }
     */
@@ -208,15 +206,15 @@ public class LeaseUnitTest {
         .setTTL(0)
         .build();
     this.responseObserverRef.get().onNext(lrp);
-    
+
     // expect lease expired exception.
     assertThatThrownBy(() -> listener.listen())
         .hasCause(new IllegalStateException("Lease " + LEASE_ID_1 + " expired"));
-    
+
     // expect no more keep alive requests for LEASE_ID after receiving lease expired response.
     verify(this.requestStreamObserverMock, after(1000).atMost(1))
         .onNext(argThat(hasLeaseID(LEASE_ID_1)));
-    
+
     listener.close();
     }
     */

@@ -16,14 +16,13 @@
 
 package io.etcd.jetcd;
 
+import io.etcd.jetcd.Watch.Watcher;
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.etcd.jetcd.watch.WatchEvent.EventType;
+import io.etcd.jetcd.watch.WatchResponse;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import io.etcd.jetcd.Watch.Watcher;
-import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
-import io.etcd.jetcd.watch.WatchEvent.EventType;
-import io.etcd.jetcd.watch.WatchResponse;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

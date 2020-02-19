@@ -16,6 +16,10 @@
 
 package io.etcd.jetcd;
 
+import io.etcd.jetcd.maintenance.SnapshotResponse;
+import io.etcd.jetcd.maintenance.StatusResponse;
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
@@ -27,11 +31,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
-import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
-import io.etcd.jetcd.maintenance.SnapshotResponse;
-import io.etcd.jetcd.maintenance.StatusResponse;
-import io.grpc.stub.StreamObserver;
 import org.apache.commons.io.output.NullOutputStream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

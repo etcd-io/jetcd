@@ -16,16 +16,15 @@
 
 package io.etcd.jetcd;
 
+import com.google.common.base.Charsets;
+import io.etcd.jetcd.lease.LeaseGrantResponse;
+import io.etcd.jetcd.lock.LockResponse;
+import io.etcd.jetcd.test.EtcdClusterExtension;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
-
-import com.google.common.base.Charsets;
-import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
-import io.etcd.jetcd.lease.LeaseGrantResponse;
-import io.etcd.jetcd.lock.LockResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
