@@ -16,11 +16,6 @@
 
 package io.etcd.jetcd;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.google.common.base.Charsets;
 import io.etcd.jetcd.launcher.junit5.EtcdClusterExtension;
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
@@ -28,13 +23,17 @@ import io.etcd.jetcd.lease.LeaseTimeToLiveResponse;
 import io.etcd.jetcd.options.LeaseOption;
 import io.etcd.jetcd.options.PutOption;
 import io.grpc.stub.StreamObserver;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class LeaseTest {
 
@@ -84,7 +83,7 @@ public class LeaseTest {
         assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
 
         tearDown();
-        Assertions.assertThrows(ExecutionException.class, () -> leaseClient.grant(5, 2, TimeUnit.SECONDS).get().getID());
+        assertThatExceptionOfType(ExecutionException.class).isThrownBy(() -> leaseClient.grant(5, 2, TimeUnit.SECONDS).get().getID());
         setUp();
     }
 
