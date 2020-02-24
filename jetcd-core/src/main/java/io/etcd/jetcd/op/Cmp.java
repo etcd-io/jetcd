@@ -27,7 +27,7 @@ import io.etcd.jetcd.api.Compare;
 public class Cmp {
 
     public enum Op {
-        EQUAL, GREATER, LESS
+        EQUAL, GREATER, LESS, NOT_EQUAL
     }
 
     private final ByteString key;
@@ -51,6 +51,9 @@ public class Cmp {
                 break;
             case LESS:
                 compareBuilder.setResult(Compare.CompareResult.LESS);
+                break;
+            case NOT_EQUAL:
+                compareBuilder.setResult(Compare.CompareResult.NOT_EQUAL);
                 break;
             default:
                 throw new IllegalArgumentException("Unexpected compare type (" + this.op + ")");
