@@ -183,6 +183,29 @@ public class KVTest {
     }
 
     @Test
+    public void testTxnForCmpOpNotEqual() throws Exception {
+        ByteSequence sampleKey = bytesOf("txn_key");
+        ByteSequence sampleValue = bytesOf("xyz");
+        ByteSequence cmpValue = bytesOf("abc");
+        ByteSequence putValue = bytesOf("XYZ");
+        ByteSequence putValueNew = bytesOf("ABC");
+        // put the original txn key value pair
+        kvClient.put(sampleKey, sampleValue).get();
+
+        // construct txn operation
+        Txn txn = kvClient.txn();
+        Cmp cmp = new Cmp(sampleKey, Cmp.Op.NOT_EQUAL, CmpTarget.value(cmpValue));
+        CompletableFuture<io.etcd.jetcd.kv.TxnResponse> txnResp = txn.If(cmp)
+                .Then(Op.put(sampleKey, putValue, PutOption.DEFAULT)).Else(Op.put(sampleKey, putValueNew, PutOption.DEFAULT))
+                .commit();
+        txnResp.get();
+        // get the value
+        GetResponse getResp = kvClient.get(sampleKey).get();
+        assertThat(getResp.getKvs()).hasSize(1);
+        assertThat(getResp.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(putValue.toString(UTF_8));
+    }
+
+    @Test
     public void testNestedTxn() throws Exception {
         ByteSequence foo = bytesOf("txn_foo");
         ByteSequence bar = bytesOf("txn_bar");
