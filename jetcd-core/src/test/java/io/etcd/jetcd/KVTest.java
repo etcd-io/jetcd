@@ -196,8 +196,8 @@ public class KVTest {
         Txn txn = kvClient.txn();
         Cmp cmp = new Cmp(sampleKey, Cmp.Op.NOT_EQUAL, CmpTarget.value(cmpValue));
         CompletableFuture<io.etcd.jetcd.kv.TxnResponse> txnResp = txn.If(cmp)
-                .Then(Op.put(sampleKey, putValue, PutOption.DEFAULT)).Else(Op.put(sampleKey, putValueNew, PutOption.DEFAULT))
-                .commit();
+            .Then(Op.put(sampleKey, putValue, PutOption.DEFAULT)).Else(Op.put(sampleKey, putValueNew, PutOption.DEFAULT))
+            .commit();
         txnResp.get();
         // get the value
         GetResponse getResp = kvClient.get(sampleKey).get();
