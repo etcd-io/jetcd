@@ -37,6 +37,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static io.etcd.jetcd.TestUtil.bytesOf;
+import static io.etcd.jetcd.TestUtil.randomString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
@@ -55,6 +56,19 @@ public class KVTest {
     @BeforeAll
     public static void setUp() throws Exception {
         kvClient = Client.builder().endpoints(cluster.getClientEndpoints()).build().getKVClient();
+    }
+
+    @Test
+    public void testByteSequence() {
+        ByteSequence prefix = bytesOf("/test-service/");
+        ByteSequence subPrefix = bytesOf("uuids/");
+
+        String keyString = randomString();
+        ByteSequence key = bytesOf(keyString);
+        ByteSequence prefixedKey = prefix.concat(subPrefix).concat(key);
+        assertThat(prefixedKey.startsWith(prefix)).isTrue();
+        assertThat(prefixedKey.substring(prefix.size() + subPrefix.size()).toString(UTF_8)).isEqualTo(keyString);
+        assertThat(prefixedKey.substring(prefix.size(), prefix.size() + subPrefix.size())).isEqualTo(subPrefix);
     }
 
     @Test
