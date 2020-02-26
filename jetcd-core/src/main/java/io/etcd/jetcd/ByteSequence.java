@@ -35,10 +35,55 @@ public final class ByteSequence {
         this.hashVal = byteString.hashCode();
     }
 
+    /**
+     * Tests if this <code>ByteSequence</code> starts with the specified prefix.
+     *
+     * @param  prefix the prefix.
+     * @return        <code>true</code> if the byte sequence represented by the argument is a prefix of the
+     *                byte sequence represented by this string; <code>false</code> otherwise.
+     */
     public boolean startsWith(ByteSequence prefix) {
         ByteString baseByteString = this.getByteString();
         ByteString prefixByteString = prefix.getByteString();
         return baseByteString.startsWith(prefixByteString);
+    }
+
+    /**
+     * Concatenate the given {@code ByteSequence} to this one.
+     * 
+     * @param  other string to concatenate
+     * @return       a new {@code ByteSequence} instance
+     */
+    public ByteSequence concat(ByteSequence other) {
+        return new ByteSequence(this.byteString.concat(other.getByteString()));
+    }
+
+    /**
+     * Return the substring from {@code ByteSequence}, inclusive, to the end of the
+     * string.
+     *
+     * @param  beginIndex                start at this index
+     * @return                           substring sharing underlying data
+     * @throws IndexOutOfBoundsException if {@code beginIndex < 0} or
+     *                                   {@code beginIndex > size()}.
+     */
+    public ByteSequence substring(int beginIndex) {
+        return this.substring(beginIndex, this.byteString.size());
+    }
+
+    /**
+     * Return the substring from {@code beginIndex}, inclusive, to {@code endIndex},
+     * exclusive.
+     *
+     * @param  beginIndex                start at this index
+     * @param  endIndex                  the last character is the one before this index
+     * @return                           substring sharing underlying data
+     * @throws IndexOutOfBoundsException if {@code beginIndex < 0},
+     *                                   {@code endIndex > size()}, or
+     *                                   {@code beginIndex > endIndex}.
+     */
+    public ByteSequence substring(int beginIndex, int endIndex) {
+        return new ByteSequence(this.byteString.substring(beginIndex, endIndex));
     }
 
     @Override
