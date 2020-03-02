@@ -108,7 +108,7 @@
         <slf4j.version>1.7.30</slf4j.version>
         <plexus-compiler-javac-errorprone.version>2.8.6</plexus-compiler-javac-errorprone.version>
         <error-prone-core.version>2.3.4</error-prone-core.version>
-        <log4j2.version>2.13.0</log4j2.version>
+        <log4j2.version>2.13.1</log4j2.version>
         <jcommander.version>1.78</jcommander.version>
         <jool.version>0.9.14</jool.version>
         <!-- should be in sync with protobuf grpc dependencies -->
