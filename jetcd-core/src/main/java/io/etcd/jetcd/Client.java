@@ -39,6 +39,8 @@ public interface Client extends AutoCloseable {
 
     Lock getLockClient();
 
+    Election getElectionClient();
+
     @Override
     void close();
 
