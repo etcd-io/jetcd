@@ -1,0 +1,111 @@
+//
+// Copyright 2016-2020 The jetcd authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+syntax = "proto3";
+
+import "rpc.proto";
+import "kv.proto";
+
+package v3electionpb;
+
+option java_multiple_files = true;
+option java_package = "io.etcd.jetcd.api";
+
+// The election service exposes client-side election facilities as a gRPC interface.
+service Election {
+  // Campaign waits to acquire leadership in an election, returning a LeaderKey
+  // representing the leadership if successful. The LeaderKey can then be used
+  // to issue new values on the election, transactionally guard API requests on
+  // leadership still being held, and resign from the election.
+  rpc Campaign(CampaignRequest) returns (CampaignResponse) {}
+
+  // Proclaim updates the leader's posted value with a new value.
+  rpc Proclaim(ProclaimRequest) returns (ProclaimResponse) {}
+
+  // Leader returns the current election proclamation, if any.
+  rpc Leader(LeaderRequest) returns (LeaderResponse) {}
+
+  // Observe streams election proclamations in-order as made by the election's
+  // elected leaders.
+  rpc Observe(LeaderRequest) returns (stream LeaderResponse) {}
+
+  // Resign releases election leadership so other campaigners may acquire
+  // leadership on the election.
+  rpc Resign(ResignRequest) returns (ResignResponse) {}
+}
+
+message CampaignRequest {
+  // name is the election's identifier for the campaign.
+  bytes name = 1;
+  // lease is the ID of the lease attached to leadership of the election. If the
+  // lease expires or is revoked before resigning leadership, then the
+  // leadership is transferred to the next campaigner, if any.
+  int64 lease = 2;
+  // value is the initial proclaimed value set when the campaigner wins the
+  // election.
+  bytes value = 3;
+}
+
+message CampaignResponse {
+  etcdserverpb.ResponseHeader header = 1;
+  // leader describes the resources used for holding leadereship of the election.
+  LeaderKey leader = 2;
+}
+
+message LeaderKey {
+  // name is the election identifier that correponds to the leadership key.
+  bytes name = 1;
+  // key is an opaque key representing the ownership of the election. If the key
+  // is deleted, then leadership is lost.
+  bytes key = 2;
+  // rev is the creation revision of the key. It can be used to test for ownership
+  // of an election during transactions by testing the key's creation revision
+  // matches rev.
+  int64 rev = 3;
+  // lease is the lease ID of the election leader.
+  int64 lease = 4;
+}
+
+message LeaderRequest {
+  // name is the election identifier for the leadership information.
+  bytes name = 1;
+}
+
+message LeaderResponse {
+  etcdserverpb.ResponseHeader header = 1;
+  // kv is the key-value pair representing the latest leader update.
+  mvccpb.KeyValue kv = 2;
+}
+
+message ResignRequest {
+  // leader is the leadership to relinquish by resignation.
+  LeaderKey leader = 1;
+}
+
+message ResignResponse {
+  etcdserverpb.ResponseHeader header = 1;
+}
+
+message ProclaimRequest {
+  // leader is the leadership hold on the election.
+  LeaderKey leader = 1;
+  // value is an update meant to overwrite the leader's current value.
+  bytes value = 2;
+}
+
+message ProclaimResponse {
+  etcdserverpb.ResponseHeader header = 1;
+}

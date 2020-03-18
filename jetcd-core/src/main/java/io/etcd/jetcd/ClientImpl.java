@@ -31,6 +31,7 @@ final class ClientImpl implements Client {
     private final MemoizingClientSupplier<Lease> leaseClient;
     private final MemoizingClientSupplier<Watch> watchClient;
     private final MemoizingClientSupplier<Lock> lockClient;
+    private final MemoizingClientSupplier<Election> electionClient;
 
     public ClientImpl(ClientBuilder clientBuilder) {
         this.connectionManager = new ClientConnectionManager(clientBuilder.copy());
@@ -48,6 +49,7 @@ final class ClientImpl implements Client {
         this.leaseClient = new MemoizingClientSupplier<>(() -> new LeaseImpl(this.connectionManager));
         this.watchClient = new MemoizingClientSupplier<>(() -> new WatchImpl(this.connectionManager));
         this.lockClient = new MemoizingClientSupplier<>(() -> new LockImpl(this.connectionManager));
+        this.electionClient = new MemoizingClientSupplier<>(() -> new ElectionImpl(this.connectionManager));
     }
 
     @Override
@@ -86,6 +88,11 @@ final class ClientImpl implements Client {
     }
 
     @Override
+    public Election getElectionClient() {
+        return electionClient.get();
+    }
+
+    @Override
     public synchronized void close() {
         authClient.close();
         kvClient.close();
@@ -94,6 +101,7 @@ final class ClientImpl implements Client {
         leaseClient.close();
         watchClient.close();
         lockClient.close();
+        electionClient.close();
 
         connectionManager.close();
     }

@@ -25,6 +25,7 @@ import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.Cluster;
+import io.etcd.jetcd.Election;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.Lease;
 import io.etcd.jetcd.Lock;
@@ -90,6 +91,11 @@ public class ClientService implements Client {
     @Override
     public Lock getLockClient() {
         return delegate.getLockClient();
+    }
+
+    @Override
+    public Election getElectionClient() {
+        return delegate.getElectionClient();
     }
 
     @Override
