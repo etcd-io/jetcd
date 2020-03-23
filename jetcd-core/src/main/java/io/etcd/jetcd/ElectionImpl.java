@@ -28,6 +28,7 @@ import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.etcd.jetcd.election.CampaignResponse;
 import io.etcd.jetcd.election.LeaderKey;
 import io.etcd.jetcd.election.LeaderResponse;
+import io.etcd.jetcd.election.NoLeaderException;
 import io.etcd.jetcd.election.NotLeaderException;
 import io.etcd.jetcd.election.ProclaimResponse;
 import io.etcd.jetcd.election.ResignResponse;
@@ -164,8 +165,10 @@ final class ElectionImpl implements Election {
                 String description = exception.getStatus().getDescription();
                 // different APIs use different messages. we cannot distinguish missing leader error otherwise,
                 // because communicated status is always UNKNOWN
-                if ("election: not leader".equals(description) || "election: no leader".equals(description)) {
+                if ("election: not leader".equals(description)) {
                     future.completeExceptionally(NotLeaderException.INSTANCE);
+                } else if ("election: no leader".equals(description)) {
+                    future.completeExceptionally(NoLeaderException.INSTANCE);
                 }
             }
             future.completeExceptionally(EtcdExceptionFactory.toEtcdException(error));
