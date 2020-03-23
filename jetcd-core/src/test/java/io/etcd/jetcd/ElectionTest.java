@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import io.etcd.jetcd.election.CampaignResponse;
 import io.etcd.jetcd.election.LeaderKey;
 import io.etcd.jetcd.election.LeaderResponse;
+import io.etcd.jetcd.election.NoLeaderException;
 import io.etcd.jetcd.election.NotLeaderException;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.test.EtcdClusterExtension;
@@ -110,7 +111,7 @@ public class ElectionTest {
             electionClient.leader(electionName).get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
             fail("etcd communicates missing leader with error");
         } catch (ExecutionException e) {
-            assertThat(e.getCause()).isInstanceOf(NotLeaderException.class);
+            assertThat(e.getCause()).isInstanceOf(NoLeaderException.class);
         }
     }
 
