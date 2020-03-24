@@ -113,7 +113,7 @@
         <jool.version>0.9.14</jool.version>
         <!-- should be in sync with protobuf grpc dependencies -->
         <protobuf.version>3.11.4</protobuf.version>
-        <failsafe.version>2.3.3</failsafe.version>
+        <failsafe.version>2.3.4</failsafe.version>
 
         <!-- osgi dependencies -->
         <karaf.version>4.2.8</karaf.version>
