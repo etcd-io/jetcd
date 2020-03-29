@@ -136,6 +136,12 @@ final class ClientConnectionManager {
         return token;
     }
 
+    void forceTokenRefresh() {
+        synchronized (lock) {
+            token = null;
+        }
+    }
+
     private void refreshToken(Channel channel) {
         synchronized (lock) {
             token = generateToken(channel);

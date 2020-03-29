@@ -45,6 +45,10 @@ public class EtcdClusterExtension implements EtcdCluster, BeforeAllCallback, Aft
         this.cluster = EtcdClusterFactory.buildCluster(clusterName, nodes, ssl);
     }
 
+    public EtcdClusterExtension(String clusterName, int nodes, boolean ssl, String... additionalArgs) {
+        this.cluster = EtcdClusterFactory.buildCluster(clusterName, nodes, ssl, additionalArgs);
+    }
+
     // Test framework methods
 
     @Override
