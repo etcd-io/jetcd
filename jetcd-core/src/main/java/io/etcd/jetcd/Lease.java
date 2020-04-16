@@ -35,7 +35,8 @@ public interface Lease extends CloseableClient {
     /**
      * New a lease with ttl value.
      *
-     * @param ttl ttl value, unit seconds
+     * @param  ttl ttl value, unit seconds
+     * @return     the grant response
      */
     CompletableFuture<LeaseGrantResponse> grant(long ttl);
 
@@ -53,7 +54,8 @@ public interface Lease extends CloseableClient {
     /**
      * revoke one lease and the key bind to this lease will be removed.
      *
-     * @param leaseId id of the lease to revoke
+     * @param  leaseId id of the lease to revoke
+     * @return         the revoke response
      */
     CompletableFuture<LeaseRevokeResponse> revoke(long leaseId);
 

@@ -37,9 +37,10 @@ public interface Election extends CloseableClient {
      * to issue new values on the election, transactionally guard API requests on
      * leadership still being held, and resign from the election.
      *
-     * @param electionName election name
-     * @param leaseId      lease identifier
-     * @param proposal     proposal
+     * @param  electionName election name
+     * @param  leaseId      lease identifier
+     * @param  proposal     proposal
+     * @return              the response
      */
     CompletableFuture<CampaignResponse> campaign(ByteSequence electionName, long leaseId, ByteSequence proposal);
 
@@ -47,15 +48,17 @@ public interface Election extends CloseableClient {
      * Proclaim updates the leader's posted value with a new value. Only active
      * leader can change the value.
      *
-     * @param leaderKey leader key
-     * @param proposal  new proposal
+     * @param  leaderKey leader key
+     * @param  proposal  new proposal
+     * @return           the response
      */
     CompletableFuture<ProclaimResponse> proclaim(LeaderKey leaderKey, ByteSequence proposal);
 
     /**
      * Returns the current election proclamation, if any.
      *
-     * @param electionName election name
+     * @param  electionName election name
+     * @return              the response
      */
     CompletableFuture<LeaderResponse> leader(ByteSequence electionName);
 
@@ -72,7 +75,8 @@ public interface Election extends CloseableClient {
      * Resign releases election leadership so other campaigners may acquire
      * leadership on the election.
      *
-     * @param leaderKey leader key
+     * @param  leaderKey leader key
+     * @return           the response
      */
     CompletableFuture<ResignResponse> resign(LeaderKey leaderKey);
 

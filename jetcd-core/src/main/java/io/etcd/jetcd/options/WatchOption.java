@@ -72,7 +72,7 @@ public final class WatchOption {
          * <i>key</i> to <i>endKey</i> (exclusive).
          *
          * <p>
-         * If end key is '\0', the range is all keys >= key.
+         * If end key is '\0', the range is all keys {@literal >=} key.
          *
          * <p>
          * If the end key is one bit larger than the given key, then it gets all keys with the prefix
@@ -93,7 +93,8 @@ public final class WatchOption {
          * When prevKV is set, created watcher gets the previous KV before the event happens,
          * if the previous KV is not compacted.
          *
-         * @return builder
+         * @param  prevKV configure the watcher to receive previous KV.
+         * @return        builder
          */
         public Builder withPrevKV(boolean prevKV) {
             this.prevKV = prevKV;
@@ -104,7 +105,8 @@ public final class WatchOption {
          * When progressNotify is set, the watch server send periodic progress updates.
          * Progress updates have zero events in WatchResponse.
          *
-         * @return builder
+         * @param  progressNotify configure the watcher to receive progress updates.
+         * @return                builder
          */
         public Builder withProgressNotify(boolean progressNotify) {
             this.progressNotify = progressNotify;
@@ -113,6 +115,9 @@ public final class WatchOption {
 
         /**
          * filter out put event in server side.
+         *
+         * @param  noPut filter out put event
+         * @return       builder
          */
         public Builder withNoPut(boolean noPut) {
             this.noPut = noPut;
@@ -121,6 +126,9 @@ public final class WatchOption {
 
         /**
          * filter out delete event in server side.
+         *
+         * @param  noDelete filter out delete event
+         * @return          builder
          */
         public Builder withNoDelete(boolean noDelete) {
             this.noDelete = noDelete;
@@ -167,12 +175,17 @@ public final class WatchOption {
         return this.endKey;
     }
 
+    /**
+     * @return the revision to watch from.
+     */
     public long getRevision() {
         return revision;
     }
 
     /**
      * Whether created watcher gets the previous KV before the event happens.
+     *
+     * @return if true, watcher receives the previous KV before the event happens.
      */
     public boolean isPrevKV() {
         return prevKV;

@@ -150,7 +150,7 @@ public final class GetOption {
          * <i>key</i> to <i>endKey</i> (exclusive).
          *
          * <p>
-         * If end key is '\0', the range is all keys >= key.
+         * If end key is '\0', the range is all keys {@literal >=} key.
          *
          * <p>
          * If the end key is one bit larger than the given key, then it gets all keys with the
@@ -215,7 +215,8 @@ public final class GetOption {
          * min_mod_revision is the lower bound for returned key mod revisions; all keys with lesser mod
          * revisions will be filtered away.
          *
-         * @param modRevision mod revision
+         * @param  modRevision mod revision
+         * @return             this builder instance
          */
         public Builder withMinModRevision(long modRevision) {
             this.minModRevision = modRevision;
@@ -227,13 +228,17 @@ public final class GetOption {
          * is the upper bound for returned key mod revisions; all keys with greater mod revisions will
          * be filtered away.
          *
-         * @param modRevision mod revision
+         * @param  modRevision mod revision
+         * @return             this builder instance
          */
         public Builder withMaxModRevision(long modRevision) {
             this.maxModRevision = modRevision;
             return this;
         }
 
+        /**
+         * @return the GetOption
+         */
         public GetOption build() {
             return new GetOption(endKey, limit, revision, sortOrder, sortTarget, serializable, keysOnly, countOnly,
                 minCreateRevision, maxCreateRevision, minModRevision, maxModRevision);

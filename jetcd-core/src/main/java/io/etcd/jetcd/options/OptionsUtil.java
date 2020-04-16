@@ -23,8 +23,7 @@ import io.etcd.jetcd.api.RangeRequest;
 import io.etcd.jetcd.options.GetOption.SortOrder;
 import io.etcd.jetcd.options.GetOption.SortTarget;
 
-public class OptionsUtil {
-
+public final class OptionsUtil {
     private static final byte[] NO_PREFIX_END = { 0 };
 
     private OptionsUtil() {
@@ -39,7 +38,7 @@ public class OptionsUtil {
      * @param  prefix the given prefix
      * @return        the range end of the given prefix
      */
-    static final ByteSequence prefixEndOf(ByteSequence prefix) {
+    static ByteSequence prefixEndOf(ByteSequence prefix) {
         byte[] endKey = prefix.getBytes().clone();
         for (int i = endKey.length - 1; i >= 0; i--) {
             if (endKey[i] != (byte) 0xff) {
@@ -53,6 +52,9 @@ public class OptionsUtil {
 
     /**
      * convert client SortOrder to apu SortOrder.
+     *
+     * @param  order the order
+     * @return       the translated {@link RangeRequest.SortOrder}
      */
     public static RangeRequest.SortOrder toRangeRequestSortOrder(SortOrder order) {
         switch (order) {
@@ -69,6 +71,9 @@ public class OptionsUtil {
 
     /**
      * convert client SortTarget to apu SortTarget.
+     *
+     * @param  target the target
+     * @return        the translated {@link RangeRequest.SortTarget}
      */
     public static RangeRequest.SortTarget toRangeRequestSortTarget(SortTarget target) {
         switch (target) {

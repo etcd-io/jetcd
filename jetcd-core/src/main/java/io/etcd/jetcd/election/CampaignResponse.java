@@ -31,7 +31,7 @@ public class CampaignResponse extends AbstractResponse<io.etcd.jetcd.api.Campaig
     }
 
     /**
-     * resources used for holding leadership of the election.
+     * @return the resources used for holding leadership of the election.
      */
     public LeaderKey getLeader() {
         return leaderKey;

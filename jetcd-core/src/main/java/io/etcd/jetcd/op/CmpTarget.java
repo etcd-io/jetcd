@@ -21,7 +21,7 @@ import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.api.Compare;
 
 /**
- * Cmp target used in {@link Txn}.
+ * Cmp target used in {@link io.etcd.jetcd.Txn}.
  */
 public abstract class CmpTarget<T> {
 

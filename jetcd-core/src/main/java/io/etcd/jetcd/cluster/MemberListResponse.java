@@ -34,7 +34,7 @@ public class MemberListResponse extends AbstractResponse<io.etcd.jetcd.api.Membe
     }
 
     /**
-     * returns a list of members. empty list if none.
+     * @return a list of members. empty list if none.
      */
     public synchronized List<Member> getMembers() {
         if (members == null) {

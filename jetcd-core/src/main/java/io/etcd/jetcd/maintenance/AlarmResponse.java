@@ -50,7 +50,7 @@ public class AlarmResponse extends AbstractResponse<io.etcd.jetcd.api.AlarmRespo
     }
 
     /**
-     * returns a list of alarms associated with the alarm request.
+     * @return a list of alarms associated with the alarm request.
      */
     public synchronized List<AlarmMember> getAlarms() {
         if (alarms == null) {

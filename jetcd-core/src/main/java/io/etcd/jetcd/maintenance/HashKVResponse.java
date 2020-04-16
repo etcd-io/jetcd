@@ -16,11 +16,13 @@
 
 package io.etcd.jetcd.maintenance;
 
+import java.net.URI;
+
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.Maintenance;
 
 /**
- * HashKVResponse returned by {@link Maintenance#HashKV(String, long)}.
+ * HashKVResponse returned by {@link Maintenance#hashKV(URI, long)}.
  */
 public class HashKVResponse extends AbstractResponse<io.etcd.jetcd.api.HashKVResponse> {
 
@@ -29,14 +31,14 @@ public class HashKVResponse extends AbstractResponse<io.etcd.jetcd.api.HashKVRes
     }
 
     /**
-     * return the hash value computed from the responding member's MVCC keys up to a given revision.
+     * @return the hash value computed from the responding member's MVCC keys up to a given revision.
      */
     public int getHash() {
         return getResponse().getHash();
     }
 
     /**
-     * return compact_revision is the compacted revision of key-value store when hash begins.
+     * @return the compacted revision of key-value store when hash begins.
      */
     public long getCompacted() {
         return getResponse().getCompactRevision();

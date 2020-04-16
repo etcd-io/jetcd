@@ -25,25 +25,52 @@ package io.etcd.jetcd;
  */
 public interface Client extends AutoCloseable {
 
+    /**
+     * @return the {@link Auth} client.
+     */
     Auth getAuthClient();
 
+    /**
+     * @return the {@link KV} client.
+     */
     KV getKVClient();
 
+    /**
+     * @return the {@link Cluster} client.
+     */
     Cluster getClusterClient();
 
+    /**
+     * @return the {@link Maintenance} client.
+     */
     Maintenance getMaintenanceClient();
 
+    /**
+     * @return the {@link Lease} client.
+     */
     Lease getLeaseClient();
 
+    /**
+     * @return the {@link Watch} client.
+     */
     Watch getWatchClient();
 
+    /**
+     * @return the {@link Lock} client.
+     */
     Lock getLockClient();
 
+    /**
+     * @return the {@link Election} client.
+     */
     Election getElectionClient();
 
     @Override
     void close();
 
+    /**
+     * @return a new {@link ClientBuilder}.
+     */
     static ClientBuilder builder() {
         return new ClientBuilder();
     }

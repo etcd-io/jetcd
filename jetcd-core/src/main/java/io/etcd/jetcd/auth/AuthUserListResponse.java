@@ -19,10 +19,9 @@ package io.etcd.jetcd.auth;
 import java.util.List;
 
 import io.etcd.jetcd.AbstractResponse;
-import io.etcd.jetcd.api.Auth;
 
 /**
- * AuthUserListResponse returned by {@link Auth#userList()} contains a header and
+ * AuthUserListResponse returned by {@link io.etcd.jetcd.Auth#userList()} contains a header and
  * a list of users.
  */
 public class AuthUserListResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserListResponse> {
@@ -32,7 +31,7 @@ public class AuthUserListResponse extends AbstractResponse<io.etcd.jetcd.api.Aut
     }
 
     /**
-     * returns a list of users.
+     * @return a list of users.
      */
     public List<String> getUsers() {
         return getResponse().getUsersList();

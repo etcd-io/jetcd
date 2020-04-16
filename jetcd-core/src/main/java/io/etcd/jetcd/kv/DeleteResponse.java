@@ -36,14 +36,14 @@ public class DeleteResponse extends AbstractResponse<DeleteRangeResponse> {
     }
 
     /**
-     * return the number of keys deleted by the delete range request.
+     * @return the number of keys deleted by the delete range request.
      */
     public long getDeleted() {
         return getResponse().getDeleted();
     }
 
     /**
-     * return previous key-value pairs.
+     * @return previous key-value pairs.
      */
     public synchronized List<KeyValue> getPrevKvs() {
         if (prevKvs == null) {

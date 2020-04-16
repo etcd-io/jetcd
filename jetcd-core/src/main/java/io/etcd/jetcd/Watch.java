@@ -34,6 +34,8 @@ public interface Watch extends CloseableClient {
      *
      * @param  key                   key to be watched on.
      * @param  option                see {@link io.etcd.jetcd.options.WatchOption}.
+     * @param  listener              the event consumer
+     * @return                       this watcher
      * @throws ClosedClientException if watch client has been closed.
      */
     Watcher watch(ByteSequence key, WatchOption option, Listener listener);
@@ -42,42 +44,97 @@ public interface Watch extends CloseableClient {
      * watch on a key.
      *
      * @param  key                   key to be watched on.
+     * @param  listener              the event consumer
+     * @return                       this watcher
      * @throws ClosedClientException if watch client has been closed.
      **/
     default Watcher watch(ByteSequence key, Listener listener) {
         return watch(key, WatchOption.DEFAULT, listener);
     }
 
+    /**
+     * @param  key    key to be watched on.
+     * @param  onNext the on next consumer
+     * @return        this watcher
+     */
     default Watcher watch(ByteSequence key, Consumer<WatchResponse> onNext) {
         return watch(key, WatchOption.DEFAULT, listener(onNext));
     }
 
+    /**
+     * @param  key     key to be watched on.
+     * @param  onNext  the on next consumer
+     * @param  onError the on error consumer
+     * @return         this watcher
+     */
     default Watcher watch(ByteSequence key, Consumer<WatchResponse> onNext, Consumer<Throwable> onError) {
         return watch(key, WatchOption.DEFAULT, listener(onNext, onError));
     }
 
+    /**
+     * @param  key         key to be watched on.
+     * @param  onNext      the on next consumer
+     * @param  onError     the on error consumer
+     * @param  onCompleted the on completion consumer
+     * @return             this watcher
+     */
     default Watcher watch(ByteSequence key, Consumer<WatchResponse> onNext, Consumer<Throwable> onError, Runnable onCompleted) {
         return watch(key, WatchOption.DEFAULT, listener(onNext, onError, onCompleted));
     }
 
+    /**
+     * @param  key         key to be watched on.
+     * @param  onNext      the on next consumer
+     * @param  onCompleted the on completion consumer
+     * @return             this watcher
+     */
     default Watcher watch(ByteSequence key, Consumer<WatchResponse> onNext, Runnable onCompleted) {
         return watch(key, WatchOption.DEFAULT, listener(onNext, t -> {
         }, onCompleted));
     }
 
+    /**
+     *
+     * @param  key    key to be watched on.
+     * @param  option the options
+     * @param  onNext the on next consumer
+     * @return        this watcher
+     */
     default Watcher watch(ByteSequence key, WatchOption option, Consumer<WatchResponse> onNext) {
         return watch(key, option, listener(onNext));
     }
 
+    /**
+     * @param  key     key to be watched on.
+     * @param  option  the options
+     * @param  onNext  the on next consumer
+     * @param  onError the on error consumer
+     * @return         this watcher
+     */
     default Watcher watch(ByteSequence key, WatchOption option, Consumer<WatchResponse> onNext, Consumer<Throwable> onError) {
         return watch(key, option, listener(onNext, onError));
     }
 
+    /**
+     * @param  key         key to be watched on.
+     * @param  option      the options
+     * @param  onNext      the on next consumer
+     * @param  onCompleted the on completion consumer
+     * @return             this watcher
+     */
     default Watcher watch(ByteSequence key, WatchOption option, Consumer<WatchResponse> onNext, Runnable onCompleted) {
         return watch(key, option, listener(onNext, t -> {
         }, onCompleted));
     }
 
+    /**
+     * @param  key         key to be watched on.
+     * @param  option      the options
+     * @param  onNext      the on next consumer
+     * @param  onError     the on error consumer
+     * @param  onCompleted the on completion consumer
+     * @return             this watcher
+     */
     default Watcher watch(ByteSequence key, WatchOption option, Consumer<WatchResponse> onNext, Consumer<Throwable> onError,
         Runnable onCompleted) {
         return watch(key, option, listener(onNext, onError, onCompleted));

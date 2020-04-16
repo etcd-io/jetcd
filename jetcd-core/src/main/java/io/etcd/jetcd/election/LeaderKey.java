@@ -32,31 +32,31 @@ public class LeaderKey {
     }
 
     /**
-     * election identifier that corresponds to the leadership key.
+     * @return the election identifier that corresponds to the leadership key. *
      */
     public ByteString getName() {
         return name;
     }
 
     /**
-     * opaque key representing the ownership of the election. If the key
-     * is deleted, then leadership is lost.
+     * @return the opaque key representing the ownership of the election. If the key
+     *         is deleted, then leadership is lost.
      */
     public ByteString getKey() {
         return key;
     }
 
     /**
-     * creation revision of the key. It can be used to test for ownership
-     * of an election during transactions by testing the key's creation revision
-     * matches rev.
+     * @return the creation revision of the key. It can be used to test for ownership
+     *         of an election during transactions by testing the key's creation revision
+     *         matches rev.
      */
     public long getRevision() {
         return revision;
     }
 
     /**
-     * lease ID of the election leader.
+     * @return the lease ID of the election leader.
      */
     public long getLease() {
         return lease;

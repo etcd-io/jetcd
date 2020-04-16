@@ -25,14 +25,14 @@ public class LeaseKeepAliveResponse extends AbstractResponse<io.etcd.jetcd.api.L
     }
 
     /**
-     * ID is the lease ID from the keep alive request.
+     * @return the lease ID from the keep alive request.
      */
     public long getID() {
         return getResponse().getID();
     }
 
     /**
-     * TTL is the new time-to-live for the lease.
+     * @return the new time-to-live for the lease.
      */
     public long getTTL() {
         return getResponse().getTTL();

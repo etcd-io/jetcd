@@ -19,7 +19,7 @@ package io.etcd.jetcd.auth;
 import java.util.List;
 
 import io.etcd.jetcd.AbstractResponse;
-import io.etcd.jetcd.api.Auth;
+import io.etcd.jetcd.Auth;
 
 /**
  * AuthRoleListResponse returned by {@link Auth#roleList()} contains a header and
@@ -32,7 +32,7 @@ public class AuthRoleListResponse extends AbstractResponse<io.etcd.jetcd.api.Aut
     }
 
     /**
-     * returns a list of roles.
+     * @return a list of roles.
      */
     public List<String> getRoles() {
         return getResponse().getRolesList();

@@ -114,10 +114,21 @@ public final class ClientBuilder implements Cloneable {
         return endpoints(Arrays.asList(endpoints));
     }
 
+    /**
+     * configure etcd server endpoints.
+     *
+     * @param  endpoints                etcd server endpoints, at least one
+     * @return                          this builder to train
+     * @throws NullPointerException     if endpoints is null or one of endpoint is null
+     * @throws IllegalArgumentException if some endpoint is invalid
+     */
     public ClientBuilder endpoints(String... endpoints) {
         return endpoints(Util.toURIs(Arrays.asList(endpoints)));
     }
 
+    /**
+     * @return the auth user
+     */
     public ByteSequence user() {
         return user;
     }
@@ -135,6 +146,9 @@ public final class ClientBuilder implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the auth password
+     */
     public ByteSequence password() {
         return password;
     }
@@ -152,6 +166,9 @@ public final class ClientBuilder implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the namespace of each key used
+     */
     public ByteSequence namespace() {
         return namespace;
     }
@@ -170,6 +187,9 @@ public final class ClientBuilder implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the executor service
+     */
     public ExecutorService executorService() {
         return executorService;
     }
@@ -209,6 +229,9 @@ public final class ClientBuilder implements Cloneable {
         return loadBalancerPolicy;
     }
 
+    /**
+     * @return true if the client initialize connections lazily
+     */
     public boolean lazyInitialization() {
         return lazyInitialization;
     }
@@ -226,6 +249,9 @@ public final class ClientBuilder implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the ssl context
+     */
     public SslContext sslContext() {
         return sslContext;
     }
@@ -245,8 +271,9 @@ public final class ClientBuilder implements Cloneable {
     /**
      * Configure SSL/TLS context create through {@link GrpcSslContexts#forClient} to use.
      *
-     * @param  consumer the SslContextBuilder consumer
-     * @return          this builder
+     * @param  consumer     the SslContextBuilder consumer
+     * @return              this builder
+     * @throws SSLException if the SslContextBuilder fails
      */
     public ClientBuilder sslContext(Consumer<SslContextBuilder> consumer) throws SSLException {
         SslContextBuilder builder = GrpcSslContexts.forClient();
@@ -255,45 +282,64 @@ public final class ClientBuilder implements Cloneable {
         return sslContext(builder.build());
     }
 
+    /**
+     * @return The authority used to authenticate connections to servers.
+     */
     public String authority() {
         return authority;
     }
 
     /**
-     * The authority used to authenticate connections to servers.
+     * @param  authority the authority used to authenticate connections to servers.
+     * @return           this builder
      */
     public ClientBuilder authority(String authority) {
         this.authority = authority;
         return this;
     }
 
+    /**
+     * @return the uri resolver loader
+     */
     public URIResolverLoader uriResolverLoader() {
         return uriResolverLoader;
     }
 
+    /**
+     * @param  loader the uri resolver loader
+     * @return        this builder
+     */
     public ClientBuilder uriResolverLoader(URIResolverLoader loader) {
         this.uriResolverLoader = loader;
         return this;
     }
 
+    /**
+     * @return the maximum message size allowed for a single gRPC frame.
+     */
     public Integer maxInboundMessageSize() {
         return maxInboundMessageSize;
     }
 
     /**
-     * Sets the maximum message size allowed for a single gRPC frame.
+     * @param  maxInboundMessageSize Sets the maximum message size allowed for a single gRPC frame.
+     * @return                       this builder
      */
     public ClientBuilder maxInboundMessageSize(Integer maxInboundMessageSize) {
         this.maxInboundMessageSize = maxInboundMessageSize;
         return this;
     }
 
+    /**
+     * @return the headers to be added to http request headers
+     */
     public Map<Metadata.Key<?>, Object> headers() {
-        return headers;
+        return Collections.unmodifiableMap(headers);
     }
 
     /**
-     * Sets headers to be added to http request headers.
+     * @param  headers Sets headers to be added to http request headers.
+     * @return         this builder
      */
     public ClientBuilder headers(Map<Metadata.Key<?>, Object> headers) {
         this.headers = new HashMap<>(headers);
@@ -302,7 +348,9 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * Sets an header to be added to http request headers.
+     * @param  key   Sets an header key to be added to http request headers.
+     * @param  value Sets an header value to be added to http request headers.
+     * @return       this builder
      */
     public ClientBuilder header(String key, String value) {
         if (this.headers == null) {
@@ -314,12 +362,16 @@ public final class ClientBuilder implements Cloneable {
         return this;
     }
 
+    /**
+     * @return the interceptors
+     */
     public List<ClientInterceptor> interceptors() {
         return interceptors;
     }
 
     /**
-     * Set the interceptors.
+     * @param  interceptors Set the interceptors.
+     * @return              this builder
      */
     public ClientBuilder interceptors(List<ClientInterceptor> interceptors) {
         this.interceptors = new ArrayList<>(interceptors);
@@ -328,7 +380,9 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * Add interceptors.
+     * @param  interceptor  an interceptors to add
+     * @param  interceptors additional interceptors
+     * @return              this builder
      */
     public ClientBuilder interceptor(ClientInterceptor interceptor, ClientInterceptor... interceptors) {
         if (this.interceptors == null) {
@@ -341,48 +395,65 @@ public final class ClientBuilder implements Cloneable {
         return this;
     }
 
+    /**
+     * @return The delay between retries.
+     */
     public long retryDelay() {
         return retryDelay;
     }
 
     /**
-     * The delay between retries.
+     * @param  retryDelay The delay between retries.
+     * @return            this builder
+     *
      */
     public ClientBuilder retryDelay(long retryDelay) {
         this.retryDelay = retryDelay;
         return this;
     }
 
+    /**
+     * @return the max backing off delay between retries
+     */
     public long retryMaxDelay() {
         return retryMaxDelay;
     }
 
     /**
-     * The max backing off delay between retries.
+     * @param  retryMaxDelay The max backing off delay between retries.
+     * @return               this builder
      */
     public ClientBuilder retryMaxDelay(long retryMaxDelay) {
         this.retryMaxDelay = retryMaxDelay;
         return this;
     }
 
+    /**
+     * @return he retries period unit.
+     */
     public ChronoUnit retryChronoUnit() {
         return retryChronoUnit;
     }
 
     /**
-     * the retries period unit.
+     * @param  retryChronoUnit the retries period unit.
+     * @return                 this builder
      */
     public ClientBuilder retryChronoUnit(ChronoUnit retryChronoUnit) {
         this.retryChronoUnit = retryChronoUnit;
         return this;
     }
 
+    /**
+     * @return the retries max duration.
+     */
     public String retryMaxDuration() {
         return retryMaxDuration;
     }
 
     /**
-     * the retries max duration.
+     * @param  retryMaxDuration the retries max duration.
+     * @return                  this builder
      */
     public ClientBuilder retryMaxDuration(String retryMaxDuration) {
         this.retryMaxDuration = retryMaxDuration;
@@ -401,6 +472,9 @@ public final class ClientBuilder implements Cloneable {
         return new ClientImpl(this);
     }
 
+    /**
+     * @return a copy of this builder
+     */
     public ClientBuilder copy() {
         try {
             return (ClientBuilder) super.clone();

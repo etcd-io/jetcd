@@ -33,23 +33,33 @@ public interface Cluster extends CloseableClient {
 
     /**
      * lists the current cluster membership.
+     *
+     * @return the response
      */
     CompletableFuture<MemberListResponse> listMember();
 
     /**
      * add a new member into the cluster.
      *
-     * @param peerAddrs the peer addresses of the new member
+     * @param  peerAddrs the peer addresses of the new member
+     * @return           the response
      */
     CompletableFuture<MemberAddResponse> addMember(List<URI> peerAddrs);
 
     /**
      * removes an existing member from the cluster.
+     *
+     * @param  memberID the member to remove.
+     * @return          the response
      */
     CompletableFuture<MemberRemoveResponse> removeMember(long memberID);
 
     /**
      * update peer addresses of the member.
+     *
+     * @param  memberID  the member id.
+     * @param  peerAddrs the addresses.
+     * @return           the response
      */
     CompletableFuture<MemberUpdateResponse> updateMember(long memberID, List<URI> peerAddrs);
 

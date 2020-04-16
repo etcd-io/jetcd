@@ -21,16 +21,31 @@ package io.etcd.jetcd;
  */
 public interface Response {
 
+    /**
+     * @return the response header
+     */
     Header getHeader();
 
     interface Header {
 
+        /**
+         * @return the cluster id
+         */
         long getClusterId();
 
+        /**
+         * @return the member id
+         */
         long getMemberId();
 
+        /**
+         * @return the revision id
+         */
         long getRevision();
 
+        /**
+         * @return the raft term
+         */
         long getRaftTerm();
     }
 }

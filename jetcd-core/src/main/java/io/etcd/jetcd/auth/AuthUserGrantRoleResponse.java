@@ -18,10 +18,9 @@ package io.etcd.jetcd.auth;
 
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.api.Auth;
 
 /**
- * AuthUserGrantRoleResponse returned by {@link Auth#userGrantRole(ByteSequence,
+ * AuthUserGrantRoleResponse returned by {@link io.etcd.jetcd.Auth#userGrantRole(ByteSequence,
  * ByteSequence)} contains a header.
  */
 public class AuthUserGrantRoleResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserGrantRoleResponse> {

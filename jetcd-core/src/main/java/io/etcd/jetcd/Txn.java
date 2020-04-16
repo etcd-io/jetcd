@@ -64,29 +64,37 @@ import io.etcd.jetcd.op.Op;
  * </pre>
  */
 public interface Txn {
-
-    /**
-     * takes a list of comparison. If all comparisons passed in succeed,
-     * the operations passed into Then() will be executed. Or the operations
-     * passed into Else() will be executed.
-     */
   //CHECKSTYLE:OFF
+  /**
+   * takes a list of comparison. If all comparisons passed in succeed,
+   * the operations passed into Then() will be executed. Or the operations
+   * passed into Else() will be executed.
+   *
+   * @param cmps the comparisons
+   * @return this object
+   */
   Txn If(Cmp... cmps);
   //CHECKSTYLE:ON
 
-    /**
-     * takes a list of operations. The Ops list will be executed, if the
-     * comparisons passed in If() succeed.
-     */
   //CHECKSTYLE:OFF
+  /**
+   * takes a list of operations. The Ops list will be executed, if the
+   * comparisons passed in If() succeed.
+   *
+   * @param ops the operations
+   * @return this object
+   */
   Txn Then(Op... ops);
   //CHECKSTYLE:ON
 
-    /**
-     * takes a list of operations. The Ops list will be executed, if the
-     * comparisons passed in If() fail.
-     */
   //CHECKSTYLE:OFF
+  /**
+   * takes a list of operations. The Ops list will be executed, if the
+   * comparisons passed in If() fail.
+   *
+   * @param ops the operations
+   * @return this object
+   */
   Txn Else(Op... ops);
   //CHECKSTYLE:ON
 

@@ -55,6 +55,8 @@ public interface Maintenance extends CloseableClient {
 
     /**
      * get all active keyspace alarm.
+     * 
+     * @return the response
      */
     CompletableFuture<AlarmResponse> listAlarms();
 
@@ -82,11 +84,17 @@ public interface Maintenance extends CloseableClient {
      * multiple members at the same time.
      * To defragment multiple members in the cluster, user need to call defragment
      * multiple times with different endpoints.
+     *
+     * @param  endpoint the etcd server endpoint.
+     * @return          the response result
      */
     CompletableFuture<DefragmentResponse> defragmentMember(URI endpoint);
 
     /**
      * get the status of a member by its endpoint.
+     *
+     * @param  endpoint the etcd server endpoint.
+     * @return          the response result
      */
     CompletableFuture<StatusResponse> statusMember(URI endpoint);
 
@@ -94,6 +102,10 @@ public interface Maintenance extends CloseableClient {
      * returns a hash of the KV state at the time of the RPC.
      * If revision is zero, the hash is computed on all keys. If the revision
      * is non-zero, the hash is computed on all keys at or below the given revision.
+     *
+     * @param  endpoint the etcd server endpoint.
+     * @param  rev      the revision
+     * @return          the response result
      */
     CompletableFuture<HashKVResponse> hashKV(URI endpoint, long rev);
 
@@ -101,7 +113,6 @@ public interface Maintenance extends CloseableClient {
      * retrieves backend snapshot.
      *
      * @param  output the output stream to write the snapshot content.
-     *
      * @return        a Snapshot for retrieving backend snapshot.
      */
     CompletableFuture<Long> snapshot(OutputStream output);
@@ -115,7 +126,10 @@ public interface Maintenance extends CloseableClient {
 
     /**
      * moveLeader requests current leader to transfer its leadership to the transferee.
-     * Request must be made to the leader.
+     *
+     *
+     * @param  transfereeID the id
+     * @return              the response result
      */
     CompletableFuture<MoveLeaderResponse> moveLeader(long transfereeID);
 }

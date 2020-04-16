@@ -27,14 +27,14 @@ public class AlarmMember {
     }
 
     /**
-     * returns the ID of the member associated with the raised alarm.
+     * @return the ID of the member associated with the raised alarm.
      */
     public long getMemberId() {
         return memberId;
     }
 
     /**
-     * returns the type of alarm which has been raised.
+     * @return the type of alarm which has been raised.
      */
     public AlarmType getAlarmType() {
         return alarmType;

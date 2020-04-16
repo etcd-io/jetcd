@@ -44,7 +44,7 @@ public final class DeleteOption {
          * from <i>key</i> to <i>endKey</i> (exclusive).
          *
          * <p>
-         * If end key is '\0', the range is all keys >=
+         * If end key is '\0', the range is all keys {@literal >=}
          * key.
          *
          * <p>

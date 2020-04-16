@@ -36,7 +36,7 @@ public class GetResponse extends AbstractResponse<RangeResponse> {
     }
 
     /**
-     * return a list of key-value pairs matched by the range request.
+     * @return a list of key-value pairs matched by the range request.
      */
     public synchronized List<KeyValue> getKvs() {
         if (kvs == null) {
@@ -47,14 +47,14 @@ public class GetResponse extends AbstractResponse<RangeResponse> {
     }
 
     /**
-     * more indicates if there are more keys to return in the requested range.
+     * @return if there are more keys to return in the requested range.
      */
     public boolean isMore() {
         return getResponse().getMore();
     }
 
     /**
-     * return the number of keys within the range when requested.
+     * @return the number of keys within the range when requested.
      */
     public long getCount() {
         return getResponse().getCount();

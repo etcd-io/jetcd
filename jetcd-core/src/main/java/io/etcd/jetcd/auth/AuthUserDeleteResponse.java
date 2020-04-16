@@ -18,10 +18,9 @@ package io.etcd.jetcd.auth;
 
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.api.Auth;
 
 /**
- * AuthUserDeleteResponse returned by {@link Auth#userDelete(ByteSequence)} contains a header.
+ * AuthUserDeleteResponse returned by {@link io.etcd.jetcd.Auth#userDelete(ByteSequence)} contains a header.
  */
 public class AuthUserDeleteResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserDeleteResponse> {
 

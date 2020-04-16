@@ -35,14 +35,14 @@ public class MemberAddResponse extends AbstractResponse<io.etcd.jetcd.api.Member
     }
 
     /**
-     * returns the member information for the added member.
+     * @return the member information for the added member.
      */
     public Member getMember() {
         return member;
     }
 
     /**
-     * returns a list of all members after adding the new member.
+     * @return a list of all members after adding the new member.
      */
     public synchronized List<Member> getMembers() {
         if (members == null) {

@@ -18,10 +18,9 @@ package io.etcd.jetcd.auth;
 
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.api.Auth;
 
 /**
- * AuthRoleRevokePermissionResponse returned by {@link Auth#roleRevokePermission(ByteSequence,
+ * AuthRoleRevokePermissionResponse returned by {@link io.etcd.jetcd.Auth#roleRevokePermission(ByteSequence,
  * ByteSequence, ByteSequence)} contains a header.
  */
 public class AuthRoleRevokePermissionResponse extends AbstractResponse<io.etcd.jetcd.api.AuthRoleRevokePermissionResponse> {

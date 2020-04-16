@@ -31,29 +31,28 @@ public class LeaseTimeToLiveResponse extends AbstractResponse<io.etcd.jetcd.api.
     }
 
     /**
-     * ID is the lease ID from the keep alive request.
+     * @return the lease ID from the keep alive request.
      */
     public long getID() {
         return getResponse().getID();
     }
 
     /**
-     * TTL is the remaining TTL in seconds for the lease;
-     * the lease will expire in under TTL+1 seconds.
+     * @return the remaining TTL in seconds for the lease; the lease will expire in under TTL+1 seconds.
      */
     public long getTTl() {
         return getResponse().getTTL();
     }
 
     /**
-     * GrantedTTL is the initial granted time in seconds upon lease creation/renewal.
+     * @return the initial granted time in seconds upon lease creation/renewal.
      */
     public long getGrantedTTL() {
         return getResponse().getGrantedTTL();
     }
 
     /**
-     * Keys is the list of keys attached to this lease.
+     * @return the list of keys attached to this lease.
      */
     public synchronized List<ByteSequence> getKeys() {
         if (keys == null) {

@@ -18,10 +18,9 @@ package io.etcd.jetcd.auth;
 
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.api.Auth;
 
 /**
- * AuthRoleAddResponse returned by {@link Auth#roleAdd(ByteSequence)} contains
+ * AuthRoleAddResponse returned by {@link io.etcd.jetcd.Auth#roleAdd(ByteSequence)} contains
  * a header.
  */
 public class AuthRoleAddResponse extends AbstractResponse<io.etcd.jetcd.api.AuthRoleAddResponse> {

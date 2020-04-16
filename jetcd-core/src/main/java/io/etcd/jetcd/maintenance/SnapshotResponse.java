@@ -25,10 +25,16 @@ public class SnapshotResponse extends AbstractResponse<io.etcd.jetcd.api.Snapsho
         super(response, response.getHeader());
     }
 
+    /**
+     * @return the remaining bytes.
+     */
     public long getRemainingBytes() {
         return getResponse().getRemainingBytes();
     }
 
+    /**
+     * @return the blob.
+     */
     public ByteString getBlob() {
         return getResponse().getBlob();
     }

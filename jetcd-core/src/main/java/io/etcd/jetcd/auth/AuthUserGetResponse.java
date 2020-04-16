@@ -20,10 +20,9 @@ import java.util.List;
 
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.api.Auth;
 
 /**
- * AuthUserGetResponse returned by {@link Auth#userGet(ByteSequence)} contains a header and
+ * AuthUserGetResponse returned by {@link io.etcd.jetcd.Auth#userGet(ByteSequence)} contains a header and
  * a list of roles associated with the user.
  */
 public class AuthUserGetResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserGetResponse> {
@@ -33,7 +32,7 @@ public class AuthUserGetResponse extends AbstractResponse<io.etcd.jetcd.api.Auth
     }
 
     /**
-     * returns a list of roles.
+     * @return a list of roles.
      */
     public List<String> getRoles() {
         return getResponse().getRolesList();

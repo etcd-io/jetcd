@@ -21,11 +21,10 @@ import java.util.stream.Collectors;
 
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.api.Auth;
 import io.etcd.jetcd.auth.Permission.Type;
 
 /**
- * AuthRoleGetResponse returned by {@link Auth#roleGet(ByteSequence)} contains
+ * AuthRoleGetResponse returned by {@link io.etcd.jetcd.Auth#roleGet(ByteSequence)} contains
  * a header and a list of permissions.
  */
 public class AuthRoleGetResponse extends AbstractResponse<io.etcd.jetcd.api.AuthRoleGetResponse> {

@@ -30,34 +30,29 @@ public class Member {
     }
 
     /**
-     * returns the member ID for this member.
+     * @return the member ID for this member.
      */
     public long getId() {
         return member.getID();
     }
 
     /**
-     * returns the human-readable name of the member.
-     *
-     * <p>
-     * If the member is not started, the name will be an empty string.
+     * @return the human-readable name of the member, ff the member is not started, the name will be an empty string.
      */
     public String getName() {
         return member.getName();
     }
 
     /**
-     * returns the list of URLs the member exposes to the cluster for communication.
+     * @return the list of URLs the member exposes to the cluster for communication.
      */
     public List<URI> getPeerURIs() {
         return Util.toURIs(member.getPeerURLsList());
     }
 
     /**
-     * returns list of URLs the member exposes to clients for communication.
-     *
-     * <p>
-     * f the member is not started, clientURLs will be empty.
+     * @return list of URLs the member exposes to clients for communication, if the member is not started, clientURLs will
+     *         be empty.
      */
     public List<URI> getClientURIs() {
         return Util.toURIs(member.getClientURLsList());
