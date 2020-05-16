@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -209,6 +210,16 @@ final class ClientConnectionManager {
             channelBuilder.sslContext(builder.sslContext());
         } else {
             channelBuilder.negotiationType(NegotiationType.PLAINTEXT);
+        }
+
+        if (builder.keepaliveTimeMs() != null) {
+            channelBuilder.keepAliveTime(builder.keepaliveTimeMs(), TimeUnit.MILLISECONDS);
+        }
+        if (builder.keepaliveTimeoutMs() != null) {
+            channelBuilder.keepAliveTimeout(builder.keepaliveTimeoutMs(), TimeUnit.MILLISECONDS);
+        }
+        if (builder.keepaliveWithoutCalls() != null) {
+            channelBuilder.keepAliveWithoutCalls(builder.keepaliveWithoutCalls());
         }
 
         channelBuilder.nameResolverFactory(

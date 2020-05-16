@@ -65,6 +65,9 @@ public final class ClientBuilder implements Cloneable {
     private ByteSequence namespace = ByteSequence.EMPTY;
     private long retryDelay = 500;
     private long retryMaxDelay = 2500;
+    private Long keepaliveTimeMs;
+    private Long keepaliveTimeoutMs;
+    private Boolean keepaliveWithoutCalls;
     private ChronoUnit retryChronoUnit = ChronoUnit.MILLIS;
     private String retryMaxDuration;
 
@@ -425,6 +428,51 @@ public final class ClientBuilder implements Cloneable {
      */
     public ClientBuilder retryMaxDelay(long retryMaxDelay) {
         this.retryMaxDelay = retryMaxDelay;
+        return this;
+    }
+
+    public Long keepaliveTimeMs() {
+        return keepaliveTimeMs;
+    }
+
+    /**
+     * The interval for gRPC keepalives.
+     * The current minimum allowed by gRPC is 10s
+     * 
+     * @param keepaliveTimeMs time in ms between keepalives
+     */
+    public ClientBuilder keepaliveTimeMs(Long keepaliveTimeMs) {
+        // gRPC uses a minimum keepalive time of 10s, if smaller values are given.
+        // No check here though, as this gRPC value might change
+        this.keepaliveTimeMs = keepaliveTimeMs;
+        return this;
+    }
+
+    public Long keepaliveTimeoutMs() {
+        return keepaliveTimeoutMs;
+    }
+
+    /**
+     * The timeout for gRPC keepalives
+     * 
+     * @param keepaliveTimeoutMs
+     */
+    public ClientBuilder keepaliveTimeoutMs(Long keepaliveTimeoutMs) {
+        this.keepaliveTimeoutMs = keepaliveTimeoutMs;
+        return this;
+    }
+
+    public Boolean keepaliveWithoutCalls() {
+        return keepaliveWithoutCalls;
+    }
+
+    /**
+     * Keepalive option for gRPC
+     * 
+     * @param keepaliveWithoutCalls
+     */
+    public ClientBuilder keepaliveWithoutCalls(Boolean keepaliveWithoutCalls) {
+        this.keepaliveWithoutCalls = keepaliveWithoutCalls;
         return this;
     }
 
