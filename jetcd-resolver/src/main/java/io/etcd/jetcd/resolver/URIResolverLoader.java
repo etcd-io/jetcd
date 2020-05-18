@@ -39,9 +39,7 @@ public interface URIResolverLoader {
     static URIResolverLoader defaultLoader() {
         return () -> {
             List<URIResolver> resolvers = new ArrayList<>();
-
             ServiceLoader.load(URIResolver.class).forEach(resolvers::add);
-
             return resolvers;
         };
     }

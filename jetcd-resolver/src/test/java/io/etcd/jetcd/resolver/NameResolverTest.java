@@ -27,7 +27,7 @@ public class NameResolverTest {
     private static final String[] DIRECT_SCHEMES = new String[] { "http", "https" };
 
     @Test
-    public void testDefaults() throws Exception {
+    public void testDefaults() {
         final URIResolverLoader loader = URIResolverLoader.defaultLoader();
         final SmartNameResolver resolver = new SmartNameResolver("etcd", Collections.emptyList(), loader);
 
@@ -35,7 +35,7 @@ public class NameResolverTest {
     }
 
     @Test
-    public void testDirectResolver() throws Exception {
+    public void testDirectResolver() {
         final DirectUriResolver discovery = new DirectUriResolver();
 
         for (String scheme : DIRECT_SCHEMES) {
@@ -47,7 +47,7 @@ public class NameResolverTest {
     }
 
     @Test
-    public void testUnsupportedDirectSchema() throws Exception {
+    public void testUnsupportedDirectSchema() {
         final DirectUriResolver discovery = new DirectUriResolver();
         final URI uri = URI.create("mailto://127.0.0.1:2379");
 

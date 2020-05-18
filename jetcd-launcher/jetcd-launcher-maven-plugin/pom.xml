@@ -35,12 +35,6 @@
             <artifactId>jetcd-launcher</artifactId>
         </dependency>
         <dependency>
-            <!-- maven-plugin-plugin is dumb and doesn't dig the <optional> for JUnit in launcher -->
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-core</artifactId>
             <version>3.6.3</version>

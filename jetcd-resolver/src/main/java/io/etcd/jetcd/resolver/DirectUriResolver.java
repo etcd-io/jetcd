@@ -33,7 +33,7 @@ public final class DirectUriResolver implements URIResolver {
 
     private static final List<String> SCHEMES = Arrays.asList("http", "https");
 
-    private ConcurrentMap<URI, List<SocketAddress>> cache;
+    private final ConcurrentMap<URI, List<SocketAddress>> cache;
 
     DirectUriResolver() {
         this.cache = new ConcurrentHashMap<>();
@@ -54,11 +54,7 @@ public final class DirectUriResolver implements URIResolver {
             return false;
         }
 
-        if (uri.getPort() == -1) {
-            return false;
-        }
-
-        return true;
+        return uri.getPort() != -1;
     }
 
     @Override
@@ -68,7 +64,8 @@ public final class DirectUriResolver implements URIResolver {
             throw EtcdExceptionFactory.newEtcdException(ErrorCode.INVALID_ARGUMENT, "Unsupported URI " + uri);
         }
 
-        return this.cache.computeIfAbsent(uri,
+        return this.cache.computeIfAbsent(
+            uri,
             u -> Collections.singletonList(new InetSocketAddress(uri.getHost(), uri.getPort())));
     }
 }

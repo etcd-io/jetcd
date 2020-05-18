@@ -438,7 +438,7 @@ public final class ClientBuilder implements Cloneable {
     /**
      * The interval for gRPC keepalives.
      * The current minimum allowed by gRPC is 10s
-     * 
+     *
      * @param keepaliveTimeMs time in ms between keepalives
      */
     public ClientBuilder keepaliveTimeMs(Long keepaliveTimeMs) {
@@ -454,8 +454,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * The timeout for gRPC keepalives
-     * 
-     * @param keepaliveTimeoutMs
+     *
+     * @param keepaliveTimeoutMs the gRPC keep alive timeout in milliseconds.
      */
     public ClientBuilder keepaliveTimeoutMs(Long keepaliveTimeoutMs) {
         this.keepaliveTimeoutMs = keepaliveTimeoutMs;
@@ -468,8 +468,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Keepalive option for gRPC
-     * 
-     * @param keepaliveWithoutCalls
+     *
+     * @param keepaliveWithoutCalls the gRPC keep alive without calls.
      */
     public ClientBuilder keepaliveWithoutCalls(Boolean keepaliveWithoutCalls) {
         this.keepaliveWithoutCalls = keepaliveWithoutCalls;
