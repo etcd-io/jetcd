@@ -46,7 +46,7 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 public class EtcdContainer implements AutoCloseable {
-    public static final String ETCD_DOCKER_IMAGE_NAME = "gcr.io/etcd-development/etcd:v3.4.5";
+    public static final String ETCD_DOCKER_IMAGE_NAME = "gcr.io/etcd-development/etcd:v3.4.7";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EtcdCluster.class);
     private static final int ETCD_CLIENT_PORT = 2379;
