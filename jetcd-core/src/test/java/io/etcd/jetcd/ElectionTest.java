@@ -216,8 +216,8 @@ public class ElectionTest {
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         List<Future<?>> futures = new ArrayList<>(threadCount);
         for (int i = 0; i < threadCount; ++i) {
-            final Integer id = i;
-            final ByteSequence proposal = ByteSequence.from(id.toString(), StandardCharsets.UTF_8);
+            final int id = i;
+            final ByteSequence proposal = ByteSequence.from(Integer.toString(id), StandardCharsets.UTF_8);
             futures.add(executor.submit(() -> {
                 try {
                     Election electionClient = clients.get(id).getElectionClient();

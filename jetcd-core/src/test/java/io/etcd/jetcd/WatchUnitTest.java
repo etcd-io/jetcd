@@ -52,6 +52,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -69,6 +70,53 @@ public class WatchUnitTest {
     private AtomicReference<StreamObserver<WatchResponse>> responseObserverRef;
     @Mock
     private StreamObserver<WatchRequest> requestStreamObserverMock;
+
+    // return a ArgumentMatcher that checks if the captured WatchRequest has same key.
+    private static ArgumentMatcher<WatchRequest> hasCreateKey(ByteSequence key) {
+        return o -> Arrays.equals(o.getCreateRequest().getKey().toByteArray(), key.getBytes());
+    }
+
+    private static WatchImplBase createWatchImpBase(AtomicReference<StreamObserver<WatchResponse>> responseObserverRef,
+        StreamObserver<WatchRequest> requestStreamObserver) {
+        return new WatchImplBase() {
+            @Override
+            public StreamObserver<WatchRequest> watch(StreamObserver<WatchResponse> responseObserver) {
+                responseObserverRef.set(responseObserver);
+                return requestStreamObserver;
+            }
+        };
+    }
+
+    private static void assertEqualOnWatchResponses(io.etcd.jetcd.watch.WatchResponse expected,
+        io.etcd.jetcd.watch.WatchResponse actual) {
+        assertThat(actual.getEvents().size()).isEqualTo(expected.getEvents().size());
+
+        for (int idx = 0; idx < expected.getEvents().size(); idx++) {
+            WatchEvent act = actual.getEvents().get(idx);
+            WatchEvent exp = actual.getEvents().get(idx);
+            assertThat(act.getEventType()).isEqualTo(exp.getEventType());
+            assertEqualOnKeyValues(act.getKeyValue(), exp.getKeyValue());
+            assertEqualOnKeyValues(act.getPrevKV(), exp.getPrevKV());
+        }
+    }
+
+    private static void assertEqualOnKeyValues(io.etcd.jetcd.KeyValue act, io.etcd.jetcd.KeyValue exp) {
+        assertThat(act.getModRevision()).isEqualTo(exp.getModRevision());
+        assertThat(act.getCreateRevision()).isEqualTo(exp.getCreateRevision());
+        assertThat(act.getLease()).isEqualTo(exp.getLease());
+        assertThat(act.getValue().getBytes()).isEqualTo(exp.getValue().getBytes());
+        assertThat(act.getVersion()).isEqualTo(exp.getVersion());
+    }
+
+    private static WatchResponse createWatchResponse(int id, Event... events) {
+        WatchResponse.Builder builder = WatchResponse.newBuilder().setCreated(true).setWatchId(id);
+
+        for (Event event : events) {
+            builder.addEvents(event);
+        }
+
+        return builder.build();
+    }
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -91,14 +139,16 @@ public class WatchUnitTest {
     public void testCreateWatcherAfterClientClosed() {
         watchClient.close();
 
-        assertThatExceptionOfType(ClosedClientException.class).isThrownBy(() -> watchClient.watch(KEY, Watch.listener(r -> {
-        })));
+        assertThatExceptionOfType(ClosedClientException.class)
+            .isThrownBy(() -> watchClient.watch(KEY, Watch.listener(TestUtil::noOpWatchResponseConsumer)));
     }
 
     @Test
     public void testWatchOnSendingWatchCreateRequest() {
-        try (Watch.Watcher watcher = watchClient.watch(KEY, WatchOption.DEFAULT, Watch.listener(r -> {
-        }))) {
+        try (Watch.Watcher watcher = watchClient.watch(
+            KEY,
+            WatchOption.DEFAULT,
+            Watch.listener(TestUtil::noOpWatchResponseConsumer))) {
             // expects a WatchCreateRequest is created.
             verify(this.requestStreamObserverMock, timeout(100).times(1)).onNext(argThat(hasCreateKey(KEY)));
         }
@@ -131,13 +181,10 @@ public class WatchUnitTest {
 
     @Test
     public void testWatcherListenOnWatcherClose() throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
         AtomicBoolean ref = new AtomicBoolean();
-        Watch.Listener listener = Watch.listener(r -> {
-        }, () -> {
-            ref.set(true);
-            latch.countDown();
-        });
+        Watch.Listener listener = Watch.listener(
+            TestUtil::noOpWatchResponseConsumer,
+            () -> ref.set(true));
 
         Watch.Watcher watcher = watchClient.watch(KEY, listener);
 
@@ -150,20 +197,16 @@ public class WatchUnitTest {
             }
         });
 
-        latch.await(4, TimeUnit.SECONDS);
-
-        assertThat(ref.get()).isTrue();
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isTrue());
     }
 
     @Test
     public void testWatcherListenOnWatchClientClose() throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
         AtomicBoolean ref = new AtomicBoolean();
-        Watch.Listener listener = Watch.listener(r -> {
-        }, () -> {
-            ref.set(true);
-            latch.countDown();
-        });
+
+        Watch.Listener listener = Watch.listener(
+            TestUtil::noOpWatchResponseConsumer,
+            () -> ref.set(true));
 
         Watch.Watcher watcher = watchClient.watch(KEY, listener);
 
@@ -176,9 +219,7 @@ public class WatchUnitTest {
             }
         });
 
-        latch.await(4, TimeUnit.SECONDS);
-
-        assertThat(ref.get()).isTrue();
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isTrue());
     }
 
     @Test
@@ -355,52 +396,5 @@ public class WatchUnitTest {
             assertThat(ref.get()).isInstanceOf(EtcdException.class)
                 .hasMessageContaining("etcd server failed to create watch id");
         }
-    }
-
-    // return a ArgumentMatcher that checks if the captured WatchRequest has same key.
-    private static ArgumentMatcher<WatchRequest> hasCreateKey(ByteSequence key) {
-        return o -> Arrays.equals(o.getCreateRequest().getKey().toByteArray(), key.getBytes());
-    }
-
-    private static WatchImplBase createWatchImpBase(AtomicReference<StreamObserver<WatchResponse>> responseObserverRef,
-        StreamObserver<WatchRequest> requestStreamObserver) {
-        return new WatchImplBase() {
-            @Override
-            public StreamObserver<WatchRequest> watch(StreamObserver<WatchResponse> responseObserver) {
-                responseObserverRef.set(responseObserver);
-                return requestStreamObserver;
-            }
-        };
-    }
-
-    private static void assertEqualOnWatchResponses(io.etcd.jetcd.watch.WatchResponse expected,
-        io.etcd.jetcd.watch.WatchResponse actual) {
-        assertThat(actual.getEvents().size()).isEqualTo(expected.getEvents().size());
-
-        for (int idx = 0; idx < expected.getEvents().size(); idx++) {
-            WatchEvent act = actual.getEvents().get(idx);
-            WatchEvent exp = actual.getEvents().get(idx);
-            assertThat(act.getEventType()).isEqualTo(exp.getEventType());
-            assertEqualOnKeyValues(act.getKeyValue(), exp.getKeyValue());
-            assertEqualOnKeyValues(act.getPrevKV(), exp.getPrevKV());
-        }
-    }
-
-    private static void assertEqualOnKeyValues(io.etcd.jetcd.KeyValue act, io.etcd.jetcd.KeyValue exp) {
-        assertThat(act.getModRevision()).isEqualTo(exp.getModRevision());
-        assertThat(act.getCreateRevision()).isEqualTo(exp.getCreateRevision());
-        assertThat(act.getLease()).isEqualTo(exp.getLease());
-        assertThat(act.getValue().getBytes()).isEqualTo(exp.getValue().getBytes());
-        assertThat(act.getVersion()).isEqualTo(exp.getVersion());
-    }
-
-    private static WatchResponse createWatchResponse(int id, Event... events) {
-        WatchResponse.Builder builder = WatchResponse.newBuilder().setCreated(true).setWatchId(id);
-
-        for (Event event : events) {
-            builder.addEvents(event);
-        }
-
-        return builder.build();
     }
 }

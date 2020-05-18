@@ -17,15 +17,14 @@
 package io.etcd.jetcd;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.function.Consumer;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.test.EtcdClusterExtension;
-import io.etcd.jetcd.watch.WatchResponse;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,6 +34,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static io.etcd.jetcd.TestUtil.randomByteSequence;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @Timeout(value = 30)
@@ -53,23 +53,13 @@ public class WatchErrorTest {
     @MethodSource("parameters")
     public void testWatchOnError(final Client client) throws Exception {
         final ByteSequence key = randomByteSequence();
-        final List<Throwable> events = new ArrayList<>();
-        final CountDownLatch latch = new CountDownLatch(1);
+        final List<Throwable> events = Collections.synchronizedList(new ArrayList<>());
 
-        Consumer<WatchResponse> onNext = r -> {
-            // no-op
-        };
-        Consumer<Throwable> onError = t -> {
-            events.add(t);
-            latch.countDown();
-        };
-
-        try (Watcher watcher = client.getWatchClient().watch(key, onNext, onError)) {
+        try (Watcher watcher = client.getWatchClient().watch(key, TestUtil::noOpWatchResponseConsumer, events::add)) {
             cluster.close();
-            latch.await();
+            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(events).isNotEmpty());
         }
 
-        assertThat(events).isNotEmpty();
         assertThat(events).allMatch(EtcdException.class::isInstance);
     }
 }

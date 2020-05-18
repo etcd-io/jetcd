@@ -43,6 +43,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static io.etcd.jetcd.TestUtil.randomByteSequence;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @Timeout(value = 30)
@@ -53,7 +54,8 @@ public class WatchTest {
     public static final ByteSequence namespace = bytesOf("test-namespace/");
 
     static Stream<Arguments> parameters() {
-        return Stream.of(arguments(Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace).build()),
+        return Stream.of(
+            arguments(Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace).build()),
             arguments(Client.builder().endpoints(cluster.getClientEndpoints()).build()));
     }
 
@@ -64,19 +66,14 @@ public class WatchTest {
         final Client client = Client.builder().endpoints(cluster.getClientEndpoints()).build();
         final Client nsClient = Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace).build();
 
-        final CountDownLatch latch = new CountDownLatch(1);
         final ByteSequence value = randomByteSequence();
         final AtomicReference<WatchResponse> ref = new AtomicReference<>();
 
         // From client with namespace watch for key. Since client is namespaced it should watch for namespaced key.
-        try (Watcher watcher = nsClient.getWatchClient().watch(key, response -> {
-            ref.set(response);
-            latch.countDown();
-        })) {
-
+        try (Watcher watcher = nsClient.getWatchClient().watch(key, ref::set)) {
             // Using non-namespaced client put namespaced key.
             client.getKVClient().put(nsKey, value).get();
-            latch.await(4, TimeUnit.SECONDS);
+            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
 
             assertThat(ref.get()).isNotNull();
             assertThat(ref.get().getEvents().size()).isEqualTo(1);
@@ -89,17 +86,14 @@ public class WatchTest {
     @MethodSource("parameters")
     public void testWatchOnPut(final Client client) throws Exception {
         final ByteSequence key = randomByteSequence();
-        final CountDownLatch latch = new CountDownLatch(1);
         final ByteSequence value = randomByteSequence();
         final AtomicReference<WatchResponse> ref = new AtomicReference<>();
 
-        try (Watcher watcher = client.getWatchClient().watch(key, response -> {
-            ref.set(response);
-            latch.countDown();
-        })) {
+        try (Watcher watcher = client.getWatchClient().watch(key, ref::set)) {
 
             client.getKVClient().put(key, value).get();
-            latch.await(4, TimeUnit.SECONDS);
+
+            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
 
             assertThat(ref.get()).isNotNull();
             assertThat(ref.get().getEvents().size()).isEqualTo(1);
@@ -116,25 +110,17 @@ public class WatchTest {
         final ByteSequence value = randomByteSequence();
         final List<WatchResponse> res = Collections.synchronizedList(new ArrayList<>(2));
 
-        try (Watcher w1 = client.getWatchClient().watch(key, response -> {
-            res.add(response);
-            latch.countDown();
-        })) {
+        try (Watcher w1 = client.getWatchClient().watch(key, res::add);
+            Watcher w2 = client.getWatchClient().watch(key, res::add)) {
 
-            try (Watcher w2 = client.getWatchClient().watch(key, response -> {
-                res.add(response);
-                latch.countDown();
-            })) {
+            client.getKVClient().put(key, value).get();
+            latch.await(4, TimeUnit.SECONDS);
 
-                client.getKVClient().put(key, value).get();
-                latch.await(4, TimeUnit.SECONDS);
-
-                assertThat(res).hasSize(2);
-                assertThat(res.get(0)).usingRecursiveComparison().isEqualTo(res.get(1));
-                assertThat(res.get(0).getEvents().size()).isEqualTo(1);
-                assertThat(res.get(0).getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
-                assertThat(res.get(0).getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
-            }
+            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(res).hasSize(2));
+            assertThat(res.get(0)).usingRecursiveComparison().isEqualTo(res.get(1));
+            assertThat(res.get(0).getEvents().size()).isEqualTo(1);
+            assertThat(res.get(0).getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
+            assertThat(res.get(0).getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
         }
     }
 
@@ -142,21 +128,16 @@ public class WatchTest {
     @MethodSource("parameters")
     public void testWatchOnDelete(final Client client) throws Exception {
         final ByteSequence key = randomByteSequence();
-        final CountDownLatch latch = new CountDownLatch(1);
         final ByteSequence value = randomByteSequence();
         final AtomicReference<WatchResponse> ref = new AtomicReference<>();
 
         client.getKVClient().put(key, value).get();
 
-        try (Watcher watcher = client.getWatchClient().watch(key, response -> {
-            ref.set(response);
-            latch.countDown();
-        })) {
+        try (Watcher watcher = client.getWatchClient().watch(key, ref::set)) {
             client.getKVClient().delete(key).get();
 
-            latch.await(4, TimeUnit.SECONDS);
+            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
 
-            assertThat(ref.get()).isNotNull();
             assertThat(ref.get().getEvents().size()).isEqualTo(1);
 
             WatchEvent event = ref.get().getEvents().get(0);
@@ -177,19 +158,13 @@ public class WatchTest {
         // Compact until latest revision
         client.getKVClient().compact(putResponse.getHeader().getRevision()).get();
 
-        final CountDownLatch latch = new CountDownLatch(1);
         final AtomicReference<Throwable> ref = new AtomicReference<>();
         // Try to listen from previous revision on
-        final WatchOption watchOption = WatchOption.newBuilder().withRevision(putResponse.getHeader().getRevision() - 1)
-            .build();
-        try (Watcher watcher = client.getWatchClient().watch(key, watchOption, Watch.listener(response -> {
-        }, error -> {
-            ref.set(error);
-            latch.countDown();
-        }))) {
-            latch.await(4, TimeUnit.SECONDS);
-            // Expect CompactedException
-            assertThat(ref.get()).isNotNull();
+        final WatchOption options = WatchOption.newBuilder().withRevision(putResponse.getHeader().getRevision() - 1).build();
+        final Watch wc = client.getWatchClient();
+
+        try (Watcher watcher = wc.watch(key, options, Watch.listener(TestUtil::noOpWatchResponseConsumer, ref::set))) {
+            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
             assertThat(ref.get().getClass()).isEqualTo(CompactedException.class);
         }
     }
@@ -199,23 +174,16 @@ public class WatchTest {
     public void testWatchClose(final Client client) throws Exception {
         final ByteSequence key = randomByteSequence();
         final ByteSequence value = randomByteSequence();
-        final List<WatchResponse> events = new ArrayList<>();
+        final List<WatchResponse> events = Collections.synchronizedList(new ArrayList<>());
 
-        final CountDownLatch l1 = new CountDownLatch(1);
-        final CountDownLatch l2 = new CountDownLatch(1);
-
-        try (Watcher watcher = client.getWatchClient().watch(key, response -> {
-            events.add(response);
-            l1.countDown();
-        })) {
+        try (Watcher watcher = client.getWatchClient().watch(key, events::add)) {
             client.getKVClient().put(key, value).get();
-            l1.await();
+            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(events).isNotEmpty());
         }
 
         client.getKVClient().put(key, randomByteSequence()).get();
-        l2.await(4, TimeUnit.SECONDS);
 
-        assertThat(events).hasSize(1);
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(events).hasSize(1));
         assertThat(events.get(0).getEvents()).hasSize(1);
         assertThat(events.get(0).getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
         assertThat(events.get(0).getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);

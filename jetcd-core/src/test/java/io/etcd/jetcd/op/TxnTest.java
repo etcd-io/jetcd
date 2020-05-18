@@ -16,8 +16,6 @@
 
 package io.etcd.jetcd.op;
 
-import java.util.concurrent.ExecutionException;
-
 import io.etcd.jetcd.options.PutOption;
 import org.junit.jupiter.api.Test;
 
@@ -31,19 +29,19 @@ public class TxnTest {
 
     @Test
     @SuppressWarnings("FutureReturnValueIgnored") // CompletableFuture is null
-    public void testIfs() throws InterruptedException, ExecutionException {
+    public void testIfs() {
         TxnImpl.newTxn((t) -> null).If(CMP).If(CMP).commit();
     }
 
     @Test
     @SuppressWarnings("FutureReturnValueIgnored") // CompletableFuture is null
-    public void testThens() throws InterruptedException, ExecutionException {
+    public void testThens() {
         TxnImpl.newTxn((t) -> null).Then(OP).Then(OP).commit();
     }
 
     @Test
     @SuppressWarnings("FutureReturnValueIgnored") // CompletableFuture is null
-    public void testElses() throws InterruptedException, ExecutionException {
+    public void testElses() {
         TxnImpl.newTxn((t) -> null).Else(OP).Else(OP).commit();
     }
 

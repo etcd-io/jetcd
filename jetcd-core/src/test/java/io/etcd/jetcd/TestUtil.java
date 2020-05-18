@@ -22,6 +22,7 @@ import java.net.ServerSocket;
 
 import com.google.common.base.Charsets;
 import com.google.protobuf.ByteString;
+import io.etcd.jetcd.watch.WatchResponse;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -74,5 +75,9 @@ public class TestUtil {
             conditionDetails = conditionDetails != null ? conditionDetails : "";
             throw new AssertionError("Condition not met within timeout " + maxWaitMs + ". " + conditionDetails);
         }
+    }
+
+    public static void noOpWatchResponseConsumer(WatchResponse response) {
+        // no-op
     }
 }

@@ -95,7 +95,7 @@ public class LeaseUnitTest {
         Throwable t = Status.ABORTED.asRuntimeException();
         responseObserverRef.get().onError(t);
 
-        assertThatThrownBy(() -> lrpFuture.get()).hasCause(toEtcdException(t));
+        assertThatThrownBy(lrpFuture::get).hasCause(toEtcdException(t));
     }
 
     @Test
