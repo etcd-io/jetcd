@@ -80,10 +80,8 @@
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
         <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
-        <maven-bundle-plugin.version>4.2.1</maven-bundle-plugin.version>
         <maven-shade-plugin.version>3.2.3</maven-shade-plugin.version>
         <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
-        <depends-maven-plugin.version>1.4.0</depends-maven-plugin.version>
         <os-maven-plugin.version>1.6.2</os-maven-plugin.version>
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
@@ -115,11 +113,6 @@
         <protobuf.version>3.11.4</protobuf.version>
         <failsafe.version>2.3.5</failsafe.version>
 
-        <!-- osgi dependencies -->
-        <karaf.version>4.2.8</karaf.version>
-        <osgi.ds.version>1.4.0</osgi.ds.version>
-        <pax.exam.version>4.13.1</pax.exam.version>
-
         <!-- test dependencies -->
         <mockito.version>3.3.3</mockito.version>
         <assertj.version>3.16.1</assertj.version>
@@ -139,7 +132,6 @@
         <module>jetcd-core</module>
         <module>jetcd-extensions</module>
         <module>jetcd-all</module>
-        <module>jetcd-osgi</module>
         <module>jetcd-examples</module>
     </modules>
 
@@ -183,16 +175,6 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>jetcd-all</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>jetcd-osgi</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>jetcd-karaf</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -567,35 +549,6 @@
                             </configuration>
                         </execution>
                     </executions>
-                </plugin>
-
-                <!--
-                    generate maven dependencies versions file that can be used later
-                    to install the right bundle in test phase.
-
-                    The file is:
-
-                        ${project.build.directory}/classes/META-INF/maven/dependencies.properties
-                -->
-                <plugin>
-                    <groupId>org.apache.servicemix.tooling</groupId>
-                    <artifactId>depends-maven-plugin</artifactId>
-                    <version>${depends-maven-plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <id>generate-depends-file</id>
-                            <goals>
-                                <goal>generate-depends-file</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.felix</groupId>
-                    <artifactId>maven-bundle-plugin</artifactId>
-                    <version>${maven-bundle-plugin.version}</version>
-                    <extensions>true</extensions>
                 </plugin>
 
                 <plugin>
