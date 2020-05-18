@@ -65,9 +65,9 @@ public final class ClientBuilder implements Cloneable {
     private ByteSequence namespace = ByteSequence.EMPTY;
     private long retryDelay = 500;
     private long retryMaxDelay = 2500;
-    private Long keepaliveTimeMs;
-    private Long keepaliveTimeoutMs;
-    private Boolean keepaliveWithoutCalls;
+    private Long keepaliveTimeMs = 30000L;
+    private Long keepaliveTimeoutMs = 10000L;
+    private Boolean keepaliveWithoutCalls = true;
     private ChronoUnit retryChronoUnit = ChronoUnit.MILLIS;
     private String retryMaxDuration;
 
