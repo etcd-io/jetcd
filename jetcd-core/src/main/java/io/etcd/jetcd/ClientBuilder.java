@@ -334,7 +334,7 @@ public final class ClientBuilder implements Cloneable {
      * @return the headers to be added to http request headers
      */
     public Map<Metadata.Key<?>, Object> headers() {
-        return Collections.unmodifiableMap(headers);
+        return headers == null ? Collections.emptyMap() : Collections.unmodifiableMap(headers);
     }
 
     /**
