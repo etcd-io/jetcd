@@ -30,7 +30,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>${project.groupId}</groupId>
+            <groupId>io.etcd</groupId>
             <artifactId>jetcd-core</artifactId>
         </dependency>
         <dependency>
@@ -96,11 +96,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.servicemix.tooling</groupId>
-                <artifactId>depends-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

@@ -37,7 +37,8 @@ public class MavenPluginTest {
     @Test
     public void testEtcdServerStarted() throws Exception {
         final String filePath = "target/jetcd-launcher-maven-plugin/endpoint";
-        String endpoint = Files.readFirstLine(new File(filePath), US_ASCII);
+        final String endpoint = Files.asCharSource(new File(filePath), US_ASCII).readFirstLine();
+
         try (Client client = Client.builder().endpoints(endpoint).build()) {
             assertThat(client.getKVClient().get(Constants.NULL_KEY).get(7, TimeUnit.SECONDS).getCount()).isEqualTo(0);
         }

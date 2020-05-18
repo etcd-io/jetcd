@@ -30,7 +30,7 @@ public class NameResolverTest {
     private static final String[] DNSSRV_SCHEMES = new String[] { "dns+srv", "dnssrv", "srv" };
 
     @Test
-    public void testUriResolverDiscovery() throws Exception {
+    public void testUriResolverDiscovery() {
         final URIResolverLoader loader = URIResolverLoader.defaultLoader();
         final SmartNameResolver resolver = new SmartNameResolver("etcd", Collections.emptyList(), loader);
 
@@ -39,7 +39,7 @@ public class NameResolverTest {
     }
 
     @Test
-    public void testDnsSrvResolver() throws Exception {
+    public void testDnsSrvResolver() {
         final DnsSrvUriResolver discovery = new DnsSrvUriResolver();
 
         for (String scheme : DNSSRV_SCHEMES) {
