@@ -56,7 +56,6 @@ public final class ClientBuilder implements Cloneable {
     private ExecutorService executorService;
     private String loadBalancerPolicy;
     private SslContext sslContext;
-    private boolean lazyInitialization = false;
     private String authority;
     private URIResolverLoader uriResolverLoader;
     private Integer maxInboundMessageSize;
@@ -230,26 +229,6 @@ public final class ClientBuilder implements Cloneable {
      */
     public String loadBalancerPolicy() {
         return loadBalancerPolicy;
-    }
-
-    /**
-     * @return true if the client initialize connections lazily
-     */
-    public boolean lazyInitialization() {
-        return lazyInitialization;
-    }
-
-    /**
-     * Define if the client has to initialize connectivity and authentication on client constructor
-     * or delay it to the first call to a client. Default is false.
-     *
-     * @param  lazyInitialization true if the client has to lazily perform
-     *                            connectivity/authentication.
-     * @return                    this builder
-     */
-    public ClientBuilder lazyInitialization(boolean lazyInitialization) {
-        this.lazyInitialization = lazyInitialization;
-        return this;
     }
 
     /**
