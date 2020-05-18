@@ -19,7 +19,6 @@ package io.etcd.jetcd;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -33,6 +32,7 @@ import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @Timeout(value = 30)
 public class WatchTokenExpireTest {
@@ -41,7 +41,10 @@ public class WatchTokenExpireTest {
     // time-to-live of the token.
     @RegisterExtension
     public static final EtcdClusterExtension cluster = new EtcdClusterExtension(
-        "etcd-ssl", 1, true, "--auth-token",
+        "etcd-ssl",
+        1,
+        true,
+        "--auth-token",
         "jwt,pub-key=/etc/ssl/etcd/server.pem,priv-key=/etc/ssl/etcd/server-key.pem,sign-method=RS256,ttl=1s");
 
     private static final ByteSequence key = TestUtil.randomByteSequence();
@@ -49,9 +52,13 @@ public class WatchTokenExpireTest {
     private static final ByteSequence password = TestUtil.randomByteSequence();
 
     private void setUpEnvironment() throws Exception {
-        File caFile = new File(getClass().getResource("/ssl/cert/ca.pem").toURI());
-        Client client = Client.builder().endpoints(cluster.getClientEndpoints())
-            .authority("etcd0").sslContext(b -> b.trustManager(caFile)).build();
+        final File caFile = new File(getClass().getResource("/ssl/cert/ca.pem").toURI());
+
+        Client client = Client.builder()
+            .endpoints(cluster.getClientEndpoints())
+            .authority("etcd0")
+            .sslContext(b -> b.trustManager(caFile))
+            .build();
 
         // enable authentication to enforce usage of access token
         ByteSequence role = TestUtil.bytesOf("root");
@@ -66,9 +73,14 @@ public class WatchTokenExpireTest {
     }
 
     private Client createAuthClient() throws Exception {
-        File caFile = new File(getClass().getResource("/ssl/cert/ca.pem").toURI());
-        return Client.builder().endpoints(cluster.getClientEndpoints())
-            .user(user).password(password).authority("etcd0").sslContext(b -> b.trustManager(caFile)).build();
+        final File caFile = new File(getClass().getResource("/ssl/cert/ca.pem").toURI());
+
+        return Client.builder()
+            .endpoints(cluster.getClientEndpoints())
+            .user(user)
+            .password(password)
+            .authority("etcd0")
+            .sslContext(b -> b.trustManager(caFile)).build();
     }
 
     @Test
@@ -82,14 +94,12 @@ public class WatchTokenExpireTest {
         authKVClient.put(key, TestUtil.randomByteSequence()).get(1, TimeUnit.SECONDS);
         Thread.sleep(3000);
 
-        CountDownLatch latch = new CountDownLatch(2);
         AtomicInteger modifications = new AtomicInteger();
 
         // watch should handle token refresh automatically
         // token is already expired when we attempt to create a watch
         Watch.Watcher watcher = authWatchClient.watch(key, response -> {
             modifications.incrementAndGet();
-            latch.countDown();
         });
 
         // create single thread pool, so that tasks are executed one after another
@@ -108,8 +118,7 @@ public class WatchTokenExpireTest {
             }));
         }
 
-        latch.await(10, TimeUnit.SECONDS);
-        assertThat(modifications.get()).isEqualTo(2);
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(modifications.get()).isEqualTo(2));
 
         executor.shutdownNow();
         futures.forEach(f -> assertThat(f).isDone());

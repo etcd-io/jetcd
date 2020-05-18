@@ -16,7 +16,6 @@
 
 package io.etcd.jetcd;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -31,6 +30,7 @@ import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @Timeout(value = 30)
 public class WatchResumeTest {
@@ -56,22 +56,16 @@ public class WatchResumeTest {
 
     @Test
     public void testWatchOnPut() throws Exception {
-        CountDownLatch latch = new CountDownLatch(1);
-        ByteSequence key = TestUtil.randomByteSequence();
-        ByteSequence value = TestUtil.randomByteSequence();
-        AtomicReference<WatchResponse> ref = new AtomicReference<>();
+        final ByteSequence key = TestUtil.randomByteSequence();
+        final ByteSequence value = TestUtil.randomByteSequence();
+        final AtomicReference<WatchResponse> ref = new AtomicReference<>();
 
-        try (Watcher watcher = watchClient.watch(key, response -> {
-            ref.set(response);
-            latch.countDown();
-        })) {
-
+        try (Watcher watcher = watchClient.watch(key, ref::set)) {
             cluster.restart();
-
             kvClient.put(key, value).get(1, TimeUnit.SECONDS);
-            latch.await(4, TimeUnit.SECONDS);
 
-            assertThat(ref.get()).isNotNull();
+            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
+
             assertThat(ref.get().getEvents().size()).isEqualTo(1);
             assertThat(ref.get().getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
             assertThat(ref.get().getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);

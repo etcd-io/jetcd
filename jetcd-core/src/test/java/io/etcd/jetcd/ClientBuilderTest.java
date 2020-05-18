@@ -47,12 +47,12 @@ public class ClientBuilderTest {
     }
 
     @Test
-    public void testEndPoints_Verify_Empty() throws URISyntaxException {
+    public void testEndPoints_Verify_Empty() {
         assertThatThrownBy(() -> Client.builder().endpoints(new URI(""))).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
-    public void testEndPoints_Verify_SomeEmpty() throws URISyntaxException {
+    public void testEndPoints_Verify_SomeEmpty() {
         assertThatThrownBy(() -> Client.builder().endpoints(new URI("http://127.0.0.1:2379"), new URI("")))
             .isInstanceOf(IllegalArgumentException.class);
     }
@@ -64,7 +64,7 @@ public class ClientBuilderTest {
 
     @Test
     public void testMaxInboundMessageSize() throws URISyntaxException {
-        final int value = 1024 * 1 + new Random().nextInt(10);
+        final int value = 1024 + new Random().nextInt(10);
         final ClientBuilder builder = Client.builder().endpoints(new URI("http://127.0.0.1:2379")).maxInboundMessageSize(value);
         final NettyChannelBuilder channelBuilder = (NettyChannelBuilder) new ClientConnectionManager(builder)
             .defaultChannelBuilder();

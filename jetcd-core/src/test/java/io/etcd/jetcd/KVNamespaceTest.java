@@ -19,6 +19,7 @@ package io.etcd.jetcd;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import com.google.protobuf.ByteString;
@@ -56,7 +57,7 @@ public class KVNamespaceTest {
     private KV kvClientWithNamespace;
     private KV kvClientWithNamespace2;
 
-    private static Integer keyIndex = -1;
+    private static final AtomicInteger keyIndex = new AtomicInteger(-1);
 
     @AfterEach
     public void cleanUpCase() {
@@ -334,7 +335,7 @@ public class KVNamespaceTest {
 
     /********************************* Internal Test Utilities. ******************************/
 
-    class TestKeyValue {
+    static class TestKeyValue {
         ByteSequence key;
         ByteSequence value;
 
@@ -345,10 +346,7 @@ public class KVNamespaceTest {
     }
 
     private static ByteSequence getNonexistentKey() {
-        synchronized (keyIndex) {
-            keyIndex++;
-            return bytesOf("sample_key_" + String.format("%05d", keyIndex));
-        }
+        return bytesOf("sample_key_" + String.format("%05d", keyIndex.incrementAndGet()));
     }
 
     private static void assertNonexistentKey(KV kvClient, ByteSequence key) throws Exception {

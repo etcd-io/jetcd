@@ -52,14 +52,14 @@ public class LockTest {
     private static final ByteSequence namespace2 = ByteSequence.from("test-ns2/", Charsets.UTF_8);
 
     @BeforeAll
-    public static void setUp() throws Exception {
+    public static void setUp() {
         Client client = Client.builder().endpoints(cluster.getClientEndpoints()).build();
 
         leaseClient = client.getLeaseClient();
     }
 
     @BeforeEach
-    public void setUpEach() throws Exception {
+    public void setUpEach() {
         locksToRelease = new HashSet<>();
     }
 
@@ -94,7 +94,7 @@ public class LockTest {
 
     @ParameterizedTest
     @MethodSource("parameters")
-    public void testLockWithNotExistingLease(boolean useNamespace) throws Exception {
+    public void testLockWithNotExistingLease(boolean useNamespace) {
         Throwable exception = assertThrows(ExecutionException.class, () -> {
             initializeLockCLient(useNamespace);
             CompletableFuture<LockResponse> feature = lockClient.lock(SAMPLE_NAME, 123456);
