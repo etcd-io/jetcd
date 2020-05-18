@@ -35,13 +35,6 @@ final class ClientImpl implements Client {
 
     public ClientImpl(ClientBuilder clientBuilder) {
         this.connectionManager = new ClientConnectionManager(clientBuilder.copy());
-
-        // If the client is not configured to be lazy, set up the managed connection and perform
-        // authentication
-        if (!clientBuilder.lazyInitialization()) {
-            this.connectionManager.getChannel();
-        }
-
         this.kvClient = new MemoizingClientSupplier<>(() -> new KVImpl(this.connectionManager));
         this.authClient = new MemoizingClientSupplier<>(() -> new AuthImpl(this.connectionManager));
         this.maintenanceClient = new MemoizingClientSupplier<>(() -> new MaintenanceImpl(this.connectionManager));
