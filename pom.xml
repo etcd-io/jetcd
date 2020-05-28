@@ -121,7 +121,7 @@
         <netty-tcnative.version>2.0.30.Final</netty-tcnative.version>
         <testcontainers.version>1.14.2</testcontainers.version>
         <commons-io.version>2.7</commons-io.version>
-        <awaitility.version>4.0.2</awaitility.version>
+        <awaitility.version>4.0.3</awaitility.version>
     </properties>
 
     <modules>
