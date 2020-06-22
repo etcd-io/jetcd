@@ -102,13 +102,14 @@
         <impsort-maven-plugin.version>1.4.1</impsort-maven-plugin.version>
 
         <!-- dependencies -->
-        <grpc.version>1.29.0</grpc.version>
+        <grpc.version>1.30.1</grpc.version>
         <slf4j.version>1.7.30</slf4j.version>
         <plexus-compiler-javac-errorprone.version>2.8.6</plexus-compiler-javac-errorprone.version>
         <error-prone-core.version>2.3.4</error-prone-core.version>
         <log4j2.version>2.13.3</log4j2.version>
         <jcommander.version>1.78</jcommander.version>
         <jool.version>0.9.14</jool.version>
+        <guava.version>28.2-jre</guava.version>
         <!-- should be in sync with protobuf grpc dependencies -->
         <protobuf.version>3.11.4</protobuf.version>
         <failsafe.version>2.4.0</failsafe.version>
@@ -188,6 +189,12 @@
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-core</artifactId>
                 <version>${grpc.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.guava</groupId>
+                        <artifactId>guava</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>io.grpc</groupId>
@@ -208,6 +215,12 @@
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-grpclb</artifactId>
                 <version>${grpc.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
             </dependency>
 
             <dependency>
