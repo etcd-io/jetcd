@@ -69,6 +69,7 @@ public final class ClientBuilder implements Cloneable {
     private Boolean keepaliveWithoutCalls = true;
     private ChronoUnit retryChronoUnit = ChronoUnit.MILLIS;
     private String retryMaxDuration;
+    private Integer connectTimeoutMs;
 
     ClientBuilder() {
     }
@@ -479,11 +480,30 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
+     * @return the connect timeout in milliseconds.
+     */
+    public Integer connectTimeoutMs() {
+        return connectTimeoutMs;
+    }
+
+    /**
      * @param  retryMaxDuration the retries max duration.
      * @return                  this builder
      */
     public ClientBuilder retryMaxDuration(String retryMaxDuration) {
         this.retryMaxDuration = retryMaxDuration;
+        return this;
+    }
+
+    /**
+     * @param  connectTimeoutMs Sets the connection timeout in milliseconds.
+     * @return                  Clients connecting to fault tolerant etcd clusters (eg, clusters with >= 3 etcd server
+     *                          peers/endpoints)
+     *                          should consider a value that will allow switching timely from a crashed/partitioned peer to
+     *                          a consensus peer.
+     */
+    public ClientBuilder connectTimeoutMs(Integer connectTimeoutMs) {
+        this.connectTimeoutMs = connectTimeoutMs;
         return this;
     }
 
