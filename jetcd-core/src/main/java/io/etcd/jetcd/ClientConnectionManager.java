@@ -55,6 +55,7 @@ import io.grpc.Status;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
+import io.netty.channel.ChannelOption;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 
@@ -220,6 +221,9 @@ final class ClientConnectionManager {
         }
         if (builder.keepaliveWithoutCalls() != null) {
             channelBuilder.keepAliveWithoutCalls(builder.keepaliveWithoutCalls());
+        }
+        if (builder.connectTimeoutMs() != null) {
+            channelBuilder.withOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, builder.connectTimeoutMs());
         }
 
         channelBuilder.nameResolverFactory(
