@@ -154,25 +154,27 @@ final class WatchImpl implements Watch {
 
         @Override
         public void close() {
-            if (closed.compareAndSet(false, true)) {
-                if (stream != null) {
-                    WatchCancelRequest watchCancelRequest = WatchCancelRequest.newBuilder().setWatchId(this.id).build();
 
-                    if (id != -1) {
-                        stream.onNext(WatchRequest.newBuilder().setCancelRequest(watchCancelRequest).build());
-                    }
-
+            // sync with onError()
+            synchronized (WatchImpl.this.lock) {
+                if (closed.compareAndSet(false, true)) {
                     if (stream != null) {
-                        stream.onError(Status.CANCELLED.withDescription("shutdown").asException());
-                        stream = null;
+                        WatchCancelRequest watchCancelRequest = WatchCancelRequest.newBuilder().setWatchId(this.id).build();
+
+                        if (id != -1) {
+                            stream.onNext(WatchRequest.newBuilder().setCancelRequest(watchCancelRequest).build());
+                        }
+
+                        if (stream != null) {
+                            stream.onError(Status.CANCELLED.withDescription("shutdown").asException());
+                            stream = null;
+                        }
                     }
-                }
 
-                id = -1;
+                    id = -1;
 
-                listener.onCompleted();
+                    listener.onCompleted();
 
-                synchronized (WatchImpl.this.lock) {
                     // remote the watcher from the watchers list
                     watchers.remove(this);
                 }
@@ -259,15 +261,20 @@ final class WatchImpl implements Watch {
 
         @Override
         public void onError(Throwable t) {
-            if (WatcherImpl.this.closed.get() || WatchImpl.this.closed.get()) {
-                return;
+            // sync with close()
+            synchronized (WatchImpl.this.lock) {
+                if (WatcherImpl.this.closed.get() || WatchImpl.this.closed.get()) {
+                    return;
+                }
+
+                Status status = Status.fromThrowable(t);
+                listener.onError(toEtcdException(status));
+
+                if (stream != null) {
+                    stream.onCompleted();
+                }
+                stream = null;
             }
-
-            Status status = Status.fromThrowable(t);
-            listener.onError(toEtcdException(status));
-
-            stream.onCompleted();
-            stream = null;
 
             Futures.addCallback(executor.schedule(this::resume, 500, TimeUnit.MILLISECONDS), new FutureCallback<Object>() {
                 @Override

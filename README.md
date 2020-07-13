@@ -137,7 +137,7 @@ See [CONTRIBUTING](https://github.com/etcd-io/jetcd/blob/master/CONTRIBUTING.md)
 
 ## Reporting bugs
 
-See [reporting bugs](https://github.com/etcd-io/etcd/blob/master/Documentation/reporting_bugs.md) for details about reporting any issues.
+See [reporting bugs](https://github.com/etcd-io/etcd/blob/master/Documentation/reporting-bugs.md) for details about reporting any issues.
 
 ## License
 
