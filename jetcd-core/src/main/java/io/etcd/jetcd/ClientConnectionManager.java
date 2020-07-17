@@ -307,10 +307,12 @@ final class ClientConnectionManager {
      * @param  <T>           Converted Type.
      * @return               a CompletableFuture with type T.
      */
-    public <S, T> CompletableFuture<T> execute(Callable<ListenableFuture<S>> task, Function<S, T> resultConvert,
+    @SuppressWarnings("FutureReturnValueIgnored")
+    public <S, T> CompletableFuture<T> execute(Callable<ListenableFuture<S>> task,
+        Function<S, T> resultConvert,
         Predicate<Throwable> doRetry) {
 
-        RetryPolicy<S> retryPolicy = new RetryPolicy<S>().handleIf(doRetry)
+        RetryPolicy<CompletableFuture<S>> retryPolicy = new RetryPolicy<CompletableFuture<S>>().handleIf(doRetry)
             .onRetriesExceeded(e -> newEtcdException(ErrorCode.ABORTED, "maximum number of auto retries reached"))
             .withBackoff(builder.retryDelay(), builder.retryMaxDelay(), builder.retryChronoUnit());
 
@@ -318,7 +320,26 @@ final class ClientConnectionManager {
             retryPolicy = retryPolicy.withMaxDuration(Duration.parse(builder.retryMaxDuration()));
         }
 
-        return Failsafe.with(retryPolicy).with(executorService).getAsync(() -> task.call().get()).thenApply(resultConvert);
+        return Failsafe.with(retryPolicy).with(executorService)
+            .getAsyncExecution(execution -> {
+                CompletableFuture<S> wrappedFuture = new CompletableFuture<>();
+                ListenableFuture<S> future = task.call();
+                future.addListener(() -> {
+                    try {
+                        wrappedFuture.complete(future.get());
+                        if (execution.complete(wrappedFuture)) {
+                            // success! but nothing to do here
+                        }
+                    } catch (Exception error) {
+                        if (!execution.retryOn(error)) {
+                            // permanent failure
+                            wrappedFuture.completeExceptionally(error);
+                        }
+                    }
+                }, executorService);
+                // note: the actual result value is supplied via execution.complete(..) above
+                return wrappedFuture;
+            }).thenCompose(f -> f.thenApply(resultConvert));
     }
 
     /**

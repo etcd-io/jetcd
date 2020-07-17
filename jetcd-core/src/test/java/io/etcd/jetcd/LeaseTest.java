@@ -18,6 +18,7 @@ package io.etcd.jetcd;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -86,7 +87,7 @@ public class LeaseTest {
         assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
 
         tearDown();
-        assertThatExceptionOfType(ExecutionException.class)
+        assertThatExceptionOfType(RejectedExecutionException.class)
             .isThrownBy(() -> leaseClient.grant(5, 2, TimeUnit.SECONDS).get().getID());
         setUp();
     }
