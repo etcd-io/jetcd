@@ -65,10 +65,15 @@ The [examples](https://github.com/etcd-io/jetcd/tree/master/jetcd-examples) are 
 
 ## Launcher
 
-The `io.etcd:jetcd-launcher` offers a convenient utility to programmatically start & stop an isolated `etcd` server.  This can be very useful e.g. for integration testing, like so:
+The `io.etcd:jetcd-test` offers a convenient utility to programmatically start & stop an isolated `etcd` server.  This can be very useful e.g. for integration testing, like so:
 
 ```java
-@Rule public final EtcdClusterResource etcd = new EtcdClusterResource("test-etcd", 1);
+import io.etcd.jetcd.Client;
+import io.etcd.jetcd.launcher.EtcdCluster;
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
+@RegisterExtension static final EtcdCluster etcd = new EtcdClusterExtension("test-etcd", 1);
 Client client = Client.builder().endpoints(etcd.getClientEndpoints()).build();
 ```
 
