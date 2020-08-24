@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
@@ -126,11 +127,15 @@ public class EtcdContainer implements AutoCloseable {
     private static Path createDataDirectory(String name) {
         try {
             final String prefix = "jetcd_test_" + name + "_";
-            final FileAttribute<?> attribute = PosixFilePermissions.asFileAttribute(EnumSet.allOf(PosixFilePermission.class));
-
-            // https://github.com/etcd-io/jetcd/issues/489
-            // Resolve symlink (/var -> /private/var) to don't fail for Mac OS because of docker thing with /var/folders
-            return Files.createTempDirectory(prefix, attribute).toRealPath();
+            if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+                // https://github.com/etcd-io/jetcd/issues/489
+                // Resolve symlink (/var -> /private/var) to don't fail for Mac OS because of docker thing with /var/folders
+                final FileAttribute<?> attribute = PosixFilePermissions
+                    .asFileAttribute(EnumSet.allOf(PosixFilePermission.class));
+                return Files.createTempDirectory(prefix, attribute).toRealPath();
+            } else {
+                return Files.createTempDirectory(prefix).toRealPath();
+            }
         } catch (IOException e) {
             throw new ContainerLaunchException("Error creating data directory", e);
         }
