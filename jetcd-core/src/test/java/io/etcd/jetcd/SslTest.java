@@ -24,12 +24,13 @@ import java.util.Objects;
 
 import io.etcd.jetcd.test.EtcdClusterExtension;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
-// TODO(#548): Add global timeout for tests once JUnit5 supports it
+@Timeout(30)
 public class SslTest {
 
     @RegisterExtension

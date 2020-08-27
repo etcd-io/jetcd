@@ -123,14 +123,13 @@
         <testcontainers.version>1.14.3</testcontainers.version>
         <commons-io.version>2.7</commons-io.version>
         <awaitility.version>4.0.3</awaitility.version>
+        <auto-service.version>1.0-rc7</auto-service.version>
     </properties>
 
     <modules>
         <module>jetcd-launcher</module>
         <module>jetcd-test</module>
         <module>jetcd-common</module>
-        <module>jetcd-resolver</module>
-        <module>jetcd-resolver-dns-srv</module>
         <module>jetcd-core</module>
         <module>jetcd-extensions</module>
         <module>jetcd-all</module>
@@ -157,16 +156,6 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>jetcd-extensions</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>jetcd-resolver</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>jetcd-resolver-dns-srv</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -327,6 +316,16 @@
                 <artifactId>spotbugs-annotations</artifactId>
                 <version>${spotbugs-annotations.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.google.auto.service</groupId>
+                <artifactId>auto-service</artifactId>
+                <version>${auto-service.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.auto.service</groupId>
+                <artifactId>auto-service-annotations</artifactId>
+                <version>${auto-service.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -481,6 +480,13 @@
                             <arg>-Xep:ObjectToString:ERROR</arg>
                             <arg>-Xep:AssertThrowsMultipleStatements:ERROR</arg>
                         </compilerArgs>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>com.google.auto.service</groupId>
+                                <artifactId>auto-service</artifactId>
+                                <version>${auto-service.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
                     <dependencies>
                         <dependency>
