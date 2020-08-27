@@ -16,23 +16,21 @@
 
 package io.etcd.jetcd.resolver;
 
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.concurrent.GuardedBy;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
-import io.grpc.Attributes;
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
 import io.grpc.Status;
@@ -41,13 +39,16 @@ import io.grpc.internal.SharedResourceHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SmartNameResolver extends NameResolver {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SmartNameResolver.class);
+public class EtcdNameResolver extends NameResolver {
+    public static final String SCHEME = "etcd";
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(EtcdNameResolver.class);
+    private static final String ETCD_CLIENT_PORT = "2379";
 
     private final Object lock;
     private final String authority;
-    private final Collection<URI> uris;
-    private final List<URIResolver> resolvers;
+    private final URI targetUri;
+    private final List<EquivalentAddressGroup> addresses;
 
     private volatile boolean shutdown;
     private volatile boolean resolving;
@@ -57,20 +58,30 @@ public class SmartNameResolver extends NameResolver {
     @GuardedBy("lock")
     private Listener listener;
 
-    public SmartNameResolver(String authority, Collection<URI> uris, URIResolverLoader loader) {
+    public EtcdNameResolver(URI targetUri) {
         this.lock = new Object();
-        this.authority = authority;
-        this.uris = uris;
-
-        this.resolvers = new ArrayList<>();
-        this.resolvers.add(new DirectUriResolver());
-        this.resolvers.addAll(loader.load());
-        this.resolvers.sort(Comparator.comparingInt(URIResolver::priority));
-    }
-
-    @VisibleForTesting
-    public List<URIResolver> getResolvers() {
-        return Collections.unmodifiableList(resolvers);
+        this.targetUri = targetUri;
+        this.authority = targetUri.getAuthority() != null ? targetUri.getAuthority() : SCHEME;
+        this.addresses = Stream.of(targetUri.getPath().split(","))
+            .map(address -> {
+                return address.startsWith("/")
+                    ? address.substring(1)
+                    : address;
+            })
+            .map(address -> {
+                Iterable<String> split = Splitter.on(':').split(address);
+                String host = Iterables.get(split, 0);
+                String port = Iterables.get(split, 1, ETCD_CLIENT_PORT);
+                return new InetSocketAddress(host, Integer.parseInt(port));
+            }).map(address -> {
+                return new EquivalentAddressGroup(
+                    address,
+                    Strings.isNullOrEmpty(authority)
+                        ? io.grpc.Attributes.newBuilder()
+                            .set(EquivalentAddressGroup.ATTR_AUTHORITY_OVERRIDE, targetUri.getAuthority())
+                            .build()
+                        : io.grpc.Attributes.EMPTY);
+            }).collect(Collectors.toList());
     }
 
     @Override
@@ -127,35 +138,13 @@ public class SmartNameResolver extends NameResolver {
         }
 
         try {
-            List<EquivalentAddressGroup> groups = new ArrayList<>();
-
-            for (URI uri : uris) {
-                resolvers.stream()
-                    .filter(r -> r.supports(uri))
-                    .findFirst()
-                    .ifPresent(resolver -> {
-                        for (SocketAddress address : resolver.resolve(uri)) {
-                            //
-                            // if the authority is not explicit set on the builder
-                            // then it will be computed from the URI
-                            //
-                            groups.add(new EquivalentAddressGroup(
-                                address,
-                                Strings.isNullOrEmpty(authority)
-                                    ? Attributes.newBuilder()
-                                        .set(EquivalentAddressGroup.ATTR_AUTHORITY_OVERRIDE, uri.getAuthority())
-                                        .build()
-                                    : Attributes.EMPTY));
-                        }
-                    });
+            if (addresses.isEmpty()) {
+                throw EtcdExceptionFactory.newEtcdException(
+                    ErrorCode.INVALID_ARGUMENT,
+                    "Unable to resolve endpoint " + targetUri);
             }
 
-            if (groups.isEmpty()) {
-                throw EtcdExceptionFactory.newEtcdException(ErrorCode.INVALID_ARGUMENT,
-                    ("Unable to resolve endpoints " + uris));
-            }
-
-            savedListener.onAddresses(groups, Attributes.EMPTY);
+            savedListener.onAddresses(addresses, io.grpc.Attributes.EMPTY);
         } catch (Exception e) {
             LOGGER.warn("Error wile getting list of servers", e);
             savedListener.onError(Status.NOT_FOUND);

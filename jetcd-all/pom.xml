@@ -69,14 +69,6 @@
             <groupId>io.etcd</groupId>
             <artifactId>jetcd-extensions</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.etcd</groupId>
-            <artifactId>jetcd-resolver</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.etcd</groupId>
-            <artifactId>jetcd-resolver-dns-srv</artifactId>
-        </dependency>
     </dependencies>
 
     <build>

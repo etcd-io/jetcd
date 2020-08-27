@@ -18,6 +18,7 @@ package io.etcd.jetcd;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -28,11 +29,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 import io.etcd.jetcd.api.AuthGrpc;
@@ -40,7 +43,8 @@ import io.etcd.jetcd.api.AuthenticateRequest;
 import io.etcd.jetcd.api.AuthenticateResponse;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
-import io.etcd.jetcd.resolver.URIResolverLoader;
+import io.etcd.jetcd.resolver.DnsSrvNameResolver;
+import io.etcd.jetcd.resolver.EtcdNameResolver;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -64,7 +68,6 @@ import static io.etcd.jetcd.Util.isInvalidTokenError;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.handleInterrupt;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
-import static io.etcd.jetcd.resolver.SmartNameResolverFactory.forEndpoints;
 
 final class ClientConnectionManager {
 
@@ -182,16 +185,10 @@ final class ClientConnectionManager {
     <T extends AbstractStub<T>, R> CompletableFuture<R> withNewChannel(URI endpoint, Function<ManagedChannel, T> stubCustomizer,
         Function<T, CompletableFuture<R>> stubConsumer) {
 
-        final ManagedChannel channel = defaultChannelBuilder().nameResolverFactory(
-            forEndpoints(
-                Util.supplyIfNull(builder.authority(), () -> ""),
-                Collections.singleton(endpoint),
-                Util.supplyIfNull(builder.uriResolverLoader(), URIResolverLoader::defaultLoader)))
-            .build();
+        final ManagedChannel channel = defaultChannelBuilder(Collections.singletonList(endpoint)).build();
+        final T stub = stubCustomizer.apply(channel);
 
         try {
-            T stub = stubCustomizer.apply(channel);
-
             return stubConsumer.apply(stub).whenComplete((r, t) -> channel.shutdown());
         } catch (Exception e) {
             channel.shutdown();
@@ -201,7 +198,35 @@ final class ClientConnectionManager {
 
     @VisibleForTesting
     protected ManagedChannelBuilder<?> defaultChannelBuilder() {
-        final NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget("etcd");
+        return defaultChannelBuilder(builder.endpoints());
+    }
+
+    @VisibleForTesting
+    protected ManagedChannelBuilder<?> defaultChannelBuilder(Collection<URI> endpoints) {
+        if (endpoints.isEmpty()) {
+            throw new IllegalArgumentException("At least one endpoint should be provided");
+        }
+
+        final String target;
+
+        if (builder.discovery()) {
+            if (endpoints.size() != 1) {
+                throw new IllegalArgumentException("When configured for discovery, there should be only a single endpoint");
+            }
+
+            target = String.format(
+                "%s:///%s",
+                DnsSrvNameResolver.SCHEME,
+                Iterables.get(endpoints, 0));
+        } else {
+            target = String.format(
+                "%s://%s/%s",
+                EtcdNameResolver.SCHEME,
+                builder.authority() != null ? builder.authority() : "",
+                endpoints.stream().map(e -> e.getHost() + ":" + e.getPort()).collect(Collectors.joining(",")));
+        }
+
+        final NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget(target);
 
         if (builder.maxInboundMessageSize() != null) {
             channelBuilder.maxInboundMessageSize(builder.maxInboundMessageSize());
@@ -225,13 +250,6 @@ final class ClientConnectionManager {
         if (builder.connectTimeoutMs() != null) {
             channelBuilder.withOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, builder.connectTimeoutMs());
         }
-
-        channelBuilder.nameResolverFactory(
-            forEndpoints(
-                Util.supplyIfNull(builder.authority(), () -> ""),
-                builder.endpoints(),
-                Util.supplyIfNull(builder.uriResolverLoader(),
-                    URIResolverLoader::defaultLoader)));
 
         if (builder.loadBalancerPolicy() != null) {
             channelBuilder.defaultLoadBalancingPolicy(builder.loadBalancerPolicy());

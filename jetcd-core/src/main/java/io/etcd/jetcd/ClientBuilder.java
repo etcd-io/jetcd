@@ -34,7 +34,6 @@ import javax.net.ssl.SSLException;
 
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
-import io.etcd.jetcd.resolver.URIResolverLoader;
 import io.grpc.ClientInterceptor;
 import io.grpc.Metadata;
 import io.grpc.netty.GrpcSslContexts;
@@ -57,7 +56,6 @@ public final class ClientBuilder implements Cloneable {
     private String loadBalancerPolicy;
     private SslContext sslContext;
     private String authority;
-    private URIResolverLoader uriResolverLoader;
     private Integer maxInboundMessageSize;
     private Map<Metadata.Key<?>, Object> headers;
     private List<ClientInterceptor> interceptors;
@@ -70,6 +68,7 @@ public final class ClientBuilder implements Cloneable {
     private ChronoUnit retryChronoUnit = ChronoUnit.MILLIS;
     private String retryMaxDuration;
     private Integer connectTimeoutMs;
+    private boolean discovery;
 
     ClientBuilder() {
     }
@@ -282,22 +281,6 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return the uri resolver loader
-     */
-    public URIResolverLoader uriResolverLoader() {
-        return uriResolverLoader;
-    }
-
-    /**
-     * @param  loader the uri resolver loader
-     * @return        this builder
-     */
-    public ClientBuilder uriResolverLoader(URIResolverLoader loader) {
-        this.uriResolverLoader = loader;
-        return this;
-    }
-
-    /**
      * @return the maximum message size allowed for a single gRPC frame.
      */
     public Integer maxInboundMessageSize() {
@@ -388,7 +371,6 @@ public final class ClientBuilder implements Cloneable {
     /**
      * @param  retryDelay The delay between retries.
      * @return            this builder
-     *
      */
     public ClientBuilder retryDelay(long retryDelay) {
         this.retryDelay = retryDelay;
@@ -504,6 +486,22 @@ public final class ClientBuilder implements Cloneable {
      */
     public ClientBuilder connectTimeoutMs(Integer connectTimeoutMs) {
         this.connectTimeoutMs = connectTimeoutMs;
+        return this;
+    }
+
+    /**
+     * @return if the endpoint represent a discovery address using dns+srv.
+     */
+    public boolean discovery() {
+        return discovery;
+    }
+
+    /**
+     * @param  discovery if the endpoint represent a discovery address using dns+srv.
+     * @return           this builder
+     */
+    public ClientBuilder discovery(boolean discovery) {
+        this.discovery = discovery;
         return this;
     }
 

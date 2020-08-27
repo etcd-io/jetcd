@@ -29,6 +29,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Network;
+import org.testcontainers.utility.ResourceReaper;
 
 import static java.util.stream.Collectors.toList;
 
@@ -77,6 +78,8 @@ public class EtcdClusterFactory {
             .map(e -> new EtcdContainer(network, listener, ssl, clusterName, e, endpoints, image, additionalArgs))
             .collect(toList());
 
+        ResourceReaper.instance().registerNetworkIdForCleanup(network.getId());
+
         return new EtcdCluster() {
             @Override
             public void start() {
@@ -97,6 +100,7 @@ public class EtcdClusterFactory {
             @Override
             public void close() {
                 containers.forEach(EtcdContainer::close);
+
             }
 
             @Override
