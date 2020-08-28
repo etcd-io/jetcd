@@ -33,7 +33,6 @@ import javax.naming.directory.InitialDirContext;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.grpc.EquivalentAddressGroup;
@@ -141,11 +140,7 @@ public class DnsSrvNameResolver extends NameResolver {
                 //
                 groups.add(new EquivalentAddressGroup(
                     address,
-                    Strings.isNullOrEmpty(authority)
-                        ? io.grpc.Attributes.newBuilder()
-                            .set(EquivalentAddressGroup.ATTR_AUTHORITY_OVERRIDE, targetUri.getAuthority())
-                            .build()
-                        : io.grpc.Attributes.EMPTY));
+                    io.grpc.Attributes.EMPTY));
             }
 
             if (groups.isEmpty()) {
