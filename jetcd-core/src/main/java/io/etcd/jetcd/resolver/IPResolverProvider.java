@@ -25,7 +25,7 @@ import io.grpc.NameResolver;
 import io.grpc.NameResolverProvider;
 
 @AutoService(NameResolverProvider.class)
-public class EtcdResolverProvider extends NameResolverProvider {
+public class IPResolverProvider extends NameResolverProvider {
     @Override
     protected boolean isAvailable() {
         return true;
@@ -38,14 +38,14 @@ public class EtcdResolverProvider extends NameResolverProvider {
 
     @Override
     public String getDefaultScheme() {
-        return EtcdNameResolver.SCHEME;
+        return IPNameResolver.SCHEME;
     }
 
     @Nullable
     @Override
     public NameResolver newNameResolver(URI targetUri, NameResolver.Args args) {
-        return EtcdNameResolver.SCHEME.equals(targetUri.getScheme())
-            ? new EtcdNameResolver(targetUri)
+        return IPNameResolver.SCHEME.equals(targetUri.getScheme())
+            ? new IPNameResolver(targetUri)
             : null;
     }
 }

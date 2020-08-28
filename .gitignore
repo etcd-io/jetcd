@@ -11,6 +11,8 @@ logs/
 .vscode/
 .settings/
 .project
+.env
+.sdkmanrc
 
 # Created by './scripts/run_etcd.sh'
 /external/

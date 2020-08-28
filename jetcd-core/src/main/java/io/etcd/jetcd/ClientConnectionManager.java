@@ -41,10 +41,9 @@ import com.google.protobuf.ByteString;
 import io.etcd.jetcd.api.AuthGrpc;
 import io.etcd.jetcd.api.AuthenticateRequest;
 import io.etcd.jetcd.api.AuthenticateResponse;
-import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.etcd.jetcd.resolver.DnsSrvNameResolver;
-import io.etcd.jetcd.resolver.EtcdNameResolver;
+import io.etcd.jetcd.resolver.IPNameResolver;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -62,15 +61,16 @@ import io.grpc.stub.AbstractStub;
 import io.netty.channel.ChannelOption;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static io.etcd.jetcd.Util.isInvalidTokenError;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.handleInterrupt;
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
 final class ClientConnectionManager {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientConnectionManager.class);
     private static final Metadata.Key<String> TOKEN = Metadata.Key.of("token", Metadata.ASCII_STRING_MARSHALLER);
 
     private final Object lock;
@@ -221,13 +221,16 @@ final class ClientConnectionManager {
         } else {
             target = String.format(
                 "%s://%s/%s",
-                EtcdNameResolver.SCHEME,
+                IPNameResolver.SCHEME,
                 builder.authority() != null ? builder.authority() : "",
                 endpoints.stream().map(e -> e.getHost() + ":" + e.getPort()).collect(Collectors.joining(",")));
         }
 
         final NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget(target);
 
+        if (builder.authority() != null) {
+            channelBuilder.overrideAuthority(builder.authority());
+        }
         if (builder.maxInboundMessageSize() != null) {
             channelBuilder.maxInboundMessageSize(builder.maxInboundMessageSize());
         }
@@ -326,12 +329,13 @@ final class ClientConnectionManager {
      * @return               a CompletableFuture with type T.
      */
     @SuppressWarnings("FutureReturnValueIgnored")
-    public <S, T> CompletableFuture<T> execute(Callable<ListenableFuture<S>> task,
+    public <S, T> CompletableFuture<T> execute(
+        Callable<ListenableFuture<S>> task,
         Function<S, T> resultConvert,
         Predicate<Throwable> doRetry) {
 
         RetryPolicy<CompletableFuture<S>> retryPolicy = new RetryPolicy<CompletableFuture<S>>().handleIf(doRetry)
-            .onRetriesExceeded(e -> newEtcdException(ErrorCode.ABORTED, "maximum number of auto retries reached"))
+            .onRetriesExceeded(e -> LOGGER.warn("maximum number of auto retries reached"))
             .withBackoff(builder.retryDelay(), builder.retryMaxDelay(), builder.retryChronoUnit());
 
         if (builder.retryMaxDuration() != null) {

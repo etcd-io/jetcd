@@ -27,7 +27,6 @@ import javax.annotation.concurrent.GuardedBy;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
@@ -39,10 +38,10 @@ import io.grpc.internal.SharedResourceHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EtcdNameResolver extends NameResolver {
-    public static final String SCHEME = "etcd";
+public class IPNameResolver extends NameResolver {
+    public static final String SCHEME = "ip";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EtcdNameResolver.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IPNameResolver.class);
     private static final String ETCD_CLIENT_PORT = "2379";
 
     private final Object lock;
@@ -58,7 +57,7 @@ public class EtcdNameResolver extends NameResolver {
     @GuardedBy("lock")
     private Listener listener;
 
-    public EtcdNameResolver(URI targetUri) {
+    public IPNameResolver(URI targetUri) {
         this.lock = new Object();
         this.targetUri = targetUri;
         this.authority = targetUri.getAuthority() != null ? targetUri.getAuthority() : SCHEME;
@@ -76,11 +75,7 @@ public class EtcdNameResolver extends NameResolver {
             }).map(address -> {
                 return new EquivalentAddressGroup(
                     address,
-                    Strings.isNullOrEmpty(authority)
-                        ? io.grpc.Attributes.newBuilder()
-                            .set(EquivalentAddressGroup.ATTR_AUTHORITY_OVERRIDE, targetUri.getAuthority())
-                            .build()
-                        : io.grpc.Attributes.EMPTY);
+                    io.grpc.Attributes.EMPTY);
             }).collect(Collectors.toList());
     }
 
