@@ -28,7 +28,10 @@ import java.util.stream.Collectors;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
+import io.grpc.Metadata;
 import io.grpc.Status;
+import io.grpc.stub.AbstractStub;
+import io.grpc.stub.MetadataUtils;
 
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
@@ -120,4 +123,22 @@ public final class Util {
         return namespace.isEmpty() ? key : key.substring(namespace.size());
     }
 
+    static <T extends AbstractStub<T>> T applyRequireLeader(boolean requireLeader, T stub) {
+        if (!requireLeader) {
+            return stub;
+        }
+        final Metadata md = new Metadata();
+        md.put(Constants.REQUIRE_LEADER_KEY, Constants.REQUIRE_LEADER_VALUE);
+        return MetadataUtils.attachHeaders(stub, md);
+    }
+
+    public static boolean isHaltError(final Status status) {
+        return status.getCode() != Status.Code.UNAVAILABLE && status.getCode() != Status.Code.INTERNAL;
+    }
+
+    static final String NO_LEADER_ERROR_MESSAGE = "etcdserver: no leader";
+
+    public static boolean isNoLeaderError(final Status status) {
+        return status.getCode() == Status.Code.UNAVAILABLE && NO_LEADER_ERROR_MESSAGE.equals(status.getDescription());
+    }
 }

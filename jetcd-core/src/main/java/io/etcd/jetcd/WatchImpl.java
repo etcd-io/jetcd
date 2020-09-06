@@ -96,7 +96,7 @@ final class WatchImpl implements Watch {
         }
     }
 
-    private final class WatcherImpl implements Watcher, StreamObserver<WatchResponse> {
+    final class WatcherImpl implements Watcher, StreamObserver<WatchResponse> {
         private final ByteSequence key;
         private final WatchOption option;
         private final Listener listener;
@@ -123,8 +123,12 @@ final class WatchImpl implements Watch {
         //
         // ************************
 
+        boolean isClosed() {
+            return this.closed.get() || WatchImpl.this.closed.get();
+        }
+
         void resume() {
-            if (this.closed.get() || WatchImpl.this.closed.get()) {
+            if (isClosed()) {
                 return;
             }
 
@@ -147,7 +151,7 @@ final class WatchImpl implements Watch {
                     builder.addFilters(WatchCreateRequest.FilterType.NOPUT);
                 }
 
-                stream = stub.watch(this);
+                stream = Util.applyRequireLeader(option.withRequireLeader(), stub).watch(this);
                 stream.onNext(WatchRequest.newBuilder().setCreateRequest(builder).build());
             }
         }
@@ -263,7 +267,7 @@ final class WatchImpl implements Watch {
         public void onError(Throwable t) {
             // sync with close()
             synchronized (WatchImpl.this.lock) {
-                if (WatcherImpl.this.closed.get() || WatchImpl.this.closed.get()) {
+                if (isClosed()) {
                     return;
                 }
 
@@ -274,6 +278,10 @@ final class WatchImpl implements Watch {
                     stream.onCompleted();
                 }
                 stream = null;
+                if (Util.isHaltError(status) || Util.isNoLeaderError(status)) {
+                    close();
+                    return;
+                }
             }
 
             Futures.addCallback(executor.schedule(this::resume, 500, TimeUnit.MILLISECONDS), new FutureCallback<Object>() {

@@ -16,6 +16,8 @@
 
 package io.etcd.jetcd;
 
+import io.grpc.Metadata;
+
 /**
  * Constants of Etcd.
  */
@@ -23,4 +25,8 @@ public class Constants {
 
     public static final String TOKEN = "token";
     public static final ByteSequence NULL_KEY = ByteSequence.from(new byte[] { '\0' });
+
+    public static final Metadata.Key<String> REQUIRE_LEADER_KEY = Metadata.Key.of("hasleader",
+        Metadata.ASCII_STRING_MARSHALLER);
+    public static final String REQUIRE_LEADER_VALUE = "true";
 }

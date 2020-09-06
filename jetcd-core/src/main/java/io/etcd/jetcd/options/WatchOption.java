@@ -46,6 +46,7 @@ public final class WatchOption {
         private boolean progressNotify = false;
         private boolean noPut = false;
         private boolean noDelete = false;
+        private boolean requireLeader = false;
 
         private Builder() {
         }
@@ -148,8 +149,23 @@ public final class WatchOption {
             return this;
         }
 
+        /**
+         * When creating the watch streaming stub, use the REQUIRED_LEADER Metadata annotation,
+         * which ensures the stream will error out if quorum is lost by
+         * the server the stream is connected to.
+         * Without this option, a stream running against a server that is out of quorum
+         * simply goes silent.
+         *
+         * @param  requireLeader require quorum for watch stream creation.
+         * @return               builder
+         */
+        public Builder withRequireLeader(boolean requireLeader) {
+            this.requireLeader = requireLeader;
+            return this;
+        }
+
         public WatchOption build() {
-            return new WatchOption(endKey, revision, prevKV, progressNotify, noPut, noDelete);
+            return new WatchOption(endKey, revision, prevKV, progressNotify, noPut, noDelete, requireLeader);
         }
 
     }
@@ -160,15 +176,17 @@ public final class WatchOption {
     private final boolean progressNotify;
     private final boolean noPut;
     private final boolean noDelete;
+    private final boolean requireLeader;
 
     private WatchOption(Optional<ByteSequence> endKey, long revision, boolean prevKV, boolean progressNotify, boolean noPut,
-        boolean noDelete) {
+        boolean noDelete, boolean requireLeader) {
         this.endKey = endKey;
         this.revision = revision;
         this.prevKV = prevKV;
         this.progressNotify = progressNotify;
         this.noPut = noPut;
         this.noDelete = noDelete;
+        this.requireLeader = requireLeader;
     }
 
     public Optional<ByteSequence> getEndKey() {
@@ -216,5 +234,19 @@ public final class WatchOption {
      */
     public boolean isNoDelete() {
         return noDelete;
+    }
+
+    /**
+     * If true, when creating the watch streaming stub, use the REQUIRED_LEADER Metadata annotation,
+     * which ensures the stream will error out if quorum is lost by
+     * the server the stream is connected to. This will make the watch fail with an error
+     * and finish.
+     * Without this option, a watch running against a server that is out of quorum
+     * simply goes silent.
+     *
+     * @return if true, use REQUIRE_LEADER metadata annotation for watch streams
+     */
+    public boolean withRequireLeader() {
+        return requireLeader;
     }
 }

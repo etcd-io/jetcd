@@ -95,7 +95,7 @@ final class LeaseImpl implements Lease {
     LeaseImpl(ClientConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
         this.stub = connectionManager.newStub(LeaseGrpc::newFutureStub);
-        this.leaseStub = connectionManager.newStub(LeaseGrpc::newStub);
+        this.leaseStub = Util.applyRequireLeader(true, connectionManager.newStub(LeaseGrpc::newStub));
         this.keepAlives = new ConcurrentHashMap<>();
         this.scheduledExecutorService = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(2));
     }
