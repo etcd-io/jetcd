@@ -397,4 +397,31 @@ public class WatchUnitTest {
                 .hasMessageContaining("etcd server failed to create watch id");
         }
     }
+
+    @Test
+    public void testWatcherWithRequireLeaderErrsOutOnNoLeader() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Throwable> ref = new AtomicReference<>();
+        Watch.Listener listener = Watch.listener(r -> {
+        }, t -> {
+            ref.set(t);
+            latch.countDown();
+        });
+
+        try (Watch.Watcher watcher = watchClient.watch(KEY, listener)) {
+            WatchResponse createdResponse = createWatchResponse(0);
+            responseObserverRef.get().onNext(createdResponse);
+            responseObserverRef.get()
+                .onError(Status.UNAVAILABLE.withDescription(Util.NO_LEADER_ERROR_MESSAGE).asRuntimeException());
+
+            latch.await(4, TimeUnit.SECONDS);
+
+            assertThat(ref.get()).isNotNull();
+            assertThat(ref.get()).isNotNull();
+            assertThat(ref.get()).isInstanceOf(EtcdException.class)
+                .hasMessageContaining(Util.NO_LEADER_ERROR_MESSAGE);
+            final WatchImpl.WatcherImpl wimpl = (WatchImpl.WatcherImpl) watcher;
+            assertThat(wimpl.isClosed());
+        }
+    }
 }

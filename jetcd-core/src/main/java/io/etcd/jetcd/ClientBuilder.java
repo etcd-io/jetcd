@@ -479,10 +479,11 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * @param  connectTimeoutMs Sets the connection timeout in milliseconds.
-     * @return                  Clients connecting to fault tolerant etcd clusters (eg, clusters with >= 3 etcd server
+     *                          Clients connecting to fault tolerant etcd clusters (eg, clusters with >= 3 etcd server
      *                          peers/endpoints)
      *                          should consider a value that will allow switching timely from a crashed/partitioned peer to
      *                          a consensus peer.
+     * @return                  this builder
      */
     public ClientBuilder connectTimeoutMs(Integer connectTimeoutMs) {
         this.connectTimeoutMs = connectTimeoutMs;
