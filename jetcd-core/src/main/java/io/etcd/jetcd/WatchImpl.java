@@ -202,10 +202,7 @@ final class WatchImpl implements Watch {
             // handle a special case when watch has been created and closed at the same time
             if (response.getCreated() && response.getCanceled() && response.getCancelReason() != null
                 && response.getCancelReason().contains("etcdserver: permission denied")) {
-                // potentially access token expired
-                connectionManager.forceTokenRefresh();
-                Status error = Status.Code.CANCELLED.toStatus().withDescription(response.getCancelReason());
-                WatcherImpl.this.onError(toEtcdException(error));
+                handlePermissionDenied(Status.Code.CANCELLED.toStatus().withDescription(response.getCancelReason()));
             } else if (response.getCreated()) {
 
                 //
@@ -263,27 +260,42 @@ final class WatchImpl implements Watch {
             }
         }
 
+        private void handlePermissionDenied(final Status status) {
+            // potentially access token expired
+            connectionManager.forceTokenRefresh();
+            handleError(toEtcdException(status), true);
+        }
+
         @Override
         public void onError(Throwable t) {
+            handleError(toEtcdException(t), shouldReschedule(Status.fromThrowable(t)));
+        }
+
+        private void handleError(Throwable toListenerThrowable, boolean shouldReschedule) {
             // sync with close()
             synchronized (WatchImpl.this.lock) {
                 if (isClosed()) {
                     return;
                 }
 
-                Status status = Status.fromThrowable(t);
-                listener.onError(toEtcdException(status));
-
+                listener.onError(toListenerThrowable);
                 if (stream != null) {
                     stream.onCompleted();
                 }
                 stream = null;
-                if (Util.isHaltError(status) || Util.isNoLeaderError(status)) {
-                    close();
-                    return;
-                }
             }
+            if (shouldReschedule) {
+                reschedule();
+                return;
+            }
+            close();
+        }
 
+        private boolean shouldReschedule(final Status status) {
+            return !Util.isHaltError(status) && !Util.isNoLeaderError(status);
+        }
+
+        private void reschedule() {
             Futures.addCallback(executor.schedule(this::resume, 500, TimeUnit.MILLISECONDS), new FutureCallback<Object>() {
                 @Override
                 public void onFailure(Throwable throwable) {
