@@ -48,6 +48,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @Timeout(value = 30)
 public class WatchTest {
+    private static final long timeOutSeconds = 30;
 
     @RegisterExtension
     public static final EtcdClusterExtension cluster = new EtcdClusterExtension("watch", 3);
@@ -73,7 +74,7 @@ public class WatchTest {
         try (Watcher watcher = nsClient.getWatchClient().watch(key, ref::set)) {
             // Using non-namespaced client put namespaced key.
             client.getKVClient().put(nsKey, value).get();
-            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
+            await().atMost(timeOutSeconds, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
 
             assertThat(ref.get()).isNotNull();
             assertThat(ref.get().getEvents().size()).isEqualTo(1);
@@ -93,7 +94,7 @@ public class WatchTest {
 
             client.getKVClient().put(key, value).get();
 
-            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
+            await().atMost(timeOutSeconds, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
 
             assertThat(ref.get()).isNotNull();
             assertThat(ref.get().getEvents().size()).isEqualTo(1);
@@ -116,7 +117,7 @@ public class WatchTest {
             client.getKVClient().put(key, value).get();
             latch.await(4, TimeUnit.SECONDS);
 
-            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(res).hasSize(2));
+            await().atMost(timeOutSeconds, TimeUnit.SECONDS).untilAsserted(() -> assertThat(res).hasSize(2));
             assertThat(res.get(0)).usingRecursiveComparison().isEqualTo(res.get(1));
             assertThat(res.get(0).getEvents().size()).isEqualTo(1);
             assertThat(res.get(0).getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
@@ -136,7 +137,7 @@ public class WatchTest {
         try (Watcher watcher = client.getWatchClient().watch(key, ref::set)) {
             client.getKVClient().delete(key).get();
 
-            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
+            await().atMost(timeOutSeconds, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
 
             assertThat(ref.get().getEvents().size()).isEqualTo(1);
 
@@ -164,7 +165,7 @@ public class WatchTest {
         final Watch wc = client.getWatchClient();
 
         try (Watcher watcher = wc.watch(key, options, Watch.listener(TestUtil::noOpWatchResponseConsumer, ref::set))) {
-            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
+            await().atMost(timeOutSeconds, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
             assertThat(ref.get().getClass()).isEqualTo(CompactedException.class);
         }
     }
@@ -178,12 +179,12 @@ public class WatchTest {
 
         try (Watcher watcher = client.getWatchClient().watch(key, events::add)) {
             client.getKVClient().put(key, value).get();
-            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(events).isNotEmpty());
+            await().atMost(timeOutSeconds, TimeUnit.SECONDS).untilAsserted(() -> assertThat(events).isNotEmpty());
         }
 
         client.getKVClient().put(key, randomByteSequence()).get();
 
-        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(events).hasSize(1));
+        await().atMost(timeOutSeconds, TimeUnit.SECONDS).untilAsserted(() -> assertThat(events).hasSize(1));
         assertThat(events.get(0).getEvents()).hasSize(1);
         assertThat(events.get(0).getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
         assertThat(events.get(0).getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
