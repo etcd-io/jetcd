@@ -16,7 +16,6 @@
 
 package io.etcd.jetcd.common.exception;
 
-import io.grpc.Status;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -36,12 +35,5 @@ public class EtcdException extends RuntimeException {
      */
     public ErrorCode getErrorCode() {
         return code;
-    }
-
-    /**
-     * Converts to Status
-     */
-    public Status toStatus() {
-        return Status.fromCodeValue(getErrorCode().getCode()).withDescription(getMessage()).withCause(getCause());
     }
 }
