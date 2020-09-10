@@ -33,6 +33,7 @@ import io.etcd.jetcd.api.WatchGrpc;
 import io.etcd.jetcd.api.WatchRequest;
 import io.etcd.jetcd.api.WatchResponse;
 import io.etcd.jetcd.common.exception.ErrorCode;
+import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.options.WatchOption;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -202,7 +203,10 @@ final class WatchImpl implements Watch {
             // handle a special case when watch has been created and closed at the same time
             if (response.getCreated() && response.getCanceled() && response.getCancelReason() != null
                 && response.getCancelReason().contains("etcdserver: permission denied")) {
-                handlePermissionDenied(Status.Code.CANCELLED.toStatus().withDescription(response.getCancelReason()));
+                // potentially access token expired
+                connectionManager.forceTokenRefresh();
+                Status error = Status.Code.CANCELLED.toStatus().withDescription(response.getCancelReason());
+                handleError(toEtcdException(error), true);
             } else if (response.getCreated()) {
 
                 //
@@ -260,25 +264,19 @@ final class WatchImpl implements Watch {
             }
         }
 
-        private void handlePermissionDenied(final Status status) {
-            // potentially access token expired
-            connectionManager.forceTokenRefresh();
-            handleError(toEtcdException(status), true);
-        }
-
         @Override
         public void onError(Throwable t) {
             handleError(toEtcdException(t), shouldReschedule(Status.fromThrowable(t)));
         }
 
-        private void handleError(Throwable toListenerThrowable, boolean shouldReschedule) {
+        private void handleError(EtcdException etcdException, boolean shouldReschedule) {
             // sync with close()
             synchronized (WatchImpl.this.lock) {
                 if (isClosed()) {
                     return;
                 }
 
-                listener.onError(toListenerThrowable);
+                listener.onError(etcdException);
                 if (stream != null) {
                     stream.onCompleted();
                 }
