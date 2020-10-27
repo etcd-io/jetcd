@@ -179,7 +179,9 @@ final class ClientConnectionManager {
             }
         }
 
-        executorService.shutdownNow();
+        if (builder.executorService() == null) {
+            executorService.shutdownNow();
+        }
     }
 
     <T extends AbstractStub<T>, R> CompletableFuture<R> withNewChannel(URI endpoint, Function<ManagedChannel, T> stubCustomizer,
