@@ -18,7 +18,6 @@ package io.etcd.jetcd;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.annotations.Beta;
 import io.etcd.jetcd.election.CampaignResponse;
 import io.etcd.jetcd.election.LeaderKey;
 import io.etcd.jetcd.election.LeaderResponse;
@@ -29,7 +28,6 @@ import io.etcd.jetcd.support.CloseableClient;
 /**
  * Interface of leader election client talking to etcd.
  */
-@Beta
 public interface Election extends CloseableClient {
     /**
      * Campaign waits to acquire leadership in an election, returning a leader key

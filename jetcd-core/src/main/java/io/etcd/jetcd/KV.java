@@ -18,7 +18,6 @@ package io.etcd.jetcd;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.annotations.Beta;
 import io.etcd.jetcd.kv.CompactResponse;
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
@@ -32,7 +31,6 @@ import io.etcd.jetcd.support.CloseableClient;
 /**
  * Interface of kv client talking to etcd.
  */
-@Beta
 public interface KV extends CloseableClient {
 
     /**
