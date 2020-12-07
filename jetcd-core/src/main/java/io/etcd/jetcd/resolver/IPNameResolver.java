@@ -23,8 +23,6 @@ import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.concurrent.GuardedBy;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
@@ -52,9 +50,7 @@ public class IPNameResolver extends NameResolver {
     private volatile boolean shutdown;
     private volatile boolean resolving;
 
-    @GuardedBy("lock")
     private Executor executor;
-    @GuardedBy("lock")
     private Listener listener;
 
     public IPNameResolver(URI targetUri) {

@@ -18,8 +18,6 @@ package io.etcd.jetcd.resolver;
 
 import java.net.URI;
 
-import javax.annotation.Nullable;
-
 import com.google.auto.service.AutoService;
 import io.grpc.NameResolver;
 import io.grpc.NameResolverProvider;
@@ -41,7 +39,6 @@ public class IPResolverProvider extends NameResolverProvider {
         return IPNameResolver.SCHEME;
     }
 
-    @Nullable
     @Override
     public NameResolver newNameResolver(URI targetUri, NameResolver.Args args) {
         return IPNameResolver.SCHEME.equals(targetUri.getScheme())

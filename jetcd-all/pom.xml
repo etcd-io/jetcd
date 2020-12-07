@@ -107,9 +107,6 @@
                                     <shadedPattern>io.etcd.jetcd.shaded.io.netty</shadedPattern>
                                 </relocation>
                                 <relocation>
-                                    <pattern>javax.annotation</pattern>
-                                    <shadedPattern>io.etcd.jetcd.shaded.javax.annotation</shadedPattern></relocation>
-                                <relocation>
                                     <pattern>io.opencensus</pattern>
                                     <shadedPattern>io.etcd.jetcd.shaded.io.opencensus</shadedPattern>
                                 </relocation>

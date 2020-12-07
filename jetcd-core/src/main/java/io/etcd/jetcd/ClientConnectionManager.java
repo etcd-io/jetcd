@@ -31,8 +31,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
@@ -103,8 +101,10 @@ final class ClientConnectionManager {
      * @param  password auth password
      * @return          authResp
      */
-    private static ListenableFuture<AuthenticateResponse> authenticate(@Nonnull Channel channel, @Nonnull ByteSequence username,
-        @Nonnull ByteSequence password) {
+    private static ListenableFuture<AuthenticateResponse> authenticate(
+        Channel channel,
+        ByteSequence username,
+        ByteSequence password) {
 
         final ByteString user = username.getByteString();
         final ByteString pass = password.getByteString();
@@ -128,7 +128,6 @@ final class ClientConnectionManager {
         return managedChannel;
     }
 
-    @Nullable
     private String getToken(Channel channel) {
         if (token == null) {
             synchronized (lock) {
@@ -293,7 +292,6 @@ final class ClientConnectionManager {
      * @return                                              the auth token
      * @throws io.etcd.jetcd.common.exception.EtcdException a exception indicates failure reason.
      */
-    @Nullable
     private String generateToken(Channel channel) {
         if (builder.user() != null && builder.password() != null) {
             try {

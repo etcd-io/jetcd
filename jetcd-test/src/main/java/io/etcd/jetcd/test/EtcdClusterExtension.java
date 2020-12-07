@@ -19,7 +19,6 @@ package io.etcd.jetcd.test;
 import java.net.URI;
 import java.util.List;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.etcd.jetcd.launcher.EtcdCluster;
 import io.etcd.jetcd.launcher.EtcdClusterFactory;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -82,13 +81,11 @@ public class EtcdClusterExtension implements EtcdCluster, BeforeAllCallback, Aft
         this.cluster.close();
     }
 
-    @NonNull
     @Override
     public List<URI> getClientEndpoints() {
         return this.cluster.getClientEndpoints();
     }
 
-    @NonNull
     @Override
     public List<URI> getPeerEndpoints() {
         return this.cluster.getPeerEndpoints();

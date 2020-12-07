@@ -25,7 +25,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-import javax.annotation.concurrent.GuardedBy;
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
@@ -66,9 +65,7 @@ public class DnsSrvNameResolver extends NameResolver {
     private volatile boolean shutdown;
     private volatile boolean resolving;
 
-    @GuardedBy("lock")
     private Executor executor;
-    @GuardedBy("lock")
     private Listener listener;
 
     public DnsSrvNameResolver(URI targetUri) {
