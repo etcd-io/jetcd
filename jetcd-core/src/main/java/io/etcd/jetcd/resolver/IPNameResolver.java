@@ -27,9 +27,11 @@ import javax.annotation.concurrent.GuardedBy;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
+import io.grpc.Attributes;
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
 import io.grpc.Status;
@@ -60,7 +62,7 @@ public class IPNameResolver extends NameResolver {
     public IPNameResolver(URI targetUri) {
         this.lock = new Object();
         this.targetUri = targetUri;
-        this.authority = targetUri.getAuthority() != null ? targetUri.getAuthority() : SCHEME;
+        this.authority = targetUri.getAuthority() != null ? targetUri.getAuthority() : "";
         this.addresses = Stream.of(targetUri.getPath().split(","))
             .map(address -> {
                 return address.startsWith("/")
@@ -71,12 +73,18 @@ public class IPNameResolver extends NameResolver {
                 Iterable<String> split = Splitter.on(':').split(address);
                 String host = Iterables.get(split, 0);
                 String port = Iterables.get(split, 1, ETCD_CLIENT_PORT);
-                return new InetSocketAddress(host, Integer.parseInt(port));
-            }).map(address -> {
                 return new EquivalentAddressGroup(
-                    address,
-                    io.grpc.Attributes.EMPTY);
+                    new InetSocketAddress(host, Integer.parseInt(port)),
+                    Strings.isNullOrEmpty(authority)
+                        ? Attributes.newBuilder()
+                            .set(EquivalentAddressGroup.ATTR_AUTHORITY_OVERRIDE, getDefaultAuthority(host, port))
+                            .build()
+                        : Attributes.EMPTY);
             }).collect(Collectors.toList());
+    }
+
+    private static String getDefaultAuthority(String host, String port) {
+        return String.format("%s:%s", host, port);
     }
 
     @Override
