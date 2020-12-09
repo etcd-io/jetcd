@@ -119,7 +119,7 @@
         <assertj.version>3.18.1</assertj.version>
         <junit.version>4.12</junit.version>
         <junit-jupiter.version>5.7.0</junit-jupiter.version>
-        <netty-tcnative.version>2.0.34.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.35.Final</netty-tcnative.version>
         <testcontainers.version>1.15.0</testcontainers.version>
         <commons-io.version>2.8.0</commons-io.version>
         <awaitility.version>4.0.3</awaitility.version>
