@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The jetcd authors
+ * Copyright 2016-2021 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package io.etcd.jetcd;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,12 +63,12 @@ public final class ClientBuilder implements Cloneable {
     private ByteSequence namespace = ByteSequence.EMPTY;
     private long retryDelay = 500;
     private long retryMaxDelay = 2500;
-    private Long keepaliveTimeMs = 30000L;
-    private Long keepaliveTimeoutMs = 10000L;
-    private Boolean keepaliveWithoutCalls = true;
     private ChronoUnit retryChronoUnit = ChronoUnit.MILLIS;
-    private String retryMaxDuration;
-    private Integer connectTimeoutMs;
+    private Duration keepaliveTime = Duration.ofSeconds(30L);
+    private Duration keepaliveTimeout = Duration.ofSeconds(10L);
+    private Boolean keepaliveWithoutCalls = true;
+    private Duration retryMaxDuration;
+    private Duration connectTimeout;
     private boolean discovery;
 
     ClientBuilder() {
@@ -393,34 +394,34 @@ public final class ClientBuilder implements Cloneable {
         return this;
     }
 
-    public Long keepaliveTimeMs() {
-        return keepaliveTimeMs;
+    public Duration keepaliveTime() {
+        return keepaliveTime;
     }
 
     /**
      * The interval for gRPC keepalives.
      * The current minimum allowed by gRPC is 10s
      *
-     * @param keepaliveTimeMs time in ms between keepalives
+     * @param keepaliveTime time between keepalives
      */
-    public ClientBuilder keepaliveTimeMs(Long keepaliveTimeMs) {
+    public ClientBuilder keepaliveTime(Duration keepaliveTime) {
         // gRPC uses a minimum keepalive time of 10s, if smaller values are given.
         // No check here though, as this gRPC value might change
-        this.keepaliveTimeMs = keepaliveTimeMs;
+        this.keepaliveTime = keepaliveTime;
         return this;
     }
 
-    public Long keepaliveTimeoutMs() {
-        return keepaliveTimeoutMs;
+    public Duration keepaliveTimeout() {
+        return keepaliveTimeout;
     }
 
     /**
      * The timeout for gRPC keepalives
      *
-     * @param keepaliveTimeoutMs the gRPC keep alive timeout in milliseconds.
+     * @param keepaliveTimeout the gRPC keep alive timeout.
      */
-    public ClientBuilder keepaliveTimeoutMs(Long keepaliveTimeoutMs) {
-        this.keepaliveTimeoutMs = keepaliveTimeoutMs;
+    public ClientBuilder keepaliveTimeout(Duration keepaliveTimeout) {
+        this.keepaliveTimeout = keepaliveTimeout;
         return this;
     }
 
@@ -457,36 +458,43 @@ public final class ClientBuilder implements Cloneable {
     /**
      * @return the retries max duration.
      */
-    public String retryMaxDuration() {
+    public Duration retryMaxDuration() {
         return retryMaxDuration;
     }
 
     /**
-     * @return the connect timeout in milliseconds.
+     * @return the connect timeout.
      */
-    public Integer connectTimeoutMs() {
-        return connectTimeoutMs;
+    public Duration connectTimeout() {
+        return connectTimeout;
     }
 
     /**
      * @param  retryMaxDuration the retries max duration.
      * @return                  this builder
      */
-    public ClientBuilder retryMaxDuration(String retryMaxDuration) {
+    public ClientBuilder retryMaxDuration(Duration retryMaxDuration) {
         this.retryMaxDuration = retryMaxDuration;
         return this;
     }
 
     /**
-     * @param  connectTimeoutMs Sets the connection timeout in milliseconds.
-     *                          Clients connecting to fault tolerant etcd clusters (eg, clusters with >= 3 etcd server
-     *                          peers/endpoints)
-     *                          should consider a value that will allow switching timely from a crashed/partitioned peer to
-     *                          a consensus peer.
-     * @return                  this builder
+     * @param  connectTimeout Sets the connection timeout.
+     *                        Clients connecting to fault tolerant etcd clusters (eg, clusters with >= 3 etcd server
+     *                        peers/endpoints)
+     *                        should consider a value that will allow switching timely from a crashed/partitioned peer to
+     *                        a consensus peer.
+     * @return                this builder
      */
-    public ClientBuilder connectTimeoutMs(Integer connectTimeoutMs) {
-        this.connectTimeoutMs = connectTimeoutMs;
+    public ClientBuilder connectTimeout(Duration connectTimeout) {
+        if (connectTimeout != null) {
+            long millis = connectTimeout.toMillis();
+            if ((int) millis != millis) {
+                throw new IllegalArgumentException("connectTimeout outside of its bounds, max value: " +
+                    Integer.MAX_VALUE);
+            }
+        }
+        this.connectTimeout = connectTimeout;
         return this;
     }
 
