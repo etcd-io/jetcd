@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The jetcd authors
+ * Copyright 2016-2021 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package io.etcd.jetcd;
 
 import java.net.URI;
-import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Callable;
@@ -243,17 +242,17 @@ final class ClientConnectionManager {
             channelBuilder.negotiationType(NegotiationType.PLAINTEXT);
         }
 
-        if (builder.keepaliveTimeMs() != null) {
-            channelBuilder.keepAliveTime(builder.keepaliveTimeMs(), TimeUnit.MILLISECONDS);
+        if (builder.keepaliveTime() != null) {
+            channelBuilder.keepAliveTime(builder.keepaliveTime().toMillis(), TimeUnit.MILLISECONDS);
         }
-        if (builder.keepaliveTimeoutMs() != null) {
-            channelBuilder.keepAliveTimeout(builder.keepaliveTimeoutMs(), TimeUnit.MILLISECONDS);
+        if (builder.keepaliveTimeout() != null) {
+            channelBuilder.keepAliveTimeout(builder.keepaliveTimeout().toMillis(), TimeUnit.MILLISECONDS);
         }
         if (builder.keepaliveWithoutCalls() != null) {
             channelBuilder.keepAliveWithoutCalls(builder.keepaliveWithoutCalls());
         }
-        if (builder.connectTimeoutMs() != null) {
-            channelBuilder.withOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, builder.connectTimeoutMs());
+        if (builder.connectTimeout() != null) {
+            channelBuilder.withOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) builder.connectTimeout().toMillis());
         }
 
         if (builder.loadBalancerPolicy() != null) {
@@ -341,7 +340,7 @@ final class ClientConnectionManager {
             .withBackoff(builder.retryDelay(), builder.retryMaxDelay(), builder.retryChronoUnit());
 
         if (builder.retryMaxDuration() != null) {
-            retryPolicy = retryPolicy.withMaxDuration(Duration.parse(builder.retryMaxDuration()));
+            retryPolicy = retryPolicy.withMaxDuration(builder.retryMaxDuration());
         }
 
         return Failsafe.with(retryPolicy).with(executorService)
