@@ -99,7 +99,7 @@
         <versions-maven-plugin.version>2.8.1</versions-maven-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <formatter-maven-plugin.version>2.13.0</formatter-maven-plugin.version>
-        <impsort-maven-plugin.version>1.4.1</impsort-maven-plugin.version>
+        <impsort-maven-plugin.version>1.5.0</impsort-maven-plugin.version>
 
         <!-- dependencies -->
         <grpc.version>1.34.1</grpc.version>
