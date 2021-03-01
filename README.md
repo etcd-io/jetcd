@@ -57,7 +57,7 @@ GetResponse response = getFuture.get();
 kvClient.delete(key).get();
 ```
 
-For full etcd v3 API, plesase refer to [API_Reference](https://github.com/etcd-io/etcd/blob/master/Documentation/dev-guide/api_reference_v3.md).
+For full etcd v3 API, plesase refer to the [official API documentation](https://etcd.io/docs/current/learning/api/).
 
 ### Examples
 
