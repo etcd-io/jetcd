@@ -113,7 +113,7 @@
         <!-- should be in sync with protobuf grpc dependencies -->
         <protobuf.version>3.11.4</protobuf.version>
         <failsafe.version>2.4.0</failsafe.version>
-        <spotbugs-annotations.version>4.2.1</spotbugs-annotations.version>
+        <spotbugs-annotations.version>4.2.2</spotbugs-annotations.version>
         <!-- test dependencies -->
         <mockito.version>3.8.0</mockito.version>
         <assertj.version>3.19.0</assertj.version>
