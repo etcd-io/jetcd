@@ -36,23 +36,19 @@ import static java.util.stream.Collectors.toList;
 public class EtcdClusterFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(EtcdClusterFactory.class);
 
-    public static EtcdCluster buildCluster(@NonNull
-    String clusterName, int nodes, boolean ssl) {
+    public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl) {
         return buildCluster(clusterName, nodes, ssl, EtcdContainer.ETCD_DOCKER_IMAGE_NAME, Collections.emptyList());
     }
 
-    public static EtcdCluster buildCluster(@NonNull
-    String clusterName, int nodes, boolean ssl, String... additionalArgs) {
+    public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl, String... additionalArgs) {
         return buildCluster(clusterName, nodes, ssl, EtcdContainer.ETCD_DOCKER_IMAGE_NAME, Arrays.asList(additionalArgs));
     }
 
     public static EtcdCluster buildCluster(
-        @NonNull
-        String clusterName,
+        @NonNull String clusterName,
         int nodes,
         boolean ssl,
-        @NonNull
-        String image,
+        @NonNull String image,
         List<String> additionalArgs) {
 
         final Network network = Network.builder().id(clusterName).build();
