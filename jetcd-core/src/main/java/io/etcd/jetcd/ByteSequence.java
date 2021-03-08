@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The jetcd authors
+ * Copyright 2016-2021 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public final class ByteSequence {
 
     /**
      * Concatenate the given {@code ByteSequence} to this one.
-     * 
+     *
      * @param  other string to concatenate
      * @return       a new {@code ByteSequence} instance
      */
