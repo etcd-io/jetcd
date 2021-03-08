@@ -20,46 +20,41 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.common.exception.EtcdException;
-import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.etcd.jetcd.launcher.EtcdCluster;
+import io.etcd.jetcd.launcher.EtcdClusterFactory;
 import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static io.etcd.jetcd.TestUtil.randomByteSequence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @Timeout(value = 30)
 public class WatchErrorTest {
-
-    @RegisterExtension
-    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("watch", 3);
-    public static final ByteSequence namespace = bytesOf("test-namespace/");
-
-    static Stream<Arguments> parameters() {
-        return Stream.of(arguments(Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace).build()),
-            arguments(Client.builder().endpoints(cluster.getClientEndpoints()).build()));
-    }
-
     @ParameterizedTest
-    @MethodSource("parameters")
-    public void testWatchOnError(final Client client) throws Exception {
-        final ByteSequence key = randomByteSequence();
-        final List<Throwable> events = Collections.synchronizedList(new ArrayList<>());
+    @ValueSource(strings = { "test-namespace/", "" })
+    public void testWatchOnError(String ns) {
+        try (EtcdCluster cluster = EtcdClusterFactory.buildCluster("watch", 3, false)) {
+            cluster.start();
 
-        try (Watcher watcher = client.getWatchClient().watch(key, TestUtil::noOpWatchResponseConsumer, events::add)) {
-            cluster.close();
-            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(events).isNotEmpty());
+            final Client client = (ns != null && ns.length() == 0)
+                ? Client.builder().endpoints(cluster.getClientEndpoints()).namespace(bytesOf(ns)).build()
+                : Client.builder().endpoints(cluster.getClientEndpoints()).build();
+
+            final ByteSequence key = randomByteSequence();
+            final List<Throwable> events = Collections.synchronizedList(new ArrayList<>());
+
+            try (Watcher watcher = client.getWatchClient().watch(key, TestUtil::noOpWatchResponseConsumer, events::add)) {
+                cluster.close();
+                await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(events).isNotEmpty());
+            }
+
+            assertThat(events).allMatch(EtcdException.class::isInstance);
         }
-
-        assertThat(events).allMatch(EtcdException.class::isInstance);
     }
 }

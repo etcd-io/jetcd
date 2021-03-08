@@ -746,6 +746,8 @@
                         <exclude>external/**</exclude>
                         <exclude>target-ide/**</exclude>
                         <exclude>.factorypath</exclude>
+                        <exclude>.sdkmanrc</exclude>
+                        <exclude>.envrc</exclude>
                         <exclude>**/.cache/**</exclude>
                     </excludes>
                     <headerDefinitions>
