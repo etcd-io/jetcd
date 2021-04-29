@@ -1,0 +1,20 @@
+version: 2
+updates:
+- package-ecosystem: maven
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: com.google.errorprone:error_prone_core
+    versions:
+    - "> 2.3.4, < 3"
+  - dependency-name: junit:junit
+    versions:
+    - ">= 4.13.a, < 4.14"
+  - dependency-name: org.codehaus.plexus:plexus-compiler-javac-errorprone
+    versions:
+    - "> 2.8.6, < 2.9"
+  - dependency-name: net.revelc.code.formatter:formatter-maven-plugin
+    versions:
+    - 2.14.0
