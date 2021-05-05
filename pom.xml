@@ -84,7 +84,7 @@
         <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
         <os-maven-plugin.version>1.7.0</os-maven-plugin.version>
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
-        <jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
         <exec-maven-plugin.version>3.0.0</exec-maven-plugin.version>
         <license-maven-plugin.version>4.1</license-maven-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
