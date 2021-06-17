@@ -16,6 +16,9 @@
 
 package io.etcd.jetcd.options;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import io.etcd.jetcd.KV;
 import java.util.Optional;
 
 import io.etcd.jetcd.ByteSequence;
@@ -175,6 +178,25 @@ public final class GetOption {
          */
         public Builder withPrefix(boolean prefix) {
             this.prefix = prefix;
+            return this;
+        }
+
+        /**
+         * Enables 'Get' requests to obtain all the keys with matching prefix.
+         *
+         * <p>
+         * You should pass the key that is passed into
+         * {@link KV#get(ByteSequence) KV.get} method into this method as the given key.
+         *
+         * @param  prefix the common prefix of all the keys that you want to get
+         * @return        builder
+         * @deprecated Use {@link #withPrefix(boolean)} instead.
+         */
+        @Deprecated
+        public Builder withPrefix(ByteSequence prefix) {
+            checkNotNull(prefix, "prefix should not be null");
+            ByteSequence prefixEnd = OptionsUtil.prefixEndOf(prefix);
+            this.withRange(prefixEnd);
             return this;
         }
 
