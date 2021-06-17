@@ -16,12 +16,12 @@
 
 package io.etcd.jetcd.options;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import io.etcd.jetcd.KV;
 import java.util.Optional;
 
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.KV;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * The option for get operation.
@@ -188,9 +188,9 @@ public final class GetOption {
          * You should pass the key that is passed into
          * {@link KV#get(ByteSequence) KV.get} method into this method as the given key.
          *
-         * @param  prefix the common prefix of all the keys that you want to get
-         * @return        builder
-         * @deprecated Use {@link #withPrefix(boolean)} instead.
+         * @param      prefix the common prefix of all the keys that you want to get
+         * @return            builder
+         * @deprecated        Use {@link #withPrefix(boolean)} instead.
          */
         @Deprecated
         public Builder withPrefix(ByteSequence prefix) {
