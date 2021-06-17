@@ -47,6 +47,7 @@ public final class WatchOption {
         private boolean noPut = false;
         private boolean noDelete = false;
         private boolean requireLeader = false;
+        private boolean prefix = false;
 
         private Builder() {
         }
@@ -137,11 +138,24 @@ public final class WatchOption {
         }
 
         /**
-         * Enables watch all the keys with matching prefix.
+         * Enables watch watch all the keys by prefix.
          *
-         * @param  prefix the common prefix of all the keys that you want to watch
+         * @param  prefix flag to watch all the keys by prefix
          * @return        builder
          */
+        public WatchOption.Builder isPrefix(boolean prefix) {
+            this.prefix = prefix;
+            return this;
+        }
+
+        /**
+         * Enables watch all the keys with matching prefix.
+         *
+         * @param      prefix the common prefix of all the keys that you want to watch
+         * @return            builder
+         * @deprecated        Use {@link #isPrefix(boolean)} instead.
+         */
+        @Deprecated
         public Builder withPrefix(ByteSequence prefix) {
             checkNotNull(prefix, "prefix should not be null");
             ByteSequence prefixEnd = OptionsUtil.prefixEndOf(prefix);
@@ -165,7 +179,7 @@ public final class WatchOption {
         }
 
         public WatchOption build() {
-            return new WatchOption(endKey, revision, prevKV, progressNotify, noPut, noDelete, requireLeader);
+            return new WatchOption(endKey, revision, prevKV, progressNotify, noPut, noDelete, requireLeader, prefix);
         }
 
     }
@@ -177,9 +191,10 @@ public final class WatchOption {
     private final boolean noPut;
     private final boolean noDelete;
     private final boolean requireLeader;
+    private final boolean prefix;
 
     private WatchOption(Optional<ByteSequence> endKey, long revision, boolean prevKV, boolean progressNotify, boolean noPut,
-        boolean noDelete, boolean requireLeader) {
+        boolean noDelete, boolean requireLeader, boolean prefix) {
         this.endKey = endKey;
         this.revision = revision;
         this.prevKV = prevKV;
@@ -187,6 +202,7 @@ public final class WatchOption {
         this.noPut = noPut;
         this.noDelete = noDelete;
         this.requireLeader = requireLeader;
+        this.prefix = prefix;
     }
 
     public Optional<ByteSequence> getEndKey() {
@@ -248,5 +264,9 @@ public final class WatchOption {
      */
     public boolean withRequireLeader() {
         return requireLeader;
+    }
+
+    public boolean isPrefix() {
+        return prefix;
     }
 }

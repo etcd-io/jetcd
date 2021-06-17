@@ -75,7 +75,7 @@ public class ElectionTest {
         assertThat(campaignResponse.getLeader().getLease()).isEqualTo(leaseId);
         assertThat(campaignResponse.getLeader().getName()).isEqualTo(electionName.getByteString());
         // election is backed by standard key in etcd. let us examine it
-        GetOption getOption = GetOption.newBuilder().withPrefix(true).build();
+        GetOption getOption = GetOption.newBuilder().isPrefix(true).build();
         List<KeyValue> keys = kvClient.get(electionName, getOption).get().getKvs();
         assertThat(keys.size()).isEqualTo(1);
         assertThat(keys.get(0).getKey().getByteString()).isEqualTo(campaignResponse.getLeader().getKey());
@@ -135,7 +135,7 @@ public class ElectionTest {
         assertThat(campaignResponse1.getLeader().getRevision()).isEqualTo(campaignResponse2.getLeader().getRevision());
 
         // latest proposal should be persisted
-        GetOption getOption = GetOption.newBuilder().withPrefix(true).build();
+        GetOption getOption = GetOption.newBuilder().isPrefix(true).build();
         List<KeyValue> keys = kvClient.get(electionName, getOption).get().getKvs();
         assertThat(keys.size()).isEqualTo(1);
         assertThat(keys.get(0).getValue()).isEqualTo(secondProposal);
@@ -155,7 +155,7 @@ public class ElectionTest {
         } catch (ExecutionException e) {
             assertThat(e.getCause()).isInstanceOf(NotLeaderException.class);
         }
-        GetOption getOption = GetOption.newBuilder().withPrefix(true).build();
+        GetOption getOption = GetOption.newBuilder().isPrefix(true).build();
         List<KeyValue> keys = kvClient.get(electionName, getOption).get().getKvs();
         assertThat(keys).isEmpty();
     }
@@ -236,7 +236,7 @@ public class ElectionTest {
         executor.awaitTermination(threadCount * OPERATION_TIMEOUT, TimeUnit.SECONDS);
         futures.forEach(f -> assertThat(f).isDone());
         assertThat(sharedVariable.get()).isEqualTo(threadCount);
-        GetOption getOption = GetOption.newBuilder().withPrefix(true).build();
+        GetOption getOption = GetOption.newBuilder().isPrefix(true).build();
         assertThat(kvClient.get(electionName, getOption).get().getCount()).isEqualTo(0L);
         for (int i = 0; i < threadCount; ++i) {
             clients.get(i).getLeaseClient().revoke(leases.get(i)).get();

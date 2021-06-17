@@ -176,7 +176,7 @@ public final class GetOption {
          * @param  prefix flag to obtain all the keys by prefix
          * @return        builder
          */
-        public Builder withPrefix(boolean prefix) {
+        public Builder isPrefix(boolean prefix) {
             this.prefix = prefix;
             return this;
         }
@@ -190,7 +190,7 @@ public final class GetOption {
          *
          * @param      prefix the common prefix of all the keys that you want to get
          * @return            builder
-         * @deprecated        Use {@link #withPrefix(boolean)} instead.
+         * @deprecated        Use {@link #isPrefix(boolean)} instead.
          */
         @Deprecated
         public Builder withPrefix(ByteSequence prefix) {

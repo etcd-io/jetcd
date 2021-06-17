@@ -117,7 +117,7 @@ public class KVTest {
         putKeysWithPrefix(prefix, numPrefix);
 
         GetOption option = GetOption.newBuilder().withSortField(SortTarget.KEY).withSortOrder(SortOrder.DESCEND)
-            .withPrefix(true).build();
+            .isPrefix(true).build();
         CompletableFuture<GetResponse> getFeature = kvClient.get(bytesOf(prefix), option);
         GetResponse response = getFeature.get();
 
@@ -154,12 +154,12 @@ public class KVTest {
         putKeysWithPrefix(prefix, numPrefixes);
 
         // verify get withPrefix.
-        CompletableFuture<GetResponse> getFuture = kvClient.get(key, GetOption.newBuilder().withPrefix(true).build());
+        CompletableFuture<GetResponse> getFuture = kvClient.get(key, GetOption.newBuilder().isPrefix(true).build());
         GetResponse getResp = getFuture.get();
         assertThat(getResp.getCount()).isEqualTo(numPrefixes);
 
         // verify del withPrefix.
-        DeleteOption deleteOpt = DeleteOption.newBuilder().withPrefix(key).build();
+        DeleteOption deleteOpt = DeleteOption.newBuilder().isPrefix(true).build();
         CompletableFuture<DeleteResponse> delFuture = kvClient.delete(key, deleteOpt);
         DeleteResponse delResp = delFuture.get();
         assertThat(delResp.getDeleted()).isEqualTo(numPrefixes);

@@ -34,6 +34,7 @@ import io.etcd.jetcd.api.WatchRequest;
 import io.etcd.jetcd.api.WatchResponse;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdException;
+import io.etcd.jetcd.options.OptionsUtil;
 import io.etcd.jetcd.options.WatchOption;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -143,6 +144,11 @@ final class WatchImpl implements Watch {
 
                 option.getEndKey().map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
                     .ifPresent(builder::setRangeEnd);
+
+                if (!option.getEndKey().isPresent() && option.isPrefix()) {
+                    ByteSequence endKey = OptionsUtil.prefixEndOf(key);
+                    builder.setRangeEnd(Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace));
+                }
 
                 if (option.isNoDelete()) {
                     builder.addFilters(WatchCreateRequest.FilterType.NODELETE);
