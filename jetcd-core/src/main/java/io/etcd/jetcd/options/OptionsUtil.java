@@ -38,7 +38,7 @@ public final class OptionsUtil {
      * @param  prefix the given prefix
      * @return        the range end of the given prefix
      */
-    static ByteSequence prefixEndOf(ByteSequence prefix) {
+    public static ByteSequence prefixEndOf(ByteSequence prefix) {
         byte[] endKey = prefix.getBytes().clone();
         for (int i = endKey.length - 1; i >= 0; i--) {
             if (endKey[i] != (byte) 0xff) {

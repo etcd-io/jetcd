@@ -19,9 +19,6 @@ package io.etcd.jetcd.options;
 import java.util.Optional;
 
 import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.KV;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * The option for get operation.
@@ -53,6 +50,7 @@ public final class GetOption {
         private long maxCreateRevision = 0L;
         private long minModRevision = 0L;
         private long maxModRevision = 0L;
+        private boolean prefix = false;
 
         private Builder() {
         }
@@ -168,19 +166,15 @@ public final class GetOption {
         }
 
         /**
-         * Enables 'Get' requests to obtain all the keys with matching prefix.
+         * Enables 'Get' requests to obtain all the keys by prefix.
          *
          * <p>
-         * You should pass the key that is passed into
-         * {@link KV#get(ByteSequence) KV.get} method into this method as the given key.
          *
-         * @param  prefix the common prefix of all the keys that you want to get
+         * @param  prefix flag to obtain all the keys by prefix
          * @return        builder
          */
-        public Builder withPrefix(ByteSequence prefix) {
-            checkNotNull(prefix, "prefix should not be null");
-            ByteSequence prefixEnd = OptionsUtil.prefixEndOf(prefix);
-            this.withRange(prefixEnd);
+        public Builder withPrefix(boolean prefix) {
+            this.prefix = prefix;
             return this;
         }
 
@@ -241,7 +235,7 @@ public final class GetOption {
          */
         public GetOption build() {
             return new GetOption(endKey, limit, revision, sortOrder, sortTarget, serializable, keysOnly, countOnly,
-                minCreateRevision, maxCreateRevision, minModRevision, maxModRevision);
+                minCreateRevision, maxCreateRevision, minModRevision, maxModRevision, prefix);
         }
 
     }
@@ -258,10 +252,11 @@ public final class GetOption {
     private final long maxCreateRevision;
     private final long minModRevision;
     private final long maxModRevision;
+    private final boolean prefix;
 
     private GetOption(Optional<ByteSequence> endKey, long limit, long revision, SortOrder sortOrder, SortTarget sortTarget,
         boolean serializable, boolean keysOnly, boolean countOnly, long minCreateRevision, long maxCreateRevision,
-        long minModRevision, long maxModRevision) {
+        long minModRevision, long maxModRevision, boolean prefix) {
         this.endKey = endKey;
         this.limit = limit;
         this.revision = revision;
@@ -274,6 +269,7 @@ public final class GetOption {
         this.maxCreateRevision = maxCreateRevision;
         this.minModRevision = minModRevision;
         this.maxModRevision = maxModRevision;
+        this.prefix = prefix;
     }
 
     /**
@@ -327,6 +323,10 @@ public final class GetOption {
 
     public long getMaxModRevision() {
         return this.maxModRevision;
+    }
+
+    public boolean isPrefix() {
+        return prefix;
     }
 
     public enum SortOrder {

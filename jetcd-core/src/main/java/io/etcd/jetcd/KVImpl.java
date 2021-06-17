@@ -32,6 +32,7 @@ import io.etcd.jetcd.op.TxnImpl;
 import io.etcd.jetcd.options.CompactOption;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
+import io.etcd.jetcd.options.OptionsUtil;
 import io.etcd.jetcd.options.PutOption;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -105,6 +106,11 @@ final class KVImpl implements KV {
 
         option.getEndKey().map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
             .ifPresent(builder::setRangeEnd);
+
+        if (!option.getEndKey().isPresent() && option.isPrefix()) {
+            ByteSequence endKey = OptionsUtil.prefixEndOf(key);
+            builder.setRangeEnd(Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace));
+        }
 
         RangeRequest request = builder.build();
 
