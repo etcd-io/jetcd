@@ -138,6 +138,11 @@ final class KVImpl implements KV {
             .map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
             .ifPresent(builder::setRangeEnd);
 
+        if (!option.getEndKey().isPresent() && option.isPrefix()) {
+            ByteSequence endKey = OptionsUtil.prefixEndOf(key);
+            builder.setRangeEnd(Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace));
+        }
+
         DeleteRangeRequest request = builder.build();
 
         return connectionManager.execute(

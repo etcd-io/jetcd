@@ -35,6 +35,7 @@ public final class DeleteOption {
 
         private Optional<ByteSequence> endKey = Optional.empty();
         private boolean prevKV = false;
+        private boolean prefix = false;
 
         private Builder() {
         }
@@ -63,6 +64,19 @@ public final class DeleteOption {
         }
 
         /**
+         * Enables 'Delete' requests to delete all the keys by prefix.
+         *
+         * <p>
+         *
+         * @param  prefix flag to delete all the keys by prefix
+         * @return        builder
+         */
+        public DeleteOption.Builder isPrefix(boolean prefix) {
+            this.prefix = prefix;
+            return this;
+        }
+
+        /**
          * Enables 'Delete' requests to delete all the keys with matching prefix.
          *
          * <p>
@@ -70,9 +84,11 @@ public final class DeleteOption {
          * {@link KV#delete(ByteSequence) KV.delete} method
          * into this method as the given key.
          *
-         * @param  prefix the common prefix of all the keys that you want to delete
-         * @return        builder
+         * @param      prefix the common prefix of all the keys that you want to delete
+         * @return            builder
+         * @deprecated        Use {@link #isPrefix(boolean)} instead.
          */
+        @Deprecated
         public Builder withPrefix(ByteSequence prefix) {
             checkNotNull(prefix, "prefix should not be null");
             ByteSequence prefixEnd = OptionsUtil.prefixEndOf(prefix);
@@ -92,17 +108,19 @@ public final class DeleteOption {
         }
 
         public DeleteOption build() {
-            return new DeleteOption(endKey, prevKV);
+            return new DeleteOption(endKey, prevKV, prefix);
         }
 
     }
 
     private final Optional<ByteSequence> endKey;
     private final boolean prevKV;
+    private final boolean prefix;
 
-    private DeleteOption(Optional<ByteSequence> endKey, boolean prevKV) {
+    private DeleteOption(Optional<ByteSequence> endKey, boolean prevKV, boolean prefix) {
         this.endKey = endKey;
         this.prevKV = prevKV;
+        this.prefix = prevKV;
     }
 
     public Optional<ByteSequence> getEndKey() {
@@ -116,5 +134,9 @@ public final class DeleteOption {
      */
     public boolean isPrevKV() {
         return prevKV;
+    }
+
+    public boolean isPrefix() {
+        return prefix;
     }
 }
