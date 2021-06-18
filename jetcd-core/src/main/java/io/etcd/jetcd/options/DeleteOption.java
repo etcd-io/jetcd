@@ -120,7 +120,7 @@ public final class DeleteOption {
     private DeleteOption(Optional<ByteSequence> endKey, boolean prevKV, boolean prefix) {
         this.endKey = endKey;
         this.prevKV = prevKV;
-        this.prefix = prevKV;
+        this.prefix = prefix;
     }
 
     public Optional<ByteSequence> getEndKey() {
