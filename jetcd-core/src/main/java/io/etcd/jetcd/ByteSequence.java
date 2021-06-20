@@ -20,6 +20,8 @@ import java.nio.charset.Charset;
 
 import com.google.protobuf.ByteString;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Etcd binary bytes, easy to convert between byte[], String and ByteString.
  */
@@ -31,6 +33,7 @@ public final class ByteSequence {
     private final ByteString byteString;
 
     private ByteSequence(ByteString byteString) {
+        checkNotNull(byteString, "byteString should not be null");
         this.byteString = byteString;
         this.hashVal = byteString.hashCode();
     }
@@ -43,6 +46,9 @@ public final class ByteSequence {
      *                byte sequence represented by this string; <code>false</code> otherwise.
      */
     public boolean startsWith(ByteSequence prefix) {
+        if (prefix == null) {
+            return false;
+        }
         ByteString baseByteString = this.getByteString();
         ByteString prefixByteString = prefix.getByteString();
         return baseByteString.startsWith(prefixByteString);
@@ -55,6 +61,7 @@ public final class ByteSequence {
      * @return       a new {@code ByteSequence} instance
      */
     public ByteSequence concat(ByteSequence other) {
+        checkNotNull(other, "other byteSequence should not be null");
         return new ByteSequence(this.byteString.concat(other.getByteString()));
     }
 
@@ -136,7 +143,6 @@ public final class ByteSequence {
      */
     public static ByteSequence from(String source, Charset charset) {
         byte[] bytes = source.getBytes(charset);
-
         return new ByteSequence(ByteString.copyFrom(bytes));
     }
 
