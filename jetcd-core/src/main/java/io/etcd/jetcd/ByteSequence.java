@@ -134,6 +134,11 @@ public final class ByteSequence {
         return byteString.size();
     }
 
+    @Override
+    public String toString() {
+        return toString(Charset.defaultCharset());
+    }
+
     /**
      * Create new ByteSequence from a String.
      *
@@ -153,5 +158,4 @@ public final class ByteSequence {
     public static ByteSequence from(byte[] source) {
         return new ByteSequence(ByteString.copyFrom(source));
     }
-
 }
