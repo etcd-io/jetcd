@@ -136,7 +136,7 @@ public final class ByteSequence {
 
     @Override
     public String toString() {
-        return toString(Charset.defaultCharset());
+        return byteString.toStringUtf8();
     }
 
     /**
