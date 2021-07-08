@@ -16,8 +16,14 @@
 
 package io.etcd.jetcd;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
@@ -242,5 +248,50 @@ public class KVTest {
         GetResponse getResp2 = kvClient.get(abc).get();
         assertThat(getResp2.getKvs()).hasSize(1);
         assertThat(getResp2.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(oneTwoThree.toString(UTF_8));
+    }
+
+    @Test
+    @SuppressWarnings("FutureReturnValueIgnored")
+    public void testKVClientCanRetryPutOnEtcdRestart() throws InterruptedException {
+        try (Client customClient = Client.builder().endpoints(cluster.getClientEndpoints())
+            .retryMaxDuration(Duration.ofSeconds(300))
+            // client will delay the retry for a long time to give the cluster plenty of time to restart
+            .retryDelay(10)
+            .retryMaxDelay(30)
+            .retryChronoUnit(ChronoUnit.SECONDS)
+            .build()) {
+            ByteSequence key = ByteSequence.from("retry_dummy_key", StandardCharsets.UTF_8);
+            int putCount = 1000;
+
+            ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
+
+            // start putting values in a sequence, at least on of them has to be retried
+            executor.submit(() -> {
+                for (int i = 0; i < putCount; ++i) {
+                    ByteSequence value = ByteSequence
+                        .from(Integer.toString(i), StandardCharsets.UTF_8);
+                    customClient.getKVClient().put(key, value).join();
+                }
+            });
+
+            // restart the cluster while uploading
+            executor.schedule(cluster::restart, 100, TimeUnit.MILLISECONDS);
+
+            executor.shutdown();
+            assertThat(executor.awaitTermination(30, TimeUnit.SECONDS)).isTrue();
+
+            GetResponse getResponse = kvClient.get(key).join();
+
+            assertThat(getResponse.getKvs().size())
+                .as("There should be exactly one KeyValue for the test key")
+                .isEqualTo(1);
+
+            ByteSequence lastPutValue = ByteSequence
+                .from(Integer.toString(putCount - 1), StandardCharsets.UTF_8);
+            assertThat(getResponse.getKvs().get(0).getValue())
+                .as("The sequence of put operations should finish successfully. " +
+                    "Last seen value should match the expected value.")
+                .isEqualTo(lastPutValue);
+        }
     }
 }
