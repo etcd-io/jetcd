@@ -77,7 +77,8 @@ public final class Util {
     }
 
     static boolean isRetryable(Throwable e) {
-        return isInvalidTokenError(Status.fromThrowable(e));
+        Status status = Status.fromThrowable(e);
+        return Status.UNAVAILABLE.getCode().equals(status.getCode()) || isInvalidTokenError(status);
     }
 
     static boolean isInvalidTokenError(Status status) {
