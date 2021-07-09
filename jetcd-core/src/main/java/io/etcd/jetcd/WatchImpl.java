@@ -224,7 +224,7 @@ final class WatchImpl implements Watch {
                     return;
                 }
 
-                revision = response.getHeader().getRevision();
+                revision = Math.max(revision, response.getHeader().getRevision());
                 id = response.getWatchId();
             } else if (response.getCanceled()) {
 

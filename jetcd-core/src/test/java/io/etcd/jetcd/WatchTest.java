@@ -48,6 +48,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @Timeout(value = 30)
 public class WatchTest {
+
     private static final long TIME_OUT_SECONDS = 30;
 
     @RegisterExtension
@@ -189,5 +190,26 @@ public class WatchTest {
         assertThat(events.get(0).getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
         assertThat(events.get(0).getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
         assertThat(events.get(0).getEvents().get(0).getKeyValue().getValue()).isEqualTo(value);
+    }
+
+    @ParameterizedTest
+    @MethodSource("parameters")
+    public void testWatchFutureRevisionIsNotOverwrittenOnCreation(final Client client) throws Exception {
+        final ByteSequence key = randomByteSequence();
+        final ByteSequence value = randomByteSequence();
+        final List<WatchResponse> events = Collections.synchronizedList(new ArrayList<>());
+
+        PutResponse putResponse = client.getKVClient().put(key, value).get();
+
+        long lastSeenRevision = putResponse.getHeader().getRevision();
+        WatchOption watchOption = WatchOption.newBuilder().withRevision(lastSeenRevision + 1).build();
+
+        try (Watcher watcher = client.getWatchClient().watch(key, watchOption, events::add)) {
+
+            cluster.restart(); // resumes (recreates) the watch
+
+            Thread.sleep(2000); // await().duration() would be better but it's broken
+            assertThat(events.isEmpty()).as("verify that received events list is empty").isTrue();
+        }
     }
 }
