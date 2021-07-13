@@ -244,7 +244,7 @@ final class WatchImpl implements Watch {
                     error = newEtcdException(ErrorCode.FAILED_PRECONDITION, reason);
                 }
 
-                listener.onError(error);
+                handleError(toEtcdException(error), false);
             } else if (response.getEventsCount() == 0 && option.isProgressNotify()) {
 
                 //
