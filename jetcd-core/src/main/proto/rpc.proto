@@ -1,5 +1,5 @@
 //
-// Copyright 2016-2020 The jetcd authors
+// Copyright 2016-2021 The jetcd authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -53,6 +53,13 @@ service KV {
 }
 
 service Watch {
+  // Progress requests that a watch stream progress status
+  // be sent in the watch response stream as soon as possible.
+  // For watch progress responses, the header.revision indicates progress. All future events
+  // received in this stream are guaranteed to have a higher revision number than the
+  // header.revision number.
+  rpc Progress(WatchProgressRequest) returns (WatchResponse) {}
+
   // Watch watches for events happening or that have happened. Both input and output
   // are streams; the input stream is for creating and canceling watchers and the output
   // stream sends events. One watch RPC can watch on multiple key ranges, streaming events
@@ -175,6 +182,9 @@ message ResponseHeader {
   // member_id is the ID of the member which sent the response.
   uint64 member_id = 2;
   // revision is the key-value store revision when the request was applied.
+  // For watch progress responses, the header.revision indicates progress. All future events
+  // recieved in this stream are guaranteed to have a higher revision number than the
+  // header.revision number.
   int64 revision = 3;
   // raft_term is the raft term when the request was applied.
   uint64 raft_term = 4;
@@ -458,6 +468,7 @@ message WatchRequest {
   oneof request_union {
     WatchCreateRequest create_request = 1;
     WatchCancelRequest cancel_request = 2;
+    WatchProgressRequest progress_request = 3;
   }
 }
 
@@ -495,6 +506,11 @@ message WatchCreateRequest {
 message WatchCancelRequest {
   // watch_id is the watcher id to cancel so that no more events are transmitted.
   int64 watch_id = 1;
+}
+
+// Requests a watch stream progress status be sent in the
+// watch response stream as soon as possible.
+message WatchProgressRequest {
 }
 
 message WatchResponse {

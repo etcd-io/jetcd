@@ -140,6 +140,11 @@ public interface Watch extends CloseableClient {
         return watch(key, option, listener(onNext, onError, onCompleted));
     }
 
+    /**
+     * Requests the latest revision processed for all watcher instances
+     */
+    void requestProgress();
+
     static Listener listener(Consumer<WatchResponse> onNext) {
         return listener(onNext, t -> {
         }, () -> {
@@ -205,5 +210,10 @@ public interface Watch extends CloseableClient {
          */
         @Override
         void close();
+
+        /**
+         * Requests the latest revision processed and propagates it to listeners
+         */
+        void requestProgress();
     }
 }

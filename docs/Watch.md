@@ -12,9 +12,11 @@ The Watch provide methods to watch on a key interval and cancel a watcher. If th
 
 4. Cancel watch request, the etcd client should process watch cancellation and filter all the notification after cancellation request.
 
+5. The watch client should be able to make a progress notify request that propagates the latest revision number to all watches
+
 # Implementation
 
-The etcd client process watch request with [watch function](#watch-function), process notification with [processEvents function](#processevents-function) , process resume with [resume function](#resume-function) and process cancel with [cancelWatch function](#cancelwatch-function).
+The etcd client process watch request with [watch function](#watch-function), process notification with [processEvents function](#processevents-function) , process resume with [resume function](#resume-function), process cancel with [cancelWatch function](#cancelwatch-function) and request progress with [requestProgress function](#requestProgress-function).
 
 ## watch function
 
@@ -43,6 +45,13 @@ Cancel the watch task with the watcher, the `onCanceled` will be called after su
 
 1. The watcher will be removed from [watchers](#watchers-instance) map.
 2. If the [watchers](#watchers-instance) map contain the watcher, it will be moved to [cancelWatchers](#cancelwatchers) and send cancel request to [requestStream](#requeststream-instance).
+
+## requestProgress function
+
+Send the latest revision processed to all active [watchers](#watchers-instance)
+
+1. Send a progress request to [requestStream](#requeststream-instance).
+2. Working watchers will receive a WatchResponse containing the latest revision number. All future revision numbers are guaranteed to be greater than or equal to the received revision number.
 
 ## requestStream instance
 
