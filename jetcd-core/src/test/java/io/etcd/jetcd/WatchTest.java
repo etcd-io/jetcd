@@ -187,6 +187,59 @@ public class WatchTest {
 
     @ParameterizedTest
     @MethodSource("parameters")
+    public void testProgressRequest(final Client client) throws Exception {
+        final ByteSequence key = randomByteSequence();
+        final ByteSequence value = randomByteSequence();
+        final Watch watchClient = client.getWatchClient();
+        final AtomicReference<WatchResponse> emptyWatcherEventRef = new AtomicReference<>();
+        final AtomicReference<WatchResponse> activeWatcherEventRef = new AtomicReference<>();
+
+        try (Watcher activeWatcher = watchClient.watch(key, activeWatcherEventRef::set);
+            Watcher emptyWatcher = watchClient.watch(key.concat(randomByteSequence()), emptyWatcherEventRef::set)) {
+            // Check that a requestProgress returns identical revisions initially
+            watchClient.requestProgress();
+            await().atMost(TIME_OUT_SECONDS, TimeUnit.SECONDS).untilAsserted(() -> {
+                assertThat(activeWatcherEventRef.get()).isNotNull();
+                assertThat(emptyWatcherEventRef.get()).isNotNull();
+            });
+            WatchResponse activeEvent = activeWatcherEventRef.get();
+            WatchResponse emptyEvent = emptyWatcherEventRef.get();
+            assertThat(activeEvent).satisfies(WatchResponse::isProgressNotify);
+            assertThat(emptyEvent).satisfies(WatchResponse::isProgressNotify);
+            assertThat(activeEvent.getHeader().getRevision()).isEqualTo(emptyEvent.getHeader().getRevision());
+
+            // Put a value being watched by only the active watcher
+            activeWatcherEventRef.set(null);
+            emptyWatcherEventRef.set(null);
+            client.getKVClient().put(key, value).get();
+            await().atMost(TIME_OUT_SECONDS, TimeUnit.SECONDS).untilAsserted(() -> {
+                assertThat(activeWatcherEventRef.get()).isNotNull();
+            });
+            activeEvent = activeWatcherEventRef.get();
+            emptyEvent = emptyWatcherEventRef.get();
+            assertThat(emptyEvent).isNull();
+            assertThat(activeEvent).isNotNull();
+            long latestRevision = activeEvent.getHeader().getRevision();
+
+            // verify the next progress notify brings both watchers to the latest revision
+            activeWatcherEventRef.set(null);
+            emptyWatcherEventRef.set(null);
+            watchClient.requestProgress();
+            await().atMost(TIME_OUT_SECONDS, TimeUnit.SECONDS).untilAsserted(() -> {
+                assertThat(activeWatcherEventRef.get()).isNotNull();
+                assertThat(emptyWatcherEventRef.get()).isNotNull();
+            });
+            activeEvent = activeWatcherEventRef.get();
+            emptyEvent = emptyWatcherEventRef.get();
+            assertThat(activeEvent).satisfies(WatchResponse::isProgressNotify);
+            assertThat(emptyEvent).satisfies(WatchResponse::isProgressNotify);
+            assertThat(activeEvent.getHeader().getRevision()).isEqualTo(emptyEvent.getHeader().getRevision())
+                .isEqualTo(latestRevision);
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("parameters")
     public void testWatchFutureRevisionIsNotOverwrittenOnCreation(final Client client) throws Exception {
         final ByteSequence key = randomByteSequence();
         final ByteSequence value = randomByteSequence();

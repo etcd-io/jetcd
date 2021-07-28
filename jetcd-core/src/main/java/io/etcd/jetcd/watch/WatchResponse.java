@@ -67,4 +67,16 @@ public class WatchResponse extends AbstractResponse<io.etcd.jetcd.api.WatchRespo
 
         return events;
     }
+
+    public boolean isProgressNotify() {
+        return isProgressNotify(getResponse());
+    }
+
+    /**
+     * returns true if the WatchResponse is progress notification.
+     */
+    public static boolean isProgressNotify(io.etcd.jetcd.api.WatchResponse response) {
+        return response.getEventsCount() == 0 && !response.getCreated() && !response.getCanceled()
+            && response.getCompactRevision() == 0 && response.getHeader().getRevision() != 0;
+    }
 }

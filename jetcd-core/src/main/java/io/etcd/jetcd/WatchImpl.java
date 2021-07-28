@@ -30,6 +30,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import io.etcd.jetcd.api.WatchCancelRequest;
 import io.etcd.jetcd.api.WatchCreateRequest;
 import io.etcd.jetcd.api.WatchGrpc;
+import io.etcd.jetcd.api.WatchProgressRequest;
 import io.etcd.jetcd.api.WatchRequest;
 import io.etcd.jetcd.api.WatchResponse;
 import io.etcd.jetcd.common.exception.ErrorCode;
@@ -94,6 +95,15 @@ final class WatchImpl implements Watch {
             synchronized (this.lock) {
                 executor.shutdownNow();
                 watchers.forEach(Watcher::close);
+            }
+        }
+    }
+
+    @Override
+    public void requestProgress() {
+        if (!closed.get()) {
+            synchronized (this.lock) {
+                watchers.forEach(Watcher::requestProgress);
             }
         }
     }
@@ -192,6 +202,14 @@ final class WatchImpl implements Watch {
             }
         }
 
+        @Override
+        public void requestProgress() {
+            if (!closed.get() && stream != null) {
+                WatchProgressRequest watchProgressRequest = WatchProgressRequest.newBuilder().build();
+                stream.onNext(WatchRequest.newBuilder().setProgressRequest(watchProgressRequest).build());
+            }
+        }
+
         // ************************
         //
         // StreamObserver
@@ -245,6 +263,9 @@ final class WatchImpl implements Watch {
                 }
 
                 handleError(toEtcdException(error), false);
+            } else if (io.etcd.jetcd.watch.WatchResponse.isProgressNotify(response)) {
+                listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response));
+                revision = Math.max(revision, response.getHeader().getRevision());
             } else if (response.getEventsCount() == 0 && option.isProgressNotify()) {
 
                 //
