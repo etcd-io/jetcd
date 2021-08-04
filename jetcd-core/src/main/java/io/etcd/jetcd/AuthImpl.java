@@ -167,7 +167,7 @@ final class AuthImpl implements Auth {
         checkNotNull(rangeEnd, "rangeEnd can't be null");
         checkNotNull(permType, "permType can't be null");
 
-        io.etcd.jetcd.api.Permission.Type type;
+        Type type;
         switch (permType) {
             case WRITE:
                 type = Type.WRITE;
@@ -183,10 +183,16 @@ final class AuthImpl implements Auth {
                 break;
         }
 
-        io.etcd.jetcd.api.Permission perm = io.etcd.jetcd.api.Permission.newBuilder().setKey(key.getByteString())
-            .setRangeEnd(rangeEnd.getByteString()).setPermType(type).build();
+        io.etcd.jetcd.api.Permission perm = io.etcd.jetcd.api.Permission.newBuilder()
+            .setKey(key.getByteString())
+            .setRangeEnd(rangeEnd.getByteString())
+            .setPermType(type)
+            .build();
         AuthRoleGrantPermissionRequest roleGrantPermissionRequest = AuthRoleGrantPermissionRequest.newBuilder()
-            .setNameBytes(role.getByteString()).setPerm(perm).build();
+            .setNameBytes(role.getByteString())
+            .setPerm(perm)
+            .build();
+
         return Util.toCompletableFuture(this.stub.roleGrantPermission(roleGrantPermissionRequest),
             AuthRoleGrantPermissionResponse::new, this.connectionManager.getExecutorService());
     }

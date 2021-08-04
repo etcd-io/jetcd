@@ -147,7 +147,7 @@ public class IPNameResolver extends NameResolver {
                     "Unable to resolve endpoint " + targetUri);
             }
 
-            savedListener.onAddresses(addresses, io.grpc.Attributes.EMPTY);
+            savedListener.onAddresses(addresses, Attributes.EMPTY);
         } catch (Exception e) {
             LOGGER.warn("Error wile getting list of servers", e);
             savedListener.onError(Status.NOT_FOUND);

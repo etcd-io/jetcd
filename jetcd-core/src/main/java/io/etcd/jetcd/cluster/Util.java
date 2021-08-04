@@ -27,8 +27,7 @@ public class Util {
     /**
      * Converts a list of API member to a List of client side member.
      */
-    static List<io.etcd.jetcd.cluster.Member> toMembers(List<io.etcd.jetcd.api.Member> members) {
-
-        return members.stream().map(io.etcd.jetcd.cluster.Member::new).collect(Collectors.toList());
+    static List<Member> toMembers(List<io.etcd.jetcd.api.Member> members) {
+        return members.stream().map(Member::new).collect(Collectors.toList());
     }
 }

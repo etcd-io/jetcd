@@ -35,16 +35,16 @@ public class AlarmResponse extends AbstractResponse<io.etcd.jetcd.api.AlarmRespo
     }
 
     private static AlarmMember toAlarmMember(io.etcd.jetcd.api.AlarmMember alarmMember) {
-        io.etcd.jetcd.maintenance.AlarmType type;
+        AlarmType type;
         switch (alarmMember.getAlarm()) {
             case NONE:
-                type = io.etcd.jetcd.maintenance.AlarmType.NONE;
+                type = AlarmType.NONE;
                 break;
             case NOSPACE:
-                type = io.etcd.jetcd.maintenance.AlarmType.NOSPACE;
+                type = AlarmType.NOSPACE;
                 break;
             default:
-                type = io.etcd.jetcd.maintenance.AlarmType.UNRECOGNIZED;
+                type = AlarmType.UNRECOGNIZED;
         }
         return new AlarmMember(alarmMember.getMemberID(), type);
     }

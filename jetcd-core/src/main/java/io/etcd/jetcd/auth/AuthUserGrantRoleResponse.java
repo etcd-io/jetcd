@@ -17,11 +17,11 @@
 package io.etcd.jetcd.auth;
 
 import io.etcd.jetcd.AbstractResponse;
-import io.etcd.jetcd.ByteSequence;
 
 /**
- * AuthUserGrantRoleResponse returned by {@link io.etcd.jetcd.Auth#userGrantRole(ByteSequence,
- * ByteSequence)} contains a header.
+ * AuthUserGrantRoleResponse returned by
+ * {@link io.etcd.jetcd.Auth#userGrantRole(io.etcd.jetcd.ByteSequence.ByteSequence,
+ * io.etcd.jetcd.ByteSequence.ByteSequence)} contains a header.
  */
 public class AuthUserGrantRoleResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserGrantRoleResponse> {
 

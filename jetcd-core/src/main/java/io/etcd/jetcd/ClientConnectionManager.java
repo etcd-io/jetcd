@@ -40,7 +40,6 @@ import com.google.protobuf.ByteString;
 import io.etcd.jetcd.api.AuthGrpc;
 import io.etcd.jetcd.api.AuthenticateRequest;
 import io.etcd.jetcd.api.AuthenticateResponse;
-import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.etcd.jetcd.resolver.DnsSrvNameResolver;
 import io.etcd.jetcd.resolver.IPNameResolver;
 import io.grpc.CallOptions;
@@ -193,7 +192,7 @@ final class ClientConnectionManager {
             return stubConsumer.apply(stub).whenComplete((r, t) -> channel.shutdown());
         } catch (Exception e) {
             channel.shutdown();
-            throw EtcdExceptionFactory.toEtcdException(e);
+            throw toEtcdException(e);
         }
     }
 
@@ -350,9 +349,7 @@ final class ClientConnectionManager {
                 future.addListener(() -> {
                     try {
                         wrappedFuture.complete(future.get());
-                        if (execution.complete(wrappedFuture)) {
-                            // success! but nothing to do here
-                        }
+                        execution.complete(wrappedFuture);
                     } catch (Exception error) {
                         if (!execution.retryOn(error)) {
                             // permanent failure

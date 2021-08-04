@@ -103,7 +103,7 @@ public final class Util {
             // range end is '\0', calculate the prefixed range end by (key + 1)
             byte[] prefixedEndArray = namespace.getByteString().toByteArray();
             boolean ok = false;
-            for (int i = (prefixedEndArray.length - 1); i >= 0; i--) {
+            for (int i = prefixedEndArray.length - 1; i >= 0; i--) {
                 prefixedEndArray[i] = (byte) (prefixedEndArray[i] + 1);
                 if (prefixedEndArray[i] != 0) {
                     ok = true;
