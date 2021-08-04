@@ -576,25 +576,6 @@
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>${maven-javadoc-plugin.version}</version>
-                    <configuration>
-                        <aggregate>true</aggregate>
-                        <encoding>UTF-8</encoding>
-                        <excludePackageNames>*.protobuf.*</excludePackageNames>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>attach-javadocs</id>
-                            <goals>
-                                <goal>jar</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
                     <version>${maven-dependency-plugin.version}</version>
                 </plugin>
@@ -801,18 +782,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>${maven-release-plugin.version}</version>
-                <configuration>
-                    <autoVersionSubmodules>true</autoVersionSubmodules>
-                    <releaseProfiles>release</releaseProfiles>
-                    <goals>deploy</goals>
-                    <tagNameFormat>jetcd-@{project.version}</tagNameFormat>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
@@ -927,9 +896,11 @@
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>${maven-javadoc-plugin.version}</version>
                         <configuration>
+                            <failOnError>false</failOnError>
+                            <failOnWarnings>false</failOnWarnings>
                             <aggregate>true</aggregate>
                             <encoding>UTF-8</encoding>
-                            <excludePackageNames>*.protobuf.*</excludePackageNames>
+                            <excludePackageNames>*.protobuf.*,io.etcd.jetcd.api.*</excludePackageNames>
                         </configuration>
                         <executions>
                             <execution>
