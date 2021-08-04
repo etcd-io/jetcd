@@ -807,9 +807,7 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <version>${maven-release-plugin.version}</version>
                 <configuration>
-                    <arguments>-DskipTests=true -Dmaven.javadoc.failOnError=false</arguments>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
-                    <useReleaseProfile>false</useReleaseProfile>
                     <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
                     <tagNameFormat>jetcd-@{project.version}</tagNameFormat>
