@@ -93,11 +93,11 @@
         <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
         <maven-install-plugin.version>2.5.2</maven-install-plugin.version>
         <maven-site-plugin.version>3.9.1</maven-site-plugin.version>
-        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
         <versions-maven-plugin.version>2.8.1</versions-maven-plugin.version>
-        <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
+        <maven-release-plugin.version>3.0.0-M4</maven-release-plugin.version>
         <formatter-maven-plugin.version>2.16.0</formatter-maven-plugin.version>
         <impsort-maven-plugin.version>1.6.2</impsort-maven-plugin.version>
 
@@ -117,11 +117,12 @@
         <!-- test dependencies -->
         <mockito.version>3.11.2</mockito.version>
         <assertj.version>3.20.2</assertj.version>
-        <junit.version>4.12</junit.version>
+        <junit.version>4.13.2</junit.version>
         <junit-jupiter.version>5.7.2</junit-jupiter.version>
         <netty-tcnative.version>2.0.40.Final</netty-tcnative.version>
         <testcontainers.version>1.16.0</testcontainers.version>
         <commons-io.version>2.11.0</commons-io.version>
+        <common-compress.version>1.21</common-compress.version>
         <awaitility.version>4.1.0</awaitility.version>
         <auto-service.version>1.0</auto-service.version>
         <javax-annotation-api.version>1.3.2</javax-annotation-api.version>
@@ -296,11 +297,31 @@
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers</artifactId>
                 <version>${testcontainers.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.commons</groupId>
+                        <artifactId>commons-compress</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${common-compress.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
