@@ -21,7 +21,7 @@
     <parent>
         <groupId>io.etcd.examples</groupId>
         <artifactId>jetcd-examples</artifactId>
-        <version>0.5.10</version>
+        <version>0.5.11-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
