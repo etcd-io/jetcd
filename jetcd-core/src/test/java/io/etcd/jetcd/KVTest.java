@@ -16,15 +16,6 @@
 
 package io.etcd.jetcd;
 
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
@@ -40,6 +31,11 @@ import io.etcd.jetcd.test.EtcdClusterExtension;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.*;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static io.etcd.jetcd.TestUtil.bytesOf;
@@ -292,6 +288,28 @@ public class KVTest {
                 .as("The sequence of put operations should finish successfully. " +
                     "Last seen value should match the expected value.")
                 .isEqualTo(lastPutValue);
+        }
+    }
+
+    @Test()
+    public void testConnectionRefused() throws ExecutionException, InterruptedException, TimeoutException {
+        String nonExistingServer = "http://127.0.0.1:9999";
+
+        try (Client customClient = Client.builder().endpoints(nonExistingServer)
+            .retryMaxDuration(Duration.ofSeconds(3))
+            .retryDelay(1)
+            .retryMaxDelay(2)
+            .retryChronoUnit(ChronoUnit.SECONDS)
+            .connectTimeout(Duration.ofSeconds(1))
+            .build()) {
+            KV kvClient = customClient.getKVClient();
+
+            CompletableFuture<String> future = kvClient.get(ByteSequence.from("/x", StandardCharsets.UTF_8))
+                    .thenApply(response -> "we got a response")
+                    .exceptionally(throwable -> "completed exceptionally");
+
+            assertThat(future.get(10, TimeUnit.SECONDS))
+                    .isEqualTo("completed exceptionally");
         }
     }
 }
