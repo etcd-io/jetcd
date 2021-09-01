@@ -70,6 +70,7 @@ public final class ClientBuilder implements Cloneable {
     private Duration retryMaxDuration;
     private Duration connectTimeout;
     private boolean discovery;
+    private boolean waitForReady = true;
 
     ClientBuilder() {
     }
@@ -511,6 +512,25 @@ public final class ClientBuilder implements Cloneable {
      */
     public ClientBuilder discovery(boolean discovery) {
         this.discovery = discovery;
+        return this;
+    }
+
+    /**
+     * @return if this client uses gRPC's wait for ready semantics.
+     * @see    <a href="https://github.com/grpc/grpc/blob/master/doc/wait-for-ready.md">gRPC Wait for Ready Semantics</a>
+     */
+    public boolean waitForReady() {
+        return waitForReady;
+    }
+
+    /**
+     * @param  waitForReady if this client should use gRPC's wait for ready semantics. Enabled by default.
+     * @return              this builder.
+     * @see                 <a href="https://github.com/grpc/grpc/blob/master/doc/wait-for-ready.md">gRPC Wait for Ready
+     *                      Semantics</a>
+     */
+    public ClientBuilder waitForReady(boolean waitForReady) {
+        this.waitForReady = waitForReady;
         return this;
     }
 

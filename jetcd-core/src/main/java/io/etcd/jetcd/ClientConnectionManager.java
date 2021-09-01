@@ -167,7 +167,16 @@ final class ClientConnectionManager {
      * @return          the attached stub
      */
     <T extends AbstractStub<T>> T newStub(Function<ManagedChannel, T> supplier) {
-        return supplier.apply(getChannel()).withWaitForReady();
+        return newStub(supplier, getChannel());
+    }
+
+    private <T extends AbstractStub<T>> T newStub(Function<ManagedChannel, T> stubCustomizer, ManagedChannel channel) {
+        final T stub = stubCustomizer.apply(channel);
+        if (builder.waitForReady()) {
+            return stub.withWaitForReady();
+        } else {
+            return stub;
+        }
     }
 
     void close() {
@@ -186,7 +195,7 @@ final class ClientConnectionManager {
         Function<T, CompletableFuture<R>> stubConsumer) {
 
         final ManagedChannel channel = defaultChannelBuilder(Collections.singletonList(endpoint)).build();
-        final T stub = stubCustomizer.apply(channel).withWaitForReady();
+        final T stub = newStub(stubCustomizer, channel);
 
         try {
             return stubConsumer.apply(stub).whenComplete((r, t) -> channel.shutdown());
