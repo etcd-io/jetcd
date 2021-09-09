@@ -120,7 +120,7 @@
         <assertj.version>3.20.2</assertj.version>
         <junit.version>4.13.2</junit.version>
         <junit-jupiter.version>5.7.2</junit-jupiter.version>
-        <netty-tcnative.version>2.0.41.Final</netty-tcnative.version>
+        <netty-tcnative.version>2.0.42.Final</netty-tcnative.version>
         <testcontainers.version>1.16.0</testcontainers.version>
         <commons-io.version>2.11.0</commons-io.version>
         <common-compress.version>1.21</common-compress.version>
