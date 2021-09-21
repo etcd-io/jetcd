@@ -431,74 +431,7 @@
                     <configuration>
                         <source>${jdk.version}</source>
                         <target>${jdk.version}</target>
-                        <fork>true</fork>
                         <encoding>UTF-8</encoding>
-                        <compilerArgs>
-                            <arg>-XDcompilePolicy=simple</arg>
-                            <arg>
-                                -Xplugin:ErrorProne \
-                                -XepExcludedPaths:.*/target/.* \
-                                -Xep:StaticOrDefaultInterfaceMethod:OFF 
-                                <!--
-                                -Xep:NullableDereference:OFF \
-                                -Xep:FieldMissingNullable:OFF \
-                                -Xep:BooleanParameter:OFF \
-                                -Xep:ReturnMissingNullable:ERROR \
-                                -Xep:MethodCanBeStatic:ERROR \
-                                -Xep:TestExceptionChecker:ERROR \
-                                -Xep:RedundantThrows:ERROR \
-                                -Xep:ConstantField:ERROR \
-                                -Xep:EmptySetMultibindingContributions:ERROR \
-                                -Xep:MixedArrayDimensions:ERROR \
-                                -Xep:MultipleTopLevelClasses:ERROR \
-                                -Xep:MultiVariableDeclaration:ERROR \
-                                -Xep:PackageLocation:ERROR \
-                                -Xep:PrivateConstructorForNoninstantiableModule:ERROR \
-                                -Xep:RemoveUnusedImports:ERROR \
-                                -Xep:UnnecessaryStaticImport:ERROR \
-                                -Xep:UseBinds:ERROR \
-                                -Xep:WildcardImport:ERROR \
-                                -Xep:FutureReturnValueIgnored:ERROR \
-                                -Xep:IntLongMath:ERROR \
-                                -Xep:FloatCast:ERROR \
-                                -Xep:ClassNewInstance:ERROR \
-                                -Xep:ConstructorInvokesOverridable:ERROR \
-                                -Xep:ThreeLetterTimeZoneID:ERROR \
-                                -Xep:UnsafeFinalization:ERROR \
-                                -Xep:MutableMethodReturnType:ERROR \
-                                -Xep:SynchronizeOnNonFinalField:ERROR \
-                                -Xep:WaitNotInLoop:ERROR \
-                                -Xep:SwitchDefault:ERROR \
-                                -Xep:ReachabilityFenceUsage:ERROR \
-                                -Xep:BoxedPrimitiveConstructor:ERROR \
-                                -Xep:InjectOnConstructorOfAbstractClass:ERROR \
-                                -Xep:StringSplitter:ERROR \
-                                -Xep:DefaultCharset:ERROR \
-                                -Xep:StreamResourceLeak:ERROR \
-                                -Xep:InconsistentCapitalization:ERROR \
-                                -Xep:TruthIncompatibleType:ERROR \
-                                -Xep:ByteBufferBackingArray:ERROR \
-                                -Xep:OrphanedFormatString:ERROR \
-                                -Xep:CatchAndPrintStackTrace:ERROR \
-                                -Xep:VarTypeName:ERROR \
-                                -Xep:ObjectToString:ERROR \
-                                -Xep:AssertThrowsMultipleStatements:ERROR
-                                -->
-                            </arg>
-                            <arg>-J-Xbootclasspath/p:${settings.localRepository}/com/google/errorprone/javac/${errorprone-compiler.version}/javac-${errorprone-compiler.version}.jar</arg>
-                        </compilerArgs>
-                        <annotationProcessorPaths>
-                            <path>
-                                <groupId>com.google.errorprone</groupId>
-                                <artifactId>error_prone_core</artifactId>
-                                <version>${errorprone-core.version}</version>
-                            </path>
-                            <path>
-                                <groupId>com.google.auto.service</groupId>
-                                <artifactId>auto-service</artifactId>
-                                <version>${auto-service.version}</version>
-                            </path>
-                        </annotationProcessorPaths>
                     </configuration>
                 </plugin>
                 <plugin>
