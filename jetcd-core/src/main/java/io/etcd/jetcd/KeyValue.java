@@ -33,42 +33,42 @@ public class KeyValue {
     }
 
     /**
-     * @return the key
+     * Returns the key
      */
     public ByteSequence getKey() {
         return unprefixedKey;
     }
 
     /**
-     * @return the value
+     * Returns the value
      */
     public ByteSequence getValue() {
         return value;
     }
 
     /**
-     * @return the create revision.
+     * Returns the create revision.
      */
     public long getCreateRevision() {
         return kv.getCreateRevision();
     }
 
     /**
-     * @return the mod revision.
+     * Returns the mod revision.
      */
     public long getModRevision() {
         return kv.getModRevision();
     }
 
     /**
-     * @return the version.
+     * Returns the version.
      */
     public long getVersion() {
         return kv.getVersion();
     }
 
     /**
-     * @return the lease.
+     * Returns the lease.
      */
     public long getLease() {
         return kv.getLease();

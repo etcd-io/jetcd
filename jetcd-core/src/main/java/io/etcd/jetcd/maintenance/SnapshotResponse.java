@@ -16,8 +16,9 @@
 
 package io.etcd.jetcd.maintenance;
 
-import com.google.protobuf.ByteString;
 import io.etcd.jetcd.AbstractResponse;
+
+import com.google.protobuf.ByteString;
 
 public class SnapshotResponse extends AbstractResponse<io.etcd.jetcd.api.SnapshotResponse> {
 
@@ -26,14 +27,14 @@ public class SnapshotResponse extends AbstractResponse<io.etcd.jetcd.api.Snapsho
     }
 
     /**
-     * @return the remaining bytes.
+     * Returns the remaining bytes.
      */
     public long getRemainingBytes() {
         return getResponse().getRemainingBytes();
     }
 
     /**
-     * @return the blob.
+     * Returns the blob.
      */
     public ByteString getBlob() {
         return getResponse().getBlob();

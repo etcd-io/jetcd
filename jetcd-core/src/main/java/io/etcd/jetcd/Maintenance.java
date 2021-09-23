@@ -55,7 +55,7 @@ public interface Maintenance extends CloseableClient {
 
     /**
      * get all active keyspace alarm.
-     * 
+     *
      * @return the response
      */
     CompletableFuture<AlarmResponse> listAlarms();

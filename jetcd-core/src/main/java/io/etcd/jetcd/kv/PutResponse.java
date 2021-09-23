@@ -30,14 +30,14 @@ public class PutResponse extends AbstractResponse<io.etcd.jetcd.api.PutResponse>
     }
 
     /**
-     * @return previous key-value pair.
+     * Returns previous key-value pair.
      */
     public KeyValue getPrevKv() {
         return new KeyValue(getResponse().getPrevKv(), namespace);
     }
 
     /**
-     * @return whether a previous key-value pair is present.
+     * Returns whether a previous key-value pair is present.
      */
     public boolean hasPrevKv() {
         return getResponse().hasPrevKv();

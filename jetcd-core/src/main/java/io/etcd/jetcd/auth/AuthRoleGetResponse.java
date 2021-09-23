@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.auth.Permission.Type;
 
 /**
  * AuthRoleGetResponse returned by {@link io.etcd.jetcd.Auth#roleGet(ByteSequence)} contains
@@ -42,16 +41,16 @@ public class AuthRoleGetResponse extends AbstractResponse<io.etcd.jetcd.api.Auth
         Permission.Type type;
         switch (perm.getPermType()) {
             case READ:
-                type = Type.READ;
+                type = Permission.Type.READ;
                 break;
             case WRITE:
-                type = Type.WRITE;
+                type = Permission.Type.WRITE;
                 break;
             case READWRITE:
-                type = Type.READWRITE;
+                type = Permission.Type.READWRITE;
                 break;
             default:
-                type = Type.UNRECOGNIZED;
+                type = Permission.Type.UNRECOGNIZED;
         }
 
         return new Permission(type, key, rangeEnd);

@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 The jetcd authors
+# Copyright 2016-2021 The jetcd authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ jobs:
         stale-pr-label: stale
         exempt-pr-label: never-stale
         stale-issue-message: |
-          This issue is stale because it has been open 60 days with no activity. 
+          This issue is stale because it has been open 60 days with no activity.
           Remove stale label or comment or this will be closed in 7 days.
         stale-pr-message: |
           This PR is stale because it has been open 60 days with no activity.

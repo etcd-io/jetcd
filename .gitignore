@@ -1,7 +1,7 @@
 .*
 !.github
 !.gitignore
-!.travis.yml
+!gradle/wrapper/gradle-wrapper.jar
 target/
 target-ide/
 *.iml
@@ -13,8 +13,5 @@ logs/
 .project
 .env
 .sdkmanrc
-
-# Created by './scripts/run_etcd.sh'
-/external/
+build/
 bin/
-/jetcd-all/dependency-reduced-pom.xml

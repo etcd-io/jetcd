@@ -22,10 +22,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
-import com.google.common.base.Charsets;
-import io.etcd.jetcd.lease.LeaseGrantResponse;
-import io.etcd.jetcd.lock.LockResponse;
-import io.etcd.jetcd.test.EtcdClusterExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +30,12 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import io.etcd.jetcd.lease.LeaseGrantResponse;
+import io.etcd.jetcd.lock.LockResponse;
+import io.etcd.jetcd.test.EtcdClusterExtension;
+
+import com.google.common.base.Charsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -180,7 +182,7 @@ public class LockTest {
         assertThat(response2.getKey().startsWith(SAMPLE_NAME)).isTrue();
         assertThat(response2.getKey()).isNotEqualTo(response.getKey());
         assertThat((timestamp2 - startTime) <= 1000)
-            .withFailMessage(String.format("Lease not unlocked, wait time was too long (%dms)", (timestamp2 - startTime)))
+            .withFailMessage(String.format("Lease not unlocked, wait time was too long (%dms)", timestamp2 - startTime))
             .isTrue();
 
         locksToRelease.add(ByteSequence.from(namespace.getByteString().concat(response2.getKey().getByteString())));
@@ -198,7 +200,7 @@ public class LockTest {
         assertThat(response3.getKey()).isNotEqualTo(response2.getKey());
         assertThat((timestamp3 - timestamp2) <= 1000)
             .withFailMessage(
-                String.format("wait time for requiring the lock was too long (%dms)", (timestamp3 - timestamp2)))
+                String.format("wait time for requiring the lock was too long (%dms)", timestamp3 - timestamp2))
             .isTrue();
 
         locksToRelease.add(ByteSequence.from(namespace2.getByteString().concat(response3.getKey().getByteString())));

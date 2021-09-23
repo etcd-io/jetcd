@@ -26,14 +26,15 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ByteString;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.stub.AbstractStub;
-import io.grpc.stub.MetadataUtils;
+
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.ByteString;
 
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
+import static io.grpc.stub.MetadataUtils.newAttachHeadersInterceptor;
 
 public final class Util {
 
@@ -130,7 +131,7 @@ public final class Util {
         }
         final Metadata md = new Metadata();
         md.put(Constants.REQUIRE_LEADER_KEY, Constants.REQUIRE_LEADER_VALUE);
-        return MetadataUtils.attachHeaders(stub, md);
+        return stub.withInterceptors(newAttachHeadersInterceptor(md));
     }
 
     public static boolean isHaltError(final Status status) {

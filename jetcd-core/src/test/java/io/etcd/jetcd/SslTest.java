@@ -22,10 +22,11 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Objects;
 
-import io.etcd.jetcd.test.EtcdClusterExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import io.etcd.jetcd.test.EtcdClusterExtension;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;

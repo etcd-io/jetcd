@@ -53,6 +53,8 @@ public interface Watch extends CloseableClient {
     }
 
     /**
+     * Watch key.
+     *
      * @param  key    key to be watched on.
      * @param  onNext the on next consumer
      * @return        this watcher
@@ -62,6 +64,8 @@ public interface Watch extends CloseableClient {
     }
 
     /**
+     * Watch key.
+     *
      * @param  key     key to be watched on.
      * @param  onNext  the on next consumer
      * @param  onError the on error consumer
@@ -72,6 +76,8 @@ public interface Watch extends CloseableClient {
     }
 
     /**
+     * Watch key.
+     *
      * @param  key         key to be watched on.
      * @param  onNext      the on next consumer
      * @param  onError     the on error consumer
@@ -83,6 +89,8 @@ public interface Watch extends CloseableClient {
     }
 
     /**
+     * Watch key.
+     *
      * @param  key         key to be watched on.
      * @param  onNext      the on next consumer
      * @param  onCompleted the on completion consumer
@@ -94,6 +102,7 @@ public interface Watch extends CloseableClient {
     }
 
     /**
+     * Watch key with option.
      *
      * @param  key    key to be watched on.
      * @param  option the options
@@ -105,6 +114,8 @@ public interface Watch extends CloseableClient {
     }
 
     /**
+     * Watch key with option.
+     *
      * @param  key     key to be watched on.
      * @param  option  the options
      * @param  onNext  the on next consumer
@@ -116,6 +127,8 @@ public interface Watch extends CloseableClient {
     }
 
     /**
+     * Watch key with option.
+     *
      * @param  key         key to be watched on.
      * @param  option      the options
      * @param  onNext      the on next consumer
@@ -128,6 +141,8 @@ public interface Watch extends CloseableClient {
     }
 
     /**
+     * Watch key with option.
+     *
      * @param  key         key to be watched on.
      * @param  option      the options
      * @param  onNext      the on next consumer

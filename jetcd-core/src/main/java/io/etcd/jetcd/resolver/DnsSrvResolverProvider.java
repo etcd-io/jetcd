@@ -20,9 +20,10 @@ import java.net.URI;
 
 import javax.annotation.Nullable;
 
-import com.google.auto.service.AutoService;
 import io.grpc.NameResolver;
 import io.grpc.NameResolverProvider;
+
+import com.google.auto.service.AutoService;
 
 @AutoService(NameResolverProvider.class)
 public class DnsSrvResolverProvider extends NameResolverProvider {

@@ -34,7 +34,6 @@ import io.etcd.jetcd.api.AuthUserGetRequest;
 import io.etcd.jetcd.api.AuthUserGrantRoleRequest;
 import io.etcd.jetcd.api.AuthUserListRequest;
 import io.etcd.jetcd.api.AuthUserRevokeRoleRequest;
-import io.etcd.jetcd.api.Permission.Type;
 import io.etcd.jetcd.auth.AuthDisableResponse;
 import io.etcd.jetcd.auth.AuthEnableResponse;
 import io.etcd.jetcd.auth.AuthRoleAddResponse;
@@ -167,19 +166,19 @@ final class AuthImpl implements Auth {
         checkNotNull(rangeEnd, "rangeEnd can't be null");
         checkNotNull(permType, "permType can't be null");
 
-        Type type;
+        io.etcd.jetcd.api.Permission.Type type;
         switch (permType) {
             case WRITE:
-                type = Type.WRITE;
+                type = io.etcd.jetcd.api.Permission.Type.WRITE;
                 break;
             case READWRITE:
-                type = Type.READWRITE;
+                type = io.etcd.jetcd.api.Permission.Type.READWRITE;
                 break;
             case READ:
-                type = Type.READ;
+                type = io.etcd.jetcd.api.Permission.Type.READ;
                 break;
             default:
-                type = Type.UNRECOGNIZED;
+                type = io.etcd.jetcd.api.Permission.Type.UNRECOGNIZED;
                 break;
         }
 

@@ -19,15 +19,16 @@ package io.etcd.jetcd;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import io.etcd.jetcd.auth.Permission;
-import io.etcd.jetcd.support.Interceptors;
-import io.etcd.jetcd.test.EtcdClusterExtension;
-import io.grpc.Metadata;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import io.etcd.jetcd.auth.Permission;
+import io.etcd.jetcd.support.Interceptors;
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.grpc.Metadata;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;

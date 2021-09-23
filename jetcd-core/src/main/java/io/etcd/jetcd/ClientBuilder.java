@@ -133,7 +133,7 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return the auth user
+     * Returns the auth user
      */
     public ByteSequence user() {
         return user;
@@ -153,7 +153,7 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return the auth password
+     * Returns the auth password
      */
     public ByteSequence password() {
         return password;
@@ -173,7 +173,7 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return the namespace of each key used
+     * Returns the namespace of each key used
      */
     public ByteSequence namespace() {
         return namespace;
@@ -194,7 +194,7 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return the executor service
+     * Returns the executor service
      */
     public ExecutorService executorService() {
         return executorService;
@@ -236,7 +236,7 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return the ssl context
+     * Returns the ssl context
      */
     public SslContext sslContext() {
         return sslContext;
@@ -269,13 +269,15 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return The authority used to authenticate connections to servers.
+     * Returns The authority used to authenticate connections to servers.
      */
     public String authority() {
         return authority;
     }
 
     /**
+     * Sets the authority used to authenticate connections to servers.
+     *
      * @param  authority the authority used to authenticate connections to servers.
      * @return           this builder
      */
@@ -285,14 +287,16 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return the maximum message size allowed for a single gRPC frame.
+     * Returns the maximum message size allowed for a single gRPC frame.
      */
     public Integer maxInboundMessageSize() {
         return maxInboundMessageSize;
     }
 
     /**
-     * @param  maxInboundMessageSize Sets the maximum message size allowed for a single gRPC frame.
+     * Sets the maximum message size allowed for a single gRPC frame.
+     *
+     * @param  maxInboundMessageSize the maximum message size allowed for a single gRPC frame.
      * @return                       this builder
      */
     public ClientBuilder maxInboundMessageSize(Integer maxInboundMessageSize) {
@@ -301,14 +305,16 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return the headers to be added to http request headers
+     * Returns the headers to be added to http request headers
      */
     public Map<Metadata.Key<?>, Object> headers() {
         return headers == null ? Collections.emptyMap() : Collections.unmodifiableMap(headers);
     }
 
     /**
-     * @param  headers Sets headers to be added to http request headers.
+     * Sets headers to be added to http request headers.
+     *
+     * @param  headers headers to be added to http request headers.
      * @return         this builder
      */
     public ClientBuilder headers(Map<Metadata.Key<?>, Object> headers) {
@@ -318,6 +324,8 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
+     * Set headers.
+     *
      * @param  key   Sets an header key to be added to http request headers.
      * @param  value Sets an header value to be added to http request headers.
      * @return       this builder
@@ -333,13 +341,15 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return the headers to be added to auth request headers
+     * Returns the headers to be added to auth request headers
      */
     public Map<Metadata.Key<?>, Object> authHeaders() {
         return authHeaders == null ? Collections.emptyMap() : Collections.unmodifiableMap(authHeaders);
     }
 
     /**
+     * Set the auth headers.
+     *
      * @param  authHeaders Sets headers to be added to auth request headers.
      * @return             this builder
      */
@@ -350,6 +360,8 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
+     * Add an auth header.
+     *
      * @param  key   Sets an header key to be added to auth request headers.
      * @param  value Sets an header value to be added to auth request headers.
      * @return       this builder
@@ -365,14 +377,16 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return the interceptors
+     * Returns the interceptors
      */
     public List<ClientInterceptor> interceptors() {
         return interceptors;
     }
 
     /**
-     * @param  interceptors Set the interceptors.
+     * Set the interceptors.
+     *
+     * @param  interceptors the interceptors.
      * @return              this builder
      */
     public ClientBuilder interceptors(List<ClientInterceptor> interceptors) {
@@ -382,6 +396,8 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
+     * Add an interceptor.
+     *
      * @param  interceptor  an interceptors to add
      * @param  interceptors additional interceptors
      * @return              this builder
@@ -398,13 +414,15 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return the auth interceptors
+     * Returns the auth interceptors
      */
     public List<ClientInterceptor> authInterceptors() {
         return authInterceptors;
     }
 
     /**
+     * Set the auth interceptors.
+     *
      * @param  interceptors Set the interceptors to add to the auth chain
      * @return              this builder
      */
@@ -415,6 +433,8 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
+     * Add an auth interceptor.
+     *
      * @param  interceptor  an interceptors to add to the auth chain
      * @param  interceptors additional interceptors to add to the auth chain
      * @return              this builder
@@ -431,13 +451,15 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return The delay between retries.
+     * Returns The delay between retries.
      */
     public long retryDelay() {
         return retryDelay;
     }
 
     /**
+     * The delay between retries.
+     *
      * @param  retryDelay The delay between retries.
      * @return            this builder
      */
@@ -447,13 +469,15 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return the max backing off delay between retries
+     * Returns the max backing off delay between retries
      */
     public long retryMaxDelay() {
         return retryMaxDelay;
     }
 
     /**
+     * Set the max backing off delay between retries.
+     *
      * @param  retryMaxDelay The max backing off delay between retries.
      * @return               this builder
      */
@@ -470,7 +494,8 @@ public final class ClientBuilder implements Cloneable {
      * The interval for gRPC keepalives.
      * The current minimum allowed by gRPC is 10s
      *
-     * @param keepaliveTime time between keepalives
+     * @param  keepaliveTime time between keepalives
+     * @return               this builder
      */
     public ClientBuilder keepaliveTime(Duration keepaliveTime) {
         // gRPC uses a minimum keepalive time of 10s, if smaller values are given.
@@ -486,7 +511,8 @@ public final class ClientBuilder implements Cloneable {
     /**
      * The timeout for gRPC keepalives
      *
-     * @param keepaliveTimeout the gRPC keep alive timeout.
+     * @param  keepaliveTimeout the gRPC keep alive timeout.
+     * @return                  this builder
      */
     public ClientBuilder keepaliveTimeout(Duration keepaliveTimeout) {
         this.keepaliveTimeout = keepaliveTimeout;
@@ -500,7 +526,8 @@ public final class ClientBuilder implements Cloneable {
     /**
      * Keepalive option for gRPC
      *
-     * @param keepaliveWithoutCalls the gRPC keep alive without calls.
+     * @param  keepaliveWithoutCalls the gRPC keep alive without calls.
+     * @return                       this builder
      */
     public ClientBuilder keepaliveWithoutCalls(Boolean keepaliveWithoutCalls) {
         this.keepaliveWithoutCalls = keepaliveWithoutCalls;
@@ -508,13 +535,15 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return he retries period unit.
+     * Returns he retries period unit.
      */
     public ChronoUnit retryChronoUnit() {
         return retryChronoUnit;
     }
 
     /**
+     * Sets the retries period unit.
+     *
      * @param  retryChronoUnit the retries period unit.
      * @return                 this builder
      */
@@ -524,20 +553,22 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return the retries max duration.
+     * Returns the retries max duration.
      */
     public Duration retryMaxDuration() {
         return retryMaxDuration;
     }
 
     /**
-     * @return the connect timeout.
+     * Returns the connect timeout.
      */
     public Duration connectTimeout() {
         return connectTimeout;
     }
 
     /**
+     * Set the retries max duration.
+     *
      * @param  retryMaxDuration the retries max duration.
      * @return                  this builder
      */
@@ -547,8 +578,10 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
+     * Set the connection timeout.
+     *
      * @param  connectTimeout Sets the connection timeout.
-     *                        Clients connecting to fault tolerant etcd clusters (eg, clusters with >= 3 etcd server
+     *                        Clients connecting to fault tolerant etcd clusters (eg, clusters with more than 2 etcd server
      *                        peers/endpoints)
      *                        should consider a value that will allow switching timely from a crashed/partitioned peer to
      *                        a consensus peer.
@@ -567,13 +600,15 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return if the endpoint represent a discovery address using dns+srv.
+     * Returns if the endpoint represent a discovery address using dns+srv.
      */
     public boolean discovery() {
         return discovery;
     }
 
     /**
+     * Sets f the endpoint represent a discovery address using dns+srv.
+     *
      * @param  discovery if the endpoint represent a discovery address using dns+srv.
      * @return           this builder
      */
@@ -583,6 +618,8 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
+     * Enable gRPC's wait for ready semantics.
+     *
      * @return if this client uses gRPC's wait for ready semantics.
      * @see    <a href="https://github.com/grpc/grpc/blob/master/doc/wait-for-ready.md">gRPC Wait for Ready Semantics</a>
      */
@@ -591,6 +628,8 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
+     * Configure the gRPC's wait for ready semantics.
+     *
      * @param  waitForReady if this client should use gRPC's wait for ready semantics. Enabled by default.
      * @return              this builder.
      * @see                 <a href="https://github.com/grpc/grpc/blob/master/doc/wait-for-ready.md">gRPC Wait for Ready
@@ -614,7 +653,7 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * @return a copy of this builder
+     * Returns a copy of this builder
      */
     public ClientBuilder copy() {
         try {

@@ -33,7 +33,9 @@ public class MemberRemoveResponse extends AbstractResponse<io.etcd.jetcd.api.Mem
     }
 
     /**
-     * @return a list of all members after removing the member.
+     * Returns a list of all members after removing the member.
+     *
+     * @return the list of members.
      */
     public synchronized List<Member> getMembers() {
         if (members == null) {

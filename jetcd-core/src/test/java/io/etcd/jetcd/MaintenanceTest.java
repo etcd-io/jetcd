@@ -28,15 +28,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import io.etcd.jetcd.maintenance.SnapshotResponse;
-import io.etcd.jetcd.maintenance.StatusResponse;
-import io.etcd.jetcd.test.EtcdClusterExtension;
-import io.grpc.stub.StreamObserver;
 import org.apache.commons.io.output.NullOutputStream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
+
+import io.etcd.jetcd.maintenance.SnapshotResponse;
+import io.etcd.jetcd.maintenance.StatusResponse;
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.grpc.stub.StreamObserver;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;

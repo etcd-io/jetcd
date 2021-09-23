@@ -21,13 +21,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
 import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.launcher.EtcdCluster;
 import io.etcd.jetcd.launcher.EtcdClusterFactory;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static io.etcd.jetcd.TestUtil.randomByteSequence;
@@ -42,7 +43,7 @@ public class WatchErrorTest {
         try (EtcdCluster cluster = EtcdClusterFactory.buildCluster("watch", 3, false)) {
             cluster.start();
 
-            final Client client = (ns != null && ns.length() == 0)
+            final Client client = ns != null && ns.length() == 0
                 ? Client.builder().endpoints(cluster.getClientEndpoints()).namespace(bytesOf(ns)).build()
                 : Client.builder().endpoints(cluster.getClientEndpoints()).build();
 

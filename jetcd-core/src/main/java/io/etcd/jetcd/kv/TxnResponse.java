@@ -46,14 +46,14 @@ public class TxnResponse extends AbstractResponse<io.etcd.jetcd.api.TxnResponse>
     }
 
     /**
-     * @return true if the compare evaluated to true or false otherwise.
+     * Returns true if the compare evaluated to true or false otherwise.
      */
     public boolean isSucceeded() {
         return getResponse().getSucceeded();
     }
 
     /**
-     * @return a list of DeleteResponse; empty list if none.
+     * Returns a list of DeleteResponse; empty list if none.
      */
     public synchronized List<DeleteResponse> getDeleteResponses() {
         if (deleteResponses == null) {
@@ -67,7 +67,7 @@ public class TxnResponse extends AbstractResponse<io.etcd.jetcd.api.TxnResponse>
     }
 
     /**
-     * @return a list of GetResponse; empty list if none.
+     * Returns a list of GetResponse; empty list if none.
      */
     public synchronized List<GetResponse> getGetResponses() {
         if (getResponses == null) {
@@ -80,7 +80,7 @@ public class TxnResponse extends AbstractResponse<io.etcd.jetcd.api.TxnResponse>
     }
 
     /**
-     * @return a list of PutResponse; empty list if none.
+     * Returns a list of PutResponse; empty list if none.
      */
     public synchronized List<PutResponse> getPutResponses() {
         if (putResponses == null) {
@@ -93,7 +93,7 @@ public class TxnResponse extends AbstractResponse<io.etcd.jetcd.api.TxnResponse>
     }
 
     /**
-     * @return a list of TxnResponse; empty list if none.
+     * Returns a list of TxnResponse; empty list if none.
      */
     public synchronized List<TxnResponse> getTxnResponses() {
         if (txnResponses == null) {

@@ -253,6 +253,8 @@ public final class GetOption {
         }
 
         /**
+         * Build the GetOption.
+         *
          * @return the GetOption
          */
         public GetOption build() {

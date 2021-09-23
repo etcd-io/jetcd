@@ -91,7 +91,7 @@ The current major version is zero (0.y.z). Anything may change at any time. The 
 The project can be built with [Apache Maven](https://maven.apache.org/):
 
 ```
-mvn clean install -DskipTests
+./gradlew compileJava
 ```
 
 ## Running tests
@@ -99,32 +99,7 @@ mvn clean install -DskipTests
 The project is tested against a three node `etcd` setup started with the Launcher (above) :
 
 ```sh
-$ mvn test
-...
-
-[INFO]  T E S T S
-[INFO] -------------------------------------------------------
-[INFO] Running TestSuite
-[WARNING] Tests run: 104, Failures: 0, Errors: 0, Skipped: 3, Time elapsed: 31.308 s - in TestSuite
-[INFO]
-[INFO] Results:
-[INFO]
-[WARNING] Tests run: 104, Failures: 0, Errors: 0, Skipped: 3
-...
-[INFO] Reactor Summary:
-[INFO]
-[INFO] jetcd .............................................. SUCCESS [  0.010 s]
-[INFO] jetcd-core ......................................... SUCCESS [ 55.480 s]
-[INFO] jetcd-discovery-dns-srv ............................ SUCCESS [  3.225 s]
-[INFO] jetcd-watch-example ................................ SUCCESS [  0.291 s]
-[INFO] jetcd-simple-ctl ................................... SUCCESS [  0.028 s]
-[INFO] jetcd-examples ..................................... SUCCESS [  0.000 s]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time: 59.929 s
-[INFO] Finished at: 2018-02-13T12:51:13-08:00
-[INFO] Final Memory: 84M/443M
+$ ./gradlew test
 ````
 
 ### Troubleshooting
@@ -134,7 +109,6 @@ It recommmonds building the project before running tests so that you have artifa
 ## Contact
 
 * Mailing list: [etcd-dev](https://groups.google.com/forum/?hl=en#!forum/etcd-dev)
-* IRC: #[etcd](irc://irc.freenode.org:6667/#etcd) on freenode.org
 
 ## Contributing
 

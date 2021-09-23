@@ -21,11 +21,12 @@ import java.net.URISyntaxException;
 import java.util.Random;
 import java.util.stream.Stream;
 
-import io.grpc.netty.NettyChannelBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import io.grpc.netty.NettyChannelBuilder;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
