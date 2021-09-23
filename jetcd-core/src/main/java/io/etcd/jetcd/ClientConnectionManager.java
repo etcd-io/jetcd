@@ -357,8 +357,6 @@ final class ClientConnectionManager {
                         }
                     }
                 }, executorService);
-                // note: the actual result value is supplied via execution.complete(..) above
-                return wrappedFuture;
             }).thenCompose(f -> f.thenApply(resultConvert));
     }
 
