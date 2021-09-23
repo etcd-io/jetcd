@@ -16,9 +16,10 @@
 
 package io.etcd.jetcd;
 
+import org.junit.jupiter.api.Test;
+
 import io.grpc.Status;
 import io.grpc.StatusException;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

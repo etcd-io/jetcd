@@ -16,8 +16,9 @@
 
 package io.etcd.jetcd.op;
 
-import io.etcd.jetcd.options.PutOption;
 import org.junit.jupiter.api.Test;
+
+import io.etcd.jetcd.options.PutOption;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

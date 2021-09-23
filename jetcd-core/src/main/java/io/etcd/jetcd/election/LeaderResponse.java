@@ -29,7 +29,7 @@ public class LeaderResponse extends AbstractResponse<io.etcd.jetcd.api.LeaderRes
     }
 
     /**
-     * @return the key-value pair representing the latest leader update.
+     * Returns the key-value pair representing the latest leader update.
      */
     public KeyValue getKv() {
         return kv;

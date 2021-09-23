@@ -170,6 +170,7 @@ final class KVImpl implements KV {
             Util::isRetryable);
     }
 
+    @Override
     public Txn txn() {
         return TxnImpl.newTxn(
             request -> connectionManager.execute(

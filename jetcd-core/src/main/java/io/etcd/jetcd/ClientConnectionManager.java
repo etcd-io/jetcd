@@ -29,9 +29,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.ListenableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.etcd.jetcd.auth.AuthInterceptor;
 import io.etcd.jetcd.resolver.DnsSrvNameResolver;
 import io.etcd.jetcd.resolver.IPNameResolver;
@@ -48,10 +48,13 @@ import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
 import io.netty.channel.ChannelOption;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.ListenableFuture;
+
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
@@ -152,13 +155,13 @@ final class ClientConnectionManager {
     }
 
     @VisibleForTesting
-    protected ManagedChannelBuilder<?> defaultChannelBuilder() {
+    ManagedChannelBuilder<?> defaultChannelBuilder() {
         return defaultChannelBuilder(builder.endpoints());
     }
 
     @VisibleForTesting
     @SuppressWarnings("rawtypes")
-    protected ManagedChannelBuilder<?> defaultChannelBuilder(Collection<URI> endpoints) {
+    ManagedChannelBuilder<?> defaultChannelBuilder(Collection<URI> endpoints) {
         if (endpoints.isEmpty()) {
             throw new IllegalArgumentException("At least one endpoint should be provided");
         }

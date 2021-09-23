@@ -22,29 +22,29 @@ package io.etcd.jetcd;
 public interface Response {
 
     /**
-     * @return the response header
+     * Returns the response header
      */
     Header getHeader();
 
     interface Header {
 
         /**
-         * @return the cluster id
+         * Returns the cluster id
          */
         long getClusterId();
 
         /**
-         * @return the member id
+         * Returns the member id
          */
         long getMemberId();
 
         /**
-         * @return the revision id
+         * Returns the revision id
          */
         long getRevision();
 
         /**
-         * @return the raft term
+         * Returns the raft term
          */
         long getRaftTerm();
     }

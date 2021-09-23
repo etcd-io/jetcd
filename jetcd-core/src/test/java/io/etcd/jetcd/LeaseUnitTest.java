@@ -22,14 +22,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.etcd.jetcd.api.LeaseGrpc.LeaseImplBase;
-import io.etcd.jetcd.api.LeaseKeepAliveRequest;
-import io.etcd.jetcd.api.LeaseKeepAliveResponse;
-import io.etcd.jetcd.support.CloseableClient;
-import io.etcd.jetcd.support.Observers;
-import io.etcd.jetcd.test.GrpcServerExtension;
-import io.grpc.Status;
-import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +32,15 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import io.etcd.jetcd.api.LeaseGrpc.LeaseImplBase;
+import io.etcd.jetcd.api.LeaseKeepAliveRequest;
+import io.etcd.jetcd.api.LeaseKeepAliveResponse;
+import io.etcd.jetcd.support.CloseableClient;
+import io.etcd.jetcd.support.Observers;
+import io.etcd.jetcd.test.GrpcServerExtension;
+import io.grpc.Status;
+import io.grpc.stub.StreamObserver;
 
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -182,6 +183,7 @@ public class LeaseUnitTest {
         verify(this.requestStreamObserverMock, after(1000).atMost(1)).onNext(argThat(hasLeaseID(LEASE_ID_1)));
     }
 
+    @SuppressWarnings("PMD.UnusedLocalVariable")
     @Test
     public void testKeepAliveCloseSomeListeners() {
         final StreamObserver<io.etcd.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> {
@@ -193,7 +195,7 @@ public class LeaseUnitTest {
         // expect closing closingListener doesn't affect sending keep alive requests for LEASE_ID_2.
         verify(this.requestStreamObserverMock, after(1200).atLeast(2)).onNext(argThat(hasLeaseID(LEASE_ID_1)));
 
-        client1.close();
+        client2.close();
     }
 
     /*

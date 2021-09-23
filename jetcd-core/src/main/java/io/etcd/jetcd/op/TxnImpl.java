@@ -21,12 +21,13 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Txn;
 import io.etcd.jetcd.api.TxnRequest;
 import io.etcd.jetcd.kv.TxnResponse;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 
 /**
  * Build an etcd transaction.
@@ -44,10 +45,10 @@ public class TxnImpl implements Txn {
 
     private final ByteSequence namespace;
 
-    private List<Cmp> cmpList = new ArrayList<>();
-    private List<Op> successOpList = new ArrayList<>();
-    private List<Op> failureOpList = new ArrayList<>();
-    private Function<TxnRequest, CompletableFuture<TxnResponse>> requestF;
+    private final List<Cmp> cmpList = new ArrayList<>();
+    private final List<Op> successOpList = new ArrayList<>();
+    private final List<Op> failureOpList = new ArrayList<>();
+    private final Function<TxnRequest, CompletableFuture<TxnResponse>> requestF;
 
     private boolean seenThen = false;
     private boolean seenElse = false;
@@ -57,15 +58,12 @@ public class TxnImpl implements Txn {
         this.namespace = namespace;
     }
 
-  //CHECKSTYLE:OFF
-  public TxnImpl If(Cmp... cmps) {
-    //CHECKSTYLE:ON
+    @Override
+    public TxnImpl If(Cmp... cmps) {
         return If(ImmutableList.copyOf(cmps));
     }
 
-  //CHECKSTYLE:OFF
-  TxnImpl If(List<Cmp> cmps) {
-    //CHECKSTYLE:ON
+    TxnImpl If(List<Cmp> cmps) {
         if (this.seenThen) {
             throw new IllegalArgumentException("cannot call If after Then!");
         }
@@ -77,15 +75,12 @@ public class TxnImpl implements Txn {
         return this;
     }
 
-  //CHECKSTYLE:OFF
-  public TxnImpl Then(Op... ops) {
-    //CHECKSTYLE:ON
+    @Override
+    public TxnImpl Then(Op... ops) {
         return Then(ImmutableList.copyOf(ops));
     }
 
-  //CHECKSTYLE:OFF
-  TxnImpl Then(List<Op> ops) {
-    //CHECKSTYLE:ON
+    TxnImpl Then(List<Op> ops) {
         if (this.seenElse) {
             throw new IllegalArgumentException("cannot call Then after Else!");
         }
@@ -96,21 +91,19 @@ public class TxnImpl implements Txn {
         return this;
     }
 
-  //CHECKSTYLE:OFF
-  public TxnImpl Else(Op... ops) {
-    //CHECKSTYLE:ON
+    @Override
+    public TxnImpl Else(Op... ops) {
         return Else(ImmutableList.copyOf(ops));
     }
 
-  //CHECKSTYLE:OFF
-  TxnImpl Else(List<Op> ops) {
-    //CHECKSTYLE:ON
+    TxnImpl Else(List<Op> ops) {
         this.seenElse = true;
 
         failureOpList.addAll(ops);
         return this;
     }
 
+    @Override
     public CompletableFuture<TxnResponse> commit() {
         return this.requestF.apply(this.toTxnRequest());
     }

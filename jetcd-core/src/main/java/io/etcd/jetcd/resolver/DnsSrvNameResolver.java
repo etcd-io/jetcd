@@ -21,7 +21,6 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executor;
 
@@ -31,8 +30,9 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.grpc.EquivalentAddressGroup;
@@ -40,9 +40,11 @@ import io.grpc.NameResolver;
 import io.grpc.Status;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.internal.SharedResourceHolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+
+@SuppressWarnings("JdkObsolete")
 public class DnsSrvNameResolver extends NameResolver {
     public static final String SCHEME = "dns+srv";
 
@@ -159,7 +161,7 @@ public class DnsSrvNameResolver extends NameResolver {
     }
 
     private List<SocketAddress> resolveAddresses() {
-        List<SocketAddress> addresses = new LinkedList<>();
+        List<SocketAddress> addresses = new ArrayList<>();
 
         try {
             String address = targetUri.getPath();

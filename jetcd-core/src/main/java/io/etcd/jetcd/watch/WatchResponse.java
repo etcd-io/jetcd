@@ -19,11 +19,12 @@ package io.etcd.jetcd.watch;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.google.common.annotations.VisibleForTesting;
 import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.api.Event;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class WatchResponse extends AbstractResponse<io.etcd.jetcd.api.WatchResponse> {
 
@@ -68,12 +69,20 @@ public class WatchResponse extends AbstractResponse<io.etcd.jetcd.api.WatchRespo
         return events;
     }
 
+    /**
+     * Returns true if the WatchResponse is progress notification.
+     *
+     * @return true if the WatchResponse is progress notification.
+     */
     public boolean isProgressNotify() {
         return isProgressNotify(getResponse());
     }
 
     /**
-     * returns true if the WatchResponse is progress notification.
+     * Returns true if the WatchResponse is progress notification.
+     *
+     * @param  response the response.
+     * @return          true if the WatchResponse is progress notification.
      */
     public static boolean isProgressNotify(io.etcd.jetcd.api.WatchResponse response) {
         return response.getEventsCount() == 0 && !response.getCreated() && !response.getCanceled()

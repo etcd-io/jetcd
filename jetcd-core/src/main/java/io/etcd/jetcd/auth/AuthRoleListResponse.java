@@ -32,7 +32,7 @@ public class AuthRoleListResponse extends AbstractResponse<io.etcd.jetcd.api.Aut
     }
 
     /**
-     * @return a list of roles.
+     * Returns a list of roles.
      */
     public List<String> getRoles() {
         return getResponse().getRolesList();

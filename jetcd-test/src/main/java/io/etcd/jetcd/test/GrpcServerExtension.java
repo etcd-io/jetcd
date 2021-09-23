@@ -19,6 +19,10 @@ package io.etcd.jetcd.test;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+
 import io.grpc.BindableService;
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
@@ -26,9 +30,6 @@ import io.grpc.ServerServiceDefinition;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import io.grpc.util.MutableHandlerRegistry;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.BeforeEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -42,6 +43,8 @@ public class GrpcServerExtension implements BeforeEachCallback, AfterEachCallbac
     /**
      * Returns {@code this} configured to use a direct executor for the {@link ManagedChannel} and
      * {@link Server}. This can only be called at the rule instantiation.
+     *
+     * @return a {@link GrpcServerExtension}
      */
     public final GrpcServerExtension directExecutor() {
         checkState(serverName == null, "directExecutor() can only be called at the rule instantiation");
@@ -51,6 +54,8 @@ public class GrpcServerExtension implements BeforeEachCallback, AfterEachCallbac
 
     /**
      * Returns a {@link ManagedChannel} connected to this service.
+     *
+     * @return a {@link ManagedChannel}
      */
     public final ManagedChannel getChannel() {
         return channel;
@@ -58,6 +63,8 @@ public class GrpcServerExtension implements BeforeEachCallback, AfterEachCallbac
 
     /**
      * Returns the underlying gRPC {@link Server} for this service.
+     *
+     * @return a {@link Server}
      */
     public final Server getServer() {
         return server;
@@ -65,6 +72,8 @@ public class GrpcServerExtension implements BeforeEachCallback, AfterEachCallbac
 
     /**
      * Returns the randomly generated server name for this service.
+     *
+     * @return the server name
      */
     public final String getServerName() {
         return serverName;
@@ -73,6 +82,8 @@ public class GrpcServerExtension implements BeforeEachCallback, AfterEachCallbac
     /**
      * Returns the service registry for this service. The registry is used to add service instances
      * (e.g. {@link BindableService} or {@link ServerServiceDefinition} to the server.
+     *
+     * @return a {@link MutableHandlerRegistry}
      */
     public final MutableHandlerRegistry getServiceRegistry() {
         return serviceRegistry;

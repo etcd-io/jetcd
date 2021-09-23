@@ -19,15 +19,16 @@ package io.etcd.jetcd;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.etcd.jetcd.Watch.Watcher;
-import io.etcd.jetcd.test.EtcdClusterExtension;
-import io.etcd.jetcd.watch.WatchEvent.EventType;
-import io.etcd.jetcd.watch.WatchResponse;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
+
+import io.etcd.jetcd.Watch.Watcher;
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.etcd.jetcd.watch.WatchEvent.EventType;
+import io.etcd.jetcd.watch.WatchResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;

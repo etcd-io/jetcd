@@ -16,8 +16,9 @@
 
 package io.etcd.jetcd.options;
 
-import io.etcd.jetcd.ByteSequence;
 import org.junit.jupiter.api.Test;
+
+import io.etcd.jetcd.ByteSequence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

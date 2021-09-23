@@ -21,6 +21,10 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.*;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
@@ -33,9 +37,6 @@ import io.etcd.jetcd.options.GetOption.SortOrder;
 import io.etcd.jetcd.options.GetOption.SortTarget;
 import io.etcd.jetcd.options.PutOption;
 import io.etcd.jetcd.test.EtcdClusterExtension;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static io.etcd.jetcd.TestUtil.bytesOf;
@@ -114,7 +115,7 @@ public class KVTest {
 
     @Test
     public void testGetSortedPrefix() throws Exception {
-        String prefix = TestUtil.randomString();
+        String prefix = randomString();
         int numPrefix = 3;
         putKeysWithPrefix(prefix, numPrefix);
 
@@ -149,7 +150,7 @@ public class KVTest {
 
     @Test
     public void testGetAndDeleteWithPrefix() throws Exception {
-        String prefix = TestUtil.randomString();
+        String prefix = randomString();
         ByteSequence key = bytesOf(prefix);
         int numPrefixes = 10;
 
@@ -250,7 +251,7 @@ public class KVTest {
     @SuppressWarnings("FutureReturnValueIgnored")
     public void testKVClientCanRetryPutOnEtcdRestart() throws InterruptedException {
         try (Client customClient = Client.builder().endpoints(cluster.getClientEndpoints())
-            .retryMaxDuration(Duration.ofSeconds(300))
+            .retryMaxDuration(Duration.ofMinutes(5))
             // client will delay the retry for a long time to give the cluster plenty of time to restart
             .retryDelay(10)
             .retryMaxDelay(30)

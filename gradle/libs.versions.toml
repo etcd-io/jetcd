@@ -1,0 +1,67 @@
+[versions]
+grpc = "1.42.0"
+log4j = "2.14.1"
+mockito = "4.0.0"
+slf4j = "1.7.32"
+guava = "31.0.1-jre"
+javaxAnnotation = "1.3.2"
+spotbugs = "4.4.2"
+assertj = "3.21.0"
+junit = "5.8.1"
+testcontainers = "1.16.2"
+protoc = "3.19.1"
+failsafe = "2.4.4"
+awaitility = "4.1.1"
+commonsIo = "2.11.0"
+commonCompress = "1.21"
+autoService = "1.0.1"
+jool = "0.9.14"
+jcommander = "1.81"
+errorprone = "2.10.0"
+
+
+[libraries]
+slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+javaxAnnotation = { module = "javax.annotation:javax.annotation-api", version.ref = "javaxAnnotation" }
+spotbugs = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "spotbugs" }
+assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+junit = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+protoc = { module = "com.google.protobuf:protoc", version.ref = "protoc" }
+failsafe = { module = "net.jodah:failsafe", version.ref = "failsafe" }
+awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
+jcommander = { module = "com.beust:jcommander", version.ref = "jcommander"}
+jool = { module = "org.jooq:jool-java-8", version.ref = "jool"}
+
+commonsIo = { module = "commons-io:commons-io", version.ref = "commonsIo" }
+commonsCompress = { module = "org.apache.commons:commons-compress", version.ref = "commonCompress" }
+
+mockitoCore = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockitoJunit = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+
+grpcCore = { module = "io.grpc:grpc-core", version.ref = "grpc" }
+grpcNetty = { module = "io.grpc:grpc-netty", version.ref = "grpc" }
+grpcProtobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
+grpcStub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
+grpcGrpclb = { module = "io.grpc:grpc-grpclb", version.ref = "grpc" }
+
+log4jApi = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j" }
+log4jCore = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
+log4jSlf4j = { module = "org.apache.logging.log4j:log4j-slf4j-impl", version.ref = "log4j" }
+log4j12 = { module = "org.apache.logging.log4j:log4j-1.2-api", version.ref = "log4j" }
+
+autoServiceAnnotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "autoService"}
+autoServiceProcessor = { module = "com.google.auto.service:auto-service", version.ref = "autoService"}
+
+
+errorprone = { module = "com.google.errorprone:error_prone_core", version.ref = "errorprone" }
+errorproneJavac = { module = "com.google.errorprone:javac", version = "9+181-r4173-1" }
+
+[bundles]
+grpc    = [ "grpcCore", "grpcNetty", "grpcProtobuf", "grpcStub", "grpcGrpclb" ]
+log4j   = [ "log4jApi", "log4jCore", "log4jSlf4j", "log4j12" ]
+mockito = [ "mockitoCore", "mockitoJunit" ]
+testing = ["junit", "assertj", "mockitoCore", "mockitoJunit"]
+
+

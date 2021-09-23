@@ -31,14 +31,14 @@ public class HashKVResponse extends AbstractResponse<io.etcd.jetcd.api.HashKVRes
     }
 
     /**
-     * @return the hash value computed from the responding member's MVCC keys up to a given revision.
+     * Returns the hash value computed from the responding member's MVCC keys up to a given revision.
      */
     public int getHash() {
         return getResponse().getHash();
     }
 
     /**
-     * @return the compacted revision of key-value store when hash begins.
+     * Returns the compacted revision of key-value store when hash begins.
      */
     public long getCompacted() {
         return getResponse().getCompactRevision();

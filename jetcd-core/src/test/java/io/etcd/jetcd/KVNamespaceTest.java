@@ -22,7 +22,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import com.google.protobuf.ByteString;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
@@ -34,12 +40,8 @@ import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
 import io.etcd.jetcd.test.EtcdClusterExtension;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+
+import com.google.protobuf.ByteString;
 
 import static io.etcd.jetcd.TestUtil.byteStringOf;
 import static io.etcd.jetcd.TestUtil.bytesOf;
@@ -124,7 +126,7 @@ public class KVNamespaceTest {
         {
             ByteSequence key = getNonexistentKey();
             ByteSequence nsKey = ByteSequence.from(namespace.getByteString().concat(key.getByteString()));
-            ByteSequence value = null;
+            ByteSequence value;
 
             assertNonexistentKey(kvClient, nsKey);
             assertNonexistentKey(kvClientWithNamespace, key);

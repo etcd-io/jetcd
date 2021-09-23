@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 The jetcd authors
+# Copyright 2016-2021 The jetcd authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 name: master
 
-env:
-  MAVEN_ARGS: -V -ntp -Dhttp.keepAlive=false -e
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
@@ -39,11 +37,12 @@ jobs:
       - name: Set Up Java
         uses: actions/setup-java@v2
         with:
-          java-version: 8
-          distribution: 'adopt'
+          java-version: 11
+          distribution: 'temurin'
       - name: Build Project
         env:
-          OSSRH_USERNAME: ${{ secrets. OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets. OSSRH_PASSWORD }}
+          CI_DEPLOY_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          CI_DEPLOY_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
         run: |
-          ./mvnw ${MAVEN_ARGS} clean deploy -DskipTests -Pcheck-format --settings etc/mvn-deploy-settings.xml
+          ./gradlew spotlessCheck
+          ./gradlew publish
