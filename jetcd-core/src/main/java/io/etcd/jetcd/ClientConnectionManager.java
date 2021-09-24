@@ -116,7 +116,8 @@ final class ClientConnectionManager {
         if (headers != null) {
             Metadata metadata = new Metadata();
             headers.forEach((BiConsumer<Metadata.Key, Object>) metadata::put);
-            authFutureStub = MetadataUtils.newAttachHeadersInterceptor(AuthGrpc.newFutureStub(channel), metadata);
+            authFutureStub = AuthGrpc.newFutureStub(channel)
+                .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata));
         }
         return authFutureStub
             .authenticate(AuthenticateRequest.newBuilder().setNameBytes(user).setPasswordBytes(pass).build());
