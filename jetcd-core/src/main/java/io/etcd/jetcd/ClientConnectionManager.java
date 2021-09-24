@@ -101,7 +101,7 @@ final class ClientConnectionManager {
      * @param  channel  channel to etcd
      * @param  username auth name
      * @param  password auth password
-     * @param headers oem header
+     * @param  headers  oem header
      * @return          authResp
      */
     private static ListenableFuture<AuthenticateResponse> authenticate(@Nonnull Channel channel, @Nonnull ByteSequence username,
@@ -112,8 +112,8 @@ final class ClientConnectionManager {
 
         checkArgument(!user.isEmpty(), "username can not be empty.");
         checkArgument(!pass.isEmpty(), "password can not be empty.");
-        AuthGrpc.AuthFutureStub authFutureStub=AuthGrpc.newFutureStub(channel);
-        if (headers!=null){
+        AuthGrpc.AuthFutureStub authFutureStub = AuthGrpc.newFutureStub(channel);
+        if (headers != null) {
             Metadata metadata = new Metadata();
             headers.forEach((BiConsumer<Metadata.Key, Object>) metadata::put);
             authFutureStub = MetadataUtils.newAttachHeadersInterceptor(AuthGrpc.newFutureStub(channel), metadata);
@@ -303,7 +303,7 @@ final class ClientConnectionManager {
     private String generateToken(Channel channel) {
         if (builder.user() != null && builder.password() != null) {
             try {
-                return authenticate(channel, builder.user(), builder.password(),builder.headers()).get().getToken();
+                return authenticate(channel, builder.user(), builder.password(), builder.headers()).get().getToken();
             } catch (InterruptedException ite) {
                 throw handleInterrupt(ite);
             } catch (ExecutionException exee) {
