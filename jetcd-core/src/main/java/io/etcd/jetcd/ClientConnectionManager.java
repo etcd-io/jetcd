@@ -19,6 +19,7 @@ package io.etcd.jetcd;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -56,6 +57,7 @@ import io.grpc.Status;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
+import io.grpc.stub.MetadataUtils;
 import io.netty.channel.ChannelOption;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -99,18 +101,24 @@ final class ClientConnectionManager {
      * @param  channel  channel to etcd
      * @param  username auth name
      * @param  password auth password
+     * @param headers oem header
      * @return          authResp
      */
     private static ListenableFuture<AuthenticateResponse> authenticate(@Nonnull Channel channel, @Nonnull ByteSequence username,
-        @Nonnull ByteSequence password) {
+        @Nonnull ByteSequence password, Map<Metadata.Key<?>, Object> headers) {
 
         final ByteString user = username.getByteString();
         final ByteString pass = password.getByteString();
 
         checkArgument(!user.isEmpty(), "username can not be empty.");
         checkArgument(!pass.isEmpty(), "password can not be empty.");
-
-        return AuthGrpc.newFutureStub(channel)
+        AuthGrpc.AuthFutureStub authFutureStub=AuthGrpc.newFutureStub(channel);
+        if (headers!=null){
+            Metadata metadata = new Metadata();
+            headers.forEach((BiConsumer<Metadata.Key, Object>) metadata::put);
+            authFutureStub = MetadataUtils.newAttachHeadersInterceptor(AuthGrpc.newFutureStub(channel), metadata);
+        }
+        return authFutureStub
             .authenticate(AuthenticateRequest.newBuilder().setNameBytes(user).setPasswordBytes(pass).build());
     }
 
@@ -295,7 +303,7 @@ final class ClientConnectionManager {
     private String generateToken(Channel channel) {
         if (builder.user() != null && builder.password() != null) {
             try {
-                return authenticate(channel, builder.user(), builder.password()).get().getToken();
+                return authenticate(channel, builder.user(), builder.password(),builder.headers()).get().getToken();
             } catch (InterruptedException ite) {
                 throw handleInterrupt(ite);
             } catch (ExecutionException exee) {
