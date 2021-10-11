@@ -49,7 +49,7 @@ public class IPNameResolver extends NameResolver {
     private final Object lock;
     private final String authority;
     private final URI targetUri;
-    private final List<EquivalentAddressGroup> addresses;
+    private final List<HostAndPort> addresses;
 
     private volatile boolean shutdown;
     private volatile boolean resolving;
@@ -64,27 +64,9 @@ public class IPNameResolver extends NameResolver {
         this.targetUri = targetUri;
         this.authority = targetUri.getAuthority() != null ? targetUri.getAuthority() : "";
         this.addresses = Stream.of(targetUri.getPath().split(","))
-            .map(address -> {
-                return address.startsWith("/")
-                    ? address.substring(1)
-                    : address;
-            })
-            .map(address -> {
-                Iterable<String> split = Splitter.on(':').split(address);
-                String host = Iterables.get(split, 0);
-                String port = Iterables.get(split, 1, ETCD_CLIENT_PORT);
-                return new EquivalentAddressGroup(
-                    new InetSocketAddress(host, Integer.parseInt(port)),
-                    Strings.isNullOrEmpty(authority)
-                        ? Attributes.newBuilder()
-                            .set(EquivalentAddressGroup.ATTR_AUTHORITY_OVERRIDE, getDefaultAuthority(host, port))
-                            .build()
-                        : Attributes.EMPTY);
-            }).collect(Collectors.toList());
-    }
-
-    private static String getDefaultAuthority(String host, String port) {
-        return String.format("%s:%s", host, port);
+            .map(address -> address.startsWith("/") ? address.substring(1) : address)
+            .map(HostAndPort::new)
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -147,12 +129,43 @@ public class IPNameResolver extends NameResolver {
                     "Unable to resolve endpoint " + targetUri);
             }
 
-            savedListener.onAddresses(addresses, Attributes.EMPTY);
+            List<EquivalentAddressGroup> servers = addresses.stream()
+                .map(address -> address.toAddressGroup(authority))
+                .collect(Collectors.toList());
+
+            savedListener.onAddresses(servers, Attributes.EMPTY);
+
         } catch (Exception e) {
             LOGGER.warn("Error wile getting list of servers", e);
             savedListener.onError(Status.NOT_FOUND);
         } finally {
             resolving = false;
+        }
+    }
+
+    private static final class HostAndPort {
+        final String host;
+        final int port;
+
+        public HostAndPort(String address) {
+            final Iterable<String> split = Splitter.on(':').split(address);
+
+            this.host = Iterables.get(split, 0);
+            this.port = Integer.parseInt(Iterables.get(split, 1, ETCD_CLIENT_PORT));
+        }
+
+        public String authority() {
+            return String.format("%s:%d", host, port);
+        }
+
+        public EquivalentAddressGroup toAddressGroup(String authority) {
+            return new EquivalentAddressGroup(
+                new InetSocketAddress(host, port),
+                Strings.isNullOrEmpty(authority)
+                    ? Attributes.newBuilder()
+                        .set(EquivalentAddressGroup.ATTR_AUTHORITY_OVERRIDE, authority())
+                        .build()
+                    : Attributes.EMPTY);
         }
     }
 }
