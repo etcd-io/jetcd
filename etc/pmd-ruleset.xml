@@ -21,13 +21,12 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 http://pmd.sourceforge.net/ruleset_2_0_0.xsd">
 
-    <description>PMD Rules that govern static code analysis for Camel K Runtime</description>
+    <description>PMD Rules that govern static code analysis for jetcd</description>
 
     <exclude-pattern>.*/org/apache/camel/k/loader/yaml/support/.*</exclude-pattern>
     <exclude-pattern>.*/org/apache/camel/k/loader/yaml/parser/.*</exclude-pattern>
 
     <rule ref="category/java/bestpractices.xml/AvoidUsingHardCodedIP"/>
-    <rule ref="category/java/bestpractices.xml/UnusedImports"/>
     <rule ref="category/java/bestpractices.xml/UnusedFormalParameter"/>
     <rule ref="category/java/bestpractices.xml/UnusedLocalVariable"/>
     <rule ref="category/java/bestpractices.xml/UnusedPrivateField"/>
@@ -35,9 +34,8 @@
     <rule ref="category/java/bestpractices.xml/OneDeclarationPerLine"/>
     <rule ref="category/java/bestpractices.xml/UseCollectionIsEmpty"/>
     <rule ref="category/java/bestpractices.xml/PreserveStackTrace"/>
+    <rule ref="category/java/bestpractices.xml/SimplifiableTestAssertion" />
 
-    <rule ref="category/java/codestyle.xml/DontImportJavaLang"/>
-    <rule ref="category/java/codestyle.xml/DuplicateImports"/>
     <rule ref="category/java/codestyle.xml/ExtendsObject"/>
     <rule ref="category/java/codestyle.xml/ForLoopShouldBeWhileLoop"/>
     <rule ref="category/java/codestyle.xml/UnnecessaryFullyQualifiedName"/>
@@ -46,14 +44,15 @@
     <rule ref="category/java/codestyle.xml/UselessParentheses"/>
     <rule ref="category/java/codestyle.xml/UselessQualifiedThis"/>
     <rule ref="category/java/codestyle.xml/ControlStatementBraces"/>
+    <rule ref="category/java/codestyle.xml/UnnecessaryImport" />
+
+
+
 
     <rule ref="category/java/design.xml/FinalFieldCouldBeStatic">
         <priority>4</priority>
     </rule>
     <rule ref="category/java/design.xml/SimplifiedTernary">
-        <priority>4</priority>
-    </rule>
-    <rule ref="category/java/design.xml/SimplifyBooleanAssertion">
         <priority>4</priority>
     </rule>
     <rule ref="category/java/design.xml/CollapsibleIfStatements">
@@ -87,7 +86,6 @@
     <rule ref="category/java/errorprone.xml/EmptySynchronizedBlock"/>
     <rule ref="category/java/errorprone.xml/EmptyTryBlock"/>
     <rule ref="category/java/errorprone.xml/EmptyWhileStmt"/>
-    <rule ref="category/java/errorprone.xml/ImportFromSamePackage"/>
     <rule ref="category/java/errorprone.xml/JumbledIncrementer"/>
     <rule ref="category/java/errorprone.xml/MisplacedNullCheck"/>
     <rule ref="category/java/errorprone.xml/OverrideBothEqualsAndHashcode"/>
@@ -103,5 +101,5 @@
     <rule ref="category/java/multithreading.xml/DontCallThreadRun"/>
 
     <rule ref="category/java/performance.xml/BigIntegerInstantiation"/>
-    <rule ref="category/java/performance.xml/BooleanInstantiation"/>
+    <rule ref="category/java/bestpractices.xml/PrimitiveWrapperInstantiation" />
 </ruleset>

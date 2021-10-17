@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Network;
@@ -36,19 +35,19 @@ import static java.util.stream.Collectors.toList;
 public class EtcdClusterFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(EtcdClusterFactory.class);
 
-    public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl) {
+    public static EtcdCluster buildCluster(String clusterName, int nodes, boolean ssl) {
         return buildCluster(clusterName, nodes, ssl, EtcdContainer.ETCD_DOCKER_IMAGE_NAME, Collections.emptyList());
     }
 
-    public static EtcdCluster buildCluster(@NonNull String clusterName, int nodes, boolean ssl, String... additionalArgs) {
+    public static EtcdCluster buildCluster(String clusterName, int nodes, boolean ssl, String... additionalArgs) {
         return buildCluster(clusterName, nodes, ssl, EtcdContainer.ETCD_DOCKER_IMAGE_NAME, Arrays.asList(additionalArgs));
     }
 
     public static EtcdCluster buildCluster(
-        @NonNull String clusterName,
+        String clusterName,
         int nodes,
         boolean ssl,
-        @NonNull String image,
+        String image,
         List<String> additionalArgs) {
 
         final Network network = Network.builder().id(clusterName).build();
@@ -108,13 +107,11 @@ public class EtcdClusterFactory {
                 containers.forEach(EtcdContainer::restart);
             }
 
-            @NonNull
             @Override
             public List<URI> getClientEndpoints() {
                 return containers.stream().map(EtcdContainer::clientEndpoint).collect(toList());
             }
 
-            @NonNull
             @Override
             public List<URI> getPeerEndpoints() {
                 return containers.stream().map(EtcdContainer::peerEndpoint).collect(toList());

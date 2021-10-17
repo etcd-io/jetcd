@@ -6,9 +6,6 @@ updates:
     interval: daily
   open-pull-requests-limit: 10
   ignore:
-  - dependency-name: com.google.errorprone:error_prone_core
-    versions:
-    - "> 2.3.4, < 3"
   - dependency-name: org.codehaus.plexus:plexus-compiler-javac-errorprone
     versions:
     - "> 2.8.6, < 2.9"
