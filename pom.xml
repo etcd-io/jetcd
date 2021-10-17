@@ -125,6 +125,7 @@
         <awaitility.version>4.1.0</awaitility.version>
         <auto-service.version>1.0</auto-service.version>
         <javax-annotation-api.version>1.3.2</javax-annotation-api.version>
+        <pmd.asm.version>9.2</pmd.asm.version>
     </properties>
 
     <modules>
@@ -463,6 +464,13 @@
                             <excludeRoot>${project.build.directory}/generated-sources</excludeRoot>
                         </excludeRoots>
                     </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.ow2.asm</groupId>
+                            <artifactId>asm</artifactId>
+                            <version>${pmd.asm.version}</version>
+                        </dependency>
+                    </dependencies>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
