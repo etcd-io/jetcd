@@ -105,8 +105,6 @@
         <!-- dependencies -->
         <grpc.version>1.41.0</grpc.version>
         <slf4j.version>1.7.32</slf4j.version>
-        <errorprone-core.version>2.8.1</errorprone-core.version>
-        <errorprone-compiler.version>9+181-r4173-1</errorprone-compiler.version>
         <log4j2.version>2.14.1</log4j2.version>
         <jcommander.version>1.81</jcommander.version>
         <jool.version>0.9.14</jool.version>
@@ -431,68 +429,8 @@
                     <configuration>
                         <source>${jdk.version}</source>
                         <target>${jdk.version}</target>
-                        <fork>true</fork>
                         <encoding>UTF-8</encoding>
-                        <compilerArgs>
-                            <arg>-XDcompilePolicy=simple</arg>
-                            <arg>
-                                -Xplugin:ErrorProne \
-                                -XepExcludedPaths:.*/target/.* \
-                                -Xep:StaticOrDefaultInterfaceMethod:OFF 
-                                <!--
-                                -Xep:NullableDereference:OFF \
-                                -Xep:FieldMissingNullable:OFF \
-                                -Xep:BooleanParameter:OFF \
-                                -Xep:ReturnMissingNullable:ERROR \
-                                -Xep:MethodCanBeStatic:ERROR \
-                                -Xep:TestExceptionChecker:ERROR \
-                                -Xep:RedundantThrows:ERROR \
-                                -Xep:ConstantField:ERROR \
-                                -Xep:EmptySetMultibindingContributions:ERROR \
-                                -Xep:MixedArrayDimensions:ERROR \
-                                -Xep:MultipleTopLevelClasses:ERROR \
-                                -Xep:MultiVariableDeclaration:ERROR \
-                                -Xep:PackageLocation:ERROR \
-                                -Xep:PrivateConstructorForNoninstantiableModule:ERROR \
-                                -Xep:RemoveUnusedImports:ERROR \
-                                -Xep:UnnecessaryStaticImport:ERROR \
-                                -Xep:UseBinds:ERROR \
-                                -Xep:WildcardImport:ERROR \
-                                -Xep:FutureReturnValueIgnored:ERROR \
-                                -Xep:IntLongMath:ERROR \
-                                -Xep:FloatCast:ERROR \
-                                -Xep:ClassNewInstance:ERROR \
-                                -Xep:ConstructorInvokesOverridable:ERROR \
-                                -Xep:ThreeLetterTimeZoneID:ERROR \
-                                -Xep:UnsafeFinalization:ERROR \
-                                -Xep:MutableMethodReturnType:ERROR \
-                                -Xep:SynchronizeOnNonFinalField:ERROR \
-                                -Xep:WaitNotInLoop:ERROR \
-                                -Xep:SwitchDefault:ERROR \
-                                -Xep:ReachabilityFenceUsage:ERROR \
-                                -Xep:BoxedPrimitiveConstructor:ERROR \
-                                -Xep:InjectOnConstructorOfAbstractClass:ERROR \
-                                -Xep:StringSplitter:ERROR \
-                                -Xep:DefaultCharset:ERROR \
-                                -Xep:StreamResourceLeak:ERROR \
-                                -Xep:InconsistentCapitalization:ERROR \
-                                -Xep:TruthIncompatibleType:ERROR \
-                                -Xep:ByteBufferBackingArray:ERROR \
-                                -Xep:OrphanedFormatString:ERROR \
-                                -Xep:CatchAndPrintStackTrace:ERROR \
-                                -Xep:VarTypeName:ERROR \
-                                -Xep:ObjectToString:ERROR \
-                                -Xep:AssertThrowsMultipleStatements:ERROR
-                                -->
-                            </arg>
-                            <arg>-J-Xbootclasspath/p:${settings.localRepository}/com/google/errorprone/javac/${errorprone-compiler.version}/javac-${errorprone-compiler.version}.jar</arg>
-                        </compilerArgs>
                         <annotationProcessorPaths>
-                            <path>
-                                <groupId>com.google.errorprone</groupId>
-                                <artifactId>error_prone_core</artifactId>
-                                <version>${errorprone-core.version}</version>
-                            </path>
                             <path>
                                 <groupId>com.google.auto.service</groupId>
                                 <artifactId>auto-service</artifactId>
