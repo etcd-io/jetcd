@@ -59,6 +59,7 @@ public final class ClientBuilder implements Cloneable {
     private String authority;
     private Integer maxInboundMessageSize;
     private Map<Metadata.Key<?>, Object> headers;
+    private Map<Metadata.Key<?>, Object> authHeaders;
     private List<ClientInterceptor> interceptors;
     private ByteSequence namespace = ByteSequence.EMPTY;
     private long retryDelay = 500;
@@ -325,6 +326,38 @@ public final class ClientBuilder implements Cloneable {
         }
 
         this.headers.put(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER), value);
+
+        return this;
+    }
+
+    /**
+     * @return the headers to be added to auth request headers
+     */
+    public Map<Metadata.Key<?>, Object> authHeaders() {
+        return authHeaders == null ? Collections.emptyMap() : Collections.unmodifiableMap(authHeaders);
+    }
+
+    /**
+     * @param  authHeaders Sets headers to be added to auth request headers.
+     * @return             this builder
+     */
+    public ClientBuilder authHeaders(Map<Metadata.Key<?>, Object> authHeaders) {
+        this.authHeaders = new HashMap<>(authHeaders);
+
+        return this;
+    }
+
+    /**
+     * @param  key   Sets an header key to be added to auth request headers.
+     * @param  value Sets an header value to be added to auth request headers.
+     * @return       this builder
+     */
+    public ClientBuilder authHeader(String key, String value) {
+        if (this.authHeaders == null) {
+            this.authHeaders = new HashMap<>();
+        }
+
+        this.authHeaders.put(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER), value);
 
         return this;
     }

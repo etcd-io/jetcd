@@ -304,7 +304,7 @@ final class ClientConnectionManager {
     private String generateToken(Channel channel) {
         if (builder.user() != null && builder.password() != null) {
             try {
-                return authenticate(channel, builder.user(), builder.password(), builder.headers()).get().getToken();
+                return authenticate(channel, builder.user(), builder.password(), builder.authHeaders()).get().getToken();
             } catch (InterruptedException ite) {
                 throw handleInterrupt(ite);
             } catch (ExecutionException exee) {

@@ -16,27 +16,26 @@
 
 package io.etcd.jetcd;
 
+import io.etcd.jetcd.auth.AuthDisableResponse;
+import io.etcd.jetcd.kv.PutResponse;
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.grpc.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import io.etcd.jetcd.kv.PutResponse;
-import io.etcd.jetcd.test.EtcdClusterExtension;
-import io.grpc.CallOptions;
-import io.grpc.Channel;
-import io.grpc.ClientCall;
-import io.grpc.ClientInterceptor;
-import io.grpc.ForwardingClientCall;
-import io.grpc.Metadata;
-import io.grpc.MethodDescriptor;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ClientConnectionManagerTest {
+
+    private final String rootString = "root";
+    private final ByteSequence root = bytesOf(rootString);
+    private final ByteSequence rootPass = bytesOf("123");
 
     @RegisterExtension
     public static final EtcdClusterExtension cluster = new EtcdClusterExtension("connection-manager-etcd", 1);
@@ -71,5 +70,27 @@ public class ClientConnectionManagerTest {
             latch.await(1, TimeUnit.MINUTES);
             future.get();
         }
+    }
+
+    @Test
+    public void testAuthHeader() throws InterruptedException, ExecutionException {
+        final CountDownLatch latch = new CountDownLatch(1);
+        Auth authClient = Client.builder().endpoints(cluster.getClientEndpoints()).build().getAuthClient();
+        authClient.userAdd(root, rootPass).get();
+        ByteSequence role = TestUtil.bytesOf("root");
+        authClient.userGrantRole(root, role).get();
+        authClient.authEnable().get();
+        final ClientBuilder builder = Client.builder().endpoints(cluster.getClientEndpoints())
+            .authHeader("MyAuthHeader", "MyAuthHeaderVal").header("MyHeader2", "MyHeaderVal2")
+            .user(root).password(rootPass);
+        assertThat(builder.authHeaders().get(Metadata.Key.of("MyAuthHeader", Metadata.ASCII_STRING_MARSHALLER)))
+            .isEqualTo("MyAuthHeaderVal");
+        try (Client client = builder.build()) {
+            CompletableFuture<AuthDisableResponse> future = client.getAuthClient().authDisable();
+            latch.await(10, TimeUnit.SECONDS);
+            future.get();
+        }
+        authClient.userRevokeRole(root, role).get();
+        authClient.userDelete(root).get();
     }
 }
