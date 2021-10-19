@@ -16,17 +16,17 @@
 
 package io.etcd.jetcd;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
 import io.etcd.jetcd.auth.AuthDisableResponse;
 import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 import io.grpc.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
