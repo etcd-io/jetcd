@@ -61,6 +61,7 @@ public final class ClientBuilder implements Cloneable {
     private Map<Metadata.Key<?>, Object> headers;
     private Map<Metadata.Key<?>, Object> authHeaders;
     private List<ClientInterceptor> interceptors;
+    private List<ClientInterceptor> authInterceptors;
     private ByteSequence namespace = ByteSequence.EMPTY;
     private long retryDelay = 500;
     private long retryMaxDelay = 2500;
@@ -391,6 +392,39 @@ public final class ClientBuilder implements Cloneable {
 
         this.interceptors.add(interceptor);
         this.interceptors.addAll(Arrays.asList(interceptors));
+
+        return this;
+    }
+
+    /**
+     * @return the auth interceptors
+     */
+    public List<ClientInterceptor> authInterceptors() {
+        return authInterceptors;
+    }
+
+    /**
+     * @param  interceptors Set the interceptors to add to the auth chain
+     * @return              this builder
+     */
+    public ClientBuilder authInterceptors(List<ClientInterceptor> interceptors) {
+        this.authInterceptors = new ArrayList<>(interceptors);
+
+        return this;
+    }
+
+    /**
+     * @param  interceptor  an interceptors to add to the auth chain
+     * @param  interceptors additional interceptors to add to the auth chain
+     * @return              this builder
+     */
+    public ClientBuilder authInterceptors(ClientInterceptor interceptor, ClientInterceptor... interceptors) {
+        if (this.authInterceptors == null) {
+            this.authInterceptors = new ArrayList<>();
+        }
+
+        this.authInterceptors.add(interceptor);
+        this.authInterceptors.addAll(Arrays.asList(interceptors));
 
         return this;
     }

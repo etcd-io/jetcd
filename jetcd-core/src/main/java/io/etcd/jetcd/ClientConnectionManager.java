@@ -19,10 +19,8 @@ package io.etcd.jetcd;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -31,16 +29,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.ByteString;
-import io.etcd.jetcd.api.AuthGrpc;
-import io.etcd.jetcd.api.AuthenticateRequest;
-import io.etcd.jetcd.api.AuthenticateResponse;
+import io.etcd.jetcd.auth.AuthInterceptor;
 import io.etcd.jetcd.resolver.DnsSrvNameResolver;
 import io.etcd.jetcd.resolver.IPNameResolver;
 import io.grpc.CallOptions;
@@ -48,36 +40,29 @@ import io.grpc.Channel;
 import io.grpc.ClientCall;
 import io.grpc.ClientInterceptor;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
-import io.grpc.ForwardingClientCallListener.SimpleForwardingClientCallListener;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
-import io.grpc.Status;
 import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
-import io.grpc.stub.MetadataUtils;
 import io.netty.channel.ChannelOption;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static io.etcd.jetcd.Util.isInvalidTokenError;
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.handleInterrupt;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
 final class ClientConnectionManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientConnectionManager.class);
-    private static final Metadata.Key<String> TOKEN = Metadata.Key.of("token", Metadata.ASCII_STRING_MARSHALLER);
 
     private final Object lock;
     private final ClientBuilder builder;
     private final ExecutorService executorService;
+    private final AuthInterceptor authInterceptor;
     private volatile ManagedChannel managedChannel;
-    private volatile String token;
 
     ClientConnectionManager(ClientBuilder builder) {
         this(builder, null);
@@ -86,6 +71,7 @@ final class ClientConnectionManager {
     ClientConnectionManager(ClientBuilder builder, ManagedChannel managedChannel) {
         this.lock = new Object();
         this.builder = builder;
+        this.authInterceptor = new AuthInterceptor(builder);
         this.managedChannel = managedChannel;
 
         if (builder.executorService() == null) {
@@ -93,34 +79,6 @@ final class ClientConnectionManager {
         } else {
             this.executorService = builder.executorService();
         }
-    }
-
-    /**
-     * get token from etcd with name and password.
-     *
-     * @param  channel  channel to etcd
-     * @param  username auth name
-     * @param  password auth password
-     * @param  headers  oem header
-     * @return          authResp
-     */
-    private static ListenableFuture<AuthenticateResponse> authenticate(@Nonnull Channel channel, @Nonnull ByteSequence username,
-        @Nonnull ByteSequence password, Map<Metadata.Key<?>, Object> headers) {
-
-        final ByteString user = username.getByteString();
-        final ByteString pass = password.getByteString();
-
-        checkArgument(!user.isEmpty(), "username can not be empty.");
-        checkArgument(!pass.isEmpty(), "password can not be empty.");
-        AuthGrpc.AuthFutureStub authFutureStub = AuthGrpc.newFutureStub(channel);
-        if (headers != null) {
-            Metadata metadata = new Metadata();
-            headers.forEach((BiConsumer<Metadata.Key, Object>) metadata::put);
-            authFutureStub = AuthGrpc.newFutureStub(channel)
-                .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata));
-        }
-        return authFutureStub
-            .authenticate(AuthenticateRequest.newBuilder().setNameBytes(user).setPasswordBytes(pass).build());
     }
 
     ManagedChannel getChannel() {
@@ -135,37 +93,16 @@ final class ClientConnectionManager {
         return managedChannel;
     }
 
-    @Nullable
-    private String getToken(Channel channel) {
-        if (token == null) {
-            synchronized (lock) {
-                if (token == null) {
-                    token = generateToken(channel);
-                }
-            }
-        }
-
-        return token;
-    }
-
-    void forceTokenRefresh() {
-        synchronized (lock) {
-            token = null;
-        }
-    }
-
-    private void refreshToken(Channel channel) {
-        synchronized (lock) {
-            token = generateToken(channel);
-        }
-    }
-
     ByteSequence getNamespace() {
         return builder.namespace();
     }
 
     ExecutorService getExecutorService() {
         return executorService;
+    }
+
+    AuthInterceptor authInterceptor() {
+        return authInterceptor;
     }
 
     /**
@@ -211,6 +148,7 @@ final class ClientConnectionManager {
     }
 
     @VisibleForTesting
+    @SuppressWarnings("rawtypes")
     protected ManagedChannelBuilder<?> defaultChannelBuilder(Collection<URI> endpoints) {
         if (endpoints.isEmpty()) {
             throw new IllegalArgumentException("At least one endpoint should be provided");
@@ -269,7 +207,7 @@ final class ClientConnectionManager {
             channelBuilder.defaultLoadBalancingPolicy("pick_first");
         }
 
-        channelBuilder.intercept(new AuthTokenInterceptor());
+        channelBuilder.intercept(authInterceptor);
 
         if (builder.headers() != null) {
             channelBuilder.intercept(new ClientInterceptor() {
@@ -292,26 +230,6 @@ final class ClientConnectionManager {
         }
 
         return channelBuilder;
-    }
-
-    /**
-     * get token with ClientBuilder.
-     *
-     * @return                                              the auth token
-     * @throws io.etcd.jetcd.common.exception.EtcdException a exception indicates failure reason.
-     */
-    @Nullable
-    private String generateToken(Channel channel) {
-        if (builder.user() != null && builder.password() != null) {
-            try {
-                return authenticate(channel, builder.user(), builder.password(), builder.authHeaders()).get().getToken();
-            } catch (InterruptedException ite) {
-                throw handleInterrupt(ite);
-            } catch (ExecutionException exee) {
-                throw toEtcdException(exee);
-            }
-        }
-        return null;
     }
 
     /**
@@ -369,38 +287,4 @@ final class ClientConnectionManager {
             }).thenCompose(f -> f.thenApply(resultConvert));
     }
 
-    /**
-     * AuthTokenInterceptor fills header with Auth token of any rpc calls and
-     * refreshes token if the rpc results an invalid Auth token error.
-     */
-    private class AuthTokenInterceptor implements ClientInterceptor {
-
-        @Override
-        public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-            CallOptions callOptions, Channel next) {
-            return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
-                @Override
-                public void start(Listener<RespT> responseListener, Metadata headers) {
-                    String token = getToken(next);
-                    if (token != null) {
-                        headers.put(TOKEN, token);
-                    }
-                    super.start(new SimpleForwardingClientCallListener<RespT>(responseListener) {
-                        @Override
-                        public void onClose(Status status, Metadata trailers) {
-                            if (isInvalidTokenError(status)) {
-                                try {
-                                    refreshToken(next);
-                                } catch (Exception e) {
-                                    // don't throw any error here.
-                                    // rpc will retry on expired auth token.
-                                }
-                            }
-                            super.onClose(status, trailers);
-                        }
-                    }, headers);
-                }
-            };
-        }
-    }
 }

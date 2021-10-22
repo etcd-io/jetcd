@@ -76,17 +76,17 @@ public final class Util {
         return targetFuture;
     }
 
-    static boolean isRetryable(Throwable e) {
+    public static boolean isRetryable(Throwable e) {
         Status status = Status.fromThrowable(e);
         return Status.UNAVAILABLE.getCode().equals(status.getCode()) || isInvalidTokenError(status);
     }
 
-    static boolean isInvalidTokenError(Status status) {
+    public static boolean isInvalidTokenError(Status status) {
         return status.getCode() == Status.Code.UNAUTHENTICATED
             && "etcdserver: invalid auth token".equals(status.getDescription());
     }
 
-    static <T> T supplyIfNull(T target, Supplier<T> supplier) {
+    public static <T> T supplyIfNull(T target, Supplier<T> supplier) {
         return target != null ? target : supplier.get();
     }
 
