@@ -59,7 +59,9 @@ public final class ClientBuilder implements Cloneable {
     private String authority;
     private Integer maxInboundMessageSize;
     private Map<Metadata.Key<?>, Object> headers;
+    private Map<Metadata.Key<?>, Object> authHeaders;
     private List<ClientInterceptor> interceptors;
+    private List<ClientInterceptor> authInterceptors;
     private ByteSequence namespace = ByteSequence.EMPTY;
     private long retryDelay = 500;
     private long retryMaxDelay = 2500;
@@ -331,6 +333,38 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
+     * @return the headers to be added to auth request headers
+     */
+    public Map<Metadata.Key<?>, Object> authHeaders() {
+        return authHeaders == null ? Collections.emptyMap() : Collections.unmodifiableMap(authHeaders);
+    }
+
+    /**
+     * @param  authHeaders Sets headers to be added to auth request headers.
+     * @return             this builder
+     */
+    public ClientBuilder authHeaders(Map<Metadata.Key<?>, Object> authHeaders) {
+        this.authHeaders = new HashMap<>(authHeaders);
+
+        return this;
+    }
+
+    /**
+     * @param  key   Sets an header key to be added to auth request headers.
+     * @param  value Sets an header value to be added to auth request headers.
+     * @return       this builder
+     */
+    public ClientBuilder authHeader(String key, String value) {
+        if (this.authHeaders == null) {
+            this.authHeaders = new HashMap<>();
+        }
+
+        this.authHeaders.put(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER), value);
+
+        return this;
+    }
+
+    /**
      * @return the interceptors
      */
     public List<ClientInterceptor> interceptors() {
@@ -359,6 +393,39 @@ public final class ClientBuilder implements Cloneable {
 
         this.interceptors.add(interceptor);
         this.interceptors.addAll(Arrays.asList(interceptors));
+
+        return this;
+    }
+
+    /**
+     * @return the auth interceptors
+     */
+    public List<ClientInterceptor> authInterceptors() {
+        return authInterceptors;
+    }
+
+    /**
+     * @param  interceptors Set the interceptors to add to the auth chain
+     * @return              this builder
+     */
+    public ClientBuilder authInterceptors(List<ClientInterceptor> interceptors) {
+        this.authInterceptors = new ArrayList<>(interceptors);
+
+        return this;
+    }
+
+    /**
+     * @param  interceptor  an interceptors to add to the auth chain
+     * @param  interceptors additional interceptors to add to the auth chain
+     * @return              this builder
+     */
+    public ClientBuilder authInterceptors(ClientInterceptor interceptor, ClientInterceptor... interceptors) {
+        if (this.authInterceptors == null) {
+            this.authInterceptors = new ArrayList<>();
+        }
+
+        this.authInterceptors.add(interceptor);
+        this.authInterceptors.addAll(Arrays.asList(interceptors));
 
         return this;
     }

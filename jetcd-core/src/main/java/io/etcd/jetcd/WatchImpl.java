@@ -228,7 +228,7 @@ final class WatchImpl implements Watch {
             if (response.getCreated() && response.getCanceled() && response.getCancelReason() != null
                 && response.getCancelReason().contains("etcdserver: permission denied")) {
                 // potentially access token expired
-                connectionManager.forceTokenRefresh();
+                connectionManager.authInterceptor().refresh();
                 Status error = Status.Code.CANCELLED.toStatus().withDescription(response.getCancelReason());
                 handleError(toEtcdException(error), true);
             } else if (response.getCreated()) {
