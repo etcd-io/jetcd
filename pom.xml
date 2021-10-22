@@ -119,7 +119,7 @@
         <junit.version>4.13.2</junit.version>
         <junit-jupiter.version>5.8.1</junit-jupiter.version>
         <netty-tcnative.version>2.0.44.Final</netty-tcnative.version>
-        <testcontainers.version>1.16.1</testcontainers.version>
+        <testcontainers.version>1.16.2</testcontainers.version>
         <commons-io.version>2.11.0</commons-io.version>
         <common-compress.version>1.21</common-compress.version>
         <awaitility.version>4.1.0</awaitility.version>
