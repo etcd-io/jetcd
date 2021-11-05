@@ -103,7 +103,7 @@
         <maven-pmd-plugin-version>3.15.0</maven-pmd-plugin-version>
 
         <!-- dependencies -->
-        <grpc.version>1.41.0</grpc.version>
+        <grpc.version>1.42.0</grpc.version>
         <slf4j.version>1.7.32</slf4j.version>
         <log4j2.version>2.14.1</log4j2.version>
         <jcommander.version>1.81</jcommander.version>
