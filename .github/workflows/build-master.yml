@@ -41,8 +41,8 @@ jobs:
           distribution: 'temurin'
       - name: Build Project
         env:
-          CI_DEPLOY_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          CI_DEPLOY_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
         run: |
           ./gradlew spotlessCheck
           ./gradlew publishToSonatype
