@@ -16,8 +16,6 @@
 
 name: Build PR
 
-env:
-  MAVEN_ARGS: -V -ntp -Dhttp.keepAlive=false -e
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
