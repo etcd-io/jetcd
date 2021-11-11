@@ -45,4 +45,4 @@ jobs:
           CI_DEPLOY_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
         run: |
           ./gradlew spotlessCheck
-          ./gradlew publish
+          ./gradlew publishToSonatype
