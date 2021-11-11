@@ -22,9 +22,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.concurrent.Executor;
 
-import javax.annotation.concurrent.GuardedBy;
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
@@ -33,19 +31,13 @@ import javax.naming.directory.InitialDirContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.grpc.EquivalentAddressGroup;
-import io.grpc.NameResolver;
-import io.grpc.Status;
-import io.grpc.internal.GrpcUtil;
-import io.grpc.internal.SharedResourceHolder;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 
 @SuppressWarnings("JdkObsolete")
-public class DnsSrvNameResolver extends NameResolver {
+public class DnsSrvNameResolver extends AbstractNameResolver {
     public static final String SCHEME = "dns+srv";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DnsSrvNameResolver.class);
@@ -61,110 +53,32 @@ public class DnsSrvNameResolver extends NameResolver {
         ENV.put("java.naming.provider.url", "dns:");
     }
 
-    private final Object lock;
-    private final String authority;
-    private final URI targetUri;
-
-    private volatile boolean shutdown;
-    private volatile boolean resolving;
-
-    @GuardedBy("lock")
-    private Executor executor;
-    @GuardedBy("lock")
-    private Listener listener;
-
     public DnsSrvNameResolver(URI targetUri) {
-        this.lock = new Object();
-        this.targetUri = targetUri;
-        this.authority = targetUri.getAuthority() != null ? targetUri.getAuthority() : SCHEME;
+        super(targetUri);
     }
 
     @Override
-    public String getServiceAuthority() {
-        return authority;
-    }
+    protected List<EquivalentAddressGroup> computeAddressGroups() {
+        List<EquivalentAddressGroup> groups = new ArrayList<>();
 
-    @Override
-    public void start(Listener listener) {
-        synchronized (lock) {
-            Preconditions.checkState(this.listener == null, "already started");
-            this.executor = SharedResourceHolder.get(GrpcUtil.SHARED_CHANNEL_EXECUTOR);
-            this.listener = Preconditions.checkNotNull(listener, "listener");
-            resolve();
-        }
-    }
-
-    @Override
-    public final synchronized void refresh() {
-        resolve();
-    }
-
-    @Override
-    public void shutdown() {
-        if (shutdown) {
-            return;
-        }
-        shutdown = true;
-
-        synchronized (lock) {
-            if (executor != null) {
-                executor = SharedResourceHolder.release(GrpcUtil.SHARED_CHANNEL_EXECUTOR, executor);
-            }
-        }
-    }
-
-    private void resolve() {
-        if (resolving || shutdown) {
-            return;
-        }
-        synchronized (lock) {
-            executor.execute(this::doResolve);
-        }
-    }
-
-    private void doResolve() {
-        Listener savedListener;
-        synchronized (lock) {
-            if (shutdown) {
-                return;
-            }
-            resolving = true;
-            savedListener = listener;
+        for (SocketAddress address : resolveAddresses()) {
+            //
+            // if the authority is not explicit set on the builder
+            // then it will be computed from the URI
+            //
+            groups.add(new EquivalentAddressGroup(
+                address,
+                io.grpc.Attributes.EMPTY));
         }
 
-        try {
-            List<EquivalentAddressGroup> groups = new ArrayList<>();
-
-            for (SocketAddress address : resolveAddresses()) {
-                //
-                // if the authority is not explicit set on the builder
-                // then it will be computed from the URI
-                //
-                groups.add(new EquivalentAddressGroup(
-                    address,
-                    io.grpc.Attributes.EMPTY));
-            }
-
-            if (groups.isEmpty()) {
-                throw EtcdExceptionFactory.newEtcdException(
-                    ErrorCode.INVALID_ARGUMENT,
-                    "Unable to resolve endpoint " + targetUri);
-            }
-
-            savedListener.onAddresses(groups, io.grpc.Attributes.EMPTY);
-        } catch (Exception e) {
-            LOGGER.warn("Error wile getting list of servers", e);
-            savedListener.onError(Status.NOT_FOUND);
-        } finally {
-            resolving = false;
-        }
+        return groups;
     }
 
     private List<SocketAddress> resolveAddresses() {
         List<SocketAddress> addresses = new ArrayList<>();
 
         try {
-            String address = targetUri.getPath();
+            String address = getTargetUri().getPath();
             if (address.startsWith("/")) {
                 address = address.substring(1);
             }

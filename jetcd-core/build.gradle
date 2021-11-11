@@ -16,6 +16,7 @@
 
 dependencies {
     api project(':jetcd-grpc')
+    api project(':jetcd-api')
     api project(':jetcd-common')
 
     api libs.slf4j

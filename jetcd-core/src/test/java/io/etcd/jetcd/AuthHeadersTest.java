@@ -36,7 +36,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Timeout(value = 1, unit = TimeUnit.MINUTES)
 public class AuthHeadersTest {
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("auth-etcd", 1, false);
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(1)
+        .build();
 
     private final ByteSequence rootRoleKeyRangeBegin = bytesOf("root");
     private final ByteSequence rootRoleKeyRangeEnd = bytesOf("root1");
@@ -60,7 +62,7 @@ public class AuthHeadersTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        Auth authClient = Client.builder().endpoints(cluster.getClientEndpoints()).build().getAuthClient();
+        Auth authClient = TestUtil.client(cluster).build().getAuthClient();
 
         authClient.roleAdd(rootRole).get();
         authClient.roleAdd(userRole).get();
@@ -82,16 +84,14 @@ public class AuthHeadersTest {
 
     @AfterEach
     public void tearDown() throws Exception {
-        Client rootClient = Client.builder()
-            .endpoints(cluster.getClientEndpoints())
+        Client rootClient = TestUtil.client(cluster)
             .user(root)
             .password(rootPass)
             .build();
 
         rootClient.getAuthClient().authDisable().get();
 
-        Auth client = Client.builder()
-            .endpoints(cluster.getClientEndpoints())
+        Auth client = TestUtil.client(cluster)
             .build()
             .getAuthClient();
 
@@ -105,8 +105,7 @@ public class AuthHeadersTest {
         final CountDownLatch headerInterceptLatch = new CountDownLatch(1);
         final CountDownLatch interceptLatch = new CountDownLatch(1);
 
-        final Client client = Client.builder()
-            .endpoints(cluster.getClientEndpoints())
+        final Client client = TestUtil.client(cluster)
             .user(user)
             .password(userPass)
             .authHeader("AuthFoo", "AuthBar")

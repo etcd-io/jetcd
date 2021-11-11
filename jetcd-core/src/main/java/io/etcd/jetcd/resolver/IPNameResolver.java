@@ -19,155 +19,52 @@ package io.etcd.jetcd.resolver;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.annotation.concurrent.GuardedBy;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.grpc.Attributes;
 import io.grpc.EquivalentAddressGroup;
-import io.grpc.NameResolver;
-import io.grpc.Status;
-import io.grpc.internal.GrpcUtil;
-import io.grpc.internal.SharedResourceHolder;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
+import com.google.common.net.HostAndPort;
 
-public class IPNameResolver extends NameResolver {
+public class IPNameResolver extends AbstractNameResolver {
     public static final String SCHEME = "ip";
+    public static final int ETCD_CLIENT_PORT = 2379;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(IPNameResolver.class);
-    private static final String ETCD_CLIENT_PORT = "2379";
-
-    private final Object lock;
-    private final String authority;
-    private final URI targetUri;
     private final List<HostAndPort> addresses;
 
-    private volatile boolean shutdown;
-    private volatile boolean resolving;
-
-    @GuardedBy("lock")
-    private Executor executor;
-    @GuardedBy("lock")
-    private Listener listener;
-
     public IPNameResolver(URI targetUri) {
-        this.lock = new Object();
-        this.targetUri = targetUri;
-        this.authority = targetUri.getAuthority() != null ? targetUri.getAuthority() : "";
+        super(targetUri);
+
         this.addresses = Stream.of(targetUri.getPath().split(","))
             .map(address -> address.startsWith("/") ? address.substring(1) : address)
-            .map(HostAndPort::new)
+            .map(HostAndPort::fromString)
             .collect(Collectors.toList());
     }
 
     @Override
-    public String getServiceAuthority() {
-        return authority;
-    }
-
-    @Override
-    public void start(Listener listener) {
-        synchronized (lock) {
-            Preconditions.checkState(this.listener == null, "already started");
-            this.executor = SharedResourceHolder.get(GrpcUtil.SHARED_CHANNEL_EXECUTOR);
-            this.listener = Preconditions.checkNotNull(listener, "listener");
-            resolve();
-        }
-    }
-
-    @Override
-    public final synchronized void refresh() {
-        resolve();
-    }
-
-    @Override
-    public void shutdown() {
-        if (shutdown) {
-            return;
-        }
-        shutdown = true;
-
-        synchronized (lock) {
-            if (executor != null) {
-                executor = SharedResourceHolder.release(GrpcUtil.SHARED_CHANNEL_EXECUTOR, executor);
-            }
-        }
-    }
-
-    private void resolve() {
-        if (resolving || shutdown) {
-            return;
-        }
-        synchronized (lock) {
-            executor.execute(this::doResolve);
-        }
-    }
-
-    private void doResolve() {
-        Listener savedListener;
-        synchronized (lock) {
-            if (shutdown) {
-                return;
-            }
-            resolving = true;
-            savedListener = listener;
+    protected List<EquivalentAddressGroup> computeAddressGroups() {
+        if (addresses.isEmpty()) {
+            throw EtcdExceptionFactory.newEtcdException(
+                ErrorCode.INVALID_ARGUMENT,
+                "Unable to resolve endpoint " + getTargetUri());
         }
 
-        try {
-            if (addresses.isEmpty()) {
-                throw EtcdExceptionFactory.newEtcdException(
-                    ErrorCode.INVALID_ARGUMENT,
-                    "Unable to resolve endpoint " + targetUri);
-            }
-
-            List<EquivalentAddressGroup> servers = addresses.stream()
-                .map(address -> address.toAddressGroup(authority))
-                .collect(Collectors.toList());
-
-            savedListener.onAddresses(servers, Attributes.EMPTY);
-
-        } catch (Exception e) {
-            LOGGER.warn("Error wile getting list of servers", e);
-            savedListener.onError(Status.NOT_FOUND);
-        } finally {
-            resolving = false;
-        }
-    }
-
-    private static final class HostAndPort {
-        final String host;
-        final int port;
-
-        public HostAndPort(String address) {
-            final Iterable<String> split = Splitter.on(':').split(address);
-
-            this.host = Iterables.get(split, 0);
-            this.port = Integer.parseInt(Iterables.get(split, 1, ETCD_CLIENT_PORT));
-        }
-
-        public String authority() {
-            return String.format("%s:%d", host, port);
-        }
-
-        public EquivalentAddressGroup toAddressGroup(String authority) {
-            return new EquivalentAddressGroup(
-                new InetSocketAddress(host, port),
-                Strings.isNullOrEmpty(authority)
-                    ? Attributes.newBuilder()
-                        .set(EquivalentAddressGroup.ATTR_AUTHORITY_OVERRIDE, authority())
-                        .build()
-                    : Attributes.EMPTY);
-        }
+        return addresses.stream()
+            .map(address -> {
+                return new EquivalentAddressGroup(
+                    new InetSocketAddress(
+                        address.getHost(),
+                        address.getPortOrDefault(ETCD_CLIENT_PORT)),
+                    Strings.isNullOrEmpty(getServiceAuthority())
+                        ? Attributes.newBuilder()
+                            .set(EquivalentAddressGroup.ATTR_AUTHORITY_OVERRIDE, address.toString())
+                            .build()
+                        : Attributes.EMPTY);
+            })
+            .collect(Collectors.toList());
     }
 }

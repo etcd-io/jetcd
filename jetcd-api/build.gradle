@@ -15,15 +15,8 @@
  */
 
 
-enableFeaturePreview('VERSION_CATALOGS')
-
-rootProject.name = "jetcd"
-
-// modules
-include ':jetcd-grpc'
-include ':jetcd-api'
-include ':jetcd-common'
-include ':jetcd-launcher'
-include ':jetcd-test'
-include ':jetcd-core'
-include ':jetcd-ctl'
+dependencies {
+    api libs.slf4j
+    api libs.guava
+    api libs.grpcCore
+}

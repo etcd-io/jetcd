@@ -19,10 +19,16 @@ package io.etcd.jetcd;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.etcd.jetcd.kv.DeleteResponse;
@@ -44,10 +50,14 @@ import static io.etcd.jetcd.TestUtil.randomString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 public class KVTest {
 
     @RegisterExtension
-    public static EtcdClusterExtension cluster = new EtcdClusterExtension("etcd-kv", 3, false);
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(1)
+        .build();
+
     private static KV kvClient;
 
     private static final ByteSequence SAMPLE_KEY = bytesOf("sample_key");
@@ -58,7 +68,7 @@ public class KVTest {
 
     @BeforeAll
     public static void setUp() throws Exception {
-        kvClient = Client.builder().endpoints(cluster.getClientEndpoints()).build().getKVClient();
+        kvClient = TestUtil.client(cluster).build().getKVClient();
     }
 
     @Test
@@ -250,7 +260,7 @@ public class KVTest {
     @Test
     @SuppressWarnings("FutureReturnValueIgnored")
     public void testKVClientCanRetryPutOnEtcdRestart() throws InterruptedException {
-        try (Client customClient = Client.builder().endpoints(cluster.getClientEndpoints())
+        try (Client customClient = TestUtil.client(cluster)
             .retryMaxDuration(Duration.ofMinutes(5))
             // client will delay the retry for a long time to give the cluster plenty of time to restart
             .retryDelay(10)
@@ -272,7 +282,7 @@ public class KVTest {
             });
 
             // restart the cluster while uploading
-            executor.schedule(cluster::restart, 100, TimeUnit.MILLISECONDS);
+            executor.schedule(() -> cluster.restart(), 100, TimeUnit.MILLISECONDS);
 
             executor.shutdown();
             assertThat(executor.awaitTermination(30, TimeUnit.SECONDS)).isTrue();

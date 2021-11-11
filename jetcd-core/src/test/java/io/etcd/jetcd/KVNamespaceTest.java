@@ -54,7 +54,10 @@ public class KVNamespaceTest {
     private static final ByteSequence END_KEY = ByteSequence.from(new byte[] { 0 });
 
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("etcd-kv-namespace-test", 3, false);
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(3)
+        .build();
+
     private KV kvClient;
     private KV kvClientWithNamespace;
     private KV kvClientWithNamespace2;
@@ -110,16 +113,16 @@ public class KVNamespaceTest {
     @Test
     public void testKV() throws Exception {
         // kvClient without namespace used as the judge for the final result
-        kvClient = Client.builder().endpoints(cluster.getClientEndpoints()).build().getKVClient();
+        kvClient = TestUtil.client(cluster).build().getKVClient();
         // kvClient with one namespace used to test operations with namespace
         ByteSequence namespace = ByteSequence
             .from(TestUtil.randomByteSequence().getByteString().concat(ByteSequence.NAMESPACE_DELIMITER.getByteString()));
-        kvClientWithNamespace = Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace).build()
+        kvClientWithNamespace = TestUtil.client(cluster).namespace(namespace).build()
             .getKVClient();
         // kvClient with another namespace used to test keyed segregation based on namespace
         ByteSequence namespace2 = ByteSequence
             .from(TestUtil.randomByteSequence().getByteString().concat(ByteSequence.NAMESPACE_DELIMITER.getByteString()));
-        kvClientWithNamespace2 = Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace2).build()
+        kvClientWithNamespace2 = TestUtil.client(cluster).namespace(namespace2).build()
             .getKVClient();
 
         // test single key
@@ -222,11 +225,11 @@ public class KVNamespaceTest {
     @Test
     public void testTxn() throws Exception {
         // kvClient without namespace used as the judge for the final result
-        kvClient = Client.builder().endpoints(cluster.getClientEndpoints()).build().getKVClient();
+        kvClient = TestUtil.client(cluster).build().getKVClient();
         // kvClient with one namespace used to test operations with namespace
         ByteSequence namespace = ByteSequence
             .from(TestUtil.randomByteSequence().getByteString().concat(ByteSequence.NAMESPACE_DELIMITER.getByteString()));
-        kvClientWithNamespace = Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace).build()
+        kvClientWithNamespace = TestUtil.client(cluster).namespace(namespace).build()
             .getKVClient();
 
         // put a key in root namespace, assert that it cannot be seen using kvClient with namespace
@@ -289,11 +292,11 @@ public class KVNamespaceTest {
     @Test
     public void testNestedTxn() throws Exception {
         // kvClient without namespace used as the judge for the final result
-        kvClient = Client.builder().endpoints(cluster.getClientEndpoints()).build().getKVClient();
+        kvClient = TestUtil.client(cluster).build().getKVClient();
         // kvClient with one namespace used to test operations with namespace
         ByteSequence namespace = ByteSequence
             .from(TestUtil.randomByteSequence().getByteString().concat(ByteSequence.NAMESPACE_DELIMITER.getByteString()));
-        kvClientWithNamespace = Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace).build()
+        kvClientWithNamespace = TestUtil.client(cluster).namespace(namespace).build()
             .getKVClient();
 
         ByteSequence cmpKey1 = getNonexistentKey();

@@ -20,6 +20,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.ServerSocket;
 
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.etcd.jetcd.test.EtcdTestTargetResolver;
 import io.etcd.jetcd.watch.WatchResponse;
 
 import com.google.common.base.Charsets;
@@ -80,5 +82,9 @@ public class TestUtil {
 
     public static void noOpWatchResponseConsumer(WatchResponse response) {
         // no-op
+    }
+
+    public static ClientBuilder client(EtcdClusterExtension extension) {
+        return Client.builder().endpointTargetResolver(new EtcdTestTargetResolver()).endpoints(extension.clusterName());
     }
 }

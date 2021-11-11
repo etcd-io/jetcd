@@ -16,11 +16,11 @@
 
 package io.etcd.jetcd;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -31,11 +31,14 @@ import io.etcd.jetcd.test.EtcdClusterExtension;
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Timeout(30)
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class SslTest {
 
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("etcd-ssl", 1, true);
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(1)
+        .withSsl(true)
+        .build();
 
     private static final String DEFAULT_SSL_AUTHORITY = "etcd0";
     private static final String DEFAULT_SSL_CA_PATH = "/ssl/cert/ca.pem";
@@ -46,10 +49,10 @@ public class SslTest {
         final ByteSequence val = bytesOf(TestUtil.randomString());
         final String capath = System.getProperty("ssl.cert.capath");
         final String authority = System.getProperty("ssl.cert.authority", DEFAULT_SSL_AUTHORITY);
-        final URI endpoint = new URI(System.getProperty("ssl.cert.endpoints", cluster.getClientEndpoints().get(0).toString()));
+        final URI endpoint = new URI(System.getProperty("ssl.cert.endpoints", cluster.clientEndpoints().get(0).toString()));
 
         try (InputStream is = Objects.nonNull(capath)
-            ? new FileInputStream(new File(capath))
+            ? new FileInputStream(capath)
             : getClass().getResourceAsStream(DEFAULT_SSL_CA_PATH)) {
 
             Client client = Client.builder()

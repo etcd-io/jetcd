@@ -35,6 +35,7 @@ import javax.net.ssl.SSLException;
 
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
+import io.etcd.jetcd.spi.EndpointTargetResolver;
 import io.grpc.ClientInterceptor;
 import io.grpc.Metadata;
 import io.grpc.netty.GrpcSslContexts;
@@ -71,7 +72,7 @@ public final class ClientBuilder implements Cloneable {
     private Boolean keepaliveWithoutCalls = true;
     private Duration retryMaxDuration;
     private Duration connectTimeout;
-    private boolean discovery;
+    private EndpointTargetResolver endpointTargetResolver;
     private boolean waitForReady = true;
 
     ClientBuilder() {
@@ -600,20 +601,20 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * Returns if the endpoint represent a discovery address using dns+srv.
+     * Returns the endpoint target resolver.
      */
-    public boolean discovery() {
-        return discovery;
+    public EndpointTargetResolver endpointTargetResolver() {
+        return endpointTargetResolver;
     }
 
     /**
-     * Sets f the endpoint represent a discovery address using dns+srv.
+     * Sets the endpoint target resolver..
      *
-     * @param  discovery if the endpoint represent a discovery address using dns+srv.
-     * @return           this builder
+     * @param  endpointTargetResolver the resolver.
+     * @return                        this builder
      */
-    public ClientBuilder discovery(boolean discovery) {
-        this.discovery = discovery;
+    public ClientBuilder endpointTargetResolver(EndpointTargetResolver endpointTargetResolver) {
+        this.endpointTargetResolver = endpointTargetResolver;
         return this;
     }
 

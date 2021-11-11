@@ -53,21 +53,24 @@ public class WatchTest {
     private static final long TIME_OUT_SECONDS = 30;
 
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("watch", 3);
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(3)
+        .build();
+
     public static final ByteSequence namespace = bytesOf("test-namespace/");
 
     static Stream<Arguments> parameters() {
         return Stream.of(
-            arguments(Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace).build()),
-            arguments(Client.builder().endpoints(cluster.getClientEndpoints()).build()));
+            arguments(TestUtil.client(cluster).namespace(namespace).build()),
+            arguments(TestUtil.client(cluster).build()));
     }
 
     @Test
     public void testNamespacedAndNotNamespacedClient() throws Exception {
         final ByteSequence key = randomByteSequence();
         final ByteSequence nsKey = ByteSequence.from(namespace.getByteString().concat(key.getByteString()));
-        final Client client = Client.builder().endpoints(cluster.getClientEndpoints()).build();
-        final Client nsClient = Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace).build();
+        final Client client = TestUtil.client(cluster).build();
+        final Client nsClient = TestUtil.client(cluster).namespace(namespace).build();
 
         final ByteSequence value = randomByteSequence();
         final AtomicReference<WatchResponse> ref = new AtomicReference<>();

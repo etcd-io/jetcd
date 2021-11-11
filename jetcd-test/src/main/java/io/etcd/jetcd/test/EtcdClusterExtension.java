@@ -17,78 +17,136 @@
 package io.etcd.jetcd.test;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.Network;
 
+import io.etcd.jetcd.launcher.Etcd;
 import io.etcd.jetcd.launcher.EtcdCluster;
-import io.etcd.jetcd.launcher.EtcdClusterFactory;
 
 /**
  * JUnit5 Extension to have etcd cluster in tests.
  */
-public class EtcdClusterExtension implements EtcdCluster, BeforeAllCallback, AfterAllCallback {
+public class EtcdClusterExtension implements BeforeAllCallback, BeforeEachCallback, AfterAllCallback, AfterEachCallback {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EtcdClusterExtension.class);
+    private static final Map<String, EtcdCluster> CLUSTERS = new ConcurrentHashMap<>();
 
     private final EtcdCluster cluster;
 
-    public EtcdClusterExtension(String clusterName, int nodes) {
-        this(clusterName, nodes, false);
+    private EtcdClusterExtension(EtcdCluster cluster) {
+        this.cluster = cluster;
     }
 
-    public EtcdClusterExtension(String clusterName, int nodes, boolean ssl) {
-        this.cluster = EtcdClusterFactory.buildCluster(clusterName, nodes, ssl);
+    public EtcdCluster cluster() {
+        return this.cluster;
     }
 
-    public EtcdClusterExtension(String clusterName, int nodes, boolean ssl, String... additionalArgs) {
-        this.cluster = EtcdClusterFactory.buildCluster(clusterName, nodes, ssl, additionalArgs);
-    }
-
-    // Test framework methods
-
-    @Override
-    public void beforeAll(final ExtensionContext context) throws Exception {
-        this.cluster.start();
-    }
-
-    @Override
-    public void afterAll(final ExtensionContext extensionContext) throws Exception {
-        try {
-            this.cluster.close();
-        } catch (RuntimeException e) {
-            LOG.warn("close() failed (but ignoring it)", e);
-        }
-    }
-
-    // Relay cluster methods to cluster
-
-    @Override
-    public void start() {
-        this.cluster.start();
-    }
-
-    @Override
     public void restart() {
         this.cluster.restart();
     }
 
-    @Override
-    public void close() {
-        this.cluster.close();
+    public String clusterName() {
+        return this.cluster.clusterName();
+    }
+
+    public List<URI> clientEndpoints() {
+        return this.cluster.clientEndpoints();
+    }
+
+    public List<URI> peerEndpoints() {
+        return this.cluster.peerEndpoints();
     }
 
     @Override
-    public List<URI> getClientEndpoints() {
-        return this.cluster.getClientEndpoints();
+    public void beforeAll(ExtensionContext context) throws Exception {
+        before(context);
     }
 
     @Override
-    public List<URI> getPeerEndpoints() {
-        return this.cluster.getPeerEndpoints();
+    public void beforeEach(ExtensionContext context) throws Exception {
+        before(context);
+    }
+
+    @Override
+    public void afterAll(ExtensionContext context) throws Exception {
+        after(context);
+    }
+
+    @Override
+    public void afterEach(ExtensionContext context) throws Exception {
+        after(context);
+    }
+
+    protected synchronized void before(ExtensionContext context) {
+        EtcdCluster oldCluster = CLUSTERS.put(cluster.clusterName(), cluster);
+        if (oldCluster != null) {
+            oldCluster.stop();
+        }
+
+        cluster.start();
+    }
+
+    protected synchronized void after(ExtensionContext context) {
+        cluster.close();
+        CLUSTERS.remove(cluster.clusterName());
+    }
+
+    public static EtcdCluster cluster(String clusterName) {
+        return CLUSTERS.get(clusterName);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private final Etcd.Builder builder = new Etcd.Builder();
+
+        public Builder withClusterName(String clusterName) {
+            builder.withClusterName(clusterName);
+            return this;
+        }
+
+        public Builder withPrefix(String prefix) {
+            builder.withPrefix(prefix);
+            return this;
+        }
+
+        public Builder withNodes(int nodes) {
+            builder.withNodes(nodes);
+            return this;
+        }
+
+        public Builder withSsl(boolean ssl) {
+            builder.withSsl(ssl);
+            return this;
+        }
+
+        public Builder withAdditionalArgs(Collection<String> additionalArgs) {
+            builder.withAdditionalArgs(additionalArgs);
+            return this;
+        }
+
+        public Builder withImage(String image) {
+            builder.withImage(image);
+            return this;
+        }
+
+        public Builder withNetwork(Network network) {
+            builder.withNetwork(network);
+            return this;
+        }
+
+        public EtcdClusterExtension build() {
+            return new EtcdClusterExtension(builder.build());
+        }
     }
 }

@@ -27,14 +27,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.etcd.jetcd.auth.AuthInterceptor;
-import io.etcd.jetcd.resolver.DnsSrvNameResolver;
-import io.etcd.jetcd.resolver.IPNameResolver;
+import io.etcd.jetcd.resolver.EndpointTargetResolvers;
+import io.etcd.jetcd.spi.EndpointTargetResolver;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -50,7 +49,6 @@ import io.grpc.stub.AbstractStub;
 import io.netty.channel.ChannelOption;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import net.jodah.failsafe.Failsafe;
@@ -166,26 +164,15 @@ final class ClientConnectionManager {
             throw new IllegalArgumentException("At least one endpoint should be provided");
         }
 
-        final String target;
-
-        if (builder.discovery()) {
-            if (endpoints.size() != 1) {
-                throw new IllegalArgumentException("When configured for discovery, there should be only a single endpoint");
-            }
-
-            target = String.format(
-                "%s:///%s",
-                DnsSrvNameResolver.SCHEME,
-                Iterables.get(endpoints, 0));
-        } else {
-            target = String.format(
-                "%s://%s/%s",
-                IPNameResolver.SCHEME,
-                builder.authority() != null ? builder.authority() : "",
-                endpoints.stream().map(e -> e.getHost() + ":" + e.getPort()).collect(Collectors.joining(",")));
+        EndpointTargetResolver tr = builder.endpointTargetResolver();
+        if (tr == null) {
+            tr = EndpointTargetResolvers.IP;
         }
 
+        final String target = tr.resolve(builder.authority(), endpoints);
         final NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget(target);
+
+        LOGGER.info(">>> endpoint: {}, target: {}", endpoints, target);
 
         if (builder.authority() != null) {
             channelBuilder.overrideAuthority(builder.authority());

@@ -16,7 +16,6 @@
 
 package io.etcd.jetcd;
 
-import java.net.URI;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -35,7 +34,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class AuthClientTest {
 
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("auth-etcd", 1, false);
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(1)
+        .build();
+
     private static final String rootString = "root";
     private static final ByteSequence rootPass = bytesOf("123");
     private static final String rootRoleString = "root";
@@ -43,7 +45,6 @@ public class AuthClientTest {
     private static final String userRoleString = "userRole";
     private static Auth authDisabledAuthClient;
     private static KV authDisabledKVClient;
-    private static List<URI> endpoints;
     private final ByteSequence rootRoleKey = bytesOf("root");
     private final ByteSequence rootRoleValue = bytesOf("b");
     private final ByteSequence rootRoleKeyRangeBegin = bytesOf("root");
@@ -64,9 +65,7 @@ public class AuthClientTest {
      */
     @BeforeAll
     public static void setupEnv() {
-        endpoints = cluster.getClientEndpoints();
-        Client client = Client.builder().endpoints(endpoints).build();
-
+        Client client = TestUtil.client(cluster).build();
         authDisabledKVClient = client.getKVClient();
         authDisabledAuthClient = client.getAuthClient();
     }
@@ -101,8 +100,8 @@ public class AuthClientTest {
 
         authDisabledAuthClient.authEnable().get();
 
-        final Client userClient = Client.builder().endpoints(endpoints).user(user).password(userNewPass).build();
-        final Client rootClient = Client.builder().endpoints(endpoints).user(root).password(rootPass).build();
+        final Client userClient = TestUtil.client(cluster).user(user).password(userNewPass).build();
+        final Client rootClient = TestUtil.client(cluster).user(root).password(rootPass).build();
 
         userClient.getKVClient().put(rootRoleKey, rootRoleValue).get();
         userClient.getKVClient().put(userRoleKey, userRoleValue).get();

@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package io.etcd.jetcd.resolver;
+package io.etcd.jetcd.test;
 
 import java.net.URI;
+
+import javax.annotation.Nullable;
 
 import io.grpc.NameResolver;
 import io.grpc.NameResolverProvider;
@@ -24,13 +26,27 @@ import io.grpc.NameResolverProvider;
 import com.google.auto.service.AutoService;
 
 @AutoService(NameResolverProvider.class)
-public class DnsSrvResolverProvider extends AbstractResolverProvider {
-    public DnsSrvResolverProvider() {
-        super(DnsSrvNameResolver.SCHEME, 5);
+public class EtcdClusterResolverProvider extends NameResolverProvider {
+    @Override
+    protected boolean isAvailable() {
+        return true;
     }
 
     @Override
-    protected NameResolver createResolver(URI targetUri, NameResolver.Args args) {
-        return new DnsSrvNameResolver(targetUri);
+    protected int priority() {
+        return 6;
+    }
+
+    @Override
+    public String getDefaultScheme() {
+        return EtcdClusterNameResolver.SCHEME;
+    }
+
+    @Nullable
+    @Override
+    public NameResolver newNameResolver(URI targetUri, NameResolver.Args args) {
+        return EtcdClusterNameResolver.SCHEME.equals(targetUri.getScheme())
+            ? new EtcdClusterNameResolver(targetUri)
+            : null;
     }
 }
