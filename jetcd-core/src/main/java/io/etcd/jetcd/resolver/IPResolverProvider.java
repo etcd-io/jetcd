@@ -18,35 +18,19 @@ package io.etcd.jetcd.resolver;
 
 import java.net.URI;
 
-import javax.annotation.Nullable;
-
 import io.grpc.NameResolver;
 import io.grpc.NameResolverProvider;
 
 import com.google.auto.service.AutoService;
 
 @AutoService(NameResolverProvider.class)
-public class IPResolverProvider extends NameResolverProvider {
-    @Override
-    protected boolean isAvailable() {
-        return true;
+public class IPResolverProvider extends AbstractResolverProvider {
+    public IPResolverProvider() {
+        super(IPNameResolver.SCHEME, 5);
     }
 
     @Override
-    protected int priority() {
-        return 5;
-    }
-
-    @Override
-    public String getDefaultScheme() {
-        return IPNameResolver.SCHEME;
-    }
-
-    @Nullable
-    @Override
-    public NameResolver newNameResolver(URI targetUri, NameResolver.Args args) {
-        return IPNameResolver.SCHEME.equals(targetUri.getScheme())
-            ? new IPNameResolver(targetUri)
-            : null;
+    protected NameResolver createResolver(URI targetUri, NameResolver.Args args) {
+        return new IPNameResolver(targetUri);
     }
 }

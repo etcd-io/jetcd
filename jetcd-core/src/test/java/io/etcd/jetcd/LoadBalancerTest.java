@@ -18,9 +18,11 @@ package io.etcd.jetcd;
 
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.etcd.jetcd.kv.PutResponse;
@@ -28,15 +30,17 @@ import io.etcd.jetcd.test.EtcdClusterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// TODO(#548): Add global timeout for tests once JUnit5 supports it
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class LoadBalancerTest {
 
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("load-balancer-etcd", 3);
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(3)
+        .build();
 
     @Test
     public void testPickFirstBalancerFactory() throws Exception {
-        final List<URI> endpoints = cluster.getClientEndpoints();
+        final List<URI> endpoints = cluster.clientEndpoints();
         final ClientBuilder builder = Client.builder().endpoints(endpoints).loadBalancerPolicy("pick_first");
 
         try (Client client = builder.build();
@@ -59,7 +63,7 @@ public class LoadBalancerTest {
 
     @Test
     public void testRoundRobinLoadBalancerFactory() throws Exception {
-        final List<URI> endpoints = cluster.getClientEndpoints();
+        final List<URI> endpoints = cluster.clientEndpoints();
         final ClientBuilder builder = Client.builder().endpoints(endpoints).loadBalancerPolicy("round_robin");
 
         try (Client client = builder.build();

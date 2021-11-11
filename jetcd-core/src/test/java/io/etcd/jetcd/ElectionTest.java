@@ -48,14 +48,17 @@ public class ElectionTest {
     private static final int OPERATION_TIMEOUT = 5;
 
     @RegisterExtension
-    public static EtcdClusterExtension cluster = new EtcdClusterExtension("etcd-election", 3, false);
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(3)
+        .build();
+
     private static Election electionClient;
     private static Lease leaseClient;
     private static KV kvClient;
 
     @BeforeAll
     public static void setUp() {
-        Client client = Client.builder().endpoints(cluster.getClientEndpoints()).build();
+        Client client = TestUtil.client(cluster).build();
         electionClient = client.getElectionClient();
         leaseClient = client.getLeaseClient();
         kvClient = client.getKVClient();
@@ -209,7 +212,7 @@ public class ElectionTest {
         List<Client> clients = new ArrayList<>(threadCount);
         List<Long> leases = new ArrayList<>(threadCount);
         for (int i = 0; i < threadCount; ++i) {
-            Client client = Client.builder().endpoints(cluster.getClientEndpoints()).build();
+            Client client = TestUtil.client(cluster).build();
             long leaseId = client.getLeaseClient().grant(100).get().getID();
             clients.add(client);
             leases.add(leaseId);

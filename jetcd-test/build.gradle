@@ -15,12 +15,16 @@
  */
 
 dependencies {
+    api project(':jetcd-api')
     api project(':jetcd-launcher')
 
     api libs.slf4j
     api libs.guava
     api libs.bundles.grpc
     api libs.junit
+
+    api libs.autoServiceAnnotations
+    annotationProcessor libs.autoServiceProcessor
 
     testRuntimeOnly libs.bundles.log4j
 }

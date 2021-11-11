@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -45,14 +46,25 @@ public class ClientConnectionManagerTest {
     private final ByteSequence rootPass = bytesOf("123");
 
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("connection-manager-etcd", 1);
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(1)
+        .build();
 
     @Test
-    public void test() throws InterruptedException, ExecutionException {
+    public void testEndpoints() throws InterruptedException, ExecutionException, TimeoutException {
+        try (Client client = Client.builder().endpoints(cluster.clientEndpoints()).build()) {
+            client.getKVClient().put(bytesOf("sample_key"), bytesOf("sample_key")).get(15, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testHeaders() throws InterruptedException, ExecutionException {
         final CountDownLatch latch = new CountDownLatch(1);
 
-        final ClientBuilder builder = Client.builder().endpoints(cluster.getClientEndpoints())
-            .header("MyHeader1", "MyHeaderVal1").header("MyHeader2", "MyHeaderVal2").interceptor(new ClientInterceptor() {
+        final ClientBuilder builder = TestUtil.client(cluster)
+            .header("MyHeader1", "MyHeaderVal1")
+            .header("MyHeader2", "MyHeaderVal2")
+            .interceptor(new ClientInterceptor() {
                 @Override
                 public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
                     CallOptions callOptions, Channel next) {
@@ -80,14 +92,14 @@ public class ClientConnectionManagerTest {
     }
 
     @Test
-    public void testAuthHeader() throws InterruptedException, ExecutionException {
+    public void testAuthHeaders() throws InterruptedException, ExecutionException {
         final CountDownLatch latch = new CountDownLatch(1);
-        Auth authClient = Client.builder().endpoints(cluster.getClientEndpoints()).build().getAuthClient();
+        Auth authClient = TestUtil.client(cluster).build().getAuthClient();
         authClient.userAdd(root, rootPass).get();
         ByteSequence role = TestUtil.bytesOf("root");
         authClient.userGrantRole(root, role).get();
         authClient.authEnable().get();
-        final ClientBuilder builder = Client.builder().endpoints(cluster.getClientEndpoints())
+        final ClientBuilder builder = TestUtil.client(cluster)
             .authHeader("MyAuthHeader", "MyAuthHeaderVal").header("MyHeader2", "MyHeaderVal2")
             .user(root).password(rootPass);
         assertThat(builder.authHeaders().get(Metadata.Key.of("MyAuthHeader", Metadata.ASCII_STRING_MARSHALLER)))

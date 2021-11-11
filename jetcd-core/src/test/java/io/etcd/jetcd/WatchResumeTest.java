@@ -33,11 +33,13 @@ import io.etcd.jetcd.watch.WatchResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-@Timeout(value = 30)
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class WatchResumeTest {
 
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("watch_resume", 3, false);
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(3)
+        .build();
 
     private static Client client;
     private static Watch watchClient;
@@ -45,7 +47,7 @@ public class WatchResumeTest {
 
     @BeforeAll
     public static void setUp() {
-        client = Client.builder().endpoints(cluster.getClientEndpoints()).build();
+        client = TestUtil.client(cluster).build();
         watchClient = client.getWatchClient();
         kvClient = client.getKVClient();
     }
@@ -65,7 +67,7 @@ public class WatchResumeTest {
             cluster.restart();
             kvClient.put(key, value).get(1, TimeUnit.SECONDS);
 
-            await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
+            await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
 
             assertThat(ref.get().getEvents().size()).isEqualTo(1);
             assertThat(ref.get().getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);

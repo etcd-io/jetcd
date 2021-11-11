@@ -18,31 +18,23 @@ package io.etcd.jetcd.launcher.test;
 
 import org.junit.jupiter.api.Test;
 
+import io.etcd.jetcd.launcher.Etcd;
 import io.etcd.jetcd.launcher.EtcdCluster;
-import io.etcd.jetcd.launcher.EtcdClusterFactory;
 
-import static io.etcd.jetcd.launcher.EtcdClusterFactory.buildCluster;
-
-/**
- * Tests (just) starting the {@link EtcdClusterFactory}.
- *
- * <p>
- * See the EtcdClusterUsingTest in the jetcd-core artifact for more.
- *
- * @author Michael Vorburger.ch
- */
 public class EtcdClusterStartTest {
 
     @Test
     public void testStartEtcd() throws Exception {
-        try (EtcdCluster etcd = buildCluster(getClass().getSimpleName(), 3, false)) {
+        try (EtcdCluster etcd = Etcd.builder().withClusterName(getClass().getSimpleName()).build()) {
             etcd.start();
         }
     }
 
     @Test
     public void testStartEtcdWithAdditionalArguments() throws Exception {
-        try (EtcdCluster etcd = buildCluster(getClass().getSimpleName(), 3, false, "--max-txn-ops", "1024")) {
+
+        try (EtcdCluster etcd = Etcd.builder().withClusterName(getClass().getSimpleName())
+            .withAdditionalArgs("--max-txn-ops", "1024").build()) {
             etcd.start();
         }
     }

@@ -20,12 +20,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -40,10 +42,12 @@ import com.google.common.base.Charsets;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Timeout(value = 2, unit = TimeUnit.MINUTES)
 public class LockTest {
-
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("etcd-lock", 3, false);
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(3)
+        .build();
 
     private Lock lockClient;
     private static Lease leaseClient;
@@ -55,8 +59,7 @@ public class LockTest {
 
     @BeforeAll
     public static void setUp() {
-        Client client = Client.builder().endpoints(cluster.getClientEndpoints()).build();
-
+        Client client = TestUtil.client(cluster).build();
         leaseClient = client.getLeaseClient();
     }
 
@@ -73,8 +76,10 @@ public class LockTest {
     }
 
     private void initializeLockCLient(boolean useNamespace) {
-        Client client = useNamespace ? Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace).build()
-            : Client.builder().endpoints(cluster.getClientEndpoints()).build();
+        Client client = useNamespace
+            ? TestUtil.client(cluster).namespace(namespace).build()
+            : TestUtil.client(cluster).build();
+
         this.lockClient = client.getLockClient();
     }
 
@@ -159,7 +164,7 @@ public class LockTest {
 
         // prepare two LockClients with different namespaces, lock operations on one LockClient
         // should have no effect on the other client.
-        Client clientWithNamespace = Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace).build();
+        Client clientWithNamespace = TestUtil.client(cluster).namespace(namespace).build();
         Lock lockClientWithNamespace = clientWithNamespace.getLockClient();
 
         long lease = grantLease(5);
@@ -189,7 +194,7 @@ public class LockTest {
 
         // Lock the same key using LockClient with another namespace, it also should not take much time.
         lease = grantLease(5);
-        Client clientWithNamespace2 = Client.builder().endpoints(cluster.getClientEndpoints()).namespace(namespace2).build();
+        Client clientWithNamespace2 = TestUtil.client(cluster).namespace(namespace2).build();
         Lock lockClientWithNamespace2 = clientWithNamespace2.getLockClient();
         CompletableFuture<LockResponse> feature3 = lockClientWithNamespace2.lock(SAMPLE_NAME, lease);
         LockResponse response3 = feature3.get();

@@ -44,7 +44,9 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 public class LeaseTest {
 
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = new EtcdClusterExtension("etcd-lease", 3, false);
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(3)
+        .build();
 
     private KV kvClient;
     private Client client;
@@ -56,7 +58,7 @@ public class LeaseTest {
 
     @BeforeEach
     public void setUp() {
-        client = Client.builder().endpoints(cluster.getClientEndpoints()).build();
+        client = TestUtil.client(cluster).build();
         kvClient = client.getKVClient();
         leaseClient = client.getLeaseClient();
     }

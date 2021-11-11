@@ -40,13 +40,15 @@ public class WatchTokenExpireTest {
     // create a cluster with SSL enabled, because otherwise volumes with certificates are not mapped
     // to test Docker container. setup JWT authentication provider, it allows to configure short
     // time-to-live of the token.
+
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = new EtcdClusterExtension(
-        "etcd-ssl",
-        1,
-        true,
-        "--auth-token",
-        "jwt,pub-key=/etc/ssl/etcd/server.pem,priv-key=/etc/ssl/etcd/server-key.pem,sign-method=RS256,ttl=1s");
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(1)
+        .withSsl(true)
+        .withAdditionalArgs(List.of(
+            "--auth-token",
+            "jwt,pub-key=/etc/ssl/etcd/server.pem,priv-key=/etc/ssl/etcd/server-key.pem,sign-method=RS256,ttl=1s"))
+        .build();
 
     private static final ByteSequence key = TestUtil.randomByteSequence();
     private static final ByteSequence user = TestUtil.bytesOf("root");
@@ -55,8 +57,7 @@ public class WatchTokenExpireTest {
     private void setUpEnvironment() throws Exception {
         final File caFile = new File(getClass().getResource("/ssl/cert/ca.pem").toURI());
 
-        Client client = Client.builder()
-            .endpoints(cluster.getClientEndpoints())
+        Client client = TestUtil.client(cluster)
             .authority("etcd0")
             .sslContext(b -> b.trustManager(caFile))
             .build();
@@ -76,8 +77,7 @@ public class WatchTokenExpireTest {
     private Client createAuthClient() throws Exception {
         final File caFile = new File(getClass().getResource("/ssl/cert/ca.pem").toURI());
 
-        return Client.builder()
-            .endpoints(cluster.getClientEndpoints())
+        return TestUtil.client(cluster)
             .user(user)
             .password(password)
             .authority("etcd0")

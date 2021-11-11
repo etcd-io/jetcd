@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.etcd.jetcd.spi;
 
+import java.net.URI;
+import java.util.Collection;
 
-enableFeaturePreview('VERSION_CATALOGS')
-
-rootProject.name = "jetcd"
-
-// modules
-include ':jetcd-grpc'
-include ':jetcd-api'
-include ':jetcd-common'
-include ':jetcd-launcher'
-include ':jetcd-test'
-include ':jetcd-core'
-include ':jetcd-ctl'
+@FunctionalInterface
+public interface EndpointTargetResolver {
+    String resolve(String authority, Collection<URI> endpoints);
+}
