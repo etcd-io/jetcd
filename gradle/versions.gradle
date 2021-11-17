@@ -15,18 +15,11 @@
  */
 
 apply plugin: 'com.github.ben-manes.versions'
+apply plugin: 'se.ascp.gradle.gradle-versions-filter'
 
-dependencyUpdates.resolutionStrategy {
-    componentSelection { rules ->
-        rules.all { selection ->
-            boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm', 'ea'].any {
-                qualifier -> return selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
-            }
-            if (rejected) {
-                selection.reject('Release candidate')
-            }
-        }
-    }
+versionsFilter {
+    exclusiveQualifiers = ['alpha', 'beta', 'rc', 'cr', 'm', 'ea']
+    log = false
 }
 
 task deps {

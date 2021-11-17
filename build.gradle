@@ -24,6 +24,7 @@ buildscript {
         classpath "net.ltgt.gradle:gradle-errorprone-plugin:$errorPronePluginVersion"
         classpath "io.github.gradle-nexus:publish-plugin:$nexusPublishPluginVersion"
         classpath "com.adarshr:gradle-test-logger-plugin:$testLoggerPluginVersion"
+        classpath "se.ascp.gradle:gradle-versions-filter:$versionsFilterPluginVersion"
     }
 }
 
