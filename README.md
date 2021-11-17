@@ -117,10 +117,6 @@ It recommmonds building the project before running tests so that you have artifa
 
 See [CONTRIBUTING](https://github.com/etcd-io/jetcd/blob/master/CONTRIBUTING.md) for details on submitting patches and the contribution workflow.
 
-## Reporting bugs
-
-See [reporting bugs](https://github.com/etcd-io/etcd/blob/master/Documentation/reporting-bugs.md) for details about reporting any issues.
-
 ## License
 
 jetcd is under the Apache 2.0 license. See the [LICENSE](https://github.com/etcd-io/jetcd/blob/master/LICENSE) file for details.
