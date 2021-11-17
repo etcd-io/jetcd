@@ -61,7 +61,7 @@ For full etcd v3 API, plesase refer to the [official API documentation](https://
 
 ### Examples
 
-The [examples](https://github.com/etcd-io/jetcd/tree/master/jetcd-examples) are standalone projects that show usage of jetcd.
+The [jetcd-ctl](https://github.com/etcd-io/jetcd/tree/master/jetcd-ctl) is a standalone projects that show usage of jetcd.
 
 ## Launcher
 
@@ -69,12 +69,15 @@ The `io.etcd:jetcd-test` offers a convenient utility to programmatically start &
 
 ```java
 import io.etcd.jetcd.Client;
-import io.etcd.jetcd.launcher.EtcdCluster;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-@RegisterExtension static final EtcdCluster etcd = new EtcdClusterExtension("test-etcd", 1);
-Client client = Client.builder().endpoints(etcd.getClientEndpoints()).build();
+@RegisterExtension 
+public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(1)
+        .build();
+
+Client client = Client.builder().endpoints(cluster.clientEndpoints()).build();
 ```
 
 This launcher uses the Testcontainers framework.
