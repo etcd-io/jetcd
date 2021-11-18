@@ -17,6 +17,7 @@
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
+apply plugin: 'net.researchgate.release'
 
 java {
     withJavadocJar()
@@ -90,3 +91,8 @@ javadoc {
         options.addBooleanOption('html5', true)
     }
 }
+
+release {
+    tagTemplate = 'jetcd-${version}'
+}
+
