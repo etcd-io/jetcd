@@ -32,6 +32,8 @@ buildscript {
 apply from: "${rootProject.projectDir}/gradle/versions.gradle"
 apply from: "${rootProject.projectDir}/gradle/publish.gradle"
 
+apply plugin: 'net.researchgate.release'
+
 group = 'io.etcd'
 
 allprojects {
@@ -66,5 +68,9 @@ subprojects {
         theme 'mocha-parallel'
         showStandardStreams false
     }
+}
+
+release {
+    tagTemplate = 'jetcd-${version}'
 }
 
