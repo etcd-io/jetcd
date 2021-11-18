@@ -25,14 +25,11 @@ buildscript {
         classpath "io.github.gradle-nexus:publish-plugin:$nexusPublishPluginVersion"
         classpath "com.adarshr:gradle-test-logger-plugin:$testLoggerPluginVersion"
         classpath "se.ascp.gradle:gradle-versions-filter:$versionsFilterPluginVersion"
-        classpath "net.researchgate:gradle-release:$gradleReleasePluginVersion"
     }
 }
 
 apply from: "${rootProject.projectDir}/gradle/versions.gradle"
 apply from: "${rootProject.projectDir}/gradle/publish.gradle"
-
-apply plugin: 'net.researchgate.release'
 
 group = 'io.etcd'
 
@@ -70,7 +67,4 @@ subprojects {
     }
 }
 
-release {
-    tagTemplate = 'jetcd-${version}'
-}
 
