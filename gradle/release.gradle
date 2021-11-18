@@ -82,6 +82,8 @@ signing {
         !version.endsWith('SNAPSHOT')
     }
 
+    useGpgCmd()
+
     sign publishing.publications."${project.name}"
 }
 
