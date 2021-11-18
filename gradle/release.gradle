@@ -14,84 +14,15 @@
  * limitations under the License.
  */
 
-apply plugin: 'java-library'
-apply plugin: 'maven-publish'
-apply plugin: 'signing'
+apply plugin: "pl.allegro.tech.build.axion-release"
 
-java {
-    withJavadocJar()
-    withSourcesJar()
-}
 
-publishing {
-    publications {
-        "${project.name}"(MavenPublication) {
-            groupId = rootProject.group
-
-            from components.java
-
-            pom {
-                name = project.name
-                description = project.name
-                url = "${gitProject}"
-
-                scm {
-                    url = "${gitProject}"
-                    connection = "scm:${gitProject}"
-                    developerConnection = "scm:${gitURL}"
-                }
-
-                licenses {
-                    license {
-                        name = 'The Apache Software License, Version 2.0'
-                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        distribution = 'repo'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id = 'lburgazzoli'
-                        name = 'Luca Burgazzoli'
-                        organization = 'Red Hat'
-                        organizationUrl = 'http://redhat.com'
-                    }
-                    developer {
-                        name = 'Fanmin Shi'
-                        organization = 'CoreOS'
-                        organizationUrl = 'http://coreos.com'
-                    }
-                    developer {
-                        name = 'Xiang Li'
-                        organization = 'CoreOS'
-                        organizationUrl = 'http://coreos.com'
-                    }
-                    developer {
-                        name = 'Anthony Romano'
-                        organization = 'CoreOS'
-                        organizationUrl = 'http://coreos.com'
-                    }
-                }
-            }
-        }
+scmVersion {
+    tag {
+        prefix = 'jetcd-'
     }
 }
 
-signing {
-    required {
-        !version.endsWith('SNAPSHOT')
-    }
-
-    if (!version.endsWith('SNAPSHOT')) {
-        useGpgCmd()
-    }
-
-    sign publishing.publications."${project.name}"
+allprojects {
+    project.version = scmVersion.version
 }
-
-javadoc {
-    if(JavaVersion.current().isJava9Compatible()) {
-        options.addBooleanOption('html5', true)
-    }
-}
-

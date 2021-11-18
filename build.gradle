@@ -25,11 +25,13 @@ buildscript {
         classpath "io.github.gradle-nexus:publish-plugin:$nexusPublishPluginVersion"
         classpath "com.adarshr:gradle-test-logger-plugin:$testLoggerPluginVersion"
         classpath "se.ascp.gradle:gradle-versions-filter:$versionsFilterPluginVersion"
+        classpath "pl.allegro.tech.build:axion-release-plugin:$axionReleasePluginVersion"
     }
 }
 
 apply from: "${rootProject.projectDir}/gradle/versions.gradle"
 apply from: "${rootProject.projectDir}/gradle/publish.gradle"
+apply from: "${rootProject.projectDir}/gradle/release.gradle"
 
 group = 'io.etcd'
 
@@ -43,8 +45,8 @@ allprojects {
 subprojects {
     apply from: "${rootProject.projectDir}/gradle/style.gradle"
     apply from: "${rootProject.projectDir}/gradle/quality.gradle"
-    apply from: "${rootProject.projectDir}/gradle/release.gradle"
-    apply from: "${rootProject.projectDir}/gradle/release-tasks.gradle"
+    apply from: "${rootProject.projectDir}/gradle/publishing-release.gradle"
+    apply from: "${rootProject.projectDir}/gradle/publishing-release-tasks.gradle"
 
     apply plugin: 'java-library'
     apply plugin: "com.adarshr.test-logger"
@@ -66,5 +68,6 @@ subprojects {
         showStandardStreams false
     }
 }
+
 
 
