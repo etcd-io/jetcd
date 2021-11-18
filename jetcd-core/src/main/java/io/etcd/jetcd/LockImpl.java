@@ -18,25 +18,22 @@ package io.etcd.jetcd;
 
 import java.util.concurrent.CompletableFuture;
 
-import io.etcd.jetcd.api.lock.LockGrpc;
 import io.etcd.jetcd.api.lock.LockRequest;
 import io.etcd.jetcd.api.lock.UnlockRequest;
+import io.etcd.jetcd.api.lock.VertxLockGrpc;
 import io.etcd.jetcd.lock.LockResponse;
 import io.etcd.jetcd.lock.UnlockResponse;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-final class LockImpl implements Lock {
-
-    private final ClientConnectionManager connectionManager;
-
-    private final LockGrpc.LockFutureStub stub;
-
+final class LockImpl extends Impl implements Lock {
+    private final VertxLockGrpc.LockVertxStub stub;
     private final ByteSequence namespace;
 
     LockImpl(ClientConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
-        this.stub = connectionManager.newStub(LockGrpc::newFutureStub);
+        super(connectionManager);
+
+        this.stub = connectionManager.newStub(VertxLockGrpc::newVertxStub);
         this.namespace = connectionManager.getNamespace();
     }
 
@@ -49,7 +46,7 @@ final class LockImpl implements Lock {
             .setLease(leaseId)
             .build();
 
-        return connectionManager.execute(
+        return execute(
             () -> stub.lock(request),
             response -> new LockResponse(response, namespace),
             Util::isRetryable);
@@ -63,7 +60,7 @@ final class LockImpl implements Lock {
             .setKey(Util.prefixNamespace(lockKey.getByteString(), namespace))
             .build();
 
-        return connectionManager.execute(
+        return execute(
             () -> stub.unlock(request),
             UnlockResponse::new,
             Util::isRetryable);

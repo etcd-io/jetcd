@@ -17,13 +17,12 @@
 package io.etcd.jetcd;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 import io.etcd.jetcd.api.CampaignRequest;
-import io.etcd.jetcd.api.ElectionGrpc;
 import io.etcd.jetcd.api.LeaderRequest;
 import io.etcd.jetcd.api.ProclaimRequest;
 import io.etcd.jetcd.api.ResignRequest;
+import io.etcd.jetcd.api.VertxElectionGrpc;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.etcd.jetcd.election.CampaignResponse;
 import io.etcd.jetcd.election.LeaderKey;
@@ -33,16 +32,18 @@ import io.etcd.jetcd.election.NotLeaderException;
 import io.etcd.jetcd.election.ProclaimResponse;
 import io.etcd.jetcd.election.ResignResponse;
 import io.grpc.StatusRuntimeException;
-import io.grpc.stub.StreamObserver;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
-final class ElectionImpl implements Election {
-    private final ElectionGrpc.ElectionStub stub;
+final class ElectionImpl extends Impl implements Election {
+    private final VertxElectionGrpc.ElectionVertxStub stub;
     private final ByteSequence namespace;
 
     ElectionImpl(ClientConnectionManager connectionManager) {
-        this.stub = connectionManager.newStub(ElectionGrpc::newStub);
+        super(connectionManager);
+
+        this.stub = connectionManager.newStub(VertxElectionGrpc::newVertxStub);
         this.namespace = connectionManager.getNamespace();
     }
 
@@ -57,11 +58,10 @@ final class ElectionImpl implements Election {
             .setLease(leaseId)
             .build();
 
-        final StreamObserverDelegate<io.etcd.jetcd.api.CampaignResponse, CampaignResponse> observer = new StreamObserverDelegate<>(
-            CampaignResponse::new);
-        stub.campaign(request, observer);
-
-        return observer.getFuture();
+        return completable(
+            stub.campaign(request),
+            CampaignResponse::new,
+            this::convertException);
     }
 
     @Override
@@ -69,19 +69,19 @@ final class ElectionImpl implements Election {
         checkNotNull(leaderKey, "leader key should not be null");
         checkNotNull(proposal, "proposal should not be null");
 
-        io.etcd.jetcd.api.LeaderKey leader = io.etcd.jetcd.api.LeaderKey.newBuilder()
-            .setKey(leaderKey.getKey()).setName(leaderKey.getName())
-            .setLease(leaderKey.getLease()).setRev(leaderKey.getRevision())
-            .build();
         ProclaimRequest request = ProclaimRequest.newBuilder()
-            .setLeader(leader).setValue(proposal.getByteString())
+            .setLeader(
+                io.etcd.jetcd.api.LeaderKey.newBuilder()
+                    .setKey(leaderKey.getKey()).setName(leaderKey.getName())
+                    .setLease(leaderKey.getLease()).setRev(leaderKey.getRevision())
+                    .build())
+            .setValue(proposal.getByteString())
             .build();
 
-        final StreamObserverDelegate<io.etcd.jetcd.api.ProclaimResponse, ProclaimResponse> observer = new StreamObserverDelegate<>(
-            ProclaimResponse::new);
-        stub.proclaim(request, observer);
-
-        return observer.getFuture();
+        return completable(
+            stub.proclaim(request),
+            ProclaimResponse::new,
+            this::convertException);
     }
 
     @Override
@@ -92,11 +92,10 @@ final class ElectionImpl implements Election {
             .setName(Util.prefixNamespace(electionName.getByteString(), namespace))
             .build();
 
-        final StreamObserverDelegate<io.etcd.jetcd.api.LeaderResponse, LeaderResponse> observer = new StreamObserverDelegate<>(
-            input -> new LeaderResponse(input, namespace));
-        stub.leader(request, observer);
-
-        return observer.getFuture();
+        return completable(
+            stub.leader(request),
+            r -> new LeaderResponse(r, namespace),
+            this::convertException);
     }
 
     @Override
@@ -104,82 +103,47 @@ final class ElectionImpl implements Election {
         checkNotNull(electionName, "election name should not be null");
         checkNotNull(listener, "listener should not be null");
 
-        LeaderRequest request = LeaderRequest.newBuilder().setName(electionName.getByteString()).build();
+        LeaderRequest request = LeaderRequest.newBuilder()
+            .setName(electionName.getByteString())
+            .build();
 
-        stub.observe(request, new StreamObserver<io.etcd.jetcd.api.LeaderResponse>() {
-            @Override
-            public void onNext(io.etcd.jetcd.api.LeaderResponse value) {
-                listener.onNext(new LeaderResponse(value, namespace));
-            }
-
-            @Override
-            public void onError(Throwable error) {
-                listener.onError(EtcdExceptionFactory.toEtcdException(error));
-            }
-
-            @Override
-            public void onCompleted() {
-                listener.onCompleted();
-            }
-        });
+        stub.observe(request)
+            .handler(value -> listener.onNext(new LeaderResponse(value, namespace)))
+            .endHandler(ignored -> listener.onCompleted())
+            .exceptionHandler(error -> listener.onError(EtcdExceptionFactory.toEtcdException(error)));
     }
 
     @Override
     public CompletableFuture<ResignResponse> resign(LeaderKey leaderKey) {
         checkNotNull(leaderKey, "leader key should not be null");
 
-        io.etcd.jetcd.api.LeaderKey leader = io.etcd.jetcd.api.LeaderKey.newBuilder()
-            .setKey(leaderKey.getKey()).setName(leaderKey.getName())
-            .setLease(leaderKey.getLease()).setRev(leaderKey.getRevision())
+        ResignRequest request = ResignRequest.newBuilder()
+            .setLeader(
+                io.etcd.jetcd.api.LeaderKey.newBuilder()
+                    .setKey(leaderKey.getKey()).setName(leaderKey.getName())
+                    .setLease(leaderKey.getLease()).setRev(leaderKey.getRevision())
+                    .build())
             .build();
-        ResignRequest request = ResignRequest.newBuilder().setLeader(leader).build();
 
-        final StreamObserverDelegate<io.etcd.jetcd.api.ResignResponse, ResignResponse> observer = new StreamObserverDelegate<>(
-            ResignResponse::new);
-        stub.resign(request, observer);
-
-        return observer.getFuture();
+        return completable(
+            stub.resign(request),
+            ResignResponse::new,
+            this::convertException);
     }
 
-    @Override
-    public void close() {
-    }
-
-    private static class StreamObserverDelegate<S, T> implements StreamObserver<S> {
-        private final CompletableFuture<T> future = new CompletableFuture<>();
-        private final Function<S, T> converter;
-
-        public StreamObserverDelegate(Function<S, T> converter) {
-            this.converter = converter;
-        }
-
-        @Override
-        public void onNext(S value) {
-            future.complete(converter.apply(value));
-        }
-
-        @Override
-        public void onError(Throwable error) {
-            if (error instanceof StatusRuntimeException) {
-                StatusRuntimeException exception = (StatusRuntimeException) error;
-                String description = exception.getStatus().getDescription();
-                // different APIs use different messages. we cannot distinguish missing leader error otherwise,
-                // because communicated status is always UNKNOWN
-                if ("election: not leader".equals(description)) {
-                    future.completeExceptionally(NotLeaderException.INSTANCE);
-                } else if ("election: no leader".equals(description)) {
-                    future.completeExceptionally(NoLeaderException.INSTANCE);
-                }
+    private Throwable convertException(Throwable e) {
+        if (e instanceof StatusRuntimeException) {
+            StatusRuntimeException exception = (StatusRuntimeException) e;
+            String description = exception.getStatus().getDescription();
+            // different APIs use different messages. we cannot distinguish missing leader error otherwise,
+            // because communicated status is always UNKNOWN
+            if ("election: not leader".equals(description)) {
+                return NotLeaderException.INSTANCE;
+            } else if ("election: no leader".equals(description)) {
+                return NoLeaderException.INSTANCE;
             }
-            future.completeExceptionally(EtcdExceptionFactory.toEtcdException(error));
         }
 
-        @Override
-        public void onCompleted() {
-        }
-
-        public CompletableFuture<T> getFuture() {
-            return future;
-        }
+        return toEtcdException(e);
     }
 }

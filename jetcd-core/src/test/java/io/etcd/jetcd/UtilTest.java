@@ -16,24 +16,30 @@
 
 package io.etcd.jetcd;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import io.grpc.Status;
 import io.grpc.StatusException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
 class UtilTest {
 
     @Test
     public void testAuthErrorIsNotRetryable() {
         Status authErrorStatus = Status.UNAUTHENTICATED
             .withDescription("etcdserver: invalid auth token");
-        assertThat(Util.isRetryable(new StatusException(authErrorStatus))).isTrue();
+        Status status = Status.fromThrowable(new StatusException(authErrorStatus));
+        assertThat(Util.isRetryable(status)).isTrue();
     }
 
     @Test
     public void testUnavailableErrorIsRetryable() {
-        assertThat(Util.isRetryable(new StatusException(Status.UNAVAILABLE))).isTrue();
+        Status status = Status.fromThrowable(new StatusException(Status.UNAVAILABLE));
+        assertThat(Util.isRetryable(status)).isTrue();
     }
 }

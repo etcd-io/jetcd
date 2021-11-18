@@ -28,7 +28,6 @@ import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.etcd.jetcd.auth.AuthInterceptor;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -39,11 +38,11 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.netty.NegotiationType;
-import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
 import io.netty.channel.ChannelOption;
+import io.vertx.core.Vertx;
+import io.vertx.grpc.VertxChannelBuilder;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import net.jodah.failsafe.Failsafe;
@@ -57,7 +56,7 @@ final class ClientConnectionManager {
     private final Object lock;
     private final ClientBuilder builder;
     private final ExecutorService executorService;
-    private final AuthInterceptor authInterceptor;
+    private final AuthCredential credential;
     private volatile ManagedChannel managedChannel;
 
     ClientConnectionManager(ClientBuilder builder) {
@@ -67,8 +66,8 @@ final class ClientConnectionManager {
     ClientConnectionManager(ClientBuilder builder, ManagedChannel managedChannel) {
         this.lock = new Object();
         this.builder = builder;
-        this.authInterceptor = new AuthInterceptor(builder);
         this.managedChannel = managedChannel;
+        this.credential = new AuthCredential(this);
 
         if (builder.executorService() == null) {
             this.executorService = Executors.newCachedThreadPool();
@@ -97,8 +96,12 @@ final class ClientConnectionManager {
         return executorService;
     }
 
-    AuthInterceptor authInterceptor() {
-        return authInterceptor;
+    ClientBuilder builder() {
+        return builder;
+    }
+
+    AuthCredential authCredential() {
+        return this.credential;
     }
 
     /**
@@ -113,12 +116,15 @@ final class ClientConnectionManager {
     }
 
     private <T extends AbstractStub<T>> T newStub(Function<ManagedChannel, T> stubCustomizer, ManagedChannel channel) {
-        final T stub = stubCustomizer.apply(channel);
+        T stub = stubCustomizer.apply(channel);
         if (builder.waitForReady()) {
-            return stub.withWaitForReady();
-        } else {
-            return stub;
+            stub = stub.withWaitForReady();
         }
+        if (builder.user() != null && builder.password() != null) {
+            stub = stub.withCallCredentials(this.authCredential());
+        }
+
+        return stub;
     }
 
     void close() {
@@ -133,7 +139,8 @@ final class ClientConnectionManager {
         }
     }
 
-    <T extends AbstractStub<T>, R> CompletableFuture<R> withNewChannel(String target,
+    <T extends AbstractStub<T>, R> CompletableFuture<R> withNewChannel(
+        String target,
         Function<ManagedChannel, T> stubCustomizer,
         Function<T, CompletableFuture<R>> stubConsumer) {
 
@@ -148,19 +155,18 @@ final class ClientConnectionManager {
         }
     }
 
-    @VisibleForTesting
     ManagedChannelBuilder<?> defaultChannelBuilder() {
         return defaultChannelBuilder(builder.target());
     }
 
-    @VisibleForTesting
     @SuppressWarnings("rawtypes")
     ManagedChannelBuilder<?> defaultChannelBuilder(String target) {
         if (target == null) {
             throw new IllegalArgumentException("At least one endpoint should be provided");
         }
 
-        final NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget(target);
+        final Vertx vertx = Vertx.vertx();
+        final VertxChannelBuilder channelBuilder = VertxChannelBuilder.forTarget(vertx, target);
 
         if (builder.authority() != null) {
             channelBuilder.overrideAuthority(builder.authority());
@@ -169,10 +175,10 @@ final class ClientConnectionManager {
             channelBuilder.maxInboundMessageSize(builder.maxInboundMessageSize());
         }
         if (builder.sslContext() != null) {
-            channelBuilder.negotiationType(NegotiationType.TLS);
-            channelBuilder.sslContext(builder.sslContext());
+            channelBuilder.nettyBuilder().negotiationType(NegotiationType.TLS);
+            channelBuilder.nettyBuilder().sslContext(builder.sslContext());
         } else {
-            channelBuilder.negotiationType(NegotiationType.PLAINTEXT);
+            channelBuilder.nettyBuilder().negotiationType(NegotiationType.PLAINTEXT);
         }
 
         if (builder.keepaliveTime() != null) {
@@ -185,7 +191,8 @@ final class ClientConnectionManager {
             channelBuilder.keepAliveWithoutCalls(builder.keepaliveWithoutCalls());
         }
         if (builder.connectTimeout() != null) {
-            channelBuilder.withOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) builder.connectTimeout().toMillis());
+            channelBuilder.nettyBuilder().withOption(ChannelOption.CONNECT_TIMEOUT_MILLIS,
+                (int) builder.connectTimeout().toMillis());
         }
 
         if (builder.loadBalancerPolicy() != null) {
@@ -194,14 +201,15 @@ final class ClientConnectionManager {
             channelBuilder.defaultLoadBalancingPolicy("pick_first");
         }
 
-        channelBuilder.intercept(authInterceptor);
-
         if (builder.headers() != null) {
             channelBuilder.intercept(new ClientInterceptor() {
                 @Override
-                public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-                    CallOptions callOptions, Channel next) {
-                    return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
+                public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+                    MethodDescriptor<ReqT, RespT> method,
+                    CallOptions callOptions,
+                    Channel next) {
+
+                    return new SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
                         @Override
                         public void start(Listener<RespT> responseListener, Metadata headers) {
                             builder.headers().forEach((BiConsumer<Metadata.Key, Object>) headers::put);
@@ -217,19 +225,6 @@ final class ClientConnectionManager {
         }
 
         return channelBuilder;
-    }
-
-    /**
-     * execute the task and retry it in case of failure.
-     *
-     * @param  task          a function that returns a new ListenableFuture.
-     * @param  resultConvert a function that converts Type S to Type T.
-     * @param  <S>           Source type
-     * @param  <T>           Converted Type.
-     * @return               a CompletableFuture with type T.
-     */
-    public <S, T> CompletableFuture<T> execute(Callable<ListenableFuture<S>> task, Function<S, T> resultConvert) {
-        return execute(task, resultConvert, Util::isRetryable);
     }
 
     /**
@@ -265,6 +260,9 @@ final class ClientConnectionManager {
                         wrappedFuture.complete(future.get());
                         execution.complete(wrappedFuture);
                     } catch (Exception error) {
+                        if (Util.isInvalidTokenError(error)) {
+                            authCredential().refresh();
+                        }
                         if (!execution.retryOn(error)) {
                             // permanent failure
                             wrappedFuture.completeExceptionally(error);
@@ -273,5 +271,4 @@ final class ClientConnectionManager {
                 }, executorService);
             }).thenCompose(f -> f.thenApply(resultConvert));
     }
-
 }

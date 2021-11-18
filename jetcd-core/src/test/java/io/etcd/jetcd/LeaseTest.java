@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
@@ -41,10 +42,11 @@ import com.google.common.base.Charsets;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class LeaseTest {
 
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+    public final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
         .withNodes(3)
         .build();
 
@@ -91,8 +93,9 @@ public class LeaseTest {
         assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
 
         tearDown();
-        assertThatExceptionOfType(RejectedExecutionException.class)
-            .isThrownBy(() -> leaseClient.grant(5, 2, TimeUnit.SECONDS).get().getID());
+        assertThatExceptionOfType(ExecutionException.class)
+            .isThrownBy(() -> leaseClient.grant(5, 2, TimeUnit.SECONDS).get().getID())
+            .withCauseInstanceOf(RejectedExecutionException.class);
         setUp();
     }
 

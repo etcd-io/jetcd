@@ -21,13 +21,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.etcd.jetcd.api.VertxWatchGrpc;
 import io.etcd.jetcd.api.WatchCancelRequest;
 import io.etcd.jetcd.api.WatchCreateRequest;
-import io.etcd.jetcd.api.WatchGrpc;
 import io.etcd.jetcd.api.WatchProgressRequest;
 import io.etcd.jetcd.api.WatchRequest;
 import io.etcd.jetcd.api.WatchResponse;
@@ -36,7 +37,8 @@ import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.options.OptionsUtil;
 import io.etcd.jetcd.options.WatchOption;
 import io.grpc.Status;
-import io.grpc.stub.StreamObserver;
+import io.vertx.core.streams.ReadStream;
+import io.vertx.core.streams.WriteStream;
 
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.FutureCallback;
@@ -52,21 +54,21 @@ import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdExceptio
 /**
  * watch Implementation.
  */
-final class WatchImpl implements Watch {
+final class WatchImpl extends Impl implements Watch {
     private static final Logger LOG = LoggerFactory.getLogger(WatchImpl.class);
 
     private final Object lock;
-    private final ClientConnectionManager connectionManager;
-    private final WatchGrpc.WatchStub stub;
+    private final VertxWatchGrpc.WatchVertxStub stub;
     private final ListeningScheduledExecutorService executor;
     private final AtomicBoolean closed;
     private final List<WatcherImpl> watchers;
     private final ByteSequence namespace;
 
     WatchImpl(ClientConnectionManager connectionManager) {
+        super(connectionManager);
+
         this.lock = new Object();
-        this.connectionManager = connectionManager;
-        this.stub = connectionManager.newStub(WatchGrpc::newStub);
+        this.stub = connectionManager.newStub(VertxWatchGrpc::newVertxStub);
         this.executor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
         this.closed = new AtomicBoolean();
         this.watchers = new CopyOnWriteArrayList<>();
@@ -110,13 +112,16 @@ final class WatchImpl implements Watch {
         }
     }
 
-    final class WatcherImpl implements Watcher, StreamObserver<WatchResponse> {
+    final class WatcherImpl implements Watcher {
         private final ByteSequence key;
         private final WatchOption option;
         private final Listener listener;
         private final AtomicBoolean closed;
 
-        private StreamObserver<WatchRequest> stream;
+        //private StreamObserver<WatchRequest> stream;
+        private AtomicReference<WriteStream<WatchRequest>> wstream;
+        private AtomicBoolean started;
+        private ReadStream<WatchResponse> rstream;
         private long revision;
         private long id;
 
@@ -126,7 +131,9 @@ final class WatchImpl implements Watch {
             this.listener = listener;
             this.closed = new AtomicBoolean();
 
-            this.stream = null;
+            this.started = new AtomicBoolean();
+            this.wstream = new AtomicReference<>();
+            this.rstream = null;
             this.id = -1;
             this.revision = this.option.getRevision();
         }
@@ -146,7 +153,7 @@ final class WatchImpl implements Watch {
                 return;
             }
 
-            if (stream == null) {
+            if (started.compareAndSet(false, true)) {
                 // id is not really useful today but it may be in etcd 3.4
                 id = -1;
 
@@ -154,10 +161,11 @@ final class WatchImpl implements Watch {
                     .setKey(Util.prefixNamespace(this.key.getByteString(), namespace)).setPrevKv(this.option.isPrevKV())
                     .setProgressNotify(option.isProgressNotify()).setStartRevision(this.revision);
 
-                option.getEndKey().map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
+                option.getEndKey()
+                    .map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
                     .ifPresent(builder::setRangeEnd);
 
-                if (!option.getEndKey().isPresent() && option.isPrefix()) {
+                if (option.getEndKey().isEmpty() && option.isPrefix()) {
                     ByteSequence endKey = OptionsUtil.prefixEndOf(key);
                     builder.setRangeEnd(Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace));
                 }
@@ -170,8 +178,14 @@ final class WatchImpl implements Watch {
                     builder.addFilters(WatchCreateRequest.FilterType.NOPUT);
                 }
 
-                stream = Util.applyRequireLeader(option.withRequireLeader(), stub).watch(this);
-                stream.onNext(WatchRequest.newBuilder().setCreateRequest(builder).build());
+                rstream = Util.applyRequireLeader(option.withRequireLeader(), stub).watch(stream -> {
+                    wstream.set(stream);
+                    stream.write(WatchRequest.newBuilder().setCreateRequest(builder).build());
+                });
+
+                rstream.handler(this::onNext);
+                rstream.exceptionHandler(this::onError);
+                rstream.endHandler(event -> onCompleted());
             }
         }
 
@@ -181,16 +195,15 @@ final class WatchImpl implements Watch {
             // sync with onError()
             synchronized (WatchImpl.this.lock) {
                 if (closed.compareAndSet(false, true)) {
-                    if (stream != null) {
-                        WatchCancelRequest watchCancelRequest = WatchCancelRequest.newBuilder().setWatchId(this.id).build();
-
+                    if (wstream.get() != null) {
                         if (id != -1) {
-                            stream.onNext(WatchRequest.newBuilder().setCancelRequest(watchCancelRequest).build());
-                        }
+                            final WatchCancelRequest watchCancelRequest = WatchCancelRequest.newBuilder().setWatchId(this.id)
+                                .build();
+                            final WatchRequest request = WatchRequest.newBuilder().setCancelRequest(watchCancelRequest).build();
 
-                        if (stream != null) {
-                            stream.onError(Status.CANCELLED.withDescription("shutdown").asException());
-                            stream = null;
+                            wstream.get().end(request);
+                        } else {
+                            wstream.get().end();
                         }
                     }
 
@@ -206,9 +219,9 @@ final class WatchImpl implements Watch {
 
         @Override
         public void requestProgress() {
-            if (!closed.get() && stream != null) {
+            if (!closed.get() && wstream.get() != null) {
                 WatchProgressRequest watchProgressRequest = WatchProgressRequest.newBuilder().build();
-                stream.onNext(WatchRequest.newBuilder().setProgressRequest(watchProgressRequest).build());
+                wstream.get().write(WatchRequest.newBuilder().setProgressRequest(watchProgressRequest).build());
             }
         }
 
@@ -218,8 +231,7 @@ final class WatchImpl implements Watch {
         //
         // ************************
 
-        @Override
-        public void onNext(WatchResponse response) {
+        private void onNext(WatchResponse response) {
             if (closed.get()) {
                 // events eventually received when the client is closed should
                 // not be propagated to the listener
@@ -230,7 +242,7 @@ final class WatchImpl implements Watch {
             if (response.getCreated() && response.getCanceled() && response.getCancelReason() != null
                 && response.getCancelReason().contains("etcdserver: permission denied")) {
                 // potentially access token expired
-                connectionManager.authInterceptor().refresh();
+                connectionManager().authCredential().refresh();
                 Status error = Status.Code.CANCELLED.toStatus().withDescription(response.getCancelReason());
                 handleError(toEtcdException(error), true);
             } else if (response.getCreated()) {
@@ -293,8 +305,11 @@ final class WatchImpl implements Watch {
             }
         }
 
-        @Override
-        public void onError(Throwable t) {
+        private void onCompleted() {
+            listener.onCompleted();
+        }
+
+        private void onError(Throwable t) {
             handleError(toEtcdException(t), shouldReschedule(Status.fromThrowable(t)));
         }
 
@@ -306,12 +321,18 @@ final class WatchImpl implements Watch {
                 }
 
                 listener.onError(etcdException);
-                if (stream != null) {
-                    stream.onCompleted();
+                if (wstream.get() != null) {
+                    wstream.get().end();
                 }
-                stream = null;
+                wstream.set(null);
+                started.set(false);
             }
             if (shouldReschedule) {
+                if (etcdException.getMessage().contains("etcdserver: permission denied")) {
+                    // potentially access token expired
+                    connectionManager().authCredential().refresh();
+                }
+
                 reschedule();
                 return;
             }
@@ -326,17 +347,13 @@ final class WatchImpl implements Watch {
             Futures.addCallback(executor.schedule(this::resume, 500, TimeUnit.MILLISECONDS), new FutureCallback<Object>() {
                 @Override
                 public void onFailure(Throwable throwable) {
-                    LOG.error("scheduled resume failed", throwable);
+                    LOG.warn("scheduled resume failed", throwable);
                 }
 
                 @Override
                 public void onSuccess(Object result) {
                 }
             }, executor);
-        }
-
-        @Override
-        public void onCompleted() {
         }
     }
 }

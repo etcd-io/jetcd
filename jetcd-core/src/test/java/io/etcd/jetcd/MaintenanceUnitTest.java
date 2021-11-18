@@ -26,11 +26,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.output.NullOutputStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import io.etcd.jetcd.api.MaintenanceGrpc.MaintenanceImplBase;
 import io.etcd.jetcd.api.SnapshotRequest;
@@ -48,8 +50,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Fail.fail;
 
-// TODO: have separate folders to unit and integration tests.
-// TODO(#548): Add global timeout for tests once JUnit5 supports it
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class MaintenanceUnitTest {
 
     private MutableHandlerRegistry serviceRegistry;

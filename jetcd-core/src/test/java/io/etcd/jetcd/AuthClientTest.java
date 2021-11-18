@@ -17,9 +17,11 @@
 package io.etcd.jetcd;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.etcd.jetcd.auth.AuthRoleGetResponse;
@@ -31,6 +33,7 @@ import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class AuthClientTest {
 
     @RegisterExtension

@@ -24,6 +24,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.etcd.jetcd.auth.AuthDisableResponse;
@@ -41,6 +42,7 @@ import io.grpc.MethodDescriptor;
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class ClientConnectionManagerTest {
 
     private final String rootString = "root";
@@ -111,6 +113,7 @@ public class ClientConnectionManagerTest {
         ByteSequence role = TestUtil.bytesOf("root");
         authClient.userGrantRole(root, role).get();
         authClient.authEnable().get();
+
         final ClientBuilder builder = TestUtil.client(cluster)
             .authHeader("MyAuthHeader", "MyAuthHeaderVal").header("MyHeader2", "MyHeaderVal2")
             .user(root).password(rootPass);

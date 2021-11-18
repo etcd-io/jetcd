@@ -21,11 +21,11 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import io.etcd.jetcd.api.ClusterGrpc;
 import io.etcd.jetcd.api.MemberAddRequest;
 import io.etcd.jetcd.api.MemberListRequest;
 import io.etcd.jetcd.api.MemberRemoveRequest;
 import io.etcd.jetcd.api.MemberUpdateRequest;
+import io.etcd.jetcd.api.VertxClusterGrpc;
 import io.etcd.jetcd.cluster.MemberAddResponse;
 import io.etcd.jetcd.cluster.MemberListResponse;
 import io.etcd.jetcd.cluster.MemberRemoveResponse;
@@ -34,14 +34,14 @@ import io.etcd.jetcd.cluster.MemberUpdateResponse;
 /**
  * Implementation of cluster client.
  */
-final class ClusterImpl implements Cluster {
+final class ClusterImpl extends Impl implements Cluster {
 
-    private final ClusterGrpc.ClusterFutureStub stub;
-    private final ClientConnectionManager connectionManager;
+    private final VertxClusterGrpc.ClusterVertxStub stub;
 
     ClusterImpl(ClientConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
-        this.stub = connectionManager.newStub(ClusterGrpc::newFutureStub);
+        super(connectionManager);
+
+        this.stub = connectionManager.newStub(VertxClusterGrpc::newVertxStub);
     }
 
     /**
@@ -49,10 +49,9 @@ final class ClusterImpl implements Cluster {
      */
     @Override
     public CompletableFuture<MemberListResponse> listMember() {
-        return Util.toCompletableFuture(
+        return completable(
             this.stub.memberList(MemberListRequest.getDefaultInstance()),
-            MemberListResponse::new,
-            this.connectionManager.getExecutorService());
+            MemberListResponse::new);
     }
 
     /**
@@ -66,10 +65,9 @@ final class ClusterImpl implements Cluster {
             .addAllPeerURLs(peerAddrs.stream().map(URI::toString).collect(Collectors.toList()))
             .build();
 
-        return Util.toCompletableFuture(
+        return completable(
             this.stub.memberAdd(memberAddRequest),
-            MemberAddResponse::new,
-            this.connectionManager.getExecutorService());
+            MemberAddResponse::new);
     }
 
     /**
@@ -83,10 +81,9 @@ final class ClusterImpl implements Cluster {
             .setID(memberID)
             .build();
 
-        return Util.toCompletableFuture(
+        return completable(
             this.stub.memberRemove(memberRemoveRequest),
-            MemberRemoveResponse::new,
-            this.connectionManager.getExecutorService());
+            MemberRemoveResponse::new);
     }
 
     /**
@@ -98,12 +95,12 @@ final class ClusterImpl implements Cluster {
     @Override
     public CompletableFuture<MemberUpdateResponse> updateMember(long memberID, List<URI> peerAddrs) {
         MemberUpdateRequest memberUpdateRequest = MemberUpdateRequest.newBuilder()
-            .addAllPeerURLs(peerAddrs.stream().map(URI::toString).collect(Collectors.toList())).setID(memberID)
+            .addAllPeerURLs(peerAddrs.stream().map(URI::toString).collect(Collectors.toList()))
+            .setID(memberID)
             .build();
 
-        return Util.toCompletableFuture(
+        return completable(
             this.stub.memberUpdate(memberUpdateRequest),
-            MemberUpdateResponse::new,
-            this.connectionManager.getExecutorService());
+            MemberUpdateResponse::new);
     }
 }

@@ -18,7 +18,7 @@ autoService = "1.0.1"
 jool = "0.9.14"
 jcommander = "1.81"
 errorprone = "2.10.0"
-
+vertx = "4.2.1"
 
 [libraries]
 slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
@@ -45,6 +45,8 @@ grpcNetty = { module = "io.grpc:grpc-netty", version.ref = "grpc" }
 grpcProtobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
 grpcStub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
 grpcGrpclb = { module = "io.grpc:grpc-grpclb", version.ref = "grpc" }
+
+vertxGrpc = { module = "io.vertx:vertx-grpc", version.ref = "vertx" }
 
 log4jApi = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j" }
 log4jCore = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }

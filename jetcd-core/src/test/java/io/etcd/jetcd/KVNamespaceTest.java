@@ -19,11 +19,13 @@ package io.etcd.jetcd;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -47,9 +49,7 @@ import static io.etcd.jetcd.TestUtil.byteStringOf;
 import static io.etcd.jetcd.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Test cases focusing on using KVClient and TxnClient with non-empty namespace.
- */
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class KVNamespaceTest {
     private static final ByteSequence END_KEY = ByteSequence.from(new byte[] { 0 });
 

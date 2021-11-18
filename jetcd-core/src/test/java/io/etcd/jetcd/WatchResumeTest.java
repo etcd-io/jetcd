@@ -19,8 +19,6 @@ package io.etcd.jetcd;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -37,41 +35,31 @@ import static org.awaitility.Awaitility.await;
 public class WatchResumeTest {
 
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+    public final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
         .withNodes(3)
         .build();
 
-    private static Client client;
-    private static Watch watchClient;
-    private static KV kvClient;
-
-    @BeforeAll
-    public static void setUp() {
-        client = TestUtil.client(cluster).build();
-        watchClient = client.getWatchClient();
-        kvClient = client.getKVClient();
-    }
-
-    @AfterAll
-    public static void tearDown() {
-        client.close();
-    }
-
     @Test
     public void testWatchOnPut() throws Exception {
-        final ByteSequence key = TestUtil.randomByteSequence();
-        final ByteSequence value = TestUtil.randomByteSequence();
-        final AtomicReference<WatchResponse> ref = new AtomicReference<>();
+        try (Client client = TestUtil.client(cluster).build()) {
+            Watch watchClient = client.getWatchClient();
+            KV kvClient = client.getKVClient();
 
-        try (Watcher watcher = watchClient.watch(key, ref::set)) {
-            cluster.restart();
-            kvClient.put(key, value).get(1, TimeUnit.SECONDS);
+            final ByteSequence key = TestUtil.randomByteSequence();
+            final ByteSequence value = TestUtil.randomByteSequence();
+            final AtomicReference<WatchResponse> ref = new AtomicReference<>();
 
-            await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
+            try (Watcher watcher = watchClient.watch(key, ref::set)) {
+                cluster.restart();
 
-            assertThat(ref.get().getEvents().size()).isEqualTo(1);
-            assertThat(ref.get().getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
-            assertThat(ref.get().getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
+                kvClient.put(key, value).get(1, TimeUnit.SECONDS);
+
+                await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
+
+                assertThat(ref.get().getEvents().size()).isEqualTo(1);
+                assertThat(ref.get().getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
+                assertThat(ref.get().getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);
+            }
         }
     }
 }

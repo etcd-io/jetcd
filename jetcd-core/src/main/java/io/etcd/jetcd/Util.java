@@ -77,9 +77,13 @@ public final class Util {
         return targetFuture;
     }
 
-    public static boolean isRetryable(Throwable e) {
-        Status status = Status.fromThrowable(e);
+    public static boolean isRetryable(Status status) {
         return Status.UNAVAILABLE.getCode().equals(status.getCode()) || isInvalidTokenError(status);
+    }
+
+    public static boolean isInvalidTokenError(Throwable e) {
+        Status status = Status.fromThrowable(e);
+        return isInvalidTokenError(status);
     }
 
     public static boolean isInvalidTokenError(Status status) {

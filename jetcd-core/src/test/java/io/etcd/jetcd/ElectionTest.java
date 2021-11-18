@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.etcd.jetcd.election.CampaignResponse;
@@ -44,6 +45,7 @@ import static io.etcd.jetcd.TestUtil.randomString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class ElectionTest {
     private static final int OPERATION_TIMEOUT = 5;
 
