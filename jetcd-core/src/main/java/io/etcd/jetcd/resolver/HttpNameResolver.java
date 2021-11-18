@@ -18,9 +18,8 @@ package io.etcd.jetcd.resolver;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
@@ -28,42 +27,35 @@ import io.grpc.Attributes;
 import io.grpc.EquivalentAddressGroup;
 
 import com.google.common.base.Strings;
-import com.google.common.net.HostAndPort;
 
-public class IPNameResolver extends AbstractNameResolver {
-    public static final String SCHEME = "ip";
+public class HttpNameResolver extends AbstractNameResolver {
+    public static final String SCHEME = "http";
 
-    private final List<HostAndPort> addresses;
+    private final URI address;
 
-    public IPNameResolver(URI targetUri) {
+    public HttpNameResolver(URI targetUri) {
         super(targetUri);
 
-        this.addresses = Stream.of(targetUri.getPath().split(","))
-            .map(address -> address.startsWith("/") ? address.substring(1) : address)
-            .map(HostAndPort::fromString)
-            .collect(Collectors.toList());
+        this.address = targetUri;
     }
 
     @Override
     protected List<EquivalentAddressGroup> computeAddressGroups() {
-        if (addresses.isEmpty()) {
+        if (address == null) {
             throw EtcdExceptionFactory.newEtcdException(
                 ErrorCode.INVALID_ARGUMENT,
                 "Unable to resolve endpoint " + getTargetUri());
         }
 
-        return addresses.stream()
-            .map(address -> {
-                return new EquivalentAddressGroup(
-                    new InetSocketAddress(
-                        address.getHost(),
-                        address.getPortOrDefault(ETCD_CLIENT_PORT)),
-                    Strings.isNullOrEmpty(getServiceAuthority())
-                        ? Attributes.newBuilder()
-                            .set(EquivalentAddressGroup.ATTR_AUTHORITY_OVERRIDE, address.toString())
-                            .build()
-                        : Attributes.EMPTY);
-            })
-            .collect(Collectors.toList());
+        return Collections.singletonList(
+            new EquivalentAddressGroup(
+                new InetSocketAddress(
+                    address.getHost(),
+                    address.getPort() != -1 ? address.getPort() : ETCD_CLIENT_PORT),
+                Strings.isNullOrEmpty(getServiceAuthority())
+                    ? Attributes.newBuilder()
+                        .set(EquivalentAddressGroup.ATTR_AUTHORITY_OVERRIDE, address.toString())
+                        .build()
+                    : Attributes.EMPTY));
     }
 }

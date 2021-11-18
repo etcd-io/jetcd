@@ -69,7 +69,17 @@ public interface Maintenance extends CloseableClient {
     CompletableFuture<AlarmResponse> alarmDisarm(AlarmMember member);
 
     /**
-     * defragment one member of the cluster by its endpoint.
+     * Defragment one member of the cluster by its endpoint.
+     *
+     * @param      endpoint the etcd server endpoint.
+     * @return              the response result
+     * @deprecated          use {@link #defragmentMember(String)}
+     */
+    @Deprecated
+    CompletableFuture<DefragmentResponse> defragmentMember(URI endpoint);
+
+    /**
+     * Defragment one member of the cluster by its endpoint.
      *
      * <p>
      * After compacting the keyspace, the backend database may exhibit internal
@@ -85,29 +95,50 @@ public interface Maintenance extends CloseableClient {
      * To defragment multiple members in the cluster, user need to call defragment
      * multiple times with different endpoints.
      *
-     * @param  endpoint the etcd server endpoint.
-     * @return          the response result
+     * @param  target the etcd server endpoint.
+     * @return        the response result
      */
-    CompletableFuture<DefragmentResponse> defragmentMember(URI endpoint);
+    CompletableFuture<DefragmentResponse> defragmentMember(String target);
 
     /**
      * get the status of a member by its endpoint.
      *
-     * @param  endpoint the etcd server endpoint.
-     * @return          the response result
+     * @param      endpoint the etcd server endpoint.
+     * @return              the response result
+     * @deprecated          use {@link #statusMember(String)}
      */
+    @Deprecated
     CompletableFuture<StatusResponse> statusMember(URI endpoint);
+
+    /**
+     * get the status of a member by its endpoint.
+     *
+     * @param  target the etcd server endpoint.
+     * @return        the response result
+     */
+    CompletableFuture<StatusResponse> statusMember(String target);
+
+    /**
+     * returns a hash of the KV state at the time of the RPC.
+     *
+     * @param      endpoint the etcd server endpoint.
+     * @param      rev      the revision
+     * @return              the response result
+     * @deprecated          use {@link #hashKV(String, long)}
+     */
+    @Deprecated
+    CompletableFuture<HashKVResponse> hashKV(URI endpoint, long rev);
 
     /**
      * returns a hash of the KV state at the time of the RPC.
      * If revision is zero, the hash is computed on all keys. If the revision
      * is non-zero, the hash is computed on all keys at or below the given revision.
      *
-     * @param  endpoint the etcd server endpoint.
-     * @param  rev      the revision
-     * @return          the response result
+     * @param  target the etcd server endpoint.
+     * @param  rev    the revision
+     * @return        the response result
      */
-    CompletableFuture<HashKVResponse> hashKV(URI endpoint, long rev);
+    CompletableFuture<HashKVResponse> hashKV(String target, long rev);
 
     /**
      * retrieves backend snapshot.

@@ -28,9 +28,6 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.grpc.EquivalentAddressGroup;
 
@@ -39,8 +36,6 @@ import com.google.common.base.Splitter;
 @SuppressWarnings("JdkObsolete")
 public class DnsSrvNameResolver extends AbstractNameResolver {
     public static final String SCHEME = "dns+srv";
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DnsSrvNameResolver.class);
 
     private static final String[] ATTRIBUTE_IDS;
     private static final Hashtable<String, String> ENV;

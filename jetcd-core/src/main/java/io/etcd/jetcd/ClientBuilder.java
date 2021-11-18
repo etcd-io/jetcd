@@ -21,26 +21,28 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.net.ssl.SSLException;
 
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
-import io.etcd.jetcd.spi.EndpointTargetResolver;
+import io.etcd.jetcd.resolver.IPNameResolver;
 import io.grpc.ClientInterceptor;
 import io.grpc.Metadata;
 import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+
+import com.google.common.base.Strings;
+import com.google.common.collect.Streams;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -51,7 +53,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public final class ClientBuilder implements Cloneable {
 
-    private final Set<URI> endpoints = new HashSet<>();
+    private String target;
     private ByteSequence user;
     private ByteSequence password;
     private ExecutorService executorService;
@@ -72,57 +74,37 @@ public final class ClientBuilder implements Cloneable {
     private Boolean keepaliveWithoutCalls = true;
     private Duration retryMaxDuration;
     private Duration connectTimeout;
-    private EndpointTargetResolver endpointTargetResolver;
     private boolean waitForReady = true;
 
     ClientBuilder() {
     }
 
     /**
-     * gets the endpoints for the builder.
+     * Gets the etcd target.
      *
-     * @return the list of endpoints configured for the builder
+     * @return the etcd target.
      */
-    public Collection<URI> endpoints() {
-        return Collections.unmodifiableCollection(this.endpoints);
+    public String target() {
+        return target;
     }
 
     /**
      * configure etcd server endpoints.
      *
-     * @param  endpoints                etcd server endpoints, at least one
-     * @return                          this builder to train
-     * @throws NullPointerException     if endpoints is null or one of endpoint is null
-     * @throws IllegalArgumentException if some endpoint is invalid
+     * @param  target               etcd server target
+     * @return                      this builder to train
+     * @throws NullPointerException if target is null or one of endpoint is null
      */
-    public ClientBuilder endpoints(Collection<URI> endpoints) {
-        checkNotNull(endpoints, "endpoints can't be null");
+    public ClientBuilder target(String target) {
+        checkArgument(!Strings.isNullOrEmpty(target), "target can't be null or empty");
 
-        for (URI endpoint : endpoints) {
-            checkNotNull(endpoint, "endpoint can't be null");
-            checkArgument(endpoint.toString().trim().length() > 0, "invalid endpoint: endpoint=" + endpoint);
-            this.endpoints.add(endpoint);
-        }
+        this.target = target;
 
         return this;
     }
 
     /**
-     * configure etcd server endpoints.
-     *
-     * @param  endpoints                etcd server endpoints, at least one
-     * @return                          this builder to train
-     * @throws NullPointerException     if endpoints is null or one of endpoint is null
-     * @throws IllegalArgumentException if some endpoint is invalid
-     */
-    public ClientBuilder endpoints(URI... endpoints) {
-        checkNotNull(endpoints, "endpoints can't be null");
-
-        return endpoints(Arrays.asList(endpoints));
-    }
-
-    /**
-     * configure etcd server endpoints.
+     * configure etcd server endpoints using the {@link IPNameResolver}.
      *
      * @param  endpoints                etcd server endpoints, at least one
      * @return                          this builder to train
@@ -130,7 +112,54 @@ public final class ClientBuilder implements Cloneable {
      * @throws IllegalArgumentException if some endpoint is invalid
      */
     public ClientBuilder endpoints(String... endpoints) {
-        return endpoints(Util.toURIs(Arrays.asList(endpoints)));
+        return endpoints(
+            Stream.of(endpoints).map(URI::create).toArray(URI[]::new));
+    }
+
+    /**
+     * configure etcd server endpoints using the {@link IPNameResolver}.
+     *
+     * @param  endpoints                etcd server endpoints, at least one
+     * @return                          this builder to train
+     * @throws NullPointerException     if endpoints is null or one of endpoint is null
+     * @throws IllegalArgumentException if some endpoint is invalid
+     */
+    public ClientBuilder endpoints(URI... endpoints) {
+        return endpoints(Arrays.asList(endpoints));
+    }
+
+    /**
+     * configure etcd server endpoints using the {@link IPNameResolver}.
+     *
+     * @param  endpoints                etcd server endpoints, at least one
+     * @return                          this builder to train
+     * @throws NullPointerException     if endpoints is null or one of endpoint is null
+     * @throws IllegalArgumentException if some endpoint is invalid
+     */
+    public ClientBuilder endpoints(Iterable<URI> endpoints) {
+        checkNotNull(endpoints, "endpoints can't be null");
+
+        endpoints.forEach(e -> {
+            if (e.getHost() == null) {
+                throw new IllegalArgumentException("Unable to compute target from endpoint: '" + e + "'");
+            }
+        });
+
+        final String target = Streams.stream(endpoints)
+            .map(e -> e.getHost() + (e.getPort() != -1 ? (":" + e.getPort()) : ""))
+            .distinct()
+            .collect(Collectors.joining(","));
+
+        if (Strings.isNullOrEmpty(target)) {
+            throw new IllegalArgumentException("Unable to compute target from endpoints: '" + endpoints + "'");
+        }
+
+        return target(
+            String.format(
+                "%s://%s/%s",
+                IPNameResolver.SCHEME,
+                authority != null ? authority : "",
+                target));
     }
 
     /**
@@ -601,24 +630,6 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * Returns the endpoint target resolver.
-     */
-    public EndpointTargetResolver endpointTargetResolver() {
-        return endpointTargetResolver;
-    }
-
-    /**
-     * Sets the endpoint target resolver..
-     *
-     * @param  endpointTargetResolver the resolver.
-     * @return                        this builder
-     */
-    public ClientBuilder endpointTargetResolver(EndpointTargetResolver endpointTargetResolver) {
-        this.endpointTargetResolver = endpointTargetResolver;
-        return this;
-    }
-
-    /**
      * Enable gRPC's wait for ready semantics.
      *
      * @return if this client uses gRPC's wait for ready semantics.
@@ -648,7 +659,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws EtcdException if client experiences build error.
      */
     public Client build() {
-        checkState(!endpoints.isEmpty(), "please configure etcd server endpoints before build.");
+        checkState(target != null, "please configure etcd server endpoints before build.");
 
         return new ClientImpl(this);
     }

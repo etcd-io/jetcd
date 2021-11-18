@@ -13,12 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.etcd.jetcd.spi;
+
+package io.etcd.jetcd.resolver;
 
 import java.net.URI;
-import java.util.Collection;
 
-@FunctionalInterface
-public interface EndpointTargetResolver {
-    String resolve(String authority, Collection<URI> endpoints);
+import io.grpc.NameResolver;
+import io.grpc.NameResolverProvider;
+
+import com.google.auto.service.AutoService;
+
+@AutoService(NameResolverProvider.class)
+public class HttpResolverProvider extends AbstractResolverProvider {
+    public HttpResolverProvider() {
+        super(HttpNameResolver.SCHEME, 5);
+    }
+
+    @Override
+    protected NameResolver createResolver(URI targetUri, NameResolver.Args args) {
+        return new HttpNameResolver(targetUri);
+    }
 }
