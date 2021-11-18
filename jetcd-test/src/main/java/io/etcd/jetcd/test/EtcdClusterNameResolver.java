@@ -55,7 +55,7 @@ public class EtcdClusterNameResolver extends NameResolver {
     public EtcdClusterNameResolver(URI targetUri) {
         this.lock = new Object();
         this.targetUri = targetUri;
-        this.authority = targetUri.getPath().replace("/", "");
+        this.authority = targetUri.getAuthority();
     }
 
     @Override

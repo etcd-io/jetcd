@@ -37,10 +37,18 @@ dependencies {
 ### Usage
 
 ```java
-// create client
-Client client = Client.builder().endpoints("http://localhost:2379").build();
-KV kvClient = client.getKVClient();
+// create client using endpoints
+Client client = Client.builder().endpoints("http://etcd0:2379", "http://etcd1:2379", "http://etcd2:2379").build();
+```
 
+```java
+// create client using target which enable using any name resolution mechanism provided
+// by grpc-java (i.e. dns:///foo.bar.com:2379)
+Client client = Client.builder().target("ip:///etcd0:2379,etcd1:2379,etcd2:2379").build();
+```
+
+```java
+KV kvClient = client.getKVClient();
 ByteSequence key = ByteSequence.from("test_key".getBytes());
 ByteSequence value = ByteSequence.from("test_value".getBytes());
 

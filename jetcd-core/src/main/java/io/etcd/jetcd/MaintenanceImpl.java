@@ -56,11 +56,6 @@ final class MaintenanceImpl implements Maintenance {
         this.streamStub = connectionManager.newStub(MaintenanceGrpc::newStub);
     }
 
-    /**
-     * get all active keyspace alarm.
-     *
-     * @return alarm list
-     */
     @Override
     public CompletableFuture<AlarmResponse> listAlarms() {
         AlarmRequest alarmRequest = AlarmRequest.newBuilder()
@@ -73,12 +68,6 @@ final class MaintenanceImpl implements Maintenance {
             this.connectionManager.getExecutorService());
     }
 
-    /**
-     * disarms a given alarm.
-     *
-     * @param  member the alarm
-     * @return        the response result
-     */
     @Override
     public CompletableFuture<AlarmResponse> alarmDisarm(io.etcd.jetcd.maintenance.AlarmMember member) {
         checkArgument(member.getMemberId() != 0, "the member id can not be 0");
@@ -94,27 +83,11 @@ final class MaintenanceImpl implements Maintenance {
             this.connectionManager.getExecutorService());
     }
 
-    /**
-     * defragment one member of the cluster.
-     *
-     * <p>
-     * After compacting the keyspace, the backend database may exhibit internal
-     * fragmentation. Any internal fragmentation is space that is free to use
-     * by the backend but still consumes storage space. The process of
-     * defragmentation releases this storage space back to the file system.
-     * Defragmentation is issued on a per-member so that cluster-wide latency
-     * spikes may be avoided.
-     *
-     * <p>
-     * Defragment is an expensive operation. User should avoid defragmenting
-     * multiple members at the same time.
-     * To defragment multiple members in the cluster, user need to call defragment
-     * multiple times with different endpoints.
-     */
     @Override
     public CompletableFuture<DefragmentResponse> defragmentMember(URI endpoint) {
         return this.connectionManager.withNewChannel(
-            endpoint,
+            // TODO
+            endpoint.toString(),
             MaintenanceGrpc::newFutureStub,
             stub -> Util.toCompletableFuture(
                 stub.defragment(DefragmentRequest.getDefaultInstance()),
@@ -122,13 +95,33 @@ final class MaintenanceImpl implements Maintenance {
                 this.connectionManager.getExecutorService()));
     }
 
-    /**
-     * get the status of one member.
-     */
+    @Override
+    public CompletableFuture<DefragmentResponse> defragmentMember(String target) {
+        return this.connectionManager.withNewChannel(
+            target,
+            MaintenanceGrpc::newFutureStub,
+            stub -> Util.toCompletableFuture(
+                stub.defragment(DefragmentRequest.getDefaultInstance()),
+                DefragmentResponse::new,
+                this.connectionManager.getExecutorService()));
+    }
+
     @Override
     public CompletableFuture<StatusResponse> statusMember(URI endpoint) {
         return this.connectionManager.withNewChannel(
-            endpoint,
+            // TODO
+            endpoint.toString(),
+            MaintenanceGrpc::newFutureStub,
+            stub -> Util.toCompletableFuture(
+                stub.status(StatusRequest.getDefaultInstance()),
+                StatusResponse::new,
+                this.connectionManager.getExecutorService()));
+    }
+
+    @Override
+    public CompletableFuture<StatusResponse> statusMember(String target) {
+        return this.connectionManager.withNewChannel(
+            target,
             MaintenanceGrpc::newFutureStub,
             stub -> Util.toCompletableFuture(
                 stub.status(StatusRequest.getDefaultInstance()),
@@ -147,7 +140,19 @@ final class MaintenanceImpl implements Maintenance {
     @Override
     public CompletableFuture<HashKVResponse> hashKV(URI endpoint, long rev) {
         return this.connectionManager.withNewChannel(
-            endpoint,
+            // TODO
+            endpoint.toString(),
+            MaintenanceGrpc::newFutureStub,
+            stub -> Util.toCompletableFuture(
+                stub.hashKV(HashKVRequest.newBuilder().setRevision(rev).build()),
+                HashKVResponse::new,
+                this.connectionManager.getExecutorService()));
+    }
+
+    @Override
+    public CompletableFuture<HashKVResponse> hashKV(String target, long rev) {
+        return this.connectionManager.withNewChannel(
+            target,
             MaintenanceGrpc::newFutureStub,
             stub -> Util.toCompletableFuture(
                 stub.hashKV(HashKVRequest.newBuilder().setRevision(rev).build()),

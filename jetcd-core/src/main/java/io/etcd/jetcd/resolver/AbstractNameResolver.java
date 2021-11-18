@@ -37,6 +37,8 @@ import io.grpc.internal.SharedResourceHolder;
 import com.google.common.base.Preconditions;
 
 public abstract class AbstractNameResolver extends NameResolver {
+    public static final int ETCD_CLIENT_PORT = 2379;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractNameResolver.class);
 
     private final Object lock;

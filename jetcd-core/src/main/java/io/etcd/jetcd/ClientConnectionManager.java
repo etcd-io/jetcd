@@ -16,9 +16,6 @@
 
 package io.etcd.jetcd;
 
-import java.net.URI;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -32,8 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.etcd.jetcd.auth.AuthInterceptor;
-import io.etcd.jetcd.resolver.EndpointTargetResolvers;
-import io.etcd.jetcd.spi.EndpointTargetResolver;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -138,10 +133,11 @@ final class ClientConnectionManager {
         }
     }
 
-    <T extends AbstractStub<T>, R> CompletableFuture<R> withNewChannel(URI endpoint, Function<ManagedChannel, T> stubCustomizer,
+    <T extends AbstractStub<T>, R> CompletableFuture<R> withNewChannel(String target,
+        Function<ManagedChannel, T> stubCustomizer,
         Function<T, CompletableFuture<R>> stubConsumer) {
 
-        final ManagedChannel channel = defaultChannelBuilder(Collections.singletonList(endpoint)).build();
+        final ManagedChannel channel = defaultChannelBuilder(target).build();
         final T stub = newStub(stubCustomizer, channel);
 
         try {
@@ -154,25 +150,17 @@ final class ClientConnectionManager {
 
     @VisibleForTesting
     ManagedChannelBuilder<?> defaultChannelBuilder() {
-        return defaultChannelBuilder(builder.endpoints());
+        return defaultChannelBuilder(builder.target());
     }
 
     @VisibleForTesting
     @SuppressWarnings("rawtypes")
-    ManagedChannelBuilder<?> defaultChannelBuilder(Collection<URI> endpoints) {
-        if (endpoints.isEmpty()) {
+    ManagedChannelBuilder<?> defaultChannelBuilder(String target) {
+        if (target == null) {
             throw new IllegalArgumentException("At least one endpoint should be provided");
         }
 
-        EndpointTargetResolver tr = builder.endpointTargetResolver();
-        if (tr == null) {
-            tr = EndpointTargetResolvers.IP;
-        }
-
-        final String target = tr.resolve(builder.authority(), endpoints);
         final NettyChannelBuilder channelBuilder = NettyChannelBuilder.forTarget(target);
-
-        LOGGER.info(">>> endpoint: {}, target: {}", endpoints, target);
 
         if (builder.authority() != null) {
             channelBuilder.overrideAuthority(builder.authority());
