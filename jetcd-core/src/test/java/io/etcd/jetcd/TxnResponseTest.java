@@ -16,8 +16,11 @@
 
 package io.etcd.jetcd;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import io.etcd.jetcd.api.DeleteRangeResponse;
 import io.etcd.jetcd.api.PutResponse;
@@ -27,6 +30,7 @@ import io.etcd.jetcd.kv.TxnResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class TxnResponseTest {
 
     private TxnResponse txnResponse;

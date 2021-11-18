@@ -19,6 +19,7 @@ package io.etcd.jetcd;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -38,7 +39,7 @@ import static org.awaitility.Awaitility.await;
 @Timeout(value = 30)
 public class WatchTokenExpireTest {
     // create a cluster with SSL enabled, because otherwise volumes with certificates are not mapped
-    // to test Docker container. setup JWT authentication provider, it allows to configure short
+    // to test Docker container. setup JWT authentication provider, it allows configuring short
     // time-to-live of the token.
 
     @RegisterExtension
@@ -55,7 +56,7 @@ public class WatchTokenExpireTest {
     private static final ByteSequence password = TestUtil.randomByteSequence();
 
     private void setUpEnvironment() throws Exception {
-        final File caFile = new File(getClass().getResource("/ssl/cert/ca.pem").toURI());
+        final File caFile = new File(Objects.requireNonNull(getClass().getResource("/ssl/cert/ca.pem")).toURI());
 
         Client client = TestUtil.client(cluster)
             .authority("etcd0")
@@ -75,7 +76,7 @@ public class WatchTokenExpireTest {
     }
 
     private Client createAuthClient() throws Exception {
-        final File caFile = new File(getClass().getResource("/ssl/cert/ca.pem").toURI());
+        final File caFile = new File(Objects.requireNonNull(getClass().getResource("/ssl/cert/ca.pem")).toURI());
 
         return TestUtil.client(cluster)
             .user(user)

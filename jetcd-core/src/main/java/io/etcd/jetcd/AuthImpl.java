@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 
 import io.etcd.jetcd.api.AuthDisableRequest;
 import io.etcd.jetcd.api.AuthEnableRequest;
-import io.etcd.jetcd.api.AuthGrpc;
 import io.etcd.jetcd.api.AuthRoleAddRequest;
 import io.etcd.jetcd.api.AuthRoleDeleteRequest;
 import io.etcd.jetcd.api.AuthRoleGetRequest;
@@ -34,6 +33,7 @@ import io.etcd.jetcd.api.AuthUserGetRequest;
 import io.etcd.jetcd.api.AuthUserGrantRoleRequest;
 import io.etcd.jetcd.api.AuthUserListRequest;
 import io.etcd.jetcd.api.AuthUserRevokeRoleRequest;
+import io.etcd.jetcd.api.VertxAuthGrpc;
 import io.etcd.jetcd.auth.AuthDisableResponse;
 import io.etcd.jetcd.auth.AuthEnableResponse;
 import io.etcd.jetcd.auth.AuthRoleAddResponse;
@@ -56,28 +56,30 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Implementation of etcd auth client.
  */
-final class AuthImpl implements Auth {
+final class AuthImpl extends Impl implements Auth {
 
-    private final AuthGrpc.AuthFutureStub stub;
-    private final ClientConnectionManager connectionManager;
+    private final VertxAuthGrpc.AuthVertxStub stub;
 
     AuthImpl(ClientConnectionManager connectionManager) {
-        this.connectionManager = connectionManager;
-        this.stub = connectionManager.newStub(AuthGrpc::newFutureStub);
+        super(connectionManager);
+
+        this.stub = connectionManager.newStub(VertxAuthGrpc::newVertxStub);
     }
 
     @Override
     public CompletableFuture<AuthEnableResponse> authEnable() {
         AuthEnableRequest enableRequest = AuthEnableRequest.getDefaultInstance();
-        return Util.toCompletableFuture(this.stub.authEnable(enableRequest), AuthEnableResponse::new,
-            this.connectionManager.getExecutorService());
+        return completable(
+            this.stub.authEnable(enableRequest),
+            AuthEnableResponse::new);
     }
 
     @Override
     public CompletableFuture<AuthDisableResponse> authDisable() {
         AuthDisableRequest disableRequest = AuthDisableRequest.getDefaultInstance();
-        return Util.toCompletableFuture(this.stub.authDisable(disableRequest), AuthDisableResponse::new,
-            this.connectionManager.getExecutorService());
+        return completable(
+            this.stub.authDisable(disableRequest),
+            AuthDisableResponse::new);
     }
 
     @Override
@@ -85,19 +87,27 @@ final class AuthImpl implements Auth {
         checkNotNull(user, "user can't be null");
         checkNotNull(password, "password can't be null");
 
-        AuthUserAddRequest addRequest = AuthUserAddRequest.newBuilder().setNameBytes(user.getByteString())
-            .setPasswordBytes(password.getByteString()).build();
-        return Util.toCompletableFuture(this.stub.userAdd(addRequest), AuthUserAddResponse::new,
-            this.connectionManager.getExecutorService());
+        AuthUserAddRequest addRequest = AuthUserAddRequest.newBuilder()
+            .setNameBytes(user.getByteString())
+            .setPasswordBytes(password.getByteString())
+            .build();
+
+        return completable(
+            this.stub.userAdd(addRequest),
+            AuthUserAddResponse::new);
     }
 
     @Override
     public CompletableFuture<AuthUserDeleteResponse> userDelete(ByteSequence user) {
         checkNotNull(user, "user can't be null");
 
-        AuthUserDeleteRequest deleteRequest = AuthUserDeleteRequest.newBuilder().setNameBytes(user.getByteString()).build();
-        return Util.toCompletableFuture(this.stub.userDelete(deleteRequest), AuthUserDeleteResponse::new,
-            this.connectionManager.getExecutorService());
+        AuthUserDeleteRequest deleteRequest = AuthUserDeleteRequest.newBuilder()
+            .setNameBytes(user.getByteString())
+            .build();
+
+        return completable(
+            this.stub.userDelete(deleteRequest),
+            AuthUserDeleteResponse::new);
     }
 
     @Override
@@ -106,25 +116,35 @@ final class AuthImpl implements Auth {
         checkNotNull(password, "password can't be null");
 
         AuthUserChangePasswordRequest changePasswordRequest = AuthUserChangePasswordRequest.newBuilder()
-            .setNameBytes(user.getByteString()).setPasswordBytes(password.getByteString()).build();
-        return Util.toCompletableFuture(this.stub.userChangePassword(changePasswordRequest),
-            AuthUserChangePasswordResponse::new, this.connectionManager.getExecutorService());
+            .setNameBytes(user.getByteString())
+            .setPasswordBytes(password.getByteString())
+            .build();
+
+        return completable(
+            this.stub.userChangePassword(changePasswordRequest),
+            AuthUserChangePasswordResponse::new);
     }
 
     @Override
     public CompletableFuture<AuthUserGetResponse> userGet(ByteSequence user) {
         checkNotNull(user, "user can't be null");
 
-        AuthUserGetRequest userGetRequest = AuthUserGetRequest.newBuilder().setNameBytes(user.getByteString()).build();
-        return Util.toCompletableFuture(this.stub.userGet(userGetRequest), AuthUserGetResponse::new,
-            this.connectionManager.getExecutorService());
+        AuthUserGetRequest userGetRequest = AuthUserGetRequest.newBuilder()
+            .setNameBytes(user.getByteString())
+            .build();
+
+        return completable(
+            this.stub.userGet(userGetRequest),
+            AuthUserGetResponse::new);
     }
 
     @Override
     public CompletableFuture<AuthUserListResponse> userList() {
         AuthUserListRequest userListRequest = AuthUserListRequest.getDefaultInstance();
-        return Util.toCompletableFuture(this.stub.userList(userListRequest), AuthUserListResponse::new,
-            this.connectionManager.getExecutorService());
+
+        return completable(
+            this.stub.userList(userListRequest),
+            AuthUserListResponse::new);
     }
 
     @Override
@@ -132,10 +152,14 @@ final class AuthImpl implements Auth {
         checkNotNull(user, "user can't be null");
         checkNotNull(role, "key can't be null");
 
-        AuthUserGrantRoleRequest userGrantRoleRequest = AuthUserGrantRoleRequest.newBuilder().setUserBytes(user.getByteString())
-            .setRoleBytes(role.getByteString()).build();
-        return Util.toCompletableFuture(this.stub.userGrantRole(userGrantRoleRequest), AuthUserGrantRoleResponse::new,
-            this.connectionManager.getExecutorService());
+        AuthUserGrantRoleRequest userGrantRoleRequest = AuthUserGrantRoleRequest.newBuilder()
+            .setUserBytes(user.getByteString())
+            .setRoleBytes(role.getByteString())
+            .build();
+
+        return completable(
+            this.stub.userGrantRole(userGrantRoleRequest),
+            AuthUserGrantRoleResponse::new);
     }
 
     @Override
@@ -144,9 +168,13 @@ final class AuthImpl implements Auth {
         checkNotNull(role, "key can't be null");
 
         AuthUserRevokeRoleRequest userRevokeRoleRequest = AuthUserRevokeRoleRequest.newBuilder()
-            .setNameBytes(user.getByteString()).setRoleBytes(role.getByteString()).build();
-        return Util.toCompletableFuture(this.stub.userRevokeRole(userRevokeRoleRequest), AuthUserRevokeRoleResponse::new,
-            this.connectionManager.getExecutorService());
+            .setNameBytes(user.getByteString())
+            .setRoleBytes(role.getByteString())
+            .build();
+
+        return completable(
+            this.stub.userRevokeRole(userRevokeRoleRequest),
+            AuthUserRevokeRoleResponse::new);
     }
 
     @Override
@@ -154,8 +182,10 @@ final class AuthImpl implements Auth {
         checkNotNull(user, "user can't be null");
 
         AuthRoleAddRequest roleAddRequest = AuthRoleAddRequest.newBuilder().setNameBytes(user.getByteString()).build();
-        return Util.toCompletableFuture(this.stub.roleAdd(roleAddRequest), AuthRoleAddResponse::new,
-            this.connectionManager.getExecutorService());
+
+        return completable(
+            this.stub.roleAdd(roleAddRequest),
+            AuthRoleAddResponse::new);
     }
 
     @Override
@@ -187,29 +217,37 @@ final class AuthImpl implements Auth {
             .setRangeEnd(rangeEnd.getByteString())
             .setPermType(type)
             .build();
+
         AuthRoleGrantPermissionRequest roleGrantPermissionRequest = AuthRoleGrantPermissionRequest.newBuilder()
             .setNameBytes(role.getByteString())
             .setPerm(perm)
             .build();
 
-        return Util.toCompletableFuture(this.stub.roleGrantPermission(roleGrantPermissionRequest),
-            AuthRoleGrantPermissionResponse::new, this.connectionManager.getExecutorService());
+        return completable(
+            this.stub.roleGrantPermission(roleGrantPermissionRequest),
+            AuthRoleGrantPermissionResponse::new);
     }
 
     @Override
     public CompletableFuture<AuthRoleGetResponse> roleGet(ByteSequence role) {
         checkNotNull(role, "role can't be null");
 
-        AuthRoleGetRequest roleGetRequest = AuthRoleGetRequest.newBuilder().setRoleBytes(role.getByteString()).build();
-        return Util.toCompletableFuture(this.stub.roleGet(roleGetRequest), AuthRoleGetResponse::new,
-            this.connectionManager.getExecutorService());
+        AuthRoleGetRequest roleGetRequest = AuthRoleGetRequest.newBuilder()
+            .setRoleBytes(role.getByteString())
+            .build();
+
+        return completable(
+            this.stub.roleGet(roleGetRequest),
+            AuthRoleGetResponse::new);
     }
 
     @Override
     public CompletableFuture<AuthRoleListResponse> roleList() {
         AuthRoleListRequest roleListRequest = AuthRoleListRequest.getDefaultInstance();
-        return Util.toCompletableFuture(this.stub.roleList(roleListRequest), AuthRoleListResponse::new,
-            this.connectionManager.getExecutorService());
+
+        return completable(
+            this.stub.roleList(roleListRequest),
+            AuthRoleListResponse::new);
     }
 
     @Override
@@ -220,17 +258,25 @@ final class AuthImpl implements Auth {
         checkNotNull(rangeEnd, "rangeEnd can't be null");
 
         AuthRoleRevokePermissionRequest roleRevokePermissionRequest = AuthRoleRevokePermissionRequest.newBuilder()
-            .setRoleBytes(role.getByteString()).setKeyBytes(key.getByteString()).setRangeEndBytes(rangeEnd.getByteString())
+            .setRoleBytes(role.getByteString())
+            .setKeyBytes(key.getByteString())
+            .setRangeEndBytes(rangeEnd.getByteString())
             .build();
-        return Util.toCompletableFuture(this.stub.roleRevokePermission(roleRevokePermissionRequest),
-            AuthRoleRevokePermissionResponse::new, this.connectionManager.getExecutorService());
+
+        return completable(
+            this.stub.roleRevokePermission(roleRevokePermissionRequest),
+            AuthRoleRevokePermissionResponse::new);
     }
 
     @Override
     public CompletableFuture<AuthRoleDeleteResponse> roleDelete(ByteSequence role) {
         checkNotNull(role, "role can't be null");
-        AuthRoleDeleteRequest roleDeleteRequest = AuthRoleDeleteRequest.newBuilder().setRoleBytes(role.getByteString()).build();
-        return Util.toCompletableFuture(this.stub.roleDelete(roleDeleteRequest), AuthRoleDeleteResponse::new,
-            this.connectionManager.getExecutorService());
+        AuthRoleDeleteRequest roleDeleteRequest = AuthRoleDeleteRequest.newBuilder()
+            .setRoleBytes(role.getByteString())
+            .build();
+
+        return completable(
+            this.stub.roleDelete(roleDeleteRequest),
+            AuthRoleDeleteResponse::new);
     }
 }

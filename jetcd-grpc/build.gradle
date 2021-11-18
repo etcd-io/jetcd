@@ -21,6 +21,7 @@ plugins {
 dependencies {
     api libs.slf4j
     api libs.javaxAnnotation
+    api libs.vertxGrpc
 
     api(libs.guava) {
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
@@ -55,10 +56,14 @@ protobuf {
         grpc {
             artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
         }
+        vertx {
+            artifact = "io.vertx:vertx-grpc-protoc-plugin:${vertxVersion}"
+        }
     }
     generateProtoTasks {
         all()*.plugins {
-            grpc {}
+            grpc
+            vertx
         }
     }
 }
@@ -66,8 +71,9 @@ protobuf {
 sourceSets {
     main {
         java {
-            srcDirs "${projectDir}/build/generated/proto/main/java"
-            srcDirs "${projectDir}/build/generated/proto/main/grpc"
+            srcDirs "${projectDir}/build/generated/source/proto/main/java"
+            srcDirs "${projectDir}/build/generated/source/proto/main/grpc"
+            srcDirs "${projectDir}/build/generated/source/proto/main/vertx"
         }
     }
 }
