@@ -51,6 +51,19 @@ public class ClusterClientTest {
         .withNetwork(NETWORK)
         .build();
 
+    @RegisterExtension
+    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+        .withNodes(3)
+        .withPrefix("cluster")
+        .build();
+
+    @Test
+    public void testMemberList() throws ExecutionException, InterruptedException {
+        try (Client client = TestUtil.client(cluster).build()) {
+            assertThat(client.getClusterClient().listMember().get().getMembers()).hasSize(3);
+        }
+    }
+
     @Test
     public void testMemberManagement() throws ExecutionException, InterruptedException, TimeoutException {
         final Client client = Client.builder().endpoints(n1.clientEndpoints()).build();
