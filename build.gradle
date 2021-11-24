@@ -26,6 +26,7 @@ buildscript {
         classpath "com.adarshr:gradle-test-logger-plugin:$testLoggerPluginVersion"
         classpath "se.ascp.gradle:gradle-versions-filter:$versionsFilterPluginVersion"
         classpath "pl.allegro.tech.build:axion-release-plugin:$axionReleasePluginVersion"
+        classpath "org.gradle:test-retry-gradle-plugin:$testRetryPluginVersion"
     }
 }
 
@@ -49,7 +50,8 @@ subprojects {
     apply from: "${rootProject.projectDir}/gradle/publishing-release-tasks.gradle"
 
     apply plugin: 'java-library'
-    apply plugin: "com.adarshr.test-logger"
+    apply plugin: 'com.adarshr.test-logger'
+    apply plugin: 'org.gradle.test-retry'
 
     java {
         toolchain {
@@ -60,7 +62,12 @@ subprojects {
     test {
         useJUnitPlatform()
 
-        maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+        maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
+
+        retry {
+            maxRetries = 3
+            maxFailures = 5
+        }
     }
 
     testlogger {
