@@ -1,6 +1,6 @@
 ### jetcd-ctl
 
-Download and start an etcd node from [instruction](https://github.com/etcd-io/etcd/blob/master/Documentation/dl_build.md)
+Download and start an etcd node from [instruction](https://github.com/etcd-io/etcd/releases/latest)
 
 Put `foo` `bar` into the cluster:
 
@@ -36,10 +36,6 @@ Watch `foo` since revision 2:
 
 ```bash
 $ gradle run --args="watch foo --rev=2"
-21:43:51.360|INFO |CommandWatch - PUT
-21:43:51.361|INFO |CommandWatch - foo
-21:43:51.361|INFO |CommandWatch - bar
-21:43:51.361|INFO |CommandWatch - PUT
-21:43:51.362|INFO |CommandWatch - foo
-21:43:51.362|INFO |CommandWatch - bar2
+21:35:09.162|INFO |CommandWatch - type=PUT, key=foo, value=bar
+21:35:09.164|INFO |CommandWatch - type=PUT, key=foo, value=bar2
 ```
