@@ -29,7 +29,7 @@ Development snapshots are available in [Sonatypes's snapshot repository](https:/
 
 ```
 dependencies {
-    compile "io.etcd:jetcd-core:$jetcd-version"
+    implementation "io.etcd:jetcd-core:$jetcd-version"
 }
 ```
 
