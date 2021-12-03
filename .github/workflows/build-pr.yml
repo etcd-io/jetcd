@@ -17,7 +17,7 @@
 name: Build PR
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
+  group: pr-${{ github.head_ref }}
   cancel-in-progress: true
 
 on:
