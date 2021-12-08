@@ -53,7 +53,7 @@ public final class WatchOption {
         }
 
         /**
-         * Provide the revision to use for the get request.
+         * Provide the revision to use for the watch request.
          *
          * <p>
          * If the revision is less or equal to zero, the get is over the newest key-value store.
@@ -70,7 +70,7 @@ public final class WatchOption {
         }
 
         /**
-         * Set the end key of the get request. If it is set, the get request will return the keys from
+         * Set the end key of the watch request. If it is set, the get request will return the keys from
          * <i>key</i> to <i>endKey</i> (exclusive).
          *
          * <p>

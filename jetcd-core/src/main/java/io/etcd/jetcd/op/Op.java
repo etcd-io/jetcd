@@ -17,10 +17,7 @@
 package io.etcd.jetcd.op;
 
 import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.Util;
-import io.etcd.jetcd.api.DeleteRangeRequest;
-import io.etcd.jetcd.api.PutRequest;
-import io.etcd.jetcd.api.RangeRequest;
+import io.etcd.jetcd.ProtoRequestMapper;
 import io.etcd.jetcd.api.RequestOp;
 import io.etcd.jetcd.api.TxnRequest;
 import io.etcd.jetcd.options.DeleteOption;
@@ -28,9 +25,6 @@ import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
 
 import com.google.protobuf.ByteString;
-
-import static io.etcd.jetcd.options.OptionsUtil.toRangeRequestSortOrder;
-import static io.etcd.jetcd.options.OptionsUtil.toRangeRequestSortTarget;
 
 /**
  * Etcd Operation.
@@ -83,10 +77,10 @@ public abstract class Op {
 
         @Override
         RequestOp toRequestOp(ByteSequence namespace) {
-            PutRequest put = PutRequest.newBuilder().setKey(Util.prefixNamespace(this.key, namespace)).setValue(this.value)
-                .setLease(this.option.getLeaseId()).setPrevKv(this.option.getPrevKV()).build();
-
-            return RequestOp.newBuilder().setRequestPut(put).build();
+            return RequestOp.newBuilder()
+                .setRequestPut(
+                    ProtoRequestMapper.mapPutRequest(ByteSequence.from(key), ByteSequence.from(value), option, namespace))
+                .build();
         }
     }
 
@@ -101,18 +95,9 @@ public abstract class Op {
 
         @Override
         RequestOp toRequestOp(ByteSequence namespace) {
-            RangeRequest.Builder range = RangeRequest.newBuilder().setKey(Util.prefixNamespace(this.key, namespace))
-                .setCountOnly(this.option.isCountOnly()).setLimit(this.option.getLimit())
-                .setRevision(this.option.getRevision()).setKeysOnly(this.option.isKeysOnly())
-                .setSerializable(this.option.isSerializable())
-                .setSortOrder(toRangeRequestSortOrder(this.option.getSortOrder()))
-                .setSortTarget(toRangeRequestSortTarget(this.option.getSortField()));
-
-            this.option.getEndKey()
-                .map(endKey -> Util.prefixNamespaceToRangeEnd(ByteString.copyFrom(endKey.getBytes()), namespace))
-                .ifPresent(range::setRangeEnd);
-
-            return RequestOp.newBuilder().setRequestRange(range).build();
+            return RequestOp.newBuilder()
+                .setRequestRange(ProtoRequestMapper.mapRangeRequest(ByteSequence.from(key), option, namespace))
+                .build();
         }
     }
 
@@ -127,14 +112,9 @@ public abstract class Op {
 
         @Override
         RequestOp toRequestOp(ByteSequence namespace) {
-            DeleteRangeRequest.Builder delete = DeleteRangeRequest.newBuilder()
-                .setKey(Util.prefixNamespace(this.key, namespace)).setPrevKv(this.option.isPrevKV());
-
-            this.option.getEndKey()
-                .map(endKey -> Util.prefixNamespaceToRangeEnd(ByteString.copyFrom(endKey.getBytes()), namespace))
-                .ifPresent(delete::setRangeEnd);
-
-            return RequestOp.newBuilder().setRequestDeleteRange(delete).build();
+            return RequestOp.newBuilder()
+                .setRequestDeleteRange(ProtoRequestMapper.mapDeleteRequest(ByteSequence.from(key), option, namespace))
+                .build();
         }
     }
 

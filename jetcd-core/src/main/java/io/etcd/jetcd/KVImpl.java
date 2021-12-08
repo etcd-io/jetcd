@@ -19,10 +19,7 @@ package io.etcd.jetcd;
 import java.util.concurrent.CompletableFuture;
 
 import io.etcd.jetcd.api.CompactionRequest;
-import io.etcd.jetcd.api.DeleteRangeRequest;
 import io.etcd.jetcd.api.KVGrpc;
-import io.etcd.jetcd.api.PutRequest;
-import io.etcd.jetcd.api.RangeRequest;
 import io.etcd.jetcd.kv.CompactResponse;
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
@@ -32,12 +29,9 @@ import io.etcd.jetcd.op.TxnImpl;
 import io.etcd.jetcd.options.CompactOption;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
-import io.etcd.jetcd.options.OptionsUtil;
 import io.etcd.jetcd.options.PutOption;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static io.etcd.jetcd.options.OptionsUtil.toRangeRequestSortOrder;
-import static io.etcd.jetcd.options.OptionsUtil.toRangeRequestSortTarget;
 
 /**
  * Implementation of etcd kv client.
@@ -66,16 +60,8 @@ final class KVImpl implements KV {
         checkNotNull(key, "key should not be null");
         checkNotNull(value, "value should not be null");
         checkNotNull(option, "option should not be null");
-
-        PutRequest request = PutRequest.newBuilder()
-            .setKey(Util.prefixNamespace(key.getByteString(), namespace))
-            .setValue(value.getByteString())
-            .setLease(option.getLeaseId())
-            .setPrevKv(option.getPrevKV())
-            .build();
-
         return connectionManager.execute(
-            () -> stub.put(request),
+            () -> stub.put(ProtoRequestMapper.mapPutRequest(key, value, option, namespace)),
             response -> new PutResponse(response, namespace),
             Util::isRetryable);
     }
@@ -89,33 +75,8 @@ final class KVImpl implements KV {
     public CompletableFuture<GetResponse> get(ByteSequence key, GetOption option) {
         checkNotNull(key, "key should not be null");
         checkNotNull(option, "option should not be null");
-
-        RangeRequest.Builder builder = RangeRequest.newBuilder()
-            .setKey(Util.prefixNamespace(key.getByteString(), namespace))
-            .setCountOnly(option.isCountOnly())
-            .setLimit(option.getLimit())
-            .setRevision(option.getRevision())
-            .setKeysOnly(option.isKeysOnly())
-            .setSerializable(option.isSerializable())
-            .setSortOrder(toRangeRequestSortOrder(option.getSortOrder()))
-            .setSortTarget(toRangeRequestSortTarget(option.getSortField()))
-            .setMinCreateRevision(option.getMinCreateRevision())
-            .setMaxCreateRevision(option.getMaxCreateRevision())
-            .setMinModRevision(option.getMinModRevision())
-            .setMaxModRevision(option.getMaxModRevision());
-
-        option.getEndKey().map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
-            .ifPresent(builder::setRangeEnd);
-
-        if (!option.getEndKey().isPresent() && option.isPrefix()) {
-            ByteSequence endKey = OptionsUtil.prefixEndOf(key);
-            builder.setRangeEnd(Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace));
-        }
-
-        RangeRequest request = builder.build();
-
         return connectionManager.execute(
-            () -> stub.range(request),
+            () -> stub.range(ProtoRequestMapper.mapRangeRequest(key, option, namespace)),
             response -> new GetResponse(response, namespace),
             Util::isRetryable);
     }
@@ -129,24 +90,8 @@ final class KVImpl implements KV {
     public CompletableFuture<DeleteResponse> delete(ByteSequence key, DeleteOption option) {
         checkNotNull(key, "key should not be null");
         checkNotNull(option, "option should not be null");
-
-        DeleteRangeRequest.Builder builder = DeleteRangeRequest.newBuilder()
-            .setKey(Util.prefixNamespace(key.getByteString(), namespace))
-            .setPrevKv(option.isPrevKV());
-
-        option.getEndKey()
-            .map(endKey -> Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace))
-            .ifPresent(builder::setRangeEnd);
-
-        if (!option.getEndKey().isPresent() && option.isPrefix()) {
-            ByteSequence endKey = OptionsUtil.prefixEndOf(key);
-            builder.setRangeEnd(Util.prefixNamespaceToRangeEnd(endKey.getByteString(), namespace));
-        }
-
-        DeleteRangeRequest request = builder.build();
-
         return connectionManager.execute(
-            () -> stub.deleteRange(request),
+            () -> stub.deleteRange(ProtoRequestMapper.mapDeleteRequest(key, option, namespace)),
             response -> new DeleteResponse(response, namespace),
             Util::isRetryable);
     }
