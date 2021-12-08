@@ -19,6 +19,7 @@ package io.etcd.jetcd;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
+import io.etcd.jetcd.kv.TxnResponse;
 import io.etcd.jetcd.op.Cmp;
 import io.etcd.jetcd.op.CmpTarget;
 import io.etcd.jetcd.op.Op;
@@ -207,6 +209,31 @@ public class KVTest {
         GetResponse getResp = kvClient.get(sampleKey).get();
         assertThat(getResp.getKvs()).hasSize(1);
         assertThat(getResp.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(putValue.toString(UTF_8));
+    }
+
+    @Test
+    void testTxnGetAndDeleteWithPrefix() throws ExecutionException, InterruptedException {
+        String prefix = randomString();
+        ByteSequence sampleKey = bytesOf(prefix);
+        int numPrefixes = 10;
+
+        putKeysWithPrefix(prefix, numPrefixes);
+        //always false cmp
+        Cmp cmp = new Cmp(sampleKey, Cmp.Op.EQUAL, CmpTarget.value(bytesOf("not_exists")));
+        Op.PutOp putOp = Op.put(bytesOf("other_string"), bytesOf("other_value"), PutOption.DEFAULT);
+        Op.GetOp getByPrefix = Op.get(sampleKey, GetOption.newBuilder().isPrefix(true).build());
+        Op.DeleteOp delete = Op.delete(sampleKey, DeleteOption.newBuilder().isPrefix(true).withPrevKV(true).build());
+        TxnResponse txnResponse = kvClient.txn().If(cmp)
+            .Then(putOp).Else(getByPrefix, delete).commit().get();
+        List<GetResponse> getResponse = txnResponse.getGetResponses();
+        assertThat(getResponse).hasSize(1);
+        assertThat(getResponse.get(0).getKvs()).hasSize(10);
+        assertThat(getResponse.get(0).getKvs()).anyMatch(keyValue -> keyValue.getKey().startsWith(sampleKey));
+        List<DeleteResponse> deleteResponses = txnResponse.getDeleteResponses();
+        assertThat(deleteResponses).hasSize(1);
+        assertThat(deleteResponses.get(0).getDeleted()).isEqualTo(10);
+        assertThat(deleteResponses.get(0).getPrevKvs()).anyMatch(keyValue -> keyValue.getKey().startsWith(sampleKey));
+        assertThat(txnResponse.getPutResponses()).isEmpty();
     }
 
     @Test
