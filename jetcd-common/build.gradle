@@ -17,8 +17,26 @@
 
 dependencies {
     api libs.slf4j
-    api libs.guava
-    api libs.grpcCore
+
+    api(libs.guava) {
+        exclude group: 'com.google.code.findbugs', module: 'jsr305'
+        exclude group: 'com.google.j2objc', module: 'j2objc-annotations'
+        exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+        exclude group: 'org.checkerframework', module: 'checker-compat-qual'
+        exclude group: 'org.checkerframework', module: 'checker-qual'
+    }
+
+    api(libs.grpcCore) {
+        exclude group: 'com.google.code.gson', module: 'gson'
+        exclude group: 'com.google.android', module: 'annotations'
+        exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'com.google.j2objc', module: 'j2objc-annotations'
+        exclude group: 'org.codehaus.mojo', module: 'animal-sniffer-annotations'
+        exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+        exclude group: 'com.google.code.findbugs', module: 'jsr305'
+        exclude group: 'io.perfmark', module: 'perfmark-api'
+        exclude group: 'org.checkerframework', module: 'checker-compat-qual'
+    }
 
     testImplementation libs.bundles.testing
     testRuntimeOnly libs.bundles.log4j
