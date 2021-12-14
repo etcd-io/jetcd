@@ -47,17 +47,17 @@ dependencies {
 protobuf {
     protoc {
         if (osdetector.os == "osx") {
-            artifact = "com.google.protobuf:protoc:${protocVersion}:osx-x86_64"
+            artifact = "com.google.protobuf:protoc:${libs.versions.protoc.get()}:osx-x86_64"
         } else {
-            artifact = "com.google.protobuf:protoc:${protocVersion}"
+            artifact = "com.google.protobuf:protoc:${libs.versions.protoc.get()}"
         }
     }
     plugins {
         grpc {
-            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+            artifact = "io.grpc:protoc-gen-grpc-java:${libs.versions.grpc.get()}"
         }
         vertx {
-            artifact = "io.vertx:vertx-grpc-protoc-plugin:${vertxVersion}"
+            artifact = "io.vertx:vertx-grpc-protoc-plugin:${libs.versions.vertx.get()}"
         }
     }
     generateProtoTasks {
