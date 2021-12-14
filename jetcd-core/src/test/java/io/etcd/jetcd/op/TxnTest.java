@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import io.etcd.jetcd.options.PutOption;
 
-import static io.etcd.jetcd.TestUtil.bytesOf;
+import static io.etcd.jetcd.impl.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class TxnTest {

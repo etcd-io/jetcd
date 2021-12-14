@@ -19,7 +19,7 @@ package io.etcd.jetcd.cluster;
 import java.net.URI;
 import java.util.List;
 
-import io.etcd.jetcd.Util;
+import io.etcd.jetcd.support.Util;
 
 public class Member {
 

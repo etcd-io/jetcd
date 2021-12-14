@@ -34,6 +34,7 @@ import javax.net.ssl.SSLException;
 
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
+import io.etcd.jetcd.impl.ClientImpl;
 import io.etcd.jetcd.resolver.IPNameResolver;
 import io.grpc.ClientInterceptor;
 import io.grpc.Metadata;
@@ -41,12 +42,9 @@ import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Streams;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * ClientBuilder knows how to create an Client instance.
@@ -96,7 +94,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws NullPointerException if target is null or one of endpoint is null
      */
     public ClientBuilder target(String target) {
-        checkArgument(!Strings.isNullOrEmpty(target), "target can't be null or empty");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(target), "target can't be null or empty");
 
         this.target = target;
 
@@ -137,7 +135,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws IllegalArgumentException if some endpoint is invalid
      */
     public ClientBuilder endpoints(Iterable<URI> endpoints) {
-        checkNotNull(endpoints, "endpoints can't be null");
+        Preconditions.checkNotNull(endpoints, "endpoints can't be null");
 
         endpoints.forEach(e -> {
             if (e.getHost() == null) {
@@ -177,7 +175,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws NullPointerException if user is <code>null</code>
      */
     public ClientBuilder user(ByteSequence user) {
-        checkNotNull(user, "user can't be null");
+        Preconditions.checkNotNull(user, "user can't be null");
         this.user = user;
         return this;
     }
@@ -197,7 +195,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws NullPointerException if password is <code>null</code>
      */
     public ClientBuilder password(ByteSequence password) {
-        checkNotNull(password, "password can't be null");
+        Preconditions.checkNotNull(password, "password can't be null");
         this.password = password;
         return this;
     }
@@ -218,7 +216,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws NullPointerException if namespace is <code>null</code>
      */
     public ClientBuilder namespace(ByteSequence namespace) {
-        checkNotNull(namespace, "namespace can't be null");
+        Preconditions.checkNotNull(namespace, "namespace can't be null");
         this.namespace = namespace;
         return this;
     }
@@ -238,7 +236,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws NullPointerException if executorService is <code>null</code>
      */
     public ClientBuilder executorService(ExecutorService executorService) {
-        checkNotNull(executorService, "executorService can't be null");
+        Preconditions.checkNotNull(executorService, "executorService can't be null");
         this.executorService = executorService;
         return this;
     }
@@ -251,7 +249,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws NullPointerException if loadBalancerPolicy is <code>null</code>
      */
     public ClientBuilder loadBalancerPolicy(String loadBalancerPolicy) {
-        checkNotNull(loadBalancerPolicy, "loadBalancerPolicy can't be null");
+        Preconditions.checkNotNull(loadBalancerPolicy, "loadBalancerPolicy can't be null");
         this.loadBalancerPolicy = loadBalancerPolicy;
         return this;
     }
@@ -659,7 +657,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws EtcdException if client experiences build error.
      */
     public Client build() {
-        checkState(target != null, "please configure etcd server endpoints before build.");
+        Preconditions.checkState(target != null, "please configure etcd server endpoints before build.");
 
         return new ClientImpl(this);
     }

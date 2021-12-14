@@ -16,7 +16,7 @@
 
 package io.etcd.jetcd.election;
 
-import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 public class ResignResponse extends AbstractResponse<io.etcd.jetcd.api.ResignResponse> {
     public ResignResponse(io.etcd.jetcd.api.ResignResponse response) {

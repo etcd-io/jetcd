@@ -16,10 +16,11 @@
 
 package io.etcd.jetcd.auth;
 
-import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.Auth;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
- * AuthDisableResponse returned by {@link io.etcd.jetcd.Auth#authDisable()} contains a header.
+ * AuthDisableResponse returned by {@link Auth#authDisable()} contains a header.
  */
 public class AuthDisableResponse extends AbstractResponse<io.etcd.jetcd.api.AuthDisableResponse> {
 

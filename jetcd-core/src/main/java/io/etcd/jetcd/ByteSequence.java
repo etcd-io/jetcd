@@ -18,9 +18,8 @@ package io.etcd.jetcd;
 
 import java.nio.charset.Charset;
 
+import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Etcd binary bytes, easy to convert between byte[], String and ByteString.
@@ -33,7 +32,7 @@ public final class ByteSequence {
     private final ByteString byteString;
 
     private ByteSequence(ByteString byteString) {
-        checkNotNull(byteString, "byteString should not be null");
+        Preconditions.checkNotNull(byteString, "byteString should not be null");
         this.byteString = byteString;
         this.hashVal = byteString.hashCode();
     }
@@ -49,8 +48,8 @@ public final class ByteSequence {
         if (prefix == null) {
             return false;
         }
-        ByteString baseByteString = this.getByteString();
-        ByteString prefixByteString = prefix.getByteString();
+        ByteString baseByteString = byteString;
+        ByteString prefixByteString = prefix.byteString;
         return baseByteString.startsWith(prefixByteString);
     }
 
@@ -61,8 +60,19 @@ public final class ByteSequence {
      * @return       a new {@code ByteSequence} instance
      */
     public ByteSequence concat(ByteSequence other) {
-        checkNotNull(other, "other byteSequence should not be null");
-        return new ByteSequence(this.byteString.concat(other.getByteString()));
+        Preconditions.checkNotNull(other, "other byteSequence should not be null");
+        return new ByteSequence(this.byteString.concat(other.byteString));
+    }
+
+    /**
+     * Concatenate the given {@code ByteSequence} to this one.
+     *
+     * @param  other string to concatenate
+     * @return       a new {@code ByteSequence} instance
+     */
+    public ByteSequence concat(ByteString other) {
+        Preconditions.checkNotNull(other, "other byteSequence should not be null");
+        return new ByteSequence(this.byteString.concat(other));
     }
 
     /**
@@ -112,10 +122,6 @@ public final class ByteSequence {
     @Override
     public int hashCode() {
         return hashVal;
-    }
-
-    ByteString getByteString() {
-        return this.byteString;
     }
 
     public String toString(Charset charset) {

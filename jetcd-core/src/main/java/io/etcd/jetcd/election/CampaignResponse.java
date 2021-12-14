@@ -16,18 +16,21 @@
 
 package io.etcd.jetcd.election;
 
-import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 public class CampaignResponse extends AbstractResponse<io.etcd.jetcd.api.CampaignResponse> {
     private final LeaderKey leaderKey;
 
     public CampaignResponse(io.etcd.jetcd.api.CampaignResponse response) {
         super(response, response.getHeader());
-        this.leaderKey = toLeaderKey(getResponse().getLeader());
-    }
 
-    private static LeaderKey toLeaderKey(io.etcd.jetcd.api.LeaderKey leader) {
-        return new LeaderKey(leader.getName(), leader.getKey(), leader.getRev(), leader.getLease());
+        this.leaderKey = new LeaderKey(
+            ByteSequence.from(getResponse().getLeader().getName()),
+            ByteSequence.from(getResponse().getLeader().getKey()),
+            getResponse().getLeader().getRev(),
+            getResponse().getLeader().getLease()
+        );
     }
 
     /**

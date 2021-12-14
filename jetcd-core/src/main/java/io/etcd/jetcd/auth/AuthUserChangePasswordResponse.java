@@ -16,12 +16,14 @@
 
 package io.etcd.jetcd.auth;
 
-import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.Auth;
+import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
  * AuthUserChangePasswordResponse returned by
- * {@link io.etcd.jetcd.Auth#userChangePassword(io.etcd.jetcd.ByteSequence.ByteSequence,
- * io.etcd.jetcd.ByteSequence.ByteSequence)} contains a header.
+ * {@link Auth#userChangePassword(ByteSequence.ByteSequence,
+ * ByteSequence.ByteSequence)} contains a header.
  */
 public class AuthUserChangePasswordResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserChangePasswordResponse> {
 

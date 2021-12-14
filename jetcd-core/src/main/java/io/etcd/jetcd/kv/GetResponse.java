@@ -19,10 +19,10 @@ package io.etcd.jetcd.kv;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.api.RangeResponse;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 public class GetResponse extends AbstractResponse<RangeResponse> {
 

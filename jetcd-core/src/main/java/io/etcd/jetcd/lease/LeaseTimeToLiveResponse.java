@@ -19,8 +19,8 @@ package io.etcd.jetcd.lease;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 public class LeaseTimeToLiveResponse extends AbstractResponse<io.etcd.jetcd.api.LeaseTimeToLiveResponse> {
 

@@ -19,8 +19,8 @@ package io.etcd.jetcd.maintenance;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.Maintenance;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
  * AlarmResponse returned by {@link Maintenance#listAlarms()} contains a header

@@ -16,11 +16,12 @@
 
 package io.etcd.jetcd.auth;
 
-import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.Auth;
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
- * AuthRoleDeleteResponse returned by {@link io.etcd.jetcd.Auth#roleDelete(ByteSequence)}
+ * AuthRoleDeleteResponse returned by {@link Auth#roleDelete(ByteSequence)}
  * contains a header.
  */
 public class AuthRoleDeleteResponse extends AbstractResponse<io.etcd.jetcd.api.AuthRoleDeleteResponse> {

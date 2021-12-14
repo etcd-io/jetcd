@@ -16,15 +16,15 @@
 
 package io.etcd.jetcd.election;
 
-import com.google.protobuf.ByteString;
+import io.etcd.jetcd.ByteSequence;
 
 public class LeaderKey {
-    private final ByteString name;
-    private final ByteString key;
+    private final ByteSequence name;
+    private final ByteSequence key;
     private final long revision;
     private final long lease;
 
-    public LeaderKey(ByteString name, ByteString key, long revision, long lease) {
+    public LeaderKey(ByteSequence name, ByteSequence key, long revision, long lease) {
         this.name = name;
         this.key = key;
         this.revision = revision;
@@ -34,7 +34,7 @@ public class LeaderKey {
     /**
      * Returns the election identifier that corresponds to the leadership key. *
      */
-    public ByteString getName() {
+    public ByteSequence getName() {
         return name;
     }
 
@@ -42,7 +42,7 @@ public class LeaderKey {
      * Returns the opaque key representing the ownership of the election. If the key
      * is deleted, then leadership is lost.
      */
-    public ByteString getKey() {
+    public ByteSequence getKey() {
         return key;
     }
 

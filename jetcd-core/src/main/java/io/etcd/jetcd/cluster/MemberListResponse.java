@@ -18,8 +18,8 @@ package io.etcd.jetcd.cluster;
 
 import java.util.List;
 
-import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.Cluster;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
  * MemberListResponse returned by {@link Cluster#listMember()}

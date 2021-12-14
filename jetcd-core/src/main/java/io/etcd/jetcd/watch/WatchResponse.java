@@ -19,10 +19,10 @@ package io.etcd.jetcd.watch;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.api.Event;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 import com.google.common.annotations.VisibleForTesting;
 

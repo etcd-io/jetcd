@@ -16,6 +16,8 @@
 
 package io.etcd.jetcd;
 
+import io.etcd.jetcd.support.Util;
+
 /**
  * Etcd key value pair.
  */

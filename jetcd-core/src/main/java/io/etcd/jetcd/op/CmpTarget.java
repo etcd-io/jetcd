@@ -17,12 +17,13 @@
 package io.etcd.jetcd.op;
 
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.Txn;
 import io.etcd.jetcd.api.Compare;
 
 import com.google.protobuf.ByteString;
 
 /**
- * Cmp target used in {@link io.etcd.jetcd.Txn}.
+ * Cmp target used in {@link Txn}.
  */
 public abstract class CmpTarget<T> {
 

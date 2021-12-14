@@ -16,8 +16,8 @@
 
 package io.etcd.jetcd.kv;
 
-import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.api.CompactionResponse;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 public class CompactResponse extends AbstractResponse<CompactionResponse> {
 

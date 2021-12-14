@@ -16,9 +16,9 @@
 
 package io.etcd.jetcd.kv;
 
-import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 public class PutResponse extends AbstractResponse<io.etcd.jetcd.api.PutResponse> {
 

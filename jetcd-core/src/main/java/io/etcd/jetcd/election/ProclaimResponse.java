@@ -16,7 +16,7 @@
 
 package io.etcd.jetcd.election;
 
-import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 public class ProclaimResponse extends AbstractResponse<io.etcd.jetcd.api.ProclaimResponse> {
     public ProclaimResponse(io.etcd.jetcd.api.ProclaimResponse response) {

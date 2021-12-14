@@ -16,9 +16,9 @@
 
 package io.etcd.jetcd.lock;
 
-import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.Util;
+import io.etcd.jetcd.impl.AbstractResponse;
+import io.etcd.jetcd.support.Util;
 
 public class LockResponse extends AbstractResponse<io.etcd.jetcd.api.lock.LockResponse> {
 

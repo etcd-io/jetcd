@@ -18,8 +18,8 @@ package io.etcd.jetcd.maintenance;
 
 import java.net.URI;
 
-import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.Maintenance;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
  * HashKVResponse returned by {@link Maintenance#hashKV(URI, long)}.

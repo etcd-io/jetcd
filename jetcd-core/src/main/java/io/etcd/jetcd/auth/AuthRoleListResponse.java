@@ -18,8 +18,8 @@ package io.etcd.jetcd.auth;
 
 import java.util.List;
 
-import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.Auth;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
  * AuthRoleListResponse returned by {@link Auth#roleList()} contains a header and

@@ -16,11 +16,12 @@
 
 package io.etcd.jetcd.auth;
 
-import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.Auth;
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
- * AuthUserAddResponse returned by {@link io.etcd.jetcd.Auth#userAdd(ByteSequence, ByteSequence)} contains a
+ * AuthUserAddResponse returned by {@link Auth#userAdd(ByteSequence, ByteSequence)} contains a
  * header.
  */
 public class AuthUserAddResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserAddResponse> {

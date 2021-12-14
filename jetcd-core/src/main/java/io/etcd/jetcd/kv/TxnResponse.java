@@ -19,8 +19,8 @@ package io.etcd.jetcd.kv;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 import static io.etcd.jetcd.api.ResponseOp.ResponseCase.RESPONSE_DELETE_RANGE;
 import static io.etcd.jetcd.api.ResponseOp.ResponseCase.RESPONSE_PUT;

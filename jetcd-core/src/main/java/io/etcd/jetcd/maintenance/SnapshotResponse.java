@@ -16,7 +16,7 @@
 
 package io.etcd.jetcd.maintenance;
 
-import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 import com.google.protobuf.ByteString;
 

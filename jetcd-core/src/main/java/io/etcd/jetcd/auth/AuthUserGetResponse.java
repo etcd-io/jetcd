@@ -18,11 +18,12 @@ package io.etcd.jetcd.auth;
 
 import java.util.List;
 
-import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.Auth;
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
- * AuthUserGetResponse returned by {@link io.etcd.jetcd.Auth#userGet(ByteSequence)} contains a header and
+ * AuthUserGetResponse returned by {@link Auth#userGet(ByteSequence)} contains a header and
  * a list of roles associated with the user.
  */
 public class AuthUserGetResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserGetResponse> {
