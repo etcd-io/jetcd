@@ -53,10 +53,8 @@ subprojects {
     apply plugin: 'com.adarshr.test-logger'
     apply plugin: 'org.gradle.test-retry'
 
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(11)
-        }
+    compileJava {
+        options.release = 11
     }
 
     test {
