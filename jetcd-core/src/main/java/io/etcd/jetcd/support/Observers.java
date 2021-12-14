@@ -17,7 +17,6 @@
 package io.etcd.jetcd.support;
 
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import io.grpc.stub.StreamObserver;
 
@@ -40,30 +39,6 @@ public final class Observers {
             public void onCompleted() {
             }
         };
-    }
-
-    public static <V> StreamObserver<V> observer(Consumer<V> onNext, Consumer<Throwable> onError) {
-        return new StreamObserver<V>() {
-            @Override
-            public void onNext(V value) {
-                onNext.accept(value);
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-                onError.accept(throwable);
-            }
-
-            @Override
-            public void onCompleted() {
-            }
-        };
-    }
-
-    public static <T, V> StreamObserver<T> observe(Function<StreamObserver<V>, StreamObserver<T>> consumer, Consumer<V> onNext,
-        Consumer<Throwable> onError) {
-
-        return consumer.apply(observer(onNext, onError));
     }
 
     public static <T> Builder<T> builder() {

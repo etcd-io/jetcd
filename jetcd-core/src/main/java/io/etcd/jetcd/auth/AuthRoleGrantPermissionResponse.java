@@ -16,12 +16,13 @@
 
 package io.etcd.jetcd.auth;
 
-import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.Auth;
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
  * AuthRoleGrantPermissionResponse returned by
- * {@link io.etcd.jetcd.Auth#roleGrantPermission(ByteSequence, ByteSequence, ByteSequence, Permission.Type)} contains a
+ * {@link Auth#roleGrantPermission(ByteSequence, ByteSequence, ByteSequence, Permission.Type)} contains a
  * header.
  */
 public class AuthRoleGrantPermissionResponse extends AbstractResponse<io.etcd.jetcd.api.AuthRoleGrantPermissionResponse> {

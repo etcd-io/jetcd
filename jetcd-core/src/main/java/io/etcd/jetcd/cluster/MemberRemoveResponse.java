@@ -18,10 +18,11 @@ package io.etcd.jetcd.cluster;
 
 import java.util.List;
 
-import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.Cluster;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
- * MemberRemoveResponse returned by {@link io.etcd.jetcd.Cluster#removeMember(long)}
+ * MemberRemoveResponse returned by {@link Cluster#removeMember(long)}
  * contains a header and a list of member the removal of the member.
  */
 public class MemberRemoveResponse extends AbstractResponse<io.etcd.jetcd.api.MemberRemoveResponse> {

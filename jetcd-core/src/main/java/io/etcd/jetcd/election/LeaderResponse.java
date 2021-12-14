@@ -16,9 +16,9 @@
 
 package io.etcd.jetcd.election;
 
-import io.etcd.jetcd.AbstractResponse;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 public class LeaderResponse extends AbstractResponse<io.etcd.jetcd.api.LeaderResponse> {
     private final KeyValue kv;

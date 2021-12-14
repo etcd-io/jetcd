@@ -18,10 +18,11 @@ package io.etcd.jetcd.cluster;
 
 import java.util.List;
 
-import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.Cluster;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
- * MemberUpdateResponse returned by {@link io.etcd.jetcd.Cluster#updateMember(long, List)}
+ * MemberUpdateResponse returned by {@link Cluster#updateMember(long, List)}
  * contains a header and a list of members after the member update.
  */
 public class MemberUpdateResponse extends AbstractResponse<io.etcd.jetcd.api.MemberUpdateResponse> {

@@ -16,10 +16,11 @@
 
 package io.etcd.jetcd.maintenance;
 
-import io.etcd.jetcd.AbstractResponse;
+import io.etcd.jetcd.Maintenance;
+import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
- * MoveLeaderResponse returned by {@link io.etcd.jetcd.Maintenance#moveLeader(long)}.
+ * MoveLeaderResponse returned by {@link Maintenance#moveLeader(long)}.
  */
 public class MoveLeaderResponse extends AbstractResponse<io.etcd.jetcd.api.MoveLeaderResponse> {
 

@@ -17,12 +17,12 @@
 package io.etcd.jetcd.op;
 
 import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.ProtoRequestMapper;
 import io.etcd.jetcd.api.RequestOp;
 import io.etcd.jetcd.api.TxnRequest;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
+import io.etcd.jetcd.support.Requests;
 
 import com.google.protobuf.ByteString;
 
@@ -79,7 +79,7 @@ public abstract class Op {
         RequestOp toRequestOp(ByteSequence namespace) {
             return RequestOp.newBuilder()
                 .setRequestPut(
-                    ProtoRequestMapper.mapPutRequest(ByteSequence.from(key), ByteSequence.from(value), option, namespace))
+                    Requests.mapPutRequest(ByteSequence.from(key), ByteSequence.from(value), option, namespace))
                 .build();
         }
     }
@@ -96,7 +96,7 @@ public abstract class Op {
         @Override
         RequestOp toRequestOp(ByteSequence namespace) {
             return RequestOp.newBuilder()
-                .setRequestRange(ProtoRequestMapper.mapRangeRequest(ByteSequence.from(key), option, namespace))
+                .setRequestRange(Requests.mapRangeRequest(ByteSequence.from(key), option, namespace))
                 .build();
         }
     }
@@ -113,7 +113,7 @@ public abstract class Op {
         @Override
         RequestOp toRequestOp(ByteSequence namespace) {
             return RequestOp.newBuilder()
-                .setRequestDeleteRange(ProtoRequestMapper.mapDeleteRequest(ByteSequence.from(key), option, namespace))
+                .setRequestDeleteRange(Requests.mapDeleteRequest(ByteSequence.from(key), option, namespace))
                 .build();
         }
     }

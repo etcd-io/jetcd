@@ -17,13 +17,14 @@
 package io.etcd.jetcd.op;
 
 import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.Util;
+import io.etcd.jetcd.Txn;
 import io.etcd.jetcd.api.Compare;
+import io.etcd.jetcd.support.Util;
 
 import com.google.protobuf.ByteString;
 
 /**
- * The compare predicate in {@link io.etcd.jetcd.Txn}.
+ * The compare predicate in {@link Txn}.
  */
 public class Cmp {
 
