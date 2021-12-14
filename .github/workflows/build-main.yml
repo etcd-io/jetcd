@@ -43,4 +43,5 @@ jobs:
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
         run: |
           ./gradlew spotlessCheck
+          ./gradlew test
           ./gradlew publishToSonatype -Prelease.forceSnapshot
