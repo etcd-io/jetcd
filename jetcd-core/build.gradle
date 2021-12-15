@@ -20,15 +20,14 @@ dependencies {
     api project(':jetcd-common')
 
     api libs.slf4j
-    api libs.javaxAnnotation
-    api libs.spotbugs
     api libs.failsafe
 
-    api libs.autoServiceAnnotations
+    compileOnly libs.javaxAnnotation
+    compileOnly libs.autoServiceAnnotations
+
     annotationProcessor libs.autoServiceProcessor
 
     testImplementation project(':jetcd-launcher')
-
     testImplementation project(':jetcd-test')
 
     testImplementation libs.awaitility
