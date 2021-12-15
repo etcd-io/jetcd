@@ -1,5 +1,5 @@
 # jetcd - A Java Client for etcd
-[![Build Status](https://github.com/etcd-io/jetcd/actions/workflows/build-master.yml/badge.svg)](https://github.com/etcd-io/jetcd/actions)
+[![Build Status](https://github.com/etcd-io/jetcd/actions/workflows/build-main.yml/badge.svg)](https://github.com/etcd-io/jetcd/actions)
 [![License](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg?style=flat-square)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![Maven Central](https://img.shields.io/maven-central/v/io.etcd/jetcd-core.svg?style=flat-square)](https://search.maven.org/#search%7Cga%7C1%7Cio.etcd)
 [![Javadocs](http://www.javadoc.io/badge/io/etcd/jetcd-core.svg)](https://javadoc.io/doc/io.etcd/jetcd-core)
