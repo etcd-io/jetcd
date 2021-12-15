@@ -85,7 +85,7 @@ public class ClusterClientTest {
         Member m3 = clusterClient.addMember(n3.peerEndpoints())
             .get(5, TimeUnit.SECONDS)
             .getMember();
-
+        
         assertThat(m3).isNotNull();
         assertThat(clusterClient.listMember().get().getMembers()).hasSize(3);
         */

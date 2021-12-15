@@ -29,8 +29,7 @@ public class CampaignResponse extends AbstractResponse<io.etcd.jetcd.api.Campaig
             ByteSequence.from(getResponse().getLeader().getName()),
             ByteSequence.from(getResponse().getLeader().getKey()),
             getResponse().getLeader().getRev(),
-            getResponse().getLeader().getLease()
-        );
+            getResponse().getLeader().getLease());
     }
 
     /**
