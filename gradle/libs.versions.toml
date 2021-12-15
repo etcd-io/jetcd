@@ -5,7 +5,6 @@ mockito = "4.1.0"
 slf4j = "1.7.32"
 guava = "31.0.1-jre"
 javaxAnnotation = "1.3.2"
-spotbugs = "4.5.2"
 assertj = "3.21.0"
 junit = "5.8.2"
 testcontainers = "1.16.2"
@@ -35,7 +34,6 @@ testRetryPlugin = "1.3.1"
 slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 javaxAnnotation = { module = "javax.annotation:javax.annotation-api", version.ref = "javaxAnnotation" }
-spotbugs = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "spotbugs" }
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 junit = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
