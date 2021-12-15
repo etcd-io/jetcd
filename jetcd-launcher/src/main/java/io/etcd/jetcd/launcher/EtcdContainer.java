@@ -13,6 +13,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -65,7 +66,7 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
 
     public EtcdContainer withAdditionalArgs(Collection<String> additionalArgs) {
         if (additionalArgs != null) {
-            this.additionalArgs = List.copyOf(additionalArgs);
+            this.additionalArgs = Collections.unmodifiableCollection(new ArrayList<>(additionalArgs));
         }
 
         return self();

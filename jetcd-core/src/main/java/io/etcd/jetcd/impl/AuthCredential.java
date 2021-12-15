@@ -85,7 +85,7 @@ class AuthCredential extends CallCredentials {
 
         if (!interceptorsChain.isEmpty()) {
             authFutureStub = authFutureStub.withInterceptors(
-                interceptorsChain.toArray(ClientInterceptor[]::new));
+                interceptorsChain.toArray(new ClientInterceptor[0]));
         }
 
         final ByteString user = ByteString.copyFrom(this.manager.builder().user().getBytes());

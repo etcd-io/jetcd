@@ -212,7 +212,7 @@ final class ClientConnectionManager {
                     CallOptions callOptions,
                     Channel next) {
 
-                    return new SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
+                    return new SimpleForwardingClientCall<ReqT, RespT>(next.newCall(method, callOptions)) {
                         @Override
                         public void start(Listener<RespT> responseListener, Metadata headers) {
                             builder.headers().forEach((BiConsumer<Metadata.Key, Object>) headers::put);

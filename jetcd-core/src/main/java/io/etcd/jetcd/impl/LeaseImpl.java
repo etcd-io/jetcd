@@ -140,7 +140,7 @@ final class LeaseImpl extends Impl implements Lease {
     public CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId) {
         final CompletableFuture<LeaseKeepAliveResponse> future = new CompletableFuture<>();
 
-        final CloseableClient ka = keepAlive(leaseId, new StreamObserver<>() {
+        final CloseableClient ka = keepAlive(leaseId, new StreamObserver<LeaseKeepAliveResponse>() {
             @Override
             public void onNext(LeaseKeepAliveResponse value) {
                 future.complete(value);

@@ -20,7 +20,7 @@ errorprone = "2.10.0"
 vertx = "4.2.2"
 
 versionsPlugin = "0.39.0"
-versionsFilterPlugin = "0.1.10"
+versionsFilterPlugin = "0.1.4"
 errorPronePlugin = "2.0.2"
 spotlessPlugin = "6.0.4"
 shadowPlugin = "7.1.1"
