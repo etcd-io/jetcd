@@ -6,6 +6,10 @@ labels: ''
 assignees: ''
 
 ---
+**Versions**
+- etcd: _add the etcd version here_
+- jetcd: _add the jetcd version here_
+- java: _add the java version here_
 
 **Describe the bug**
 A clear and concise description of what the bug is.
@@ -19,3 +23,5 @@ A clear and concise description of what you expected to happen.
 
 **Additional context**
 Add any other context about the problem here.
+
+
