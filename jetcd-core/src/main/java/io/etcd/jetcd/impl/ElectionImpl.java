@@ -18,8 +18,6 @@ package io.etcd.jetcd.impl;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.google.protobuf.ByteString;
-
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Election;
 import io.etcd.jetcd.api.CampaignRequest;
@@ -37,6 +35,8 @@ import io.etcd.jetcd.election.ProclaimResponse;
 import io.etcd.jetcd.election.ResignResponse;
 import io.etcd.jetcd.support.Util;
 import io.grpc.StatusRuntimeException;
+
+import com.google.protobuf.ByteString;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
