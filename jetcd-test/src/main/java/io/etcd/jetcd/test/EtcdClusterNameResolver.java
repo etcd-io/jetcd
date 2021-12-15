@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
-import javax.annotation.concurrent.GuardedBy;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,9 +45,7 @@ public class EtcdClusterNameResolver extends NameResolver {
     private volatile boolean shutdown;
     private volatile boolean resolving;
 
-    @GuardedBy("lock")
     private Executor executor;
-    @GuardedBy("lock")
     private Listener listener;
 
     public EtcdClusterNameResolver(URI targetUri) {
