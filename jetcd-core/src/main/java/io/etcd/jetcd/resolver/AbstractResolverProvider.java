@@ -19,8 +19,6 @@ package io.etcd.jetcd.resolver;
 import java.net.URI;
 import java.util.Objects;
 
-import javax.annotation.Nullable;
-
 import io.grpc.NameResolver;
 import io.grpc.NameResolverProvider;
 
@@ -48,7 +46,6 @@ public abstract class AbstractResolverProvider extends NameResolverProvider {
         return scheme;
     }
 
-    @Nullable
     @Override
     public NameResolver newNameResolver(URI targetUri, NameResolver.Args args) {
         return Objects.equals(scheme, targetUri.getScheme())

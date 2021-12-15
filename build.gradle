@@ -19,14 +19,14 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
-        classpath "com.github.ben-manes:gradle-versions-plugin:$versionsPluginVersion"
-        classpath "com.diffplug.spotless:spotless-plugin-gradle:$spotlessPluginVersion"
-        classpath "net.ltgt.gradle:gradle-errorprone-plugin:$errorPronePluginVersion"
-        classpath "io.github.gradle-nexus:publish-plugin:$nexusPublishPluginVersion"
-        classpath "com.adarshr:gradle-test-logger-plugin:$testLoggerPluginVersion"
-        classpath "se.ascp.gradle:gradle-versions-filter:$versionsFilterPluginVersion"
-        classpath "pl.allegro.tech.build:axion-release-plugin:$axionReleasePluginVersion"
-        classpath "org.gradle:test-retry-gradle-plugin:$testRetryPluginVersion"
+        classpath "com.github.ben-manes:gradle-versions-plugin:${libs.versions.versionsPlugin.get()}"
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:${libs.versions.spotlessPlugin.get()}"
+        classpath "net.ltgt.gradle:gradle-errorprone-plugin:${libs.versions.errorPronePlugin.get()}"
+        classpath "io.github.gradle-nexus:publish-plugin:${libs.versions.nexusPublishPlugin.get()}"
+        classpath "com.adarshr:gradle-test-logger-plugin:${libs.versions.testLoggerPlugin.get()}"
+        classpath "se.ascp.gradle:gradle-versions-filter:${libs.versions.versionsFilterPlugin.get()}"
+        classpath "pl.allegro.tech.build:axion-release-plugin:${libs.versions.axionReleasePlugin.get()}"
+        classpath "org.gradle:test-retry-gradle-plugin:${libs.versions.testRetryPlugin.get()}"
     }
 }
 
@@ -52,6 +52,16 @@ subprojects {
     apply plugin: 'java-library'
     apply plugin: 'com.adarshr.test-logger'
     apply plugin: 'org.gradle.test-retry'
+
+    configurations.api {
+        exclude group: 'com.google.code.gson', module: 'gson'
+        exclude group: 'com.google.android', module: 'annotations'
+        exclude group: 'com.google.j2objc', module: 'j2objc-annotations'
+        exclude group: 'org.codehaus.mojo', module: 'animal-sniffer-annotations'
+        exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
+        exclude group: 'com.google.code.findbugs', module: 'jsr305'
+        exclude group: 'org.checkerframework', module: 'checker-compat-qual'
+    }
 
     compileJava {
         options.release = 11

@@ -18,8 +18,6 @@ package io.etcd.jetcd.test;
 
 import java.net.URI;
 
-import javax.annotation.Nullable;
-
 import io.grpc.NameResolver;
 import io.grpc.NameResolverProvider;
 
@@ -42,7 +40,6 @@ public class EtcdClusterResolverProvider extends NameResolverProvider {
         return EtcdClusterNameResolver.SCHEME;
     }
 
-    @Nullable
     @Override
     public NameResolver newNameResolver(URI targetUri, NameResolver.Args args) {
         return EtcdClusterNameResolver.SCHEME.equals(targetUri.getScheme())

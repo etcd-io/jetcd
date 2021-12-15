@@ -20,8 +20,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-import javax.annotation.concurrent.GuardedBy;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,9 +46,7 @@ public abstract class AbstractNameResolver extends NameResolver {
     private volatile boolean shutdown;
     private volatile boolean resolving;
 
-    @GuardedBy("lock")
     private Executor executor;
-    @GuardedBy("lock")
     private Listener listener;
 
     public AbstractNameResolver(URI targetUri) {

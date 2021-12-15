@@ -16,7 +16,8 @@
 
 plugins {
     id "application"
-    id "com.github.johnrengelman.shadow" version "$shadowPluginVersion"
+
+    alias(libs.plugins.shadow)
 }
 
 project.tasks.publish.enabled = false
