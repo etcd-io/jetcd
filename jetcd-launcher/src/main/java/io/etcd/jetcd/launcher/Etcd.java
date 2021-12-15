@@ -1,6 +1,9 @@
 package io.etcd.jetcd.launcher;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,12 +52,12 @@ public final class Etcd {
         }
 
         public Builder withAdditionalArgs(Collection<String> additionalArgs) {
-            this.additionalArgs = List.copyOf(additionalArgs);
+            this.additionalArgs = Collections.unmodifiableList(new ArrayList<>(additionalArgs));
             return this;
         }
 
         public Builder withAdditionalArgs(String... additionalArgs) {
-            this.additionalArgs = List.of(additionalArgs);
+            this.additionalArgs = Collections.unmodifiableList(Arrays.asList(additionalArgs));
             return this;
         }
 

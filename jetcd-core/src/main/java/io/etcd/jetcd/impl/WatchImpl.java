@@ -170,7 +170,7 @@ final class WatchImpl extends Impl implements Watch {
                     .map(endKey -> Util.prefixNamespaceToRangeEnd(endKey, namespace))
                     .ifPresent(builder::setRangeEnd);
 
-                if (option.getEndKey().isEmpty() && option.isPrefix()) {
+                if (!option.getEndKey().isPresent() && option.isPrefix()) {
                     ByteSequence endKey = OptionsUtil.prefixEndOf(key);
                     builder.setRangeEnd(Util.prefixNamespaceToRangeEnd(endKey, namespace));
                 }

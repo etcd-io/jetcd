@@ -60,13 +60,14 @@ public final class Requests {
 
     private static void defineRangeRequestEnd(ByteSequence key, Optional<ByteSequence> endKeyOptional,
         boolean hasPrefix, ByteSequence namespace, Consumer<ByteString> setRangeEndConsumer) {
-        endKeyOptional.ifPresentOrElse(endKey -> {
-            setRangeEndConsumer.accept(Util.prefixNamespaceToRangeEnd(ByteString.copyFrom(endKey.getBytes()), namespace));
-        }, () -> {
+        if (endKeyOptional.isPresent()) {
+            setRangeEndConsumer
+                .accept(Util.prefixNamespaceToRangeEnd(ByteString.copyFrom(endKeyOptional.get().getBytes()), namespace));
+        } else {
             if (hasPrefix) {
                 ByteSequence endKey = OptionsUtil.prefixEndOf(key);
                 setRangeEndConsumer.accept(Util.prefixNamespaceToRangeEnd(ByteString.copyFrom(endKey.getBytes()), namespace));
             }
-        });
+        }
     }
 }

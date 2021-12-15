@@ -18,6 +18,7 @@ package io.etcd.jetcd.impl;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -50,9 +51,9 @@ public class WatchTokenExpireTest {
     public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
         .withNodes(1)
         .withSsl(true)
-        .withAdditionalArgs(List.of(
-            "--auth-token",
-            "jwt,pub-key=/etc/ssl/etcd/server.pem,priv-key=/etc/ssl/etcd/server-key.pem,sign-method=RS256,ttl=1s"))
+        .withAdditionalArgs(
+            Arrays.asList("--auth-token",
+                "jwt,pub-key=/etc/ssl/etcd/server.pem,priv-key=/etc/ssl/etcd/server-key.pem,sign-method=RS256,ttl=1s"))
         .build();
 
     private static final ByteSequence key = TestUtil.randomByteSequence();

@@ -96,7 +96,7 @@ public class MaintenanceTest {
         final AtomicLong count = new AtomicLong();
         final CountDownLatch latcht = new CountDownLatch(1);
 
-        maintenance.snapshot(new StreamObserver<>() {
+        maintenance.snapshot(new StreamObserver<SnapshotResponse>() {
             @Override
             public void onNext(SnapshotResponse value) {
                 count.addAndGet(value.getBlob().size());
