@@ -18,7 +18,7 @@ autoService = "1.0.1"
 jool = "0.9.14"
 jcommander = "1.81"
 errorprone = "2.10.0"
-vertx = "4.2.1"
+vertx = "4.2.2"
 
 versionsPlugin = "0.39.0"
 versionsFilterPlugin = "0.1.10"
