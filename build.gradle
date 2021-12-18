@@ -24,7 +24,6 @@ buildscript {
         classpath "net.ltgt.gradle:gradle-errorprone-plugin:${libs.versions.errorPronePlugin.get()}"
         classpath "io.github.gradle-nexus:publish-plugin:${libs.versions.nexusPublishPlugin.get()}"
         classpath "com.adarshr:gradle-test-logger-plugin:${libs.versions.testLoggerPlugin.get()}"
-        classpath "se.ascp.gradle:gradle-versions-filter:${libs.versions.versionsFilterPlugin.get()}"
         classpath "pl.allegro.tech.build:axion-release-plugin:${libs.versions.axionReleasePlugin.get()}"
         classpath "org.gradle:test-retry-gradle-plugin:${libs.versions.testRetryPlugin.get()}"
     }
