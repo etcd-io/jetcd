@@ -15,11 +15,16 @@
  */
 
 apply plugin: 'com.github.ben-manes.versions'
-apply plugin: 'se.ascp.gradle.gradle-versions-filter'
 
-versionsFilter {
-    exclusiveQualifiers = ['alpha', 'beta', 'rc', 'cr', 'm', 'ea']
-    log = false
+dependencyUpdates.configure {
+
+    def isNonStable = { String version ->
+        return ['alpha', 'beta', 'rc', 'cr', 'm', 'ea'].any { keyword -> version.toUpperCase().contains(keyword.toUpperCase())}
+    }
+
+    rejectVersionIf {
+        isNonStable(it.candidate.version)
+    }
 }
 
 task deps {
