@@ -53,7 +53,12 @@ import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdExceptio
  * Implementation of lease client.
  */
 final class LeaseImpl extends Impl implements Lease {
-    private static final int FIRST_KEEPALIVE_TIMEOUT_MS = 5000;
+
+    /**
+     * if there is no user-provided keep-alive timeout from ClientBuilder, then DEFAULT_FIRST_KEEPALIVE_TIMEOUT_MS
+     * is the timeout for the first keepalive request before the actual TTL is known to the lease client.
+     */
+    private static final int DEFAULT_FIRST_KEEPALIVE_TIMEOUT_MS = 5000;
 
     private final VertxLeaseGrpc.LeaseVertxStub stub;
     private final VertxLeaseGrpc.LeaseVertxStub leaseStub;
@@ -325,7 +330,12 @@ final class LeaseImpl extends Impl implements Lease {
 
         public KeepAliveObserver(long leaseId) {
             this.nextKeepAlive = System.currentTimeMillis();
-            this.deadLine = nextKeepAlive + FIRST_KEEPALIVE_TIMEOUT_MS;
+
+            // Use user-provided timeout if present to avoid removing KeepAlive before first response from server
+            int initialKeepAliveTimeoutMs = connectionManager().builder().keepaliveTimeout() != null
+                ? Math.toIntExact(connectionManager().builder().keepaliveTimeout().toMillis())
+                : DEFAULT_FIRST_KEEPALIVE_TIMEOUT_MS;
+            this.deadLine = nextKeepAlive + initialKeepAliveTimeoutMs;
 
             this.observers = new CopyOnWriteArrayList<>();
             this.leaseId = leaseId;
