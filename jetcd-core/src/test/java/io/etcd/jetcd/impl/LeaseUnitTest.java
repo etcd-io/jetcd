@@ -156,8 +156,8 @@ public class LeaseUnitTest {
 
         try (CloseableClient listener = this.leaseCli.keepAlive(LEASE_ID_1, observer)) {
             // expect at least some KeepAlive requests are sent within
-            // firstKeepAliveTimeout(5000 ms) + some quiet time (1000 ms).
-            verify(this.requestStreamObserverMock, after(6000).atLeastOnce()).onNext(argThat(hasLeaseID(LEASE_ID_1)));
+            // firstKeepAliveTimeout(10000 ms) + some quiet time (1000 ms).
+            verify(this.requestStreamObserverMock, after(11000).atLeastOnce()).onNext(argThat(hasLeaseID(LEASE_ID_1)));
 
             // reset mock to a empty state.
             Mockito.<StreamObserver> reset(this.requestStreamObserverMock);
