@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The jetcd authors
+ * Copyright 2016-2022 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,10 +60,10 @@ final class LeaseImpl implements Lease {
     private static final Logger LOG = LoggerFactory.getLogger(LeaseImpl.class);
 
     /**
-     * FIRST_KEEPALIVE_TIMEOUT_MS is the timeout for the first keepalive request
-     * before the actual TTL is known to the lease client.
+     * if there is no user-provided keep-alive timeout from ClientBuilder, then DEFAULT_FIRST_KEEPALIVE_TIMEOUT_MS
+     * is the timeout for the first keepalive request before the actual TTL is known to the lease client.
      */
-    private static final int FIRST_KEEPALIVE_TIMEOUT_MS = 5000;
+    private static final int DEFAULT_FIRST_KEEPALIVE_TIMEOUT_MS = 5000;
 
     private final ClientConnectionManager connectionManager;
     private final LeaseGrpc.LeaseFutureStub stub;
@@ -295,7 +295,11 @@ final class LeaseImpl implements Lease {
 
         public KeepAlive(long leaseId) {
             this.nextKeepAlive = System.currentTimeMillis();
-            this.deadLine = nextKeepAlive + FIRST_KEEPALIVE_TIMEOUT_MS;
+            // Use user-provided timeout if present to avoid removing KeepAlive before first response from server
+            int initialKeepAliveTimeoutMs = connectionManager.builder().keepaliveTimeout() != null
+                ? Math.toIntExact(connectionManager.builder().keepaliveTimeout().toMillis())
+                : DEFAULT_FIRST_KEEPALIVE_TIMEOUT_MS;
+            this.deadLine = nextKeepAlive + initialKeepAliveTimeoutMs;
 
             this.observers = new CopyOnWriteArrayList<>();
             this.leaseId = leaseId;

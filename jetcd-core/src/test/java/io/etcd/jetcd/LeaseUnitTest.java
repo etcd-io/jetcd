@@ -17,6 +17,7 @@
 package io.etcd.jetcd;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +58,7 @@ public class LeaseUnitTest {
     private AtomicReference<StreamObserver<LeaseKeepAliveResponse>> responseObserverRef;
     private static final long LEASE_ID_1 = 1;
     private static final long LEASE_ID_2 = 2;
+    private static final int keepAliveTimeoutInMs = 5000;
 
     @RegisterExtension
     public final GrpcServerExtension grpcServerRule = new GrpcServerExtension().directExecutor();
@@ -70,7 +72,8 @@ public class LeaseUnitTest {
         this.grpcServerRule.getServiceRegistry()
             .addService(this.createLeaseImplBase(this.responseObserverRef, this.requestStreamObserverMock));
 
-        this.leaseCli = new LeaseImpl(new ClientConnectionManager(Client.builder(), grpcServerRule.getChannel()));
+        ClientBuilder builder = Client.builder().keepaliveTimeout(Duration.ofMillis(keepAliveTimeoutInMs));
+        this.leaseCli = new LeaseImpl(new ClientConnectionManager(builder, grpcServerRule.getChannel()));
     }
 
     @AfterEach
@@ -151,8 +154,8 @@ public class LeaseUnitTest {
 
         try (CloseableClient listener = this.leaseCli.keepAlive(LEASE_ID_1, observer)) {
             // expect at least some KeepAlive requests are sent within
-            // firstKeepAliveTimeout(5000 ms) + some quiet time (1000 ms).
-            verify(this.requestStreamObserverMock, after(6000).atLeastOnce()).onNext(argThat(hasLeaseID(LEASE_ID_1)));
+            // firstKeepAliveTimeout + some quiet time (1000 ms).
+            verify(this.requestStreamObserverMock, after(keepAliveTimeoutInMs + 1000).atLeastOnce()).onNext(argThat(hasLeaseID(LEASE_ID_1)));
 
             // reset mock to a empty state.
             Mockito.<StreamObserver> reset(this.requestStreamObserverMock);
