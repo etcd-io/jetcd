@@ -20,6 +20,7 @@ import io.grpc.Status;
 
 public final class Errors {
     public static final String NO_LEADER_ERROR_MESSAGE = "etcdserver: no leader";
+    public static final String INVALID_AUTH_TOKEN_ERROR_MESSAGE = "etcdserver: invalid auth token";
 
     private Errors() {
     }
@@ -34,8 +35,8 @@ public final class Errors {
     }
 
     public static boolean isInvalidTokenError(Status status) {
-        return status.getCode() == Status.Code.UNAUTHENTICATED
-            && "etcdserver: invalid auth token".equals(status.getDescription());
+        return (status.getCode() == Status.Code.UNAUTHENTICATED || status.getCode() == Status.Code.UNKNOWN)
+            && INVALID_AUTH_TOKEN_ERROR_MESSAGE.equals(status.getDescription());
     }
 
     public static boolean isHaltError(final Status status) {
