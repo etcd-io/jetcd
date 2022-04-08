@@ -21,7 +21,7 @@ vertx = "4.2.6"
 
 versionsPlugin = "0.42.0"
 errorPronePlugin = "2.0.2"
-spotlessPlugin = "6.3.0"
+spotlessPlugin = "6.4.2"
 shadowPlugin = "7.1.2"
 testLoggerPlugin = "3.2.0"
 protobufPlugin = "0.8.18"
