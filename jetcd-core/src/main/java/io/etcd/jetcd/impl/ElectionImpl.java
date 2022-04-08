@@ -147,9 +147,9 @@ final class ElectionImpl extends Impl implements Election {
             // different APIs use different messages. we cannot distinguish missing leader error otherwise,
             // because communicated status is always UNKNOWN
             if ("election: not leader".equals(description)) {
-                return NotLeaderException.INSTANCE;
+                return new NotLeaderException();
             } else if ("election: no leader".equals(description)) {
-                return NoLeaderException.INSTANCE;
+                return new NoLeaderException();
             }
         }
 

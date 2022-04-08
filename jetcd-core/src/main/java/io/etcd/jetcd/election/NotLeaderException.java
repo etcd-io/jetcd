@@ -20,5 +20,4 @@ package io.etcd.jetcd.election;
  * Signals that candidate is not a leader at the moment.
  */
 public class NotLeaderException extends RuntimeException {
-    public static final NotLeaderException INSTANCE = new NotLeaderException();
 }
