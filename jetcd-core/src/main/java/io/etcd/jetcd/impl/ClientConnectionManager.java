@@ -60,6 +60,7 @@ final class ClientConnectionManager {
     private final ClientBuilder builder;
     private final ExecutorService executorService;
     private final AuthCredential credential;
+    private volatile Vertx vertx;
     private volatile ManagedChannel managedChannel;
 
     ClientConnectionManager(ClientBuilder builder) {
@@ -135,6 +136,9 @@ final class ClientConnectionManager {
             if (managedChannel != null) {
                 managedChannel.shutdownNow();
             }
+            if (vertx != null) {
+                vertx.close();
+            }
         }
 
         if (builder.executorService() == null) {
@@ -167,8 +171,9 @@ final class ClientConnectionManager {
         if (target == null) {
             throw new IllegalArgumentException("At least one endpoint should be provided");
         }
-
-        final Vertx vertx = Vertx.vertx();
+        if (vertx == null) {
+            vertx = Vertx.vertx();
+        }
         final VertxChannelBuilder channelBuilder = VertxChannelBuilder.forTarget(vertx, target);
 
         if (builder.authority() != null) {
