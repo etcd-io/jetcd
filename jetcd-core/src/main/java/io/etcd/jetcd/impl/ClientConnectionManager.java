@@ -20,6 +20,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -73,7 +74,15 @@ final class ClientConnectionManager {
         this.credential = new AuthCredential(this);
 
         if (builder.executorService() == null) {
-            this.executorService = Executors.newCachedThreadPool();
+            final ThreadFactory backingThreadFactory = Executors.defaultThreadFactory();
+            this.executorService = Executors.newCachedThreadPool(r -> {
+                Thread t = backingThreadFactory.newThread(r);
+                // default to daemon
+                t.setDaemon(true);
+                // set a proper name so it is easier to find out the where the thread was created
+                t.setName("jetcd-" + t.getName());
+                return t;
+            });
         } else {
             this.executorService = builder.executorService();
         }
