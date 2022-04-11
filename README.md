@@ -99,7 +99,7 @@ The current major version is zero (0.y.z). Anything may change at any time. The 
 
 ## Build from source
 
-The project can be built with [Apache Maven](https://maven.apache.org/):
+The project can be built with [Gradle](https://gradle.org/):
 
 ```
 ./gradlew compileJava
