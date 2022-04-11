@@ -19,7 +19,6 @@ package io.etcd.jetcd.impl;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -74,16 +73,9 @@ final class WatchImpl extends Impl implements Watch {
 
         this.lock = new Object();
         this.stub = connectionManager.newStub(VertxWatchGrpc::newVertxStub);
-        final ThreadFactory backingThreadFactory = Executors.defaultThreadFactory();
-        this.executor = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1, r -> {
-            Thread t = backingThreadFactory.newThread(r);
-            // set it to daemon as there is no way for users to create this thread pool by their
-            // own
-            t.setDaemon(true);
-            // set a proper name so it is easier to find out the where the thread was created
-            t.setName("jetcd-watch-" + t.getName());
-            return t;
-        }));
+        // set it to daemon as there is no way for users to create this thread pool by their own
+        this.executor = MoreExecutors.listeningDecorator(
+                Executors.newScheduledThreadPool(1, Util.createThreadFactory("jetcd-watch-", true)));
         this.closed = new AtomicBoolean();
         this.watchers = new CopyOnWriteArrayList<>();
         this.namespace = connectionManager.getNamespace();
