@@ -75,7 +75,7 @@ final class WatchImpl extends Impl implements Watch {
         this.stub = connectionManager.newStub(VertxWatchGrpc::newVertxStub);
         // set it to daemon as there is no way for users to create this thread pool by their own
         this.executor = MoreExecutors.listeningDecorator(
-                Executors.newScheduledThreadPool(1, Util.createThreadFactory("jetcd-watch-", true)));
+            Executors.newScheduledThreadPool(1, Util.createThreadFactory("jetcd-watch-", true)));
         this.closed = new AtomicBoolean();
         this.watchers = new CopyOnWriteArrayList<>();
         this.namespace = connectionManager.getNamespace();
