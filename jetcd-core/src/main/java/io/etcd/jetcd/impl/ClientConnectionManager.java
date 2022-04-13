@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.support.Errors;
+import io.etcd.jetcd.support.Util;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -74,7 +75,8 @@ final class ClientConnectionManager {
         this.credential = new AuthCredential(this);
 
         if (builder.executorService() == null) {
-            this.executorService = Executors.newCachedThreadPool();
+            // default to daemon
+            this.executorService = Executors.newCachedThreadPool(Util.createThreadFactory("jetcd-", true));
         } else {
             this.executorService = builder.executorService();
         }
