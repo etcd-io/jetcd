@@ -76,7 +76,7 @@ The [jetcd-ctl](https://github.com/etcd-io/jetcd/tree/master/jetcd-ctl) is a sta
 The `io.etcd:jetcd-test` offers a convenient utility to programmatically start & stop an isolated `etcd` server.  This can be very useful e.g. for integration testing, like so:
 
 ```java
-import io.etcd.Client;
+import io.etcd.jetcd.Client;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -99,7 +99,7 @@ The current major version is zero (0.y.z). Anything may change at any time. The 
 
 ## Build from source
 
-The project can be built with [Apache Maven](https://maven.apache.org/):
+The project can be built with [Gradle](https://gradle.org/):
 
 ```
 ./gradlew compileJava

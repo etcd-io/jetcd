@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.support.Errors;
+import io.etcd.jetcd.support.Util;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;
@@ -60,6 +61,7 @@ final class ClientConnectionManager {
     private final ClientBuilder builder;
     private final ExecutorService executorService;
     private final AuthCredential credential;
+    private volatile Vertx vertx;
     private volatile ManagedChannel managedChannel;
 
     ClientConnectionManager(ClientBuilder builder) {
@@ -73,7 +75,8 @@ final class ClientConnectionManager {
         this.credential = new AuthCredential(this);
 
         if (builder.executorService() == null) {
-            this.executorService = Executors.newCachedThreadPool();
+            // default to daemon
+            this.executorService = Executors.newCachedThreadPool(Util.createThreadFactory("jetcd-", true));
         } else {
             this.executorService = builder.executorService();
         }
@@ -135,6 +138,9 @@ final class ClientConnectionManager {
             if (managedChannel != null) {
                 managedChannel.shutdownNow();
             }
+            if (vertx != null) {
+                vertx.close();
+            }
         }
 
         if (builder.executorService() == null) {
@@ -167,8 +173,9 @@ final class ClientConnectionManager {
         if (target == null) {
             throw new IllegalArgumentException("At least one endpoint should be provided");
         }
-
-        final Vertx vertx = Vertx.vertx();
+        if (vertx == null) {
+            vertx = Vertx.vertx();
+        }
         final VertxChannelBuilder channelBuilder = VertxChannelBuilder.forTarget(vertx, target);
 
         if (builder.authority() != null) {
