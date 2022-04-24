@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+plugins {
+    alias(libs.plugins.shadow)
+}
 
 dependencies {
     api project(':jetcd-grpc')
@@ -35,4 +38,9 @@ dependencies {
     testImplementation libs.bundles.testing
 
     testRuntimeOnly libs.bundles.log4j
+}
+
+shadowJar {
+    relocate 'io.grpc', 'io.etcd.jetcd.shaded.io.grpc'
+    relocate 'io.netty', 'io.etcd.jetcd.shaded.io.netty'
 }
