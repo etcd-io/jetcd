@@ -16,7 +16,7 @@ commonCompress = "1.21"
 autoService = "1.0.1"
 jool = "0.9.14"
 jcommander = "1.82"
-errorprone = "2.12.1"
+errorprone = "2.13.1"
 vertx = "4.2.6"
 
 versionsPlugin = "0.42.0"
