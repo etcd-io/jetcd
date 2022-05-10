@@ -14,25 +14,19 @@
  * limitations under the License.
  */
 
+
+plugins {
+    alias(libs.plugins.shadow)
+}
+
 dependencies {
-    api project(':jetcd-grpc')
-    api project(':jetcd-api')
-    api project(':jetcd-common')
+    api project(':jetcd-core')
+}
 
-    api libs.slf4j
-    api libs.failsafe
+shadowJar {
+    relocate 'io.grpc', 'io.etcd.jetcd.shaded.io.grpc'
+    relocate 'io.netty', 'io.etcd.jetcd.shaded.io.netty'
+    mergeServiceFiles()
 
-    compileOnly libs.javaxAnnotation
-    compileOnly libs.autoServiceAnnotations
-
-    annotationProcessor libs.autoServiceProcessor
-
-    testImplementation project(':jetcd-launcher')
-    testImplementation project(':jetcd-test')
-
-    testImplementation libs.awaitility
-    testImplementation libs.commonsIo
-    testImplementation libs.bundles.testing
-
-    testRuntimeOnly libs.bundles.log4j
+    archiveClassifier.set('')
 }
