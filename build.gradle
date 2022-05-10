@@ -81,7 +81,5 @@ subprojects {
         theme 'mocha-parallel'
         showStandardStreams false
     }
-
-    tasks.withType(Javadoc).all { enabled = false }
 }
 
