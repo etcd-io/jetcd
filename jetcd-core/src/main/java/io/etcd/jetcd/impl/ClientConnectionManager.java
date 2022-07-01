@@ -273,6 +273,9 @@ final class ClientConnectionManager {
                         if (Errors.isInvalidTokenError(error)) {
                             authCredential().refresh();
                         }
+                        if (Errors.isAuthStoreExpired(error)) {
+                            authCredential().refresh();
+                        }
                         if (!execution.retryOn(error)) {
                             // permanent failure
                             wrappedFuture.completeExceptionally(error);

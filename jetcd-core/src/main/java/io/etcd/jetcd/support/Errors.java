@@ -21,6 +21,7 @@ import io.grpc.Status;
 public final class Errors {
     public static final String NO_LEADER_ERROR_MESSAGE = "etcdserver: no leader";
     public static final String INVALID_AUTH_TOKEN_ERROR_MESSAGE = "etcdserver: invalid auth token";
+    public static final String ERROR_AUTH_STORE_OLD = "etcdserver: revision of auth store is old";
 
     private Errors() {
     }
@@ -37,6 +38,16 @@ public final class Errors {
     public static boolean isInvalidTokenError(Status status) {
         return (status.getCode() == Status.Code.UNAUTHENTICATED || status.getCode() == Status.Code.UNKNOWN)
             && INVALID_AUTH_TOKEN_ERROR_MESSAGE.equals(status.getDescription());
+    }
+
+    public static boolean isAuthStoreExpired(Throwable e) {
+        Status status = Status.fromThrowable(e);
+        return isAuthStoreExpired(status);
+    }
+
+    public static boolean isAuthStoreExpired(Status status) {
+        return (status.getCode() == Status.Code.UNAUTHENTICATED || status.getCode() == Status.Code.INVALID_ARGUMENT)
+            && ERROR_AUTH_STORE_OLD.equals(status.getDescription());
     }
 
     public static boolean isHaltError(final Status status) {
