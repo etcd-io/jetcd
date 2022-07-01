@@ -16,6 +16,7 @@ import io.vertx.core.Future;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 
+import static io.etcd.jetcd.support.Errors.isAuthStoreExpired;
 import static io.etcd.jetcd.support.Errors.isInvalidTokenError;
 
 abstract class Impl {
@@ -111,6 +112,9 @@ abstract class Impl {
             .handleIf(throwable -> {
                 Status status = Status.fromThrowable(throwable);
                 if (isInvalidTokenError(status)) {
+                    connectionManager.authCredential().refresh();
+                }
+                if (isAuthStoreExpired(status)) {
                     connectionManager.authCredential().refresh();
                 }
                 return doRetry.test(status);
