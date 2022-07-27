@@ -19,6 +19,7 @@ package io.etcd.jetcd.impl;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -50,6 +51,7 @@ public class AuthUnitTest {
     private final ByteSequence key = bytesOf("foo");
     private final ByteSequence value = bytesOf("bar");
 
+    @Disabled("temporary disabled")
     @Test
     public void testHeaders() throws Exception {
         MutableHandlerRegistry serviceRegistry = new MutableHandlerRegistry();
