@@ -69,6 +69,7 @@ public class DnsSrvNameResolver extends AbstractNameResolver {
         return groups;
     }
 
+    @SuppressWarnings("BanJNDI")
     private List<SocketAddress> resolveAddresses() {
         List<SocketAddress> addresses = new ArrayList<>();
 
