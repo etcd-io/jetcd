@@ -25,7 +25,6 @@ import io.etcd.jetcd.api.LeaderRequest;
 import io.etcd.jetcd.api.ProclaimRequest;
 import io.etcd.jetcd.api.ResignRequest;
 import io.etcd.jetcd.api.VertxElectionGrpc;
-import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
 import io.etcd.jetcd.election.CampaignResponse;
 import io.etcd.jetcd.election.LeaderKey;
 import io.etcd.jetcd.election.LeaderResponse;
@@ -117,7 +116,7 @@ final class ElectionImpl extends Impl implements Election {
         stub.observe(request)
             .handler(value -> listener.onNext(new LeaderResponse(value, namespace)))
             .endHandler(ignored -> listener.onCompleted())
-            .exceptionHandler(error -> listener.onError(EtcdExceptionFactory.toEtcdException(error)));
+            .exceptionHandler(error -> listener.onError(toEtcdException(error)));
     }
 
     @Override

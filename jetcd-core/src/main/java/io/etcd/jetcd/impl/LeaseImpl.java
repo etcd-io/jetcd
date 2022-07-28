@@ -189,7 +189,7 @@ final class LeaseImpl extends Impl implements Lease {
         private volatile ScheduledFuture<?> task;
         private volatile ScheduledFuture<?> restart;
         private volatile ScheduledExecutorService executor;
-        private volatile WriteStream<io.etcd.jetcd.api.LeaseKeepAliveRequest> requestStream;
+        private volatile WriteStream<LeaseKeepAliveRequest> requestStream;
 
         public KeepAlive() {
             this.executor = Executors.newScheduledThreadPool(2);
@@ -226,7 +226,7 @@ final class LeaseImpl extends Impl implements Lease {
             this.executor.shutdownNow();
         }
 
-        private void writeHandler(WriteStream<io.etcd.jetcd.api.LeaseKeepAliveRequest> stream) {
+        private void writeHandler(WriteStream<LeaseKeepAliveRequest> stream) {
             requestStream = stream;
 
             task = executor.scheduleAtFixedRate(
@@ -236,7 +236,7 @@ final class LeaseImpl extends Impl implements Lease {
                 TimeUnit.MILLISECONDS);
         }
 
-        private void sendKeepAlive(KeepAliveObserver observer, WriteStream<io.etcd.jetcd.api.LeaseKeepAliveRequest> stream) {
+        private void sendKeepAlive(KeepAliveObserver observer, WriteStream<LeaseKeepAliveRequest> stream) {
             if (observer.getNextKeepAlive() < System.currentTimeMillis()) {
                 stream.write(
                     LeaseKeepAliveRequest.newBuilder().setID(observer.getLeaseId()).build());
@@ -267,7 +267,7 @@ final class LeaseImpl extends Impl implements Lease {
             }
         }
 
-        private synchronized void handleException(Throwable r) {
+        private synchronized void handleException(Throwable unused) {
             if (!this.isRunning()) {
                 return;
             }

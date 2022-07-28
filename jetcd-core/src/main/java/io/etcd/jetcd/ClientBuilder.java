@@ -144,7 +144,7 @@ public final class ClientBuilder implements Cloneable {
         });
 
         final String target = Streams.stream(endpoints)
-            .map(e -> e.getHost() + (e.getPort() != -1 ? (":" + e.getPort()) : ""))
+            .map(e -> e.getHost() + (e.getPort() != -1 ? ":" + e.getPort() : ""))
             .distinct()
             .collect(Collectors.joining(","));
 

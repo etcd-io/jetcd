@@ -49,9 +49,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class ClientConnectionManagerTest {
 
-    private final String rootString = "root";
-    private final ByteSequence root = bytesOf(rootString);
-    private final ByteSequence rootPass = bytesOf("123");
+    private final static String ROOT_STRING = "root";
+    private final static ByteSequence ROOT = bytesOf(ROOT_STRING);
+    private final static ByteSequence ROOT_PASS = bytesOf("123");
 
     @RegisterExtension
     public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
@@ -113,14 +113,14 @@ public class ClientConnectionManagerTest {
     public void testAuthHeaders() throws InterruptedException, ExecutionException {
         final CountDownLatch latch = new CountDownLatch(1);
         Auth authClient = TestUtil.client(cluster).build().getAuthClient();
-        authClient.userAdd(root, rootPass).get();
-        ByteSequence role = TestUtil.bytesOf("root");
-        authClient.userGrantRole(root, role).get();
+        authClient.userAdd(ROOT, ROOT_PASS).get();
+        ByteSequence role = bytesOf("root");
+        authClient.userGrantRole(ROOT, role).get();
         authClient.authEnable().get();
 
         final ClientBuilder builder = TestUtil.client(cluster)
             .authHeader("MyAuthHeader", "MyAuthHeaderVal").header("MyHeader2", "MyHeaderVal2")
-            .user(root).password(rootPass);
+            .user(ROOT).password(ROOT_PASS);
         assertThat(builder.authHeaders().get(Metadata.Key.of("MyAuthHeader", Metadata.ASCII_STRING_MARSHALLER)))
             .isEqualTo("MyAuthHeaderVal");
         try (Client client = builder.build()) {
@@ -128,7 +128,7 @@ public class ClientConnectionManagerTest {
             latch.await(10, TimeUnit.SECONDS);
             future.get();
         }
-        authClient.userRevokeRole(root, role).get();
-        authClient.userDelete(root).get();
+        authClient.userRevokeRole(ROOT, role).get();
+        authClient.userDelete(ROOT).get();
     }
 }
