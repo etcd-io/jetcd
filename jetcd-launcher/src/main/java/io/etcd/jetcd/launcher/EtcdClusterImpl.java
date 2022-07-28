@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.testcontainers.containers.Network;
@@ -120,12 +119,12 @@ public class EtcdClusterImpl implements EtcdCluster {
 
     @Override
     public List<URI> clientEndpoints() {
-        return containers.stream().map(EtcdContainer::clientEndpoint).collect(Collectors.toList());
+        return containers.stream().map(EtcdContainer::clientEndpoint).collect(toList());
     }
 
     @Override
     public List<URI> peerEndpoints() {
-        return containers.stream().map(EtcdContainer::peerEndpoint).collect(Collectors.toList());
+        return containers.stream().map(EtcdContainer::peerEndpoint).collect(toList());
     }
 
     @Override

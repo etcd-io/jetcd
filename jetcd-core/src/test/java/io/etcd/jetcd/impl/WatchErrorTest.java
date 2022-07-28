@@ -41,7 +41,7 @@ import static org.awaitility.Awaitility.await;
 public class WatchErrorTest {
 
     @RegisterExtension
-    public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
+    public final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
         .withNodes(3)
         .build();
 
