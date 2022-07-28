@@ -59,7 +59,7 @@ public class AuthUnitTest {
             @Override
             public void authenticate(
                 io.etcd.jetcd.api.AuthenticateRequest request,
-                io.grpc.stub.StreamObserver<io.etcd.jetcd.api.AuthenticateResponse> responseObserver) {
+                io.grpc.stub.StreamObserver<AuthenticateResponse> responseObserver) {
 
                 responseObserver.onNext(
                     AuthenticateResponse.newBuilder().setToken("token").build());
@@ -69,7 +69,7 @@ public class AuthUnitTest {
             @Override
             public void put(
                 io.etcd.jetcd.api.PutRequest request,
-                io.grpc.stub.StreamObserver<io.etcd.jetcd.api.PutResponse> responseObserver) {
+                io.grpc.stub.StreamObserver<PutResponse> responseObserver) {
 
                 responseObserver.onNext(
                     PutResponse.newBuilder().build());

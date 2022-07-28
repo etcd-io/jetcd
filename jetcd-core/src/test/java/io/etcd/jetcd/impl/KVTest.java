@@ -205,7 +205,7 @@ public class KVTest {
         // construct txn operation
         Txn txn = kvClient.txn();
         Cmp cmp = new Cmp(sampleKey, Cmp.Op.GREATER, CmpTarget.value(cmpValue));
-        CompletableFuture<io.etcd.jetcd.kv.TxnResponse> txnResp = txn.If(cmp)
+        CompletableFuture<TxnResponse> txnResp = txn.If(cmp)
             .Then(Op.put(sampleKey, putValue, PutOption.DEFAULT)).Else(Op.put(sampleKey, putValueNew, PutOption.DEFAULT))
             .commit();
         txnResp.get();
@@ -253,7 +253,7 @@ public class KVTest {
         // construct txn operation
         Txn txn = kvClient.txn();
         Cmp cmp = new Cmp(sampleKey, Cmp.Op.NOT_EQUAL, CmpTarget.value(cmpValue));
-        CompletableFuture<io.etcd.jetcd.kv.TxnResponse> txnResp = txn.If(cmp)
+        CompletableFuture<TxnResponse> txnResp = txn.If(cmp)
             .Then(Op.put(sampleKey, putValue, PutOption.DEFAULT)).Else(Op.put(sampleKey, putValueNew, PutOption.DEFAULT))
             .commit();
         txnResp.get();
@@ -273,7 +273,7 @@ public class KVTest {
 
         Txn txn = kvClient.txn();
         Cmp cmp = new Cmp(foo, Cmp.Op.EQUAL, CmpTarget.version(0));
-        CompletableFuture<io.etcd.jetcd.kv.TxnResponse> txnResp = txn.If(cmp)
+        CompletableFuture<TxnResponse> txnResp = txn.If(cmp)
             .Then(Op.put(foo, bar, PutOption.DEFAULT),
                 Op.txn(null, new Op[] { Op.put(abc, oneTwoThree, PutOption.DEFAULT) }, null))
             .Else(Op.put(foo, barz, PutOption.DEFAULT)).commit();
