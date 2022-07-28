@@ -24,7 +24,6 @@ spotless {
         endWithNewline()
         importOrderFile(rootProject.file('etc/eclipse.importorder'))
         eclipse().configFile(rootProject.file('etc/eclipse-formatter-config.xml'))
-        //licenseHeaderFile(rootProject.file('etc/license.txt'))
-        //licenseHeader 'Copyright $YEAR The jetcd authors'
+        targetExclude("build/generated/**/*.java")
     }
 }
