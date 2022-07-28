@@ -26,6 +26,8 @@ public class LeaseGrantResponse extends AbstractResponse<io.etcd.jetcd.api.Lease
 
     /**
      * Returns the lease ID for the granted lease.
+     *
+     * @return the id.
      */
     public long getID() {
         return getResponse().getID();
@@ -33,6 +35,8 @@ public class LeaseGrantResponse extends AbstractResponse<io.etcd.jetcd.api.Lease
 
     /**
      * Returns the server chosen lease time-to-live in seconds.
+     *
+     * @return the ttl.
      */
     public long getTTL() {
         return getResponse().getTTL();

@@ -32,7 +32,9 @@ public class LeaderKey {
     }
 
     /**
-     * Returns the election identifier that corresponds to the leadership key. *
+     * Returns the election identifier that corresponds to the leadership key.
+     *
+     * @return the name.
      */
     public ByteSequence getName() {
         return name;
@@ -41,6 +43,8 @@ public class LeaderKey {
     /**
      * Returns the opaque key representing the ownership of the election. If the key
      * is deleted, then leadership is lost.
+     *
+     * @return the key.
      */
     public ByteSequence getKey() {
         return key;
@@ -50,6 +54,8 @@ public class LeaderKey {
      * Returns the creation revision of the key. It can be used to test for ownership
      * of an election during transactions by testing the key's creation revision
      * matches rev.
+     *
+     * @return the revision.
      */
     public long getRevision() {
         return revision;
@@ -57,6 +63,8 @@ public class LeaderKey {
 
     /**
      * Returns the lease ID of the election leader.
+     *
+     * @return the lese id.
      */
     public long getLease() {
         return lease;

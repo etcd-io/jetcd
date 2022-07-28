@@ -211,6 +211,8 @@ public final class WatchOption {
 
     /**
      * Returns the revision to watch from.
+     *
+     * @return the revision.
      */
     public long getRevision() {
         return revision;

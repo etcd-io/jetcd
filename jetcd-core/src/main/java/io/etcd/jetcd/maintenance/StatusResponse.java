@@ -33,6 +33,8 @@ public class StatusResponse extends AbstractResponse<io.etcd.jetcd.api.StatusRes
 
     /**
      * Returns the cluster protocol version used by the responding member.
+     *
+     * @return the version.
      */
     public String getVersion() {
         return getResponse().getVersion();
@@ -40,13 +42,17 @@ public class StatusResponse extends AbstractResponse<io.etcd.jetcd.api.StatusRes
 
     /**
      * Returns the size of the backend database, in bytes, of the responding member.
+     *
+     * @return the db sie.
      */
     public long getDbSize() {
         return getResponse().getDbSize();
     }
 
     /**
-     * Returns the the member ID which the responding member believes is the current leader.
+     * Returns the member ID which the responding member believes is the current leader.
+     *
+     * @return the leader.
      */
     public long getLeader() {
         return getResponse().getLeader();
@@ -54,6 +60,8 @@ public class StatusResponse extends AbstractResponse<io.etcd.jetcd.api.StatusRes
 
     /**
      * Returns the current raft index of the responding member.
+     *
+     * @return the raft index.
      */
     public long getRaftIndex() {
         return getResponse().getRaftIndex();
@@ -61,6 +69,8 @@ public class StatusResponse extends AbstractResponse<io.etcd.jetcd.api.StatusRes
 
     /**
      * Returns the current raft term of the responding member.
+     *
+     * @return the raft term.
      */
     public long getRaftTerm() {
         return getResponse().getRaftTerm();

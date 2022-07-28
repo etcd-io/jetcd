@@ -36,6 +36,8 @@ public class KeyValue {
 
     /**
      * Returns the key
+     *
+     * @return the key.
      */
     public ByteSequence getKey() {
         return unprefixedKey;
@@ -43,6 +45,8 @@ public class KeyValue {
 
     /**
      * Returns the value
+     *
+     * @return the value.
      */
     public ByteSequence getValue() {
         return value;
@@ -50,6 +54,8 @@ public class KeyValue {
 
     /**
      * Returns the create revision.
+     *
+     * @return the create revision.
      */
     public long getCreateRevision() {
         return kv.getCreateRevision();
@@ -57,6 +63,8 @@ public class KeyValue {
 
     /**
      * Returns the mod revision.
+     *
+     * @return the mod revision.
      */
     public long getModRevision() {
         return kv.getModRevision();
@@ -64,6 +72,8 @@ public class KeyValue {
 
     /**
      * Returns the version.
+     *
+     * @return the version.
      */
     public long getVersion() {
         return kv.getVersion();
@@ -71,6 +81,8 @@ public class KeyValue {
 
     /**
      * Returns the lease.
+     *
+     * @return the lease.
      */
     public long getLease() {
         return kv.getLease();

@@ -27,41 +27,57 @@ public interface Client extends AutoCloseable {
 
     /**
      * Returns the {@link Auth} client.
+     *
+     * @return the client.
      */
     Auth getAuthClient();
 
     /**
      * Returns the {@link KV} client.
+     *
+     * @return the client.
      */
     KV getKVClient();
 
     /**
      * Returns the {@link Cluster} client.
+     *
+     * @return the client.
      */
     Cluster getClusterClient();
 
     /**
      * Returns the {@link Maintenance} client.
+     *
+     * @return the client.
      */
     Maintenance getMaintenanceClient();
 
     /**
      * Returns the {@link Lease} client.
+     *
+     * @return the client.
      */
     Lease getLeaseClient();
 
     /**
      * Returns the {@link Watch} client.
+     *
+     * @return the client.
      */
     Watch getWatchClient();
 
     /**
      * Returns the {@link Lock} client.
+     *
+     * @return the client.
      */
     Lock getLockClient();
 
     /**
      * Returns the {@link Election} client.
+     *
+     * @return the client.
      */
     Election getElectionClient();
 
@@ -70,6 +86,8 @@ public interface Client extends AutoCloseable {
 
     /**
      * Returns a new {@link ClientBuilder}.
+     *
+     * @return the builder.
      */
     static ClientBuilder builder() {
         return new ClientBuilder();
