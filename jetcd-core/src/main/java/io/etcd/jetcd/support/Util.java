@@ -20,11 +20,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.etcd.jetcd.ByteSequence;
@@ -32,10 +29,8 @@ import io.etcd.jetcd.Constants;
 import io.grpc.Metadata;
 import io.grpc.stub.AbstractStub;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
 
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 import static io.grpc.stub.MetadataUtils.newAttachHeadersInterceptor;
 
 public final class Util {
@@ -51,33 +46,6 @@ public final class Util {
                 throw new IllegalArgumentException("Invalid endpoint URI: " + uri, e);
             }
         }).collect(Collectors.toList());
-    }
-
-    /**
-     * convert ListenableFuture of Type S to CompletableFuture of Type T.
-     */
-    public static <S, T> CompletableFuture<T> toCompletableFuture(ListenableFuture<S> sourceFuture,
-        Function<S, T> resultConvert,
-        Executor executor) {
-
-        CompletableFuture<T> targetFuture = new CompletableFuture<T>() {
-            // the cancel of targetFuture also cancels the sourceFuture.
-            @Override
-            public boolean cancel(boolean mayInterruptIfRunning) {
-                super.cancel(mayInterruptIfRunning);
-                return sourceFuture.cancel(mayInterruptIfRunning);
-            }
-        };
-
-        sourceFuture.addListener(() -> {
-            try {
-                targetFuture.complete(resultConvert.apply(sourceFuture.get()));
-            } catch (Exception e) {
-                targetFuture.completeExceptionally(toEtcdException(e));
-            }
-        }, executor);
-
-        return targetFuture;
     }
 
     public static ByteString prefixNamespace(ByteSequence key, ByteSequence namespace) {
@@ -106,7 +74,7 @@ public final class Util {
             }
             if (!ok) {
                 // 0xff..ff => 0x00
-                prefixedEndArray = new byte[] { 0 };
+                prefixedEndArray = Constants.NULL_KEY.getBytes();
             }
             return ByteString.copyFrom(prefixedEndArray);
         } else {
@@ -132,7 +100,7 @@ public final class Util {
             }
             if (!ok) {
                 // 0xff..ff => 0x00
-                prefixedEndArray = new byte[] { 0 };
+                prefixedEndArray = Constants.NULL_KEY.getBytes();
             }
             return ByteString.copyFrom(prefixedEndArray);
         } else {

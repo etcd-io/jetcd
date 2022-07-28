@@ -27,7 +27,6 @@ import io.etcd.jetcd.api.AlarmRequest;
 import io.etcd.jetcd.api.AlarmType;
 import io.etcd.jetcd.api.DefragmentRequest;
 import io.etcd.jetcd.api.HashKVRequest;
-import io.etcd.jetcd.api.MaintenanceGrpc;
 import io.etcd.jetcd.api.MoveLeaderRequest;
 import io.etcd.jetcd.api.SnapshotRequest;
 import io.etcd.jetcd.api.StatusRequest;
@@ -37,7 +36,6 @@ import io.etcd.jetcd.maintenance.DefragmentResponse;
 import io.etcd.jetcd.maintenance.HashKVResponse;
 import io.etcd.jetcd.maintenance.MoveLeaderResponse;
 import io.etcd.jetcd.maintenance.StatusResponse;
-import io.etcd.jetcd.support.Util;
 import io.grpc.stub.StreamObserver;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -82,48 +80,36 @@ final class MaintenanceImpl extends Impl implements Maintenance {
 
     @Override
     public CompletableFuture<DefragmentResponse> defragmentMember(URI endpoint) {
-        return this.connectionManager().withNewChannel(
-            // TODO
-            endpoint.toString(),
-            MaintenanceGrpc::newFutureStub,
-            stub -> Util.toCompletableFuture(
-                stub.defragment(DefragmentRequest.getDefaultInstance()),
-                DefragmentResponse::new,
-                this.connectionManager().getExecutorService()));
+        return defragmentMember(endpoint.toString());
     }
 
     @Override
     public CompletableFuture<DefragmentResponse> defragmentMember(String target) {
         return this.connectionManager().withNewChannel(
             target,
-            MaintenanceGrpc::newFutureStub,
-            stub -> Util.toCompletableFuture(
-                stub.defragment(DefragmentRequest.getDefaultInstance()),
-                DefragmentResponse::new,
-                this.connectionManager().getExecutorService()));
+            VertxMaintenanceGrpc::newVertxStub,
+            stub -> {
+                return stub.defragment(DefragmentRequest.getDefaultInstance())
+                    .map(DefragmentResponse::new)
+                    .toCompletionStage().toCompletableFuture();
+            });
     }
 
     @Override
     public CompletableFuture<StatusResponse> statusMember(URI endpoint) {
-        return this.connectionManager().withNewChannel(
-            // TODO
-            endpoint.toString(),
-            MaintenanceGrpc::newFutureStub,
-            stub -> Util.toCompletableFuture(
-                stub.status(StatusRequest.getDefaultInstance()),
-                StatusResponse::new,
-                this.connectionManager().getExecutorService()));
+        return statusMember(endpoint.toString());
     }
 
     @Override
     public CompletableFuture<StatusResponse> statusMember(String target) {
         return this.connectionManager().withNewChannel(
             target,
-            MaintenanceGrpc::newFutureStub,
-            stub -> Util.toCompletableFuture(
-                stub.status(StatusRequest.getDefaultInstance()),
-                StatusResponse::new,
-                this.connectionManager().getExecutorService()));
+            VertxMaintenanceGrpc::newVertxStub,
+            stub -> {
+                return stub.status(StatusRequest.getDefaultInstance())
+                    .map(StatusResponse::new)
+                    .toCompletionStage().toCompletableFuture();
+            });
     }
 
     @Override
@@ -135,25 +121,19 @@ final class MaintenanceImpl extends Impl implements Maintenance {
 
     @Override
     public CompletableFuture<HashKVResponse> hashKV(URI endpoint, long rev) {
-        return this.connectionManager().withNewChannel(
-            // TODO
-            endpoint.toString(),
-            MaintenanceGrpc::newFutureStub,
-            stub -> Util.toCompletableFuture(
-                stub.hashKV(HashKVRequest.newBuilder().setRevision(rev).build()),
-                HashKVResponse::new,
-                this.connectionManager().getExecutorService()));
+        return hashKV(endpoint.toString(), rev);
     }
 
     @Override
     public CompletableFuture<HashKVResponse> hashKV(String target, long rev) {
         return this.connectionManager().withNewChannel(
             target,
-            MaintenanceGrpc::newFutureStub,
-            stub -> Util.toCompletableFuture(
-                stub.hashKV(HashKVRequest.newBuilder().setRevision(rev).build()),
-                HashKVResponse::new,
-                this.connectionManager().getExecutorService()));
+            VertxMaintenanceGrpc::newVertxStub,
+            stub -> {
+                return stub.hashKV(HashKVRequest.newBuilder().setRevision(rev).build())
+                    .map(HashKVResponse::new)
+                    .toCompletionStage().toCompletableFuture();
+            });
     }
 
     @Override
