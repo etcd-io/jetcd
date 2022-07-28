@@ -33,6 +33,8 @@ public class LockResponse extends AbstractResponse<io.etcd.jetcd.api.lock.LockRe
      * Returns the key that will exist on etcd for the duration that the Lock caller
      * owns the lock. Users should not modify this key or the lock may exhibit
      * undefined behavior.
+     *
+     * @return the key.
      */
     public ByteSequence getKey() {
         return unprefixedKey;

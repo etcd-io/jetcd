@@ -34,6 +34,8 @@ public class AuthUserGetResponse extends AbstractResponse<io.etcd.jetcd.api.Auth
 
     /**
      * Returns a list of roles.
+     *
+     * @return the roles.
      */
     public List<String> getRoles() {
         return getResponse().getRolesList();

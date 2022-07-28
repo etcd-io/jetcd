@@ -37,6 +37,8 @@ public class DeleteResponse extends AbstractResponse<DeleteRangeResponse> {
 
     /**
      * Returns the number of keys deleted by the delete range request.
+     *
+     * @return number of deleted items.
      */
     public long getDeleted() {
         return getResponse().getDeleted();
@@ -44,6 +46,8 @@ public class DeleteResponse extends AbstractResponse<DeleteRangeResponse> {
 
     /**
      * Returns previous key-value pairs.
+     *
+     * @return previous kv,
      */
     public synchronized List<KeyValue> getPrevKvs() {
         if (prevKvs == null) {

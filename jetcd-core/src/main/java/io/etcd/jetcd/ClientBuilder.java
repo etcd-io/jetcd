@@ -162,6 +162,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns the auth user
+     *
+     * @return the user.
      */
     public ByteSequence user() {
         return user;
@@ -182,6 +184,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns the auth password
+     *
+     * @return the password.
      */
     public ByteSequence password() {
         return password;
@@ -202,6 +206,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns the namespace of each key used
+     *
+     * @return the namespace.
      */
     public ByteSequence namespace() {
         return namespace;
@@ -223,6 +229,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns the executor service
+     *
+     * @return the executor service.
      */
     public ExecutorService executorService() {
         return executorService;
@@ -265,6 +273,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns the ssl context
+     *
+     * @return the ssl context.
      */
     public SslContext sslContext() {
         return sslContext;
@@ -298,6 +308,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns The authority used to authenticate connections to servers.
+     *
+     * @return the authority.
      */
     public String authority() {
         return authority;
@@ -316,6 +328,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns the maximum message size allowed for a single gRPC frame.
+     *
+     * @return max inbound message size.
      */
     public Integer maxInboundMessageSize() {
         return maxInboundMessageSize;
@@ -334,6 +348,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns the headers to be added to http request headers
+     *
+     * @return headers.
      */
     public Map<Metadata.Key<?>, Object> headers() {
         return headers == null ? Collections.emptyMap() : Collections.unmodifiableMap(headers);
@@ -370,6 +386,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns the headers to be added to auth request headers
+     *
+     * @return auth headers.
      */
     public Map<Metadata.Key<?>, Object> authHeaders() {
         return authHeaders == null ? Collections.emptyMap() : Collections.unmodifiableMap(authHeaders);
@@ -406,6 +424,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns the interceptors
+     *
+     * @return the interceptors.
      */
     public List<ClientInterceptor> interceptors() {
         return interceptors;
@@ -443,6 +463,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns the auth interceptors
+     *
+     * @return the interceptors.
      */
     public List<ClientInterceptor> authInterceptors() {
         return authInterceptors;
@@ -480,6 +502,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns The delay between retries.
+     *
+     * @return the retry delay.
      */
     public long retryDelay() {
         return retryDelay;
@@ -498,6 +522,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns the max backing off delay between retries
+     *
+     * @return max retry delay.
      */
     public long retryMaxDelay() {
         return retryMaxDelay;
@@ -514,6 +540,11 @@ public final class ClientBuilder implements Cloneable {
         return this;
     }
 
+    /**
+     * Returns the keep alive time.
+     *
+     * @return keep alive time.
+     */
     public Duration keepaliveTime() {
         return keepaliveTime;
     }
@@ -532,6 +563,11 @@ public final class ClientBuilder implements Cloneable {
         return this;
     }
 
+    /**
+     * Returns the keep alive time out.
+     *
+     * @return keep alive time out.
+     */
     public Duration keepaliveTimeout() {
         return keepaliveTimeout;
     }
@@ -564,6 +600,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns he retries period unit.
+     *
+     * @return the chrono unit.
      */
     public ChronoUnit retryChronoUnit() {
         return retryChronoUnit;
@@ -582,6 +620,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns the retries max duration.
+     *
+     * @return retry max duration.
      */
     public Duration retryMaxDuration() {
         return retryMaxDuration;
@@ -589,6 +629,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns the connect timeout.
+     *
+     * @return connect timeout.
      */
     public Duration connectTimeout() {
         return connectTimeout;
@@ -664,6 +706,8 @@ public final class ClientBuilder implements Cloneable {
 
     /**
      * Returns a copy of this builder
+     *
+     * @return a copy of the builder.
      */
     public ClientBuilder copy() {
         try {

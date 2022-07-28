@@ -33,6 +33,8 @@ public class AuthUserListResponse extends AbstractResponse<io.etcd.jetcd.api.Aut
 
     /**
      * Returns a list of users.
+     *
+     * @return the users.
      */
     public List<String> getUsers() {
         return getResponse().getUsersList();

@@ -39,6 +39,8 @@ public class Permission {
 
     /**
      * Returns the type of Permission: READ, WRITE, READWRITE, or UNRECOGNIZED.
+     *
+     * @return the permission type.
      */
     public Type getPermType() {
         return permType;
