@@ -39,5 +39,5 @@ jobs:
           distribution: 'temurin'
       - name: Build Project
         run: |
-          ./gradlew spotlessCheck
+          ./gradlew check -x test
           ./gradlew test
