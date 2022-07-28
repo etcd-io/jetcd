@@ -23,6 +23,8 @@
 
     <description>PMD Rules that govern static code analysis for jetcd</description>
 
+    <exclude-pattern>.*/io/etcd/jetcd/api/.*</exclude-pattern>
+
     <rule ref="category/java/bestpractices.xml/AvoidUsingHardCodedIP"/>
     <rule ref="category/java/bestpractices.xml/UnusedFormalParameter"/>
     <rule ref="category/java/bestpractices.xml/UnusedLocalVariable"/>
