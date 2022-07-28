@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -40,9 +41,11 @@ public class EtcdClusterExtension implements BeforeAllCallback, BeforeEachCallba
     private static final Map<String, EtcdCluster> CLUSTERS = new ConcurrentHashMap<>();
 
     private final EtcdCluster cluster;
+    private final AtomicBoolean beforeAll;
 
     private EtcdClusterExtension(EtcdCluster cluster) {
         this.cluster = cluster;
+        this.beforeAll = new AtomicBoolean();
     }
 
     public EtcdCluster cluster() {
@@ -67,6 +70,7 @@ public class EtcdClusterExtension implements BeforeAllCallback, BeforeEachCallba
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
+        this.beforeAll.set(true);
         before(context);
     }
 
@@ -77,6 +81,7 @@ public class EtcdClusterExtension implements BeforeAllCallback, BeforeEachCallba
 
     @Override
     public void afterAll(ExtensionContext context) throws Exception {
+        this.beforeAll.set(false);
         after(context);
     }
 
@@ -93,10 +98,12 @@ public class EtcdClusterExtension implements BeforeAllCallback, BeforeEachCallba
     }
 
     protected synchronized void after(ExtensionContext context) {
-        try {
-            cluster.close();
-        } finally {
-            CLUSTERS.remove(cluster.clusterName());
+        if (!this.beforeAll.get()) {
+            try {
+                cluster.close();
+            } finally {
+                CLUSTERS.remove(cluster.clusterName());
+            }
         }
     }
 
