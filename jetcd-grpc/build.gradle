@@ -28,11 +28,7 @@ dependencies {
 
 protobuf {
     protoc {
-        if (osdetector.os == "osx") {
-            artifact = "com.google.protobuf:protoc:${libs.versions.protoc.get()}:osx-x86_64"
-        } else {
-            artifact = "com.google.protobuf:protoc:${libs.versions.protoc.get()}"
-        }
+        artifact = "com.google.protobuf:protoc:${libs.versions.protoc.get()}"
     }
     plugins {
         grpc {
