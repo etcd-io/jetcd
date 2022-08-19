@@ -370,7 +370,7 @@ message Compare {
   }
   // range_end compares the given target to all keys in the range [key, range_end).
   // See RangeRequest for more details on key ranges.
-  bytes range_end = 8;
+  bytes range_end = 64;
   // TODO: fill out with most of the rest of RangeRequest fields when needed.
 }
 
@@ -795,8 +795,8 @@ message AuthRoleGrantPermissionRequest {
 
 message AuthRoleRevokePermissionRequest {
   string role = 1;
-  string key = 2;
-  string range_end = 3;
+  bytes key = 2;
+  bytes range_end = 3;
 }
 
 message AuthEnableResponse {

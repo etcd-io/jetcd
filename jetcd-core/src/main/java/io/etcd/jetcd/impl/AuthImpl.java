@@ -264,8 +264,8 @@ final class AuthImpl extends Impl implements Auth {
 
         AuthRoleRevokePermissionRequest roleRevokePermissionRequest = AuthRoleRevokePermissionRequest.newBuilder()
             .setRoleBytes(ByteString.copyFrom(role.getBytes()))
-            .setKeyBytes(ByteString.copyFrom(key.getBytes()))
-            .setRangeEndBytes(ByteString.copyFrom(rangeEnd.getBytes()))
+            .setKey(ByteString.copyFrom(key.getBytes()))
+            .setRangeEnd(ByteString.copyFrom(rangeEnd.getBytes()))
             .build();
 
         return completable(
