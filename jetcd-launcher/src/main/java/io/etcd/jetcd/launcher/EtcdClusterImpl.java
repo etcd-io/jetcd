@@ -43,7 +43,8 @@ public class EtcdClusterImpl implements EtcdCluster {
         int nodes,
         boolean ssl,
         Collection<String> additionalArgs,
-        Network network) {
+        Network network,
+        boolean bindVolumn) {
 
         this.clusterName = clusterName;
         this.network = network;
@@ -57,6 +58,7 @@ public class EtcdClusterImpl implements EtcdCluster {
                     .withClusterToken(clusterName)
                     .withSll(ssl)
                     .withAdditionalArgs(additionalArgs)
+                        .withBindVolumn(bindVolumn)
                     .withNetwork(network);
 
                 return answer;

@@ -138,6 +138,11 @@ public class EtcdClusterExtension implements BeforeAllCallback, BeforeEachCallba
             return this;
         }
 
+        public Builder withBindVolumn(boolean bindVolumn) {
+            builder.withBindVolumn(bindVolumn);
+            return this;
+        }
+
         public Builder withAdditionalArgs(Collection<String> additionalArgs) {
             builder.withAdditionalArgs(additionalArgs);
             return this;

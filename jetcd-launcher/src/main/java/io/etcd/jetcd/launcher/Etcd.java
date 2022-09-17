@@ -46,6 +46,7 @@ public final class Etcd {
         private boolean ssl = false;
         private List<String> additionalArgs;
         private Network network;
+        private boolean bindVolumn = true;
 
         public Builder withClusterName(String clusterName) {
             this.clusterName = clusterName;
@@ -87,6 +88,11 @@ public final class Etcd {
             return this;
         }
 
+        public Builder withBindVolumn(boolean bindVolumn) {
+            this.bindVolumn = bindVolumn;
+            return this;
+        }
+
         public EtcdCluster build() {
             return new EtcdClusterImpl(
                 image,
@@ -95,7 +101,8 @@ public final class Etcd {
                 nodes,
                 ssl,
                 additionalArgs,
-                network != null ? network : Network.newNetwork());
+                network != null ? network : Network.newNetwork(),
+                    bindVolumn);
         }
     }
 }

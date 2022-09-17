@@ -56,6 +56,7 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
     private final Set<String> nodes;
 
     private String clusterToken;
+    private boolean bindVolumn = true;
     private boolean ssl;
     private Path dataDirectory;
     private Collection<String> additionalArgs;
@@ -79,6 +80,11 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
         this.clusterToken = clusterToken;
         return self();
     }
+    
+    public EtcdContainer withBindVolumn(boolean bindVolumn){
+        this.bindVolumn=bindVolumn;
+        return self();
+    }
 
     public EtcdContainer withAdditionalArgs(Collection<String> additionalArgs) {
         if (additionalArgs != null) {
@@ -94,8 +100,10 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
             return;
         }
 
-        dataDirectory = createDataDirectory(node);
-        addFileSystemBind(dataDirectory.toString(), Etcd.ETCD_DATA_DIR, BindMode.READ_WRITE, SelinuxContext.SHARED);
+        if(bindVolumn){
+            dataDirectory = createDataDirectory(node);
+            addFileSystemBind(dataDirectory.toString(), Etcd.ETCD_DATA_DIR, BindMode.READ_WRITE, SelinuxContext.SHARED);
+        }
 
         withExposedPorts(Etcd.ETCD_PEER_PORT, Etcd.ETCD_CLIENT_PORT);
         withNetworkAliases(node);
@@ -203,7 +211,9 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
     @Override
     public void close() {
         super.close();
-        deleteDataDirectory(dataDirectory);
+        if(bindVolumn) {
+            deleteDataDirectory(dataDirectory);
+        }
     }
 
     public String node() {
