@@ -22,8 +22,8 @@ dependencies {
     api libs.guava
     api libs.bundles.grpc
     api libs.junit
-
     api libs.autoServiceAnnotations
+
     annotationProcessor libs.autoServiceProcessor
 
     testRuntimeOnly libs.bundles.log4j

@@ -19,6 +19,7 @@ apply plugin: "pmd"
 
 dependencies {
     errorprone(libs.errorprone)
+    errorprone(libs.errorproneAnnotations)
     errorproneJavac(libs.errorproneJavac)
 }
 
