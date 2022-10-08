@@ -63,7 +63,7 @@ GetResponse response = getFuture.get();
 // delete the key
 kvClient.delete(key).get();
 ```
-To build one ssl secured client, refer to [secured client config](docs/sslconfig.md).
+To build one ssl secured client, refer to [secured client config](docs/SslConfig.md).
 
 For full etcd v3 API, plesase refer to the [official API documentation](https://etcd.io/docs/current/learning/api/).
 
