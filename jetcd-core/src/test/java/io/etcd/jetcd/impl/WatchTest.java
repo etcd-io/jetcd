@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
+import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.common.exception.CompactedException;
@@ -263,6 +265,38 @@ public class WatchTest {
 
             Thread.sleep(2000); // await().duration() would be better but it's broken
             assertThat(events.isEmpty()).as("verify that received events list is empty").isTrue();
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("parameters")
+    public void testWatchAndGet(final Client client) throws Exception {
+        final ByteSequence key = randomByteSequence();
+        final ByteSequence value = randomByteSequence();
+        final AtomicReference<KeyValue> ref = new AtomicReference<>();
+
+        final Consumer<WatchResponse> consumer = response -> {
+            for (WatchEvent event : response.getEvents()) {
+                if (event.getEventType() == EventType.PUT) {
+                    ByteSequence key1 = event.getKeyValue().getKey();
+
+                    client.getKVClient().get(key1).whenComplete((r, t) -> {
+                        if (!r.getKvs().isEmpty()) {
+                            ref.set(r.getKvs().get(0));
+                        }
+                    });
+                }
+            }
+        };
+
+        try (Watcher watcher = client.getWatchClient().watch(key, consumer)) {
+            client.getKVClient().put(key, value).get();
+
+            await().atMost(TIME_OUT_SECONDS, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
+
+            assertThat(ref.get()).isNotNull();
+            assertThat(ref.get().getKey()).isEqualTo(key);
+            assertThat(ref.get().getValue()).isEqualTo(value);
         }
     }
 
