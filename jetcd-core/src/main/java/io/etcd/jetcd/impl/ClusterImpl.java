@@ -59,11 +59,13 @@ final class ClusterImpl extends Impl implements Cluster {
      * add a new member into the cluster.
      *
      * @param peerAddrs the peer addresses of the new member
+     * @param isLearner whether the member is raft learner
      */
     @Override
-    public CompletableFuture<MemberAddResponse> addMember(List<URI> peerAddrs) {
+    public CompletableFuture<MemberAddResponse> addMember(List<URI> peerAddrs, boolean isLearner) {
         MemberAddRequest memberAddRequest = MemberAddRequest.newBuilder()
             .addAllPeerURLs(peerAddrs.stream().map(URI::toString).collect(Collectors.toList()))
+            .setIsLearner(isLearner)
             .build();
 
         return completable(

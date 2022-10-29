@@ -42,9 +42,10 @@ public interface Cluster extends CloseableClient {
      * add a new member into the cluster.
      *
      * @param  peerAddrs the peer addresses of the new member
+     * @param  isLearner whether the member is raft learner
      * @return           the response
      */
-    CompletableFuture<MemberAddResponse> addMember(List<URI> peerAddrs);
+    CompletableFuture<MemberAddResponse> addMember(List<URI> peerAddrs, boolean isLearner);
 
     /**
      * removes an existing member from the cluster.

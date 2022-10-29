@@ -73,7 +73,7 @@ public class ClusterClientTest {
         final Client client = Client.builder().endpoints(n1.clientEndpoints()).build();
         final Cluster clusterClient = client.getClusterClient();
 
-        Member m2 = clusterClient.addMember(n2.peerEndpoints())
+        Member m2 = clusterClient.addMember(n2.peerEndpoints(), false)
             .get(5, TimeUnit.SECONDS)
             .getMember();
 
