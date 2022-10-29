@@ -65,4 +65,13 @@ public class Member {
     public List<URI> getClientURIs() {
         return Util.toURIs(member.getClientURLsList());
     }
+
+    /**
+     * Returns if the member is raft learner
+     *
+     * @return if the member is raft learner
+     */
+    public boolean isLearner() {
+        return member.getIsLearner();
+    }
 }
