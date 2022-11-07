@@ -56,6 +56,16 @@ final class ClusterImpl extends Impl implements Cluster {
     }
 
     /**
+     * add a non-learner new member into the cluster.
+     *
+     * @param peerAddrs the peer addresses of the new member
+     */
+    @Override
+    public CompletableFuture<MemberAddResponse> addMember(List<URI> peerAddrs) {
+        return addMember(peerAddrs, false);
+    }
+
+    /**
      * add a new member into the cluster.
      *
      * @param peerAddrs the peer addresses of the new member

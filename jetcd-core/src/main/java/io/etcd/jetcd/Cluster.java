@@ -39,6 +39,14 @@ public interface Cluster extends CloseableClient {
     CompletableFuture<MemberListResponse> listMember();
 
     /**
+     * add a non-learner new member into the cluster.
+     *
+     * @param  peerAddrs the peer addresses of the new member
+     * @return           the response
+     */
+    CompletableFuture<MemberAddResponse> addMember(List<URI> peerAddrs);
+
+    /**
      * add a new member into the cluster.
      *
      * @param  peerAddrs the peer addresses of the new member
