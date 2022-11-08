@@ -16,6 +16,7 @@
 
 package io.etcd.jetcd.impl;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -102,7 +103,10 @@ public class ClusterClientTest {
 
         assertThat(m2).isNotNull();
         assertThat(m2.isLearner()).isFalse();
-        assertThat(clusterClient.listMember().get().getMembers()).hasSize(2);
+
+        List<Member> members = clusterClient.listMember().get().getMembers();
+        assertThat(members).hasSize(2);
+        assertThat(members.stream().filter(Member::isLearner).findAny()).isEmpty();
     }
 
     @Test
@@ -116,6 +120,9 @@ public class ClusterClientTest {
 
         assertThat(m2).isNotNull();
         assertThat(m2.isLearner()).isTrue();
-        assertThat(clusterClient.listMember().get().getMembers()).hasSize(2);
+
+        List<Member> members = clusterClient.listMember().get().getMembers();
+        assertThat(members).hasSize(2);
+        assertThat(members.stream().filter(Member::isLearner).findAny()).isPresent();
     }
 }
