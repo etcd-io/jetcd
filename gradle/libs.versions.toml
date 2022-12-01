@@ -1,38 +1,36 @@
 [versions]
-grpc = "1.49.0"
+grpc = "1.51.0"
 log4j = "2.19.0"
-mockito = "4.8.0"
-slf4j = "2.0.1"
+mockito = "4.9.0"
+slf4j = "2.0.5"
 guava = "31.1-jre"
-javaxAnnotation = "1.3.2"
 assertj = "3.23.1"
-junit = "5.9.0"
-testcontainers = "1.17.3"
-protoc = "3.21.6"
+junit = "5.9.1"
+testcontainers = "1.17.6"
+protoc = "3.21.10"
 failsafe = "2.4.4"
 awaitility = "4.2.0"
 commonsIo = "2.11.0"
-commonCompress = "1.21"
+commonCompress = "1.22"
 autoService = "1.0.1"
 jool = "0.9.14"
 jcommander = "1.82"
-errorprone = "2.14.0"
-vertx = "4.3.3"
+errorprone = "2.16"
+vertx = "4.3.5"
 
-versionsPlugin = "0.42.0"
-errorPronePlugin = "2.0.2"
-spotlessPlugin = "6.11.0"
+versionsPlugin = "0.44.0"
+errorPronePlugin = "3.0.1"
+spotlessPlugin = "6.12.0"
 shadowPlugin = "7.1.2"
 testLoggerPlugin = "3.2.0"
-protobufPlugin = "0.8.19"
+protobufPlugin = "0.9.1"
 nexusPublishPlugin = "1.1.0"
-axionReleasePlugin = "1.14.1"
-testRetryPlugin = "1.4.1"
+axionReleasePlugin = "1.14.3"
+testRetryPlugin = "1.5.0"
 
 [libraries]
 slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
-javaxAnnotation = { module = "javax.annotation:javax.annotation-api", version.ref = "javaxAnnotation" }
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 junit = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }

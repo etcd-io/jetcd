@@ -81,5 +81,9 @@ subprojects {
         theme 'mocha-parallel'
         showStandardStreams false
     }
+
+    task allDeps(type: DependencyReportTask) {
+        
+    }
 }
 
