@@ -22,7 +22,7 @@ dependencies {
     api libs.slf4j
     api libs.failsafe
 
-    compileOnly libs.javaxAnnotation
+    //compileOnly libs.javaxAnnotation
     compileOnly libs.autoServiceAnnotations
 
     annotationProcessor libs.autoServiceProcessor
