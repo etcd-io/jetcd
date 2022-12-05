@@ -45,12 +45,12 @@ protobuf {
     }
 }
 
-sourceSets {
-    main {
-        java {
-            srcDirs "${projectDir}/build/generated/source/proto/main/java"
-            srcDirs "${projectDir}/build/generated/source/proto/main/grpc"
-            srcDirs "${projectDir}/build/generated/source/proto/main/vertx"
-        }
-    }
-}
+//sourceSets {
+//    main {
+//        java {
+//            srcDirs "${projectDir}/build/generated/source/proto/main/java"
+//            srcDirs "${projectDir}/build/generated/source/proto/main/grpc"
+//            srcDirs "${projectDir}/build/generated/source/proto/main/vertx"
+//        }
+//    }
+//}
