@@ -26,7 +26,7 @@ import java.util.UUID;
 import org.testcontainers.containers.Network;
 
 public final class Etcd {
-    public static final String CONTAINER_IMAGE = "gcr.io/etcd-development/etcd:v3.5.4";
+    public static final String CONTAINER_IMAGE = "gcr.io/etcd-development/etcd:v3.5.6";
     public static final int ETCD_CLIENT_PORT = 2379;
     public static final int ETCD_PEER_PORT = 2380;
     public static final String ETCD_DATA_DIR = "/data.etcd";
