@@ -44,7 +44,7 @@ public class LeaseTimeToLiveResponse extends AbstractResponse<io.etcd.jetcd.api.
      *
      * @return the ttl.
      */
-    public long getTTl() {
+    public long getTTL() {
         return getResponse().getTTL();
     }
 
