@@ -1,0 +1,21 @@
+= Release
+
++
+[source,shell]
+----
+$ ./gradlew currentVersion
+Project version: 0.7.5-SNAPSHOT
+
+$ ./gradlew release
+
+$ git tag
+jetcd-0.7.5
+
+$ ./gradlew currentVersion
+Project version: 0.7.5
+
+$ ./gradlew publish
+published jetcd-0.7.5 release version
+
+$ ./gradlew markNextVersion -Prelease.version=0.7.6
+----
