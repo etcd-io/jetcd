@@ -149,7 +149,7 @@ public class LeaseTest {
         long ttl = 5;
         long leaseID = leaseClient.grant(ttl).get().getID();
         LeaseTimeToLiveResponse resp = leaseClient.timeToLive(leaseID, LeaseOption.DEFAULT).get();
-        assertThat(resp.getTTl()).isGreaterThan(0);
+        assertThat(resp.getTTL()).isGreaterThan(0);
         assertThat(resp.getGrantedTTL()).isEqualTo(ttl);
     }
 
@@ -162,7 +162,7 @@ public class LeaseTest {
 
         LeaseOption leaseOption = LeaseOption.newBuilder().withAttachedKeys().build();
         LeaseTimeToLiveResponse resp = leaseClient.timeToLive(leaseID, leaseOption).get();
-        assertThat(resp.getTTl()).isGreaterThan(0);
+        assertThat(resp.getTTL()).isGreaterThan(0);
         assertThat(resp.getGrantedTTL()).isEqualTo(ttl);
         assertThat(resp.getKeys().size()).isEqualTo(1);
         assertThat(resp.getKeys().get(0)).isEqualTo(KEY_2);
