@@ -43,7 +43,7 @@ public class EtcdClusterImpl implements EtcdCluster {
         int nodes,
         boolean ssl,
         Collection<String> additionalArgs,
-        Network network) {
+        Network network, boolean shouldMountDataDirectory) {
 
         this.clusterName = clusterName;
         this.network = network;
@@ -52,15 +52,12 @@ public class EtcdClusterImpl implements EtcdCluster {
             .collect(toList());
 
         this.containers = endpoints.stream()
-            .map(e -> {
-                EtcdContainer answer = new EtcdContainer(image, e, endpoints)
-                    .withClusterToken(clusterName)
-                    .withSll(ssl)
-                    .withAdditionalArgs(additionalArgs)
-                    .withNetwork(network);
-
-                return answer;
-            })
+            .map(e -> new EtcdContainer(image, e, endpoints)
+                .withClusterToken(clusterName)
+                .withSll(ssl)
+                .withAdditionalArgs(additionalArgs)
+                .withNetwork(network)
+                .withShouldMountDataDirectory(shouldMountDataDirectory))
             .collect(toList());
     }
 
