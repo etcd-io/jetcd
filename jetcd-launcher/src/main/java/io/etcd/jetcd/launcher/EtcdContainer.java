@@ -59,6 +59,7 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
     private boolean ssl;
     private Path dataDirectory;
     private Collection<String> additionalArgs;
+    private boolean shouldMountDataDirectory = true;
 
     public EtcdContainer(String image, String node, Collection<String> nodes) {
         super(image);
@@ -72,6 +73,11 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
 
     public EtcdContainer withSll(boolean ssl) {
         this.ssl = ssl;
+        return self();
+    }
+
+    public EtcdContainer withShouldMountDataDirectory(boolean shouldMountDataDiretory) {
+        this.shouldMountDataDirectory = shouldMountDataDiretory;
         return self();
     }
 
@@ -94,8 +100,10 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
             return;
         }
 
-        dataDirectory = createDataDirectory(node);
-        addFileSystemBind(dataDirectory.toString(), Etcd.ETCD_DATA_DIR, BindMode.READ_WRITE, SelinuxContext.SHARED);
+        if (shouldMountDataDirectory) {
+            dataDirectory = createDataDirectory(node);
+            addFileSystemBind(dataDirectory.toString(), Etcd.ETCD_DATA_DIR, BindMode.READ_WRITE, SelinuxContext.SHARED);
+        }
 
         withExposedPorts(Etcd.ETCD_PEER_PORT, Etcd.ETCD_CLIENT_PORT);
         withNetworkAliases(node);
@@ -132,8 +140,10 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
         cmd.add((ssl ? "https" : "http") + "://0.0.0.0:" + Etcd.ETCD_CLIENT_PORT);
         cmd.add("--listen-client-urls");
         cmd.add((ssl ? "https" : "http") + "://0.0.0.0:" + Etcd.ETCD_CLIENT_PORT);
-        cmd.add("--data-dir");
-        cmd.add(Etcd.ETCD_DATA_DIR);
+        if (shouldMountDataDirectory) {
+            cmd.add("--data-dir");
+            cmd.add(Etcd.ETCD_DATA_DIR);
+        }
 
         if (ssl) {
             withClasspathResourceMapping(
@@ -236,5 +246,9 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("URISyntaxException should never happen here", e);
         }
+    }
+
+    public boolean hasDataDirectoryMounted() {
+        return dataDirectory != null;
     }
 }

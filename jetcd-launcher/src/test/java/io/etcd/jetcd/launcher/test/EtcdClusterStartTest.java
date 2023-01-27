@@ -21,6 +21,9 @@ import org.junit.jupiter.api.Test;
 import io.etcd.jetcd.launcher.Etcd;
 import io.etcd.jetcd.launcher.EtcdCluster;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 public class EtcdClusterStartTest {
 
     @Test
@@ -32,10 +35,34 @@ public class EtcdClusterStartTest {
 
     @Test
     public void testStartEtcdWithAdditionalArguments() throws Exception {
-
         try (EtcdCluster etcd = Etcd.builder().withClusterName(getClass().getSimpleName())
             .withAdditionalArgs("--max-txn-ops", "1024").build()) {
             etcd.start();
         }
     }
+
+    @Test
+    public void testContainerShouldMountDirectory() {
+        try (EtcdCluster etcd = Etcd.builder().withClusterName(getClass().getSimpleName()).withMountedDataDirectory(true)
+            .build()) {
+            etcd.start();
+
+            var containers = etcd.containers();
+
+            containers.forEach(container -> assertTrue(container.hasDataDirectoryMounted(), "Data directory was not mounted"));
+        }
+    }
+
+    @Test
+    public void testContainerShouldNotMountDirectory() {
+        try (EtcdCluster etcd = Etcd.builder().withClusterName(getClass().getSimpleName()).withMountedDataDirectory(false)
+            .build()) {
+            etcd.start();
+
+            var containers = etcd.containers();
+
+            containers.forEach(container -> assertFalse(container.hasDataDirectoryMounted(), "Data directory was mounted"));
+        }
+    }
+
 }
