@@ -40,7 +40,7 @@ Please follow this style to make jetcd easy to review, maintain, and develop.
 To make sure CI checks would pass please run
 
 ```bash
-./mvnw license:format
+./gradlew spotlessApply
 ```
 
 and including any changes in PR before opening it.
