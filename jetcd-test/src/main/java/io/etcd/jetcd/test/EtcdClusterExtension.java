@@ -153,6 +153,11 @@ public class EtcdClusterExtension implements BeforeAllCallback, BeforeEachCallba
             return this;
         }
 
+        public Builder withMountDirectory(boolean mountDirectory) {
+            builder.withMountedDataDirectory(mountDirectory);
+            return this;
+        }
+
         public EtcdClusterExtension build() {
             return new EtcdClusterExtension(builder.build());
         }
