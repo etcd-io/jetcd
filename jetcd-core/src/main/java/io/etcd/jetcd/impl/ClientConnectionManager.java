@@ -16,11 +16,7 @@
 
 package io.etcd.jetcd.impl;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -76,7 +72,9 @@ final class ClientConnectionManager {
 
         if (builder.executorService() == null) {
             // default to daemon
-            this.executorService = Executors.newCachedThreadPool(Util.createThreadFactory("jetcd-", true));
+            this.executorService = new ThreadPoolExecutor(4, 8, 5, TimeUnit.MINUTES
+                    , new LinkedBlockingQueue<>(1000)
+                    , Util.createThreadFactory("jetcd-", true));
         } else {
             this.executorService = builder.executorService();
         }
