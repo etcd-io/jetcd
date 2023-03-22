@@ -73,7 +73,7 @@ final class ClientConnectionManager {
         if (builder.executorService() == null) {
             // default to daemon
             this.executorService = new ThreadPoolExecutor(4, 8, 5, TimeUnit.MINUTES, new LinkedBlockingQueue<>(1000),
-                    Util.createThreadFactory("jetcd-", true));
+                Util.createThreadFactory("jetcd-", true));
         } else {
             this.executorService = builder.executorService();
         }
