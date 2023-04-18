@@ -46,7 +46,7 @@ The Lease interface provides methods to grant, revoke, and keepalive leases.
 1. This function is called periodically by `keepAliveSchedule`.
 2. The lease may expire as:
      * The etcd respond overtime.
-     * The client faile to send request in time.
+     * The client fails to send request in time.
 3. It will scan the keepAlives map and find the leases that requires keepAlive requests to send based on its nextKeepAliveTime.
 4. Send request to the StreamObserver for these leases.
 
