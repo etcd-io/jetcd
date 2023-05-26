@@ -47,7 +47,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Streams;
 
 /**
- * ClientBuilder knows how to create an Client instance.
+ * ClientBuilder knows how to create a Client instance.
  */
 public final class ClientBuilder implements Cloneable {
 
@@ -73,6 +73,9 @@ public final class ClientBuilder implements Cloneable {
     private Duration retryMaxDuration;
     private Duration connectTimeout;
     private boolean waitForReady = true;
+
+    // default matches vertx default and does not change behvior compared to earlier versions of jetcd.
+    private boolean useDaemonThread = false;
 
     ClientBuilder() {
     }
@@ -689,6 +692,29 @@ public final class ClientBuilder implements Cloneable {
      */
     public ClientBuilder waitForReady(boolean waitForReady) {
         this.waitForReady = waitForReady;
+        return this;
+    }
+
+    /**
+     * Returns if any service threads created by this client will be setup as daemon threads.
+     *
+     * @return true if this client will create any necessary service threads as daemon threads.
+     */
+    public boolean useDaemonThread() {
+        return useDaemonThread;
+    }
+
+    /**
+     * Configure whether any service threads created by this client will be setup as daemon threads.
+     * Defaults to false. Note if this is not explicitly set to true, a JVM that has created service threads
+     * through this client may not exit when/if its main thread exits.
+     *
+     * @param useDaemonThread true if any service threads created by this client should be setup as daemon threads.
+     *                        False by default to preserve backwards compatibility.
+     * @return this builder
+     */
+    public ClientBuilder useDaemonThread(boolean useDaemonThread) {
+        this.useDaemonThread = useDaemonThread;
         return this;
     }
 

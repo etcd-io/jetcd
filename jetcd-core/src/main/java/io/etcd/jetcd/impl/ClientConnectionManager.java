@@ -25,6 +25,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import io.vertx.core.VertxOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -174,7 +175,7 @@ final class ClientConnectionManager {
             throw new IllegalArgumentException("At least one endpoint should be provided");
         }
         if (vertx == null) {
-            vertx = Vertx.vertx();
+            vertx = Vertx.vertx(new VertxOptions().setUseDaemonThread(builder.useDaemonThread()));
         }
         final VertxChannelBuilder channelBuilder = VertxChannelBuilder.forTarget(vertx, target);
 
