@@ -26,7 +26,17 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+  
 jobs:
+  deps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@v3
   build:
     runs-on: ubuntu-latest
     steps:
