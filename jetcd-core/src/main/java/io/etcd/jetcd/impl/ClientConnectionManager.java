@@ -25,7 +25,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import io.vertx.core.VertxOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +45,7 @@ import io.grpc.netty.NegotiationType;
 import io.grpc.stub.AbstractStub;
 import io.netty.channel.ChannelOption;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.grpc.VertxChannelBuilder;
 
 import com.google.common.util.concurrent.ListenableFuture;
