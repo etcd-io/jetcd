@@ -30,15 +30,14 @@ import io.etcd.jetcd.op.Op;
  * <pre>
  * {@code
  * txn.If(
- *    new Cmp(KEY, Cmp.Op.GREATER, CmpTarget.value(VALUE)),
- *    new Cmp(KEY, cmp.Op.EQUAL, CmpTarget.version(2))
- * ).Then(
- *    Op.put(KEY2, VALUE2, PutOption.DEFAULT),
- *    Op.put(KEY3, VALUE3, PutOption.DEFAULT)
- * ).Else(
- *    Op.put(KEY4, VALUE4, PutOption.DEFAULT),
- *    Op.put(KEY4, VALUE4, PutOption.DEFAULT)
- * ).commit();
+ *     new Cmp(KEY, Cmp.Op.GREATER, CmpTarget.value(VALUE)),
+ *     new Cmp(KEY, cmp.Op.EQUAL, CmpTarget.version(2))).Then(
+ *         Op.put(KEY2, VALUE2, PutOption.DEFAULT),
+ *         Op.put(KEY3, VALUE3, PutOption.DEFAULT))
+ *     .Else(
+ *         Op.put(KEY4, VALUE4, PutOption.DEFAULT),
+ *         Op.put(KEY4, VALUE4, PutOption.DEFAULT))
+ *     .commit();
  * }
  * </pre>
  *
@@ -48,18 +47,17 @@ import io.etcd.jetcd.op.Op;
  * <pre>
  * {@code
  * txn.If(
- *    new Cmp(KEY, Cmp.Op.GREATER, CmpTarget.value(VALUE))
- * ).If(
- *    new Cmp(KEY, cmp.Op.EQUAL, CmpTarget.version(VERSION))
- * ).Then(
- *    Op.put(KEY2, VALUE2, PutOption.DEFAULT)
- * ).Then(
- *    Op.put(KEY3, VALUE3, PutOption.DEFAULT)
- * ).Else(
- *    Op.put(KEY4, VALUE4, PutOption.DEFAULT)
- * ).Else(
- *    Op.put(KEY4, VALUE4, PutOption.DEFAULT)
- * ).commit();
+ *     new Cmp(KEY, Cmp.Op.GREATER, CmpTarget.value(VALUE))).If(
+ *         new Cmp(KEY, cmp.Op.EQUAL, CmpTarget.version(VERSION)))
+ *     .Then(
+ *         Op.put(KEY2, VALUE2, PutOption.DEFAULT))
+ *     .Then(
+ *         Op.put(KEY3, VALUE3, PutOption.DEFAULT))
+ *     .Else(
+ *         Op.put(KEY4, VALUE4, PutOption.DEFAULT))
+ *     .Else(
+ *         Op.put(KEY4, VALUE4, PutOption.DEFAULT))
+ *     .commit();
  * }
  * </pre>
  */
