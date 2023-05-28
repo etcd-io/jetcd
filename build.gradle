@@ -82,9 +82,7 @@ subprojects {
         showStandardStreams false
     }
 
-    task allDeps(type: DependencyReportTask) {
-        
-    }
+    tasks.register('allDeps', DependencyReportTask)
 }
 
 

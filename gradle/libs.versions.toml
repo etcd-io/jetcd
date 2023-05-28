@@ -56,7 +56,7 @@ vertxGrpc = { module = "io.vertx:vertx-grpc", version.ref = "vertx" }
 
 log4jApi = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j" }
 log4jCore = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
-log4jSlf4j = { module = "org.apache.logging.log4j:log4j-slf4j-impl", version.ref = "log4j" }
+log4jSlf4j = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
 log4j12 = { module = "org.apache.logging.log4j:log4j-1.2-api", version.ref = "log4j" }
 
 autoServiceAnnotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "autoService"}

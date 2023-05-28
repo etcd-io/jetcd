@@ -22,19 +22,27 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.Network;
-import org.testcontainers.utility.ResourceReaper;
+
+import com.github.dockerjava.api.command.SyncDockerCmd;
 
 import static java.util.stream.Collectors.toList;
 
 public class EtcdClusterImpl implements EtcdCluster {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EtcdClusterImpl.class);
+
     private final List<EtcdContainer> containers;
     private final String clusterName;
     private final Network network;
     private final List<String> endpoints;
+    private final AtomicBoolean hookIsSet;
 
     public EtcdClusterImpl(
         String image,
@@ -47,6 +55,7 @@ public class EtcdClusterImpl implements EtcdCluster {
 
         this.clusterName = clusterName;
         this.network = network;
+        this.hookIsSet = new AtomicBoolean(false);
         this.endpoints = IntStream.range(0, nodes)
             .mapToObj(i -> (prefix == null ? "etcd" : prefix + "etcd") + i)
             .collect(toList());
@@ -61,21 +70,37 @@ public class EtcdClusterImpl implements EtcdCluster {
             .collect(toList());
     }
 
+    private void execQuietly(SyncDockerCmd<?> cmd) {
+        try {
+            cmd.exec();
+        } catch (Exception e) {
+            LOGGER.warn("", e);
+        }
+    }
+
+    private void performCleanup() {
+        if (this.network != null && network.getId() != null) {
+            execQuietly(
+                DockerClientFactory.instance().client().removeNetworkCmd(this.network.getId()));
+        }
+    }
+
     @Override
     public void start() {
+        if (hookIsSet.compareAndSet(false, true)) {
+            // If the JVM stops without containers being stopped, try and stop the container.
+            Runtime
+                .getRuntime()
+                .addShutdownHook(new Thread(this::performCleanup));
+        }
+
         final CountDownLatch latch = new CountDownLatch(containers.size());
         final AtomicReference<Exception> failedToStart = new AtomicReference<>();
-
-        ResourceReaper.instance().registerNetworkIdForCleanup(this.network.getId());
 
         for (EtcdContainer container : containers) {
             new Thread(() -> {
                 try {
                     container.start();
-
-                    ResourceReaper.instance().registerContainerForCleanup(
-                        container.getContainerId(),
-                        container.getDockerImageName());
                 } catch (Exception e) {
                     failedToStart.set(e);
                 } finally {
