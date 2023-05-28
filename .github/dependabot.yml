@@ -12,3 +12,7 @@ updates:
       interval: daily
       time: "19:30"
       timezone: Europe/Paris
+    labels:
+      - area/dependencies
+    ignore:
+      - dependency-name: com.google.protobuf:protoc
