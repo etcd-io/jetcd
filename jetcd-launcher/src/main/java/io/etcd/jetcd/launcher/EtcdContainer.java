@@ -109,6 +109,12 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
         withNetworkAliases(node);
         withLogConsumer(new Slf4jLogConsumer(LOGGER).withPrefix(node));
         withCommand(createCommand());
+        withEnv("ETCD_LOG_LEVEL", "debug");
+
+        String user = System.getenv("TC_USER");
+        if (user != null) {
+            withCreateContainerCmdModifier(c -> c.withUser(user));
+        }
 
         waitingFor(Wait.forLogMessage(".*ready to serve client requests.*", 1));
     }
@@ -188,11 +194,15 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
 
     private static void deleteDataDirectory(Path dir) {
         if (dir != null && Files.exists(dir)) {
-            try (Stream<Path> stream = Files.walk(dir)) {
-                stream.sorted(Comparator.reverseOrder())
-                    .map(Path::toFile)
-                    .forEach(File::delete);
-            } catch (IOException e) {
+            try {
+                try (Stream<Path> stream = Files.walk(dir)) {
+                    stream.sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+                } catch (IOException e) {
+                    LOGGER.error("Error deleting directory {}", dir, e);
+                }
+            } catch (Exception e) {
                 LOGGER.error("Error deleting directory {}", dir, e);
             }
         }
@@ -221,22 +231,22 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
     }
 
     public InetSocketAddress getClientAddress() {
-        return new InetSocketAddress(getContainerIpAddress(), getMappedPort(Etcd.ETCD_CLIENT_PORT));
+        return new InetSocketAddress(getHost(), getMappedPort(Etcd.ETCD_CLIENT_PORT));
     }
 
     public URI clientEndpoint() {
         return newURI(
-            getContainerIpAddress(),
+            getHost(),
             getMappedPort(Etcd.ETCD_CLIENT_PORT));
     }
 
     public InetSocketAddress getPeerAddress() {
-        return new InetSocketAddress(getContainerIpAddress(), getMappedPort(Etcd.ETCD_PEER_PORT));
+        return new InetSocketAddress(getHost(), getMappedPort(Etcd.ETCD_PEER_PORT));
     }
 
     public URI peerEndpoint() {
         return newURI(
-            getContainerIpAddress(),
+            getHost(),
             getMappedPort(Etcd.ETCD_PEER_PORT));
     }
 

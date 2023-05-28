@@ -56,7 +56,7 @@ public class WatchResumeTest {
             try (Watcher watcher = watchClient.watch(key, ref::set)) {
                 cluster.restart();
 
-                kvClient.put(key, value).get(1, TimeUnit.SECONDS);
+                kvClient.put(key, value).get();
 
                 await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
 

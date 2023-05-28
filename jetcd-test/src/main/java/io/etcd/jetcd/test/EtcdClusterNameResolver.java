@@ -17,14 +17,15 @@
 package io.etcd.jetcd.test;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.etcd.jetcd.launcher.EtcdCluster;
+import io.etcd.jetcd.launcher.EtcdContainer;
 import io.grpc.Attributes;
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
@@ -117,17 +118,28 @@ public class EtcdClusterNameResolver extends NameResolver {
                 throw new RuntimeException("Unable to find cluster " + authority);
             }
 
-            List<EquivalentAddressGroup> servers = cluster.containers().stream()
-                .map(container -> {
-                    return new EquivalentAddressGroup(
+            List<EquivalentAddressGroup> servers = new ArrayList<>();
+
+            for (EtcdContainer container : cluster.containers()) {
+                try {
+                    EquivalentAddressGroup ag = new EquivalentAddressGroup(
                         container.getClientAddress(),
                         Attributes.newBuilder()
                             .set(EquivalentAddressGroup.ATTR_AUTHORITY_OVERRIDE, container.node())
                             .build());
-                })
-                .collect(Collectors.toList());
 
-            savedListener.onAddresses(servers, Attributes.EMPTY);
+                    servers.add(ag);
+                } catch (IllegalStateException | IllegalArgumentException e) {
+                    LOGGER.debug(
+                        "Failure computing AddressGroup for cluster {}, {}",
+                        cluster.clusterName(),
+                        e.getMessage());
+                }
+            }
+
+            if (!servers.isEmpty()) {
+                savedListener.onAddresses(servers, Attributes.EMPTY);
+            }
 
         } catch (Exception e) {
             LOGGER.warn("Error wile getting list of servers", e);

@@ -18,7 +18,6 @@ package io.etcd.jetcd.impl;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -30,12 +29,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.slf4j.LoggerFactory;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.auth.Permission;
+import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,11 +53,13 @@ public class WatchTokenExpireTest {
         .withNodes(1)
         .withSsl(true)
         .withAdditionalArgs(
-            Arrays.asList("--auth-token",
+            List.of(
+                "--auth-token",
                 "jwt,pub-key=/etc/ssl/etcd/server.pem,priv-key=/etc/ssl/etcd/server-key.pem,sign-method=RS256,ttl=1s"))
         .build();
 
-    private static final ByteSequence key = TestUtil.randomByteSequence();
+    private static final ByteSequence key = TestUtil.bytesOf("key");
+    private static final ByteSequence keyEnd = TestUtil.bytesOf("key1");
     private static final ByteSequence user = TestUtil.bytesOf("root");
     private static final ByteSequence password = TestUtil.randomByteSequence();
 
@@ -73,7 +76,7 @@ public class WatchTokenExpireTest {
         client.getAuthClient().roleAdd(role).get();
         client.getAuthClient().userAdd(user, password).get();
         // grant access only to given key
-        client.getAuthClient().roleGrantPermission(role, key, key, Permission.Type.READWRITE).get();
+        client.getAuthClient().roleGrantPermission(role, key, keyEnd, Permission.Type.READWRITE).get();
         client.getAuthClient().userGrantRole(user, role).get();
         client.getAuthClient().authEnable().get();
 
@@ -87,7 +90,8 @@ public class WatchTokenExpireTest {
             .user(user)
             .password(password)
             .authority("etcd0")
-            .sslContext(b -> b.trustManager(caFile)).build();
+            .sslContext(b -> b.trustManager(caFile))
+            .build();
     }
 
     @Test
@@ -105,9 +109,15 @@ public class WatchTokenExpireTest {
 
         // watch should handle token refresh automatically
         // token is already expired when we attempt to create a watch
-        Watch.Watcher watcher = authWatchClient.watch(key, response -> {
-            modifications.incrementAndGet();
-        });
+        Watch.Watcher watcher = authWatchClient.watch(
+            key,
+            WatchOption.newBuilder().withRange(keyEnd).build(),
+            response -> {
+                modifications.incrementAndGet();
+            },
+            error -> {
+                LoggerFactory.getLogger(getClass()).info(">>> {}", error.toString());
+            });
 
         // create single thread pool, so that tasks are executed one after another
         ExecutorService executor = Executors.newFixedThreadPool(1);

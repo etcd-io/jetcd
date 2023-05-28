@@ -247,7 +247,9 @@ final class WatchImpl extends Impl implements Watch {
 
             // handle a special case when watch has been created and closed at the same time
             if (response.getCreated() && response.getCanceled() && response.getCancelReason() != null
-                && response.getCancelReason().contains("etcdserver: permission denied")) {
+                && (response.getCancelReason().contains("etcdserver: permission denied") ||
+                    response.getCancelReason().contains("etcdserver: invalid auth token"))) {
+
                 // potentially access token expired
                 connectionManager().authCredential().refresh();
                 Status error = Status.Code.CANCELLED.toStatus().withDescription(response.getCancelReason());

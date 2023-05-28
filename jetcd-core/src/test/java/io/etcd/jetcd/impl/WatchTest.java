@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -280,7 +281,7 @@ public class WatchTest {
                 if (event.getEventType() == EventType.PUT) {
                     ByteSequence key1 = event.getKeyValue().getKey();
 
-                    client.getKVClient().get(key1).whenComplete((r, t) -> {
+                    Future<?> unused = client.getKVClient().get(key1).whenComplete((r, t) -> {
                         if (!r.getKvs().isEmpty()) {
                             ref.set(r.getKvs().get(0));
                         }

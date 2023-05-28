@@ -16,21 +16,15 @@
 
 package io.etcd.jetcd.impl;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.ClientBuilder;
-import io.etcd.jetcd.support.Errors;
 import io.etcd.jetcd.support.Util;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -48,16 +42,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.grpc.VertxChannelBuilder;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
-
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
 final class ClientConnectionManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientConnectionManager.class);
-
     private final Object lock;
     private final ClientBuilder builder;
     private final ExecutorService executorService;
@@ -236,53 +223,5 @@ final class ClientConnectionManager {
         }
 
         return channelBuilder;
-    }
-
-    /**
-     * execute the task and retry it in case of failure.
-     *
-     * @param  task          a function that returns a new SourceFuture.
-     * @param  resultConvert a function that converts Type S to Type T.
-     * @param  doRetry       a function that determines the retry condition base on SourceFuture error.
-     * @param  <S>           Source type
-     * @param  <T>           Converted Type.
-     * @return               a CompletableFuture with type T.
-     */
-    @SuppressWarnings("FutureReturnValueIgnored")
-    public <S, T> CompletableFuture<T> execute(
-        Callable<ListenableFuture<S>> task,
-        Function<S, T> resultConvert,
-        Predicate<Throwable> doRetry) {
-
-        RetryPolicy<CompletableFuture<S>> retryPolicy = new RetryPolicy<CompletableFuture<S>>().handleIf(doRetry)
-            .onRetriesExceeded(e -> LOGGER.warn("maximum number of auto retries reached"))
-            .withBackoff(builder.retryDelay(), builder.retryMaxDelay(), builder.retryChronoUnit());
-
-        if (builder.retryMaxDuration() != null) {
-            retryPolicy = retryPolicy.withMaxDuration(builder.retryMaxDuration());
-        }
-
-        return Failsafe.with(retryPolicy).with(executorService)
-            .getAsyncExecution(execution -> {
-                CompletableFuture<S> wrappedFuture = new CompletableFuture<>();
-                ListenableFuture<S> future = task.call();
-                future.addListener(() -> {
-                    try {
-                        wrappedFuture.complete(future.get());
-                        execution.complete(wrappedFuture);
-                    } catch (Exception error) {
-                        if (Errors.isInvalidTokenError(error)) {
-                            authCredential().refresh();
-                        }
-                        if (Errors.isAuthStoreExpired(error)) {
-                            authCredential().refresh();
-                        }
-                        if (!execution.retryOn(error)) {
-                            // permanent failure
-                            wrappedFuture.completeExceptionally(error);
-                        }
-                    }
-                }, executorService);
-            }).thenCompose(f -> f.thenApply(resultConvert));
     }
 }

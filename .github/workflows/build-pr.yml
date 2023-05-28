@@ -49,5 +49,8 @@ jobs:
           distribution: 'temurin'
       - name: Build Project
         run: |
+          export TC_USER="$(id -u):$(id -g)"
+          echo "tc user -> $TC_USER"
+          
           ./gradlew check -x test
           ./gradlew test
