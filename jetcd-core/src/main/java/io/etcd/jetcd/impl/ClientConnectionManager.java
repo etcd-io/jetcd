@@ -175,7 +175,7 @@ final class ClientConnectionManager {
             throw new IllegalArgumentException("At least one endpoint should be provided");
         }
         if (vertx == null) {
-            vertx = Vertx.vertx(new VertxOptions().setUseDaemonThread(builder.useDaemonThread()));
+            vertx = Vertx.vertx(new VertxOptions().setUseDaemonThread(true));
         }
         final VertxChannelBuilder channelBuilder = VertxChannelBuilder.forTarget(vertx, target);
 
