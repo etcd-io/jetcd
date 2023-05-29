@@ -47,7 +47,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Streams;
 
 /**
- * ClientBuilder knows how to create an Client instance.
+ * ClientBuilder knows how to create a Client instance.
  */
 public final class ClientBuilder implements Cloneable {
 

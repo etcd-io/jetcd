@@ -45,6 +45,7 @@ import io.grpc.netty.NegotiationType;
 import io.grpc.stub.AbstractStub;
 import io.netty.channel.ChannelOption;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.grpc.VertxChannelBuilder;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -174,7 +175,7 @@ final class ClientConnectionManager {
             throw new IllegalArgumentException("At least one endpoint should be provided");
         }
         if (vertx == null) {
-            vertx = Vertx.vertx();
+            vertx = Vertx.vertx(new VertxOptions().setUseDaemonThread(true));
         }
         final VertxChannelBuilder channelBuilder = VertxChannelBuilder.forTarget(vertx, target);
 
