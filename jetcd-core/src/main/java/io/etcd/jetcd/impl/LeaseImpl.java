@@ -21,9 +21,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import io.etcd.jetcd.Lease;
@@ -186,13 +183,11 @@ final class LeaseImpl extends Impl implements Lease {
      * The KeepAliver hold a background task and stream for keep aliaves.
      */
     private final class KeepAlive extends Service {
-        private volatile ScheduledFuture<?> task;
-        private volatile ScheduledFuture<?> restart;
-        private volatile ScheduledExecutorService executor;
+        private volatile Long task;
+        private volatile Long restart;
         private volatile WriteStream<LeaseKeepAliveRequest> requestStream;
 
         public KeepAlive() {
-            this.executor = Executors.newScheduledThreadPool(2);
         }
 
         @Override
@@ -208,12 +203,10 @@ final class LeaseImpl extends Impl implements Lease {
                 requestStream.end();
             }
             if (this.restart != null) {
-                this.restart.cancel(true);
-                this.restart = null;
+                connectionManager().vertx().cancelTimer(this.restart);
             }
             if (this.task != null) {
-                this.task.cancel(true);
-                this.task = null;
+                connectionManager().vertx().cancelTimer(this.task);
             }
         }
 
@@ -223,17 +216,17 @@ final class LeaseImpl extends Impl implements Lease {
 
             this.task = null;
             this.restart = null;
-            this.executor.shutdownNow();
         }
 
         private void writeHandler(WriteStream<LeaseKeepAliveRequest> stream) {
             requestStream = stream;
 
-            task = executor.scheduleAtFixedRate(
-                () -> keepAlives.values().forEach(element -> sendKeepAlive(element, stream)),
+            task = connectionManager().vertx().setPeriodic(
                 0,
                 500,
-                TimeUnit.MILLISECONDS);
+                l -> {
+                    keepAlives.values().forEach(element -> sendKeepAlive(element, stream));
+                });
         }
 
         private void sendKeepAlive(KeepAliveObserver observer, WriteStream<LeaseKeepAliveRequest> stream) {
@@ -272,7 +265,13 @@ final class LeaseImpl extends Impl implements Lease {
                 return;
             }
 
-            restart = this.executor.schedule(this::restart, 500, TimeUnit.MILLISECONDS);
+            restart = connectionManager().vertx().setTimer(
+                500,
+                l -> {
+                    if (isRunning()) {
+                        restart();
+                    }
+                });
         }
     }
 
@@ -280,42 +279,35 @@ final class LeaseImpl extends Impl implements Lease {
      * The DeadLiner hold a background task to check deadlines.
      */
     private class DeadLine extends Service {
-        private volatile ScheduledFuture<?> task;
-        private volatile ScheduledExecutorService executor;
+        private volatile Long task;
 
         public DeadLine() {
-            this.executor = Executors.newScheduledThreadPool(2);
         }
 
         @Override
         public void doStart() {
-            this.task = executor.scheduleAtFixedRate(() -> {
-                long now = System.currentTimeMillis();
+            this.task = connectionManager().vertx().setPeriodic(
+                0,
+                1000,
+                l -> {
+                    long now = System.currentTimeMillis();
 
-                keepAlives.values().removeIf(ka -> {
-                    if (ka.getDeadLine() < now) {
-                        ka.onCompleted();
-                        return true;
-                    }
-                    return false;
+                    keepAlives.values().removeIf(ka -> {
+                        if (ka.getDeadLine() < now) {
+                            ka.onCompleted();
+                            return true;
+                        }
+                        return false;
+                    });
                 });
-            }, 0, 1000, TimeUnit.MILLISECONDS);
         }
 
         @Override
         public void doStop() {
             if (this.task != null) {
-                this.task.cancel(true);
+                connectionManager().vertx().cancelTimer(this.task);
             }
         }
-
-        @Override
-        public void close() {
-            super.close();
-
-            this.executor.shutdownNow();
-        }
-
     }
 
     /**

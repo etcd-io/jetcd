@@ -161,10 +161,8 @@ final class ClientConnectionManager {
         if (target == null) {
             throw new IllegalArgumentException("At least one endpoint should be provided");
         }
-        if (vertx == null) {
-            vertx = Vertx.vertx(new VertxOptions().setUseDaemonThread(true));
-        }
-        final VertxChannelBuilder channelBuilder = VertxChannelBuilder.forTarget(vertx, target);
+
+        final VertxChannelBuilder channelBuilder = VertxChannelBuilder.forTarget(vertx(), target);
 
         if (builder.authority() != null) {
             channelBuilder.overrideAuthority(builder.authority());
@@ -223,5 +221,17 @@ final class ClientConnectionManager {
         }
 
         return channelBuilder;
+    }
+
+    Vertx vertx() {
+        if (this.vertx == null) {
+            synchronized (this.lock) {
+                if (this.vertx == null) {
+                    this.vertx = Vertx.vertx(new VertxOptions().setUseDaemonThread(true));
+                }
+            }
+        }
+
+        return this.vertx;
     }
 }
