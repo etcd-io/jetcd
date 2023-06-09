@@ -16,6 +16,8 @@
 
 package io.etcd.jetcd.impl;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -24,11 +26,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import io.etcd.jetcd.Lease;
-import io.etcd.jetcd.api.LeaseGrantRequest;
-import io.etcd.jetcd.api.LeaseKeepAliveRequest;
-import io.etcd.jetcd.api.LeaseRevokeRequest;
-import io.etcd.jetcd.api.LeaseTimeToLiveRequest;
-import io.etcd.jetcd.api.VertxLeaseGrpc;
+import io.etcd.jetcd.api.*;
 import io.etcd.jetcd.common.Service;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.lease.LeaseGrantResponse;
@@ -42,9 +40,7 @@ import io.grpc.stub.StreamObserver;
 import io.vertx.core.streams.WriteStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newClosedLeaseClientException;
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
+import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.*;
 
 /**
  * Implementation of lease client.
@@ -142,25 +138,12 @@ final class LeaseImpl extends Impl implements Lease {
     public CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId) {
         final CompletableFuture<LeaseKeepAliveResponse> future = new CompletableFuture<>();
 
-        final CloseableClient ka = keepAlive(leaseId, new StreamObserver<LeaseKeepAliveResponse>() {
-            @Override
-            public void onNext(LeaseKeepAliveResponse value) {
-                future.complete(value);
-            }
+        leaseStub
+            .leaseKeepAlive(s -> s.write(LeaseKeepAliveRequest.newBuilder().setID(leaseId).build()))
+            .handler(r -> future.complete(new LeaseKeepAliveResponse(r)))
+            .exceptionHandler(t -> future.completeExceptionally(t));
 
-            @Override
-            public void onError(Throwable t) {
-                future.completeExceptionally(toEtcdException(t));
-            }
-
-            @Override
-            public void onCompleted() {
-            }
-        });
-
-        return future.whenCompleteAsync(
-            (val, throwable) -> ka.close(),
-            connectionManager().getExecutorService());
+        return future;
     }
 
     @Override
@@ -321,6 +304,10 @@ final class LeaseImpl extends Impl implements Lease {
         private long nextKeepAlive;
 
         public KeepAliveObserver(long leaseId) {
+            this(leaseId, Collections.emptyList());
+        }
+
+        public KeepAliveObserver(long leaseId, Collection<StreamObserver<LeaseKeepAliveResponse>> observers) {
             this.nextKeepAlive = System.currentTimeMillis();
 
             // Use user-provided timeout if present to avoid removing KeepAlive before first response from server
@@ -329,7 +316,7 @@ final class LeaseImpl extends Impl implements Lease {
                 : DEFAULT_FIRST_KEEPALIVE_TIMEOUT_MS;
             this.deadLine = nextKeepAlive + initialKeepAliveTimeoutMs;
 
-            this.observers = new CopyOnWriteArrayList<>();
+            this.observers = new CopyOnWriteArrayList<>(observers);
             this.leaseId = leaseId;
         }
 

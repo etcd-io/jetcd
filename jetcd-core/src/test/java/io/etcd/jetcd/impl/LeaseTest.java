@@ -16,7 +16,6 @@
 
 package io.etcd.jetcd.impl;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -39,12 +38,11 @@ import io.etcd.jetcd.options.PutOption;
 import io.etcd.jetcd.support.CloseableClient;
 import io.etcd.jetcd.support.Observers;
 import io.etcd.jetcd.test.EtcdClusterExtension;
-import io.grpc.stub.StreamObserver;
 
 import com.google.common.base.Charsets;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
 
 @Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class LeaseTest {
@@ -83,24 +81,34 @@ public class LeaseTest {
         kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
         assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
 
-        Thread.sleep(6000);
+        await().pollInterval(250, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
+        });
+
         assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
     }
 
     @Test
     public void testGrantWithTimeout() throws Exception {
-        long leaseID = leaseClient.grant(5, 10, TimeUnit.SECONDS).get().getID();
-        kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
-        assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
+        Client c = TestUtil.client(cluster).build();
+        Lease lc = c.getLeaseClient();
 
-        Thread.sleep(6000L);
-        assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
+        try {
+            long leaseID = lc.grant(5, 10, TimeUnit.SECONDS).get().getID();
+            kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+            assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
 
-        tearDown();
-        assertThatExceptionOfType(ExecutionException.class)
-            .isThrownBy(() -> leaseClient.grant(5, 2, TimeUnit.SECONDS).get().getID())
-            .withCauseInstanceOf(RejectedExecutionException.class);
-        setUp();
+            await().pollInterval(250, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+                assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
+            });
+
+        } finally {
+            assertThatNoException()
+                .isThrownBy(c::close);
+            assertThatExceptionOfType(ExecutionException.class)
+                .isThrownBy(() -> lc.grant(5, 2, TimeUnit.SECONDS).get().getID())
+                .withCauseInstanceOf(RejectedExecutionException.class);
+        }
     }
 
     @Test
@@ -122,26 +130,40 @@ public class LeaseTest {
     }
 
     @Test
+    public void testKeepAliveOnceAverage() throws ExecutionException, InterruptedException {
+        long leaseID = leaseClient.grant(2).get().getID();
+        long sum = 0L;
+        long iter = 10;
+
+        for (int i = 0; i < iter; i++) {
+            long startTime = System.currentTimeMillis();
+            client.getLeaseClient().keepAliveOnce(leaseID).get();
+            long endTime = System.currentTimeMillis();
+            sum += endTime - startTime;
+        }
+
+        assertThat(sum / iter).isLessThan(100);
+    }
+
+    @Test
     public void testKeepAlive() throws ExecutionException, InterruptedException {
         long leaseID = leaseClient.grant(2).get().getID();
         kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
         assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
 
-        CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<LeaseKeepAliveResponse> responseRef = new AtomicReference<>();
-        StreamObserver<LeaseKeepAliveResponse> observer = Observers.observer(response -> {
-            responseRef.set(response);
-            latch.countDown();
-        });
 
-        try (CloseableClient c = leaseClient.keepAlive(leaseID, observer)) {
-            latch.await(5, TimeUnit.SECONDS);
-            LeaseKeepAliveResponse response = responseRef.get();
-            assertThat(response.getTTL()).isGreaterThan(0);
+        try (CloseableClient c = leaseClient.keepAlive(leaseID, Observers.observer(responseRef::set))) {
+            await().pollInterval(250, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+                LeaseKeepAliveResponse response = responseRef.get();
+                assertThat(response).isNotNull();
+                assertThat(response.getTTL()).isGreaterThan(0);
+            });
         }
 
-        Thread.sleep(3000);
-        assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
+        await().pollInterval(250, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
+        });
     }
 
     @Test
