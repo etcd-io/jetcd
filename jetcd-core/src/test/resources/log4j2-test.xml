@@ -28,16 +28,12 @@
     <!-- package loggers -->
     <Logger name="org.testcontainers" level="INFO"/>
     <Logger name="com.github.dockerjava" level="INFO"/>
-    <Logger name="🐳 [gcr.io/etcd-development/etcd:v3.3]" level="WARN"/>
-    <Logger name="🐳 [gcr.io/etcd-development/etcd:v3.4]" level="WARN"/>
-    <Logger name="🐳 [gcr.io/etcd-development/etcd:v3.4.7]" level="WARN"/>
-    <Logger name="io.etcd.jetcd.internal.infrastructure" level="INFO"/>
-    <Logger name="io.etcd.jetcd.launcher.EtcdCluster" level="INFO"/>
-    <Logger name="io.etcd.jetcd.launcher.EtcdContainer" level="INFO"/>
-    <Logger name="io.etcd" level="INFO"/>
+    <Logger name="io.etcd.jetcd.launcher.EtcdCluster" level="DEBUG"/>
+    <Logger name="io.etcd.jetcd.launcher.EtcdContainer" level="DEBUG"/>
+    <Logger name="io.etcd" level="TRACE"/>
 
     <!-- main logger -->
-    <Root level="DEBUG">
+    <Root level="TRACE">
       <AppenderRef ref="STDOUT" />
     </Root>
   </Loggers>
