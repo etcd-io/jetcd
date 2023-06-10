@@ -19,12 +19,7 @@ package io.etcd.jetcd;
 import java.net.URI;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -66,6 +61,7 @@ public final class ClientBuilder implements Cloneable {
     private ByteSequence namespace = ByteSequence.EMPTY;
     private long retryDelay = 500;
     private long retryMaxDelay = 2500;
+    private int retryMaxAttempts = 2;
     private ChronoUnit retryChronoUnit = ChronoUnit.MILLIS;
     private Duration keepaliveTime = Duration.ofSeconds(30L);
     private Duration keepaliveTimeout = Duration.ofSeconds(10L);
@@ -537,6 +533,26 @@ public final class ClientBuilder implements Cloneable {
      */
     public ClientBuilder retryMaxDelay(long retryMaxDelay) {
         this.retryMaxDelay = retryMaxDelay;
+        return this;
+    }
+
+    /**
+     * Returns the max number of retry attempts
+     *
+     * @return max retry attempts.
+     */
+    public int retryMaxAttempts() {
+        return retryMaxAttempts;
+    }
+
+    /**
+     * Set the max number of retry attempts
+     *
+     * @param  retryMaxAttempts The max retry attempts.
+     * @return                  this builder
+     */
+    public ClientBuilder retryMaxAttempts(int retryMaxAttempts) {
+        this.retryMaxAttempts = retryMaxAttempts;
         return this;
     }
 

@@ -108,7 +108,30 @@ abstract class Impl {
         Function<S, T> resultConvert,
         Predicate<Status> doRetry) {
 
-        RetryPolicy<S> retryPolicy = new RetryPolicy<S>()
+        return Failsafe
+            .with(retryPolicy(doRetry))
+            .with(connectionManager.getExecutorService())
+            .getStageAsync(() -> supplier.get().toCompletionStage())
+            .thenApply(resultConvert);
+    }
+
+    protected <S> RetryPolicy<S> retryPolicy(Predicate<Status> doRetry) {
+        RetryPolicy<S> policy = new RetryPolicy<S>()
+            .onFailure(e -> {
+                logger.warn("retry failure (attempt: {}, error: {})",
+                    e.getAttemptCount(),
+                    e.getFailure() != null ? e.getFailure().getMessage() : "<none>");
+            })
+            .onRetry(e -> {
+                logger.debug("retry (attempt: {}, error: {})",
+                    e.getAttemptCount(),
+                    e.getLastFailure() != null ? e.getLastFailure().getMessage() : "<none>");
+            })
+            .onRetriesExceeded(e -> {
+                logger.warn("maximum number of auto retries reached (attempt: {}, error: {})",
+                    e.getAttemptCount(),
+                    e.getFailure() != null ? e.getFailure().getMessage() : "<none>");
+            })
             .handleIf(throwable -> {
                 Status status = Status.fromThrowable(throwable);
                 if (isInvalidTokenError(status)) {
@@ -119,20 +142,16 @@ abstract class Impl {
                 }
                 return doRetry.test(status);
             })
-            .onRetriesExceeded(e -> logger.warn("maximum number of auto retries reached"))
+            .withMaxRetries(connectionManager.builder().retryMaxAttempts())
             .withBackoff(
                 connectionManager.builder().retryDelay(),
                 connectionManager.builder().retryMaxDelay(),
                 connectionManager.builder().retryChronoUnit());
 
         if (connectionManager.builder().retryMaxDuration() != null) {
-            retryPolicy = retryPolicy.withMaxDuration(connectionManager.builder().retryMaxDuration());
+            policy = policy.withMaxDuration(connectionManager.builder().retryMaxDuration());
         }
 
-        return Failsafe
-            .with(retryPolicy)
-            .with(connectionManager.getExecutorService())
-            .getStageAsync(() -> supplier.get().toCompletionStage())
-            .thenApply(resultConvert);
+        return policy;
     }
 }

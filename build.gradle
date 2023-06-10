@@ -72,7 +72,7 @@ subprojects {
         maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
 
         retry {
-            maxRetries = 3
+            maxRetries = 1
             maxFailures = 5
         }
     }
