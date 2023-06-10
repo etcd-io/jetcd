@@ -63,7 +63,7 @@ autoServiceProcessor = { module = "com.google.auto.service:auto-service", versio
 
 errorprone = { module = "com.google.errorprone:error_prone_core", version.ref = "errorprone" }
 errorproneAnnotations = { module = "com.google.errorprone:error_prone_annotations", version.ref = "errorprone" }
-errorproneJavac = { module = "com.google.errorprone:javac", version = "9+" }
+errorproneJavac = { module = "com.google.errorprone:javac", version = "1+" }
 
 [bundles]
 grpc    = [ "grpcCore", "grpcNetty", "grpcProtobuf", "grpcStub", "grpcGrpclb" ]
