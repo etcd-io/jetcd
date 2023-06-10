@@ -13,10 +13,9 @@ awaitility = "4.2.0"
 commonsIo = "2.13.0"
 commonCompress = "1.23.0"
 autoService = "1.1.0"
-jool = "0.9.15"
-jcommander = "1.82"
 errorprone = "2.19.1"
 vertx = "4.4.3"
+picocli = "4.7.4"
 
 versionsPlugin = "0.46.0"
 errorPronePlugin = "3.0.1"
@@ -37,8 +36,7 @@ testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protoc" }
 failsafe = { module = "net.jodah:failsafe", version.ref = "failsafe" }
 awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
-jcommander = { module = "com.beust:jcommander", version.ref = "jcommander"}
-jool = { module = "org.jooq:jool-java-8", version.ref = "jool"}
+picocli  = { module = "info.picocli:picocli", version.ref = "picocli"}
 
 commonsIo = { module = "commons-io:commons-io", version.ref = "commonsIo" }
 commonsCompress = { module = "org.apache.commons:commons-compress", version.ref = "commonCompress" }

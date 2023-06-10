@@ -16,57 +16,23 @@
 
 package io.etcd.jetcd.examples.ctl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 
-import io.etcd.jetcd.Client;
+@CommandLine.Command(name = "jetcdctl", version = "1.0", mixinStandardHelpOptions = true, subcommands = {
+        CommandWatch.class,
+        CommandGet.class,
+        CommandPut.class
+})
+public class Main implements Runnable {
+    @CommandLine.Option(names = { "--endpoints" }, description = "gRPC endpoints", defaultValue = "http://127.0.0.1:2379")
+    String endpoints;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-
-public class Main {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
-
-    public static void main(String[] args) {
-        Args global = new Args();
-        CommandGet getCmd = new CommandGet();
-        CommandPut putCmd = new CommandPut();
-        CommandWatch watchCmd = new CommandWatch();
-
-        JCommander jc = JCommander.newBuilder().addObject(global).addCommand("get", getCmd).addCommand("put", putCmd)
-            .addCommand("watch", watchCmd).build();
-
-        jc.parse(args);
-
-        String cmd = jc.getParsedCommand();
-        if (cmd == null || global.help) {
-            jc.usage();
-            return;
-        }
-
-        try (Client client = Client.builder().endpoints(global.endpoints.split(",")).build()) {
-            switch (cmd) {
-                case "get":
-                    getCmd.accept(client);
-                    break;
-                case "put":
-                    putCmd.accept(client);
-                    break;
-                case "watch":
-                    watchCmd.accept(client);
-                    break;
-            }
-        } catch (Exception e) {
-            LOGGER.error(cmd + " Error {}", e);
-            System.exit(1);
-        }
+    @Override
+    public void run() {
     }
 
-    public static class Args {
-        @Parameter(names = { "--endpoints" }, description = "gRPC endpoints ")
-        private String endpoints = "http://127.0.0.1:2379";
-
-        @Parameter(names = { "-h", "--help" }, help = true)
-        private boolean help = false;
+    public static void main(String[] args) {
+        int exitCode = new CommandLine(new Main()).execute(args);
+        System.exit(exitCode);
     }
 }

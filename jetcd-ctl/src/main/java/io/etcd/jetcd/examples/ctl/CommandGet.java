@@ -16,7 +16,6 @@
 
 package io.etcd.jetcd.examples.ctl;
 
-import org.jooq.lambda.fi.util.function.CheckedConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,32 +24,39 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.options.GetOption;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
+import picocli.CommandLine;
 
 import static com.google.common.base.Charsets.UTF_8;
 
-@Parameters(separators = "=", commandDescription = "Gets the key")
-class CommandGet implements CheckedConsumer<Client> {
+@CommandLine.Command(name = "get", description = "Gets the key")
+class CommandGet implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(CommandGet.class);
 
-    @Parameter(arity = 1, description = "<key>")
-    String key = "";
+    @CommandLine.ParentCommand
+    Main main;
 
-    @Parameter(names = "--rev", description = "Specify the kv revision")
-    Long rev = 0L;
+    @CommandLine.Parameters(index = "0", arity = "1", description = "key")
+    String key;
+
+    @CommandLine.Option(names = "--rev", description = "Revision to start watching", defaultValue = "0")
+    Long rev;
 
     @Override
-    public void accept(Client client) throws Exception {
-        GetResponse getResponse = client.getKVClient()
-            .get(ByteSequence.from(key, UTF_8), GetOption.newBuilder().withRevision(rev).build()).get();
+    public void run() {
+        try (Client client = Client.builder().endpoints(main.endpoints).build()) {
+            GetResponse getResponse = client.getKVClient().get(
+                ByteSequence.from(key, UTF_8),
+                GetOption.newBuilder().withRevision(rev).build()).get();
 
-        if (getResponse.getKvs().isEmpty()) {
-            // key does not exist
-            return;
+            if (getResponse.getKvs().isEmpty()) {
+                // key does not exist
+                return;
+            }
+
+            LOGGER.info(key);
+            LOGGER.info(getResponse.getKvs().get(0).getValue().toString(UTF_8));
+        } catch (Exception e) {
+            LOGGER.warn(e.getMessage());
         }
-
-        LOGGER.info(key);
-        LOGGER.info(getResponse.getKvs().get(0).getValue().toString(UTF_8));
     }
 }

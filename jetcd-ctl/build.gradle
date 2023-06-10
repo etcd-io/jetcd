@@ -24,8 +24,7 @@ project.tasks.publish.enabled = false
 
 dependencies {
     implementation project(':jetcd-core')
-    implementation libs.jool
-    implementation libs.jcommander
+    implementation libs.picocli
 
     runtimeOnly libs.bundles.log4j
 }
@@ -37,6 +36,8 @@ shadowJar {
     archiveBaseName.set('jetcdctl')
     archiveClassifier.set('')
     archiveVersion.set('')
+
+    mergeServiceFiles()
 }
 
 application {

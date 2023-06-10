@@ -16,31 +16,38 @@
 
 package io.etcd.jetcd.examples.ctl;
 
-import java.util.List;
-
-import org.jooq.lambda.fi.util.function.CheckedConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import com.google.common.base.Charsets;
 
-@Parameters(separators = "=", commandDescription = "Puts the given key into the store")
-class CommandPut implements CheckedConsumer<Client> {
+import picocli.CommandLine;
+
+@CommandLine.Command(name = "put", description = "Puts the given key into the store")
+class CommandPut implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(CommandPut.class);
 
-    @Parameter(arity = 2, description = "<key> <value>")
-    List<String> keyValue;
+    @CommandLine.ParentCommand
+    Main main;
+
+    @CommandLine.Parameters(index = "0", arity = "1", description = "key")
+    String key;
+    @CommandLine.Parameters(index = "1", arity = "1", description = "value")
+    String val;
 
     @Override
-    public void accept(Client client) throws Exception {
-        client.getKVClient()
-            .put(ByteSequence.from(keyValue.get(0), Charsets.UTF_8), ByteSequence.from(keyValue.get(1), Charsets.UTF_8)).get();
+    public void run() {
+        try (Client client = Client.builder().endpoints(main.endpoints).build()) {
+            client.getKVClient().put(
+                ByteSequence.from(key, Charsets.UTF_8),
+                ByteSequence.from(val, Charsets.UTF_8)).get();
 
-        LOGGER.info("OK");
+            LOGGER.info("OK");
+        } catch (Exception e) {
+            LOGGER.warn(e.getMessage());
+        }
     }
 }

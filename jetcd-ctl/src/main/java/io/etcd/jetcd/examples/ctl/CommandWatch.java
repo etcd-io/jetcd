@@ -18,8 +18,8 @@ package io.etcd.jetcd.examples.ctl;
 
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
-import org.jooq.lambda.fi.util.function.CheckedConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,50 +28,55 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.watch.WatchEvent;
+import io.etcd.jetcd.watch.WatchResponse;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import com.google.common.base.Charsets;
 
-@Parameters(separators = "=", commandDescription = "Watches events stream for a key")
-class CommandWatch implements CheckedConsumer<Client> {
+import picocli.CommandLine;
+
+@CommandLine.Command(name = "watch", description = "Watches events stream for a key")
+class CommandWatch implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(CommandWatch.class);
 
-    @Parameter(arity = 1, description = "<key>")
+    @CommandLine.ParentCommand
+    Main main;
+
+    @CommandLine.Parameters(arity = "1", description = "<key>")
     String key;
 
-    @Parameter(names = "--rev", description = "Revision to start watching")
-    Long rev = 0L;
-
-    @Parameter(names = { "-m", "--max-events" }, description = "the maximum number of events to receive")
-    Integer maxEvents = Integer.MAX_VALUE;
+    @CommandLine.Option(names = "--rev", description = "Revision to start watching", defaultValue = "0")
+    Long rev;
+    @CommandLine.Option(names = { "-m", "--max-events" }, description = "the maximum number of events to receive")
+    Integer maxEvents;
 
     @Override
-    public void accept(Client client) throws Exception {
-        CountDownLatch latch = new CountDownLatch(maxEvents);
-        Watcher watcher = null;
+    public void run() {
+        CountDownLatch latch = new CountDownLatch(maxEvents != null ? maxEvents : Integer.MAX_VALUE);
 
-        try {
+        try (Client client = Client.builder().endpoints(main.endpoints).build()) {
             ByteSequence watchKey = ByteSequence.from(key, Charsets.UTF_8);
-            WatchOption watchOpts = WatchOption.newBuilder().withRevision(rev).build();
+            WatchOption watchOpts = WatchOption.newBuilder().withRevision(rev != null ? rev : 0).build();
 
-            watcher = client.getWatchClient().watch(watchKey, watchOpts, response -> {
+            Consumer<WatchResponse> consumer = response -> {
                 for (WatchEvent event : response.getEvents()) {
-                    LOGGER.info("type={}, key={}, value={}", event.getEventType().toString(),
+                    LOGGER.info("type={}, key={}, value={}",
+                        event.getEventType().toString(),
                         Optional.ofNullable(event.getKeyValue().getKey()).map(bs -> bs.toString(Charsets.UTF_8)).orElse(""),
                         Optional.ofNullable(event.getKeyValue().getValue()).map(bs -> bs.toString(Charsets.UTF_8)).orElse(""));
                 }
 
                 latch.countDown();
-            });
+            };
 
-            latch.await();
-        } catch (Exception e) {
-            if (watcher != null) {
-                watcher.close();
+            try (Watcher ignored = client.getWatchClient().watch(watchKey, watchOpts, consumer)) {
+                // close the watcher
             }
 
-            throw e;
+            latch.await();
+
+            LOGGER.info("done");
+        } catch (Exception e) {
+            LOGGER.warn(e.getMessage());
         }
     }
 }
