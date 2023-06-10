@@ -55,7 +55,7 @@ class CommandWatch implements Runnable {
 
         try (Client client = Client.builder().endpoints(main.endpoints).build()) {
             ByteSequence watchKey = ByteSequence.from(key, Charsets.UTF_8);
-            WatchOption watchOpts = WatchOption.newBuilder().withRevision(rev != null ? rev : 0).build();
+            WatchOption watchOpts = WatchOption.builder().withRevision(rev != null ? rev : 0).build();
 
             Consumer<WatchResponse> consumer = response -> {
                 for (WatchEvent event : response.getEvents()) {

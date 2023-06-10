@@ -26,22 +26,115 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * The option for watch operation.
  */
 public final class WatchOption {
+    public static final WatchOption DEFAULT = builder().build();
 
-    public static final WatchOption DEFAULT = newBuilder().build();
+    private final ByteSequence endKey;
+    private final long revision;
+    private final boolean prevKV;
+    private final boolean progressNotify;
+    private final boolean noPut;
+    private final boolean noDelete;
+    private final boolean requireLeader;
+    private final boolean prefix;
+
+    private WatchOption(ByteSequence endKey, long revision, boolean prevKV, boolean progressNotify, boolean noPut,
+        boolean noDelete, boolean requireLeader, boolean prefix) {
+        this.endKey = endKey;
+        this.revision = revision;
+        this.prevKV = prevKV;
+        this.progressNotify = progressNotify;
+        this.noPut = noPut;
+        this.noDelete = noDelete;
+        this.requireLeader = requireLeader;
+        this.prefix = prefix;
+    }
+
+    public Optional<ByteSequence> getEndKey() {
+        return Optional.ofNullable(this.endKey);
+    }
 
     /**
-     * Create a builder to construct option for watch operation.
+     * Returns the revision to watch from.
      *
-     * @return builder
+     * @return the revision.
      */
+    public long getRevision() {
+        return revision;
+    }
+
+    /**
+     * Whether created watcher gets the previous KV before the event happens.
+     *
+     * @return if true, watcher receives the previous KV before the event happens.
+     */
+    public boolean isPrevKV() {
+        return prevKV;
+    }
+
+    /**
+     * Whether watcher server send periodic progress updates.
+     *
+     * @return if true, watcher server should send periodic progress updates.
+     */
+    public boolean isProgressNotify() {
+        return progressNotify;
+    }
+
+    /**
+     * Whether filter put event in server side.
+     *
+     * @return if true, filter put event in server side
+     */
+    public boolean isNoPut() {
+        return noPut;
+    }
+
+    /**
+     * Whether filter delete event in server side.
+     *
+     * @return if true, filter delete event in server side
+     */
+    public boolean isNoDelete() {
+        return noDelete;
+    }
+
+    /**
+     * If true, when creating the watch streaming stub, use the REQUIRED_LEADER Metadata annotation,
+     * which ensures the stream will error out if quorum is lost by
+     * the server the stream is connected to. This will make the watch fail with an error
+     * and finish.
+     * Without this option, a watch running against a server that is out of quorum
+     * simply goes silent.
+     *
+     * @return if true, use REQUIRE_LEADER metadata annotation for watch streams
+     */
+    public boolean withRequireLeader() {
+        return requireLeader;
+    }
+
+    public boolean isPrefix() {
+        return prefix;
+    }
+
+    /**
+     * Returns the builder.
+     *
+     * @deprecated use {@link #builder()}
+     * @return     the builder
+     */
+    @SuppressWarnings("InlineMeSuggester")
+    @Deprecated
     public static Builder newBuilder() {
+        return builder();
+    }
+
+    public static Builder builder() {
         return new Builder();
     }
 
-    public static class Builder {
-
+    public static final class Builder {
         private long revision = 0L;
-        private Optional<ByteSequence> endKey = Optional.empty();
+        private ByteSequence endKey;
         private boolean prevKV = false;
         private boolean progressNotify = false;
         private boolean noPut = false;
@@ -87,7 +180,7 @@ public final class WatchOption {
          * @return        builder
          */
         public Builder withRange(ByteSequence endKey) {
-            this.endKey = Optional.ofNullable(endKey);
+            this.endKey = endKey;
             return this;
         }
 
@@ -182,93 +275,5 @@ public final class WatchOption {
             return new WatchOption(endKey, revision, prevKV, progressNotify, noPut, noDelete, requireLeader, prefix);
         }
 
-    }
-
-    private final Optional<ByteSequence> endKey;
-    private final long revision;
-    private final boolean prevKV;
-    private final boolean progressNotify;
-    private final boolean noPut;
-    private final boolean noDelete;
-    private final boolean requireLeader;
-    private final boolean prefix;
-
-    private WatchOption(Optional<ByteSequence> endKey, long revision, boolean prevKV, boolean progressNotify, boolean noPut,
-        boolean noDelete, boolean requireLeader, boolean prefix) {
-        this.endKey = endKey;
-        this.revision = revision;
-        this.prevKV = prevKV;
-        this.progressNotify = progressNotify;
-        this.noPut = noPut;
-        this.noDelete = noDelete;
-        this.requireLeader = requireLeader;
-        this.prefix = prefix;
-    }
-
-    public Optional<ByteSequence> getEndKey() {
-        return this.endKey;
-    }
-
-    /**
-     * Returns the revision to watch from.
-     *
-     * @return the revision.
-     */
-    public long getRevision() {
-        return revision;
-    }
-
-    /**
-     * Whether created watcher gets the previous KV before the event happens.
-     *
-     * @return if true, watcher receives the previous KV before the event happens.
-     */
-    public boolean isPrevKV() {
-        return prevKV;
-    }
-
-    /**
-     * Whether watcher server send periodic progress updates.
-     *
-     * @return if true, watcher server should send periodic progress updates.
-     */
-    public boolean isProgressNotify() {
-        return progressNotify;
-    }
-
-    /**
-     * Whether filter put event in server side.
-     *
-     * @return if true, filter put event in server side
-     */
-    public boolean isNoPut() {
-        return noPut;
-    }
-
-    /**
-     * Whether filter delete event in server side.
-     *
-     * @return if true, filter delete event in server side
-     */
-    public boolean isNoDelete() {
-        return noDelete;
-    }
-
-    /**
-     * If true, when creating the watch streaming stub, use the REQUIRED_LEADER Metadata annotation,
-     * which ensures the stream will error out if quorum is lost by
-     * the server the stream is connected to. This will make the watch fail with an error
-     * and finish.
-     * Without this option, a watch running against a server that is out of quorum
-     * simply goes silent.
-     *
-     * @return if true, use REQUIRE_LEADER metadata annotation for watch streams
-     */
-    public boolean withRequireLeader() {
-        return requireLeader;
-    }
-
-    public boolean isPrefix() {
-        return prefix;
     }
 }

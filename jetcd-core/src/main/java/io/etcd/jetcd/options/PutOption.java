@@ -22,17 +22,54 @@ import static com.google.common.base.Preconditions.checkArgument;
  * The options for put operation.
  */
 public final class PutOption {
+    public static final PutOption DEFAULT = builder().build();
 
-    public static final PutOption DEFAULT = newBuilder().build();
+    private final long leaseId;
+    private final boolean prevKV;
 
+    private PutOption(long leaseId, boolean prevKV) {
+        this.leaseId = leaseId;
+        this.prevKV = prevKV;
+    }
+
+    /**
+     * Get the lease id.
+     *
+     * @return the lease id
+     */
+    public long getLeaseId() {
+        return this.leaseId;
+    }
+
+    /**
+     * Get the previous KV.
+     *
+     * @return the prevKV
+     */
+    public boolean getPrevKV() {
+        return this.prevKV;
+    }
+
+    /**
+     * Returns the builder.
+     *
+     * @deprecated use {@link #builder()}
+     * @return     the builder
+     */
+    @SuppressWarnings("InlineMeSuggester")
+    @Deprecated
     public static Builder newBuilder() {
+        return builder();
+    }
+
+    public static Builder builder() {
         return new Builder();
     }
 
     /**
      * Builder to construct a put option.
      */
-    public static class Builder {
+    public static final class Builder {
 
         private long leaseId = 0L;
         private boolean prevKV = false;
@@ -72,31 +109,5 @@ public final class PutOption {
             return new PutOption(this.leaseId, this.prevKV);
         }
 
-    }
-
-    private final long leaseId;
-    private final boolean prevKV;
-
-    private PutOption(long leaseId, boolean prevKV) {
-        this.leaseId = leaseId;
-        this.prevKV = prevKV;
-    }
-
-    /**
-     * Get the lease id.
-     *
-     * @return the lease id
-     */
-    public long getLeaseId() {
-        return this.leaseId;
-    }
-
-    /**
-     * Get the previous KV.
-     *
-     * @return the prevKV
-     */
-    public boolean getPrevKV() {
-        return this.prevKV;
     }
 }

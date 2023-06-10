@@ -48,9 +48,7 @@ public final class ByteSequence {
         if (prefix == null) {
             return false;
         }
-        ByteString baseByteString = byteString;
-        ByteString prefixByteString = prefix.byteString;
-        return baseByteString.startsWith(prefixByteString);
+        return byteString.startsWith(prefix.byteString);
     }
 
     /**
@@ -157,10 +155,22 @@ public final class ByteSequence {
         return new ByteSequence(ByteString.copyFrom(bytes));
     }
 
+    /**
+     * Create new ByteSequence from a {@link ByteString}.
+     *
+     * @param  source input {@link ByteString}
+     * @return        the ByteSequence
+     */
     public static ByteSequence from(ByteString source) {
         return new ByteSequence(source);
     }
 
+    /**
+     * Create new ByteSequence from raw bytes.
+     *
+     * @param  source input bytes
+     * @return        the ByteSequence
+     */
     public static ByteSequence from(byte[] source) {
         return new ByteSequence(ByteString.copyFrom(source));
     }

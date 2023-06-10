@@ -79,7 +79,7 @@ public class LeaseTest {
     public void testGrant() throws Exception {
         long leaseID = leaseClient.grant(5).get().getID();
 
-        kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+        kvClient.put(KEY, VALUE, PutOption.builder().withLeaseId(leaseID).build()).get();
         assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
 
         await().pollInterval(250, TimeUnit.MILLISECONDS).untilAsserted(() -> {
@@ -96,7 +96,7 @@ public class LeaseTest {
 
         try {
             long leaseID = lc.grant(5, 10, TimeUnit.SECONDS).get().getID();
-            kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+            kvClient.put(KEY, VALUE, PutOption.builder().withLeaseId(leaseID).build()).get();
             assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
 
             await().pollInterval(250, TimeUnit.MILLISECONDS).untilAsserted(() -> {
@@ -115,7 +115,7 @@ public class LeaseTest {
     @Test
     public void testRevoke() throws Exception {
         long leaseID = leaseClient.grant(5).get().getID();
-        kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+        kvClient.put(KEY, VALUE, PutOption.builder().withLeaseId(leaseID).build()).get();
         assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
         leaseClient.revoke(leaseID).get();
         assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
@@ -124,7 +124,7 @@ public class LeaseTest {
     @Test
     public void testKeepAliveOnce() throws ExecutionException, InterruptedException {
         long leaseID = leaseClient.grant(2).get().getID();
-        kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+        kvClient.put(KEY, VALUE, PutOption.builder().withLeaseId(leaseID).build()).get();
         assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
         LeaseKeepAliveResponse rp = leaseClient.keepAliveOnce(leaseID).get();
         assertThat(rp.getTTL()).isGreaterThan(0);
@@ -149,7 +149,7 @@ public class LeaseTest {
     @Test
     public void testKeepAlive() throws ExecutionException, InterruptedException {
         long leaseID = leaseClient.grant(2).get().getID();
-        kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+        kvClient.put(KEY, VALUE, PutOption.builder().withLeaseId(leaseID).build()).get();
         assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
 
         AtomicReference<LeaseKeepAliveResponse> responseRef = new AtomicReference<>();
@@ -182,7 +182,7 @@ public class LeaseTest {
 
             long leaseID = lc.grant(5, 10, TimeUnit.SECONDS).get().getID();
 
-            kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+            kvClient.put(KEY, VALUE, PutOption.builder().withLeaseId(leaseID).build()).get();
             assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
 
             try (CloseableClient lcc = lc.keepAlive(leaseID, observer)) {
@@ -216,10 +216,10 @@ public class LeaseTest {
     public void testTimeToLiveWithKeys() throws ExecutionException, InterruptedException {
         long ttl = 5;
         long leaseID = leaseClient.grant(ttl).get().getID();
-        PutOption putOption = PutOption.newBuilder().withLeaseId(leaseID).build();
+        PutOption putOption = PutOption.builder().withLeaseId(leaseID).build();
         kvClient.put(KEY_2, VALUE, putOption).get();
 
-        LeaseOption leaseOption = LeaseOption.newBuilder().withAttachedKeys().build();
+        LeaseOption leaseOption = LeaseOption.builder().withAttachedKeys().build();
         LeaseTimeToLiveResponse resp = leaseClient.timeToLive(leaseID, leaseOption).get();
         assertThat(resp.getTTL()).isGreaterThan(0);
         assertThat(resp.getGrantedTTL()).isEqualTo(ttl);

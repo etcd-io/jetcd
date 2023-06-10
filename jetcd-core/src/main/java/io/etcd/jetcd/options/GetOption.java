@@ -27,19 +27,134 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * The option for get operation.
  */
 public final class GetOption {
+    public static final GetOption DEFAULT = builder().build();
 
-    public static final GetOption DEFAULT = newBuilder().build();
+    private final ByteSequence endKey;
+    private final long limit;
+    private final long revision;
+    private final SortOrder sortOrder;
+    private final SortTarget sortTarget;
+    private final boolean serializable;
+    private final boolean keysOnly;
+    private final boolean countOnly;
+    private final long minCreateRevision;
+    private final long maxCreateRevision;
+    private final long minModRevision;
+    private final long maxModRevision;
+    private final boolean prefix;
+
+    private GetOption(
+        ByteSequence endKey,
+        long limit,
+        long revision,
+        SortOrder sortOrder,
+        SortTarget sortTarget,
+        boolean serializable,
+        boolean keysOnly,
+        boolean countOnly,
+        long minCreateRevision,
+        long maxCreateRevision,
+        long minModRevision,
+        long maxModRevision,
+        boolean prefix) {
+
+        this.endKey = endKey;
+        this.limit = limit;
+        this.revision = revision;
+        this.sortOrder = sortOrder;
+        this.sortTarget = sortTarget;
+        this.serializable = serializable;
+        this.keysOnly = keysOnly;
+        this.countOnly = countOnly;
+        this.minCreateRevision = minCreateRevision;
+        this.maxCreateRevision = maxCreateRevision;
+        this.minModRevision = minModRevision;
+        this.maxModRevision = maxModRevision;
+        this.prefix = prefix;
+    }
 
     /**
-     * Create a builder to construct option for get operation.
+     * Get the maximum number of keys to return for a get request.
      *
-     * @return builder
+     * @return the maximum number of keys to return.
      */
+    public long getLimit() {
+        return this.limit;
+    }
+
+    public Optional<ByteSequence> getEndKey() {
+        return Optional.ofNullable(this.endKey);
+    }
+
+    public long getRevision() {
+        return revision;
+    }
+
+    public SortOrder getSortOrder() {
+        return sortOrder;
+    }
+
+    public SortTarget getSortField() {
+        return sortTarget;
+    }
+
+    public boolean isSerializable() {
+        return serializable;
+    }
+
+    public boolean isKeysOnly() {
+        return keysOnly;
+    }
+
+    public boolean isCountOnly() {
+        return countOnly;
+    }
+
+    public long getMinCreateRevision() {
+        return this.minCreateRevision;
+    }
+
+    public long getMaxCreateRevision() {
+        return this.maxCreateRevision;
+    }
+
+    public long getMinModRevision() {
+        return this.minModRevision;
+    }
+
+    public long getMaxModRevision() {
+        return this.maxModRevision;
+    }
+
+    public boolean isPrefix() {
+        return prefix;
+    }
+
+    public enum SortOrder {
+        NONE, ASCEND, DESCEND,
+    }
+
+    public enum SortTarget {
+        KEY, VERSION, CREATE, MOD, VALUE,
+    }
+
+    /**
+     * Returns the builder.
+     *
+     * @deprecated use {@link #builder()}
+     * @return     the builder
+     */
+    @SuppressWarnings("InlineMeSuggester")
+    @Deprecated
     public static Builder newBuilder() {
+        return builder();
+    }
+
+    public static Builder builder() {
         return new Builder();
     }
 
-    public static class Builder {
+    public static final class Builder {
 
         private long limit = 0L;
         private long revision = 0L;
@@ -48,7 +163,7 @@ public final class GetOption {
         private boolean serializable = false;
         private boolean keysOnly = false;
         private boolean countOnly = false;
-        private Optional<ByteSequence> endKey = Optional.empty();
+        private ByteSequence endKey;
         private long minCreateRevision = 0L;
         private long maxCreateRevision = 0L;
         private long minModRevision = 0L;
@@ -164,7 +279,7 @@ public final class GetOption {
          * @return        builder
          */
         public Builder withRange(ByteSequence endKey) {
-            this.endKey = Optional.ofNullable(endKey);
+            this.endKey = endKey;
             return this;
         }
 
@@ -258,106 +373,21 @@ public final class GetOption {
          * @return the GetOption
          */
         public GetOption build() {
-            return new GetOption(endKey, limit, revision, sortOrder, sortTarget, serializable, keysOnly, countOnly,
-                minCreateRevision, maxCreateRevision, minModRevision, maxModRevision, prefix);
+            return new GetOption(
+                endKey,
+                limit,
+                revision,
+                sortOrder,
+                sortTarget,
+                serializable,
+                keysOnly,
+                countOnly,
+                minCreateRevision,
+                maxCreateRevision,
+                minModRevision,
+                maxModRevision,
+                prefix);
         }
 
-    }
-
-    private final Optional<ByteSequence> endKey;
-    private final long limit;
-    private final long revision;
-    private final SortOrder sortOrder;
-    private final SortTarget sortTarget;
-    private final boolean serializable;
-    private final boolean keysOnly;
-    private final boolean countOnly;
-    private final long minCreateRevision;
-    private final long maxCreateRevision;
-    private final long minModRevision;
-    private final long maxModRevision;
-    private final boolean prefix;
-
-    private GetOption(Optional<ByteSequence> endKey, long limit, long revision, SortOrder sortOrder, SortTarget sortTarget,
-        boolean serializable, boolean keysOnly, boolean countOnly, long minCreateRevision, long maxCreateRevision,
-        long minModRevision, long maxModRevision, boolean prefix) {
-        this.endKey = endKey;
-        this.limit = limit;
-        this.revision = revision;
-        this.sortOrder = sortOrder;
-        this.sortTarget = sortTarget;
-        this.serializable = serializable;
-        this.keysOnly = keysOnly;
-        this.countOnly = countOnly;
-        this.minCreateRevision = minCreateRevision;
-        this.maxCreateRevision = maxCreateRevision;
-        this.minModRevision = minModRevision;
-        this.maxModRevision = maxModRevision;
-        this.prefix = prefix;
-    }
-
-    /**
-     * Get the maximum number of keys to return for a get request.
-     *
-     * @return the maximum number of keys to return.
-     */
-    public long getLimit() {
-        return this.limit;
-    }
-
-    public Optional<ByteSequence> getEndKey() {
-        return this.endKey;
-    }
-
-    public long getRevision() {
-        return revision;
-    }
-
-    public SortOrder getSortOrder() {
-        return sortOrder;
-    }
-
-    public SortTarget getSortField() {
-        return sortTarget;
-    }
-
-    public boolean isSerializable() {
-        return serializable;
-    }
-
-    public boolean isKeysOnly() {
-        return keysOnly;
-    }
-
-    public boolean isCountOnly() {
-        return countOnly;
-    }
-
-    public long getMinCreateRevision() {
-        return this.minCreateRevision;
-    }
-
-    public long getMaxCreateRevision() {
-        return this.maxCreateRevision;
-    }
-
-    public long getMinModRevision() {
-        return this.minModRevision;
-    }
-
-    public long getMaxModRevision() {
-        return this.maxModRevision;
-    }
-
-    public boolean isPrefix() {
-        return prefix;
-    }
-
-    public enum SortOrder {
-        NONE, ASCEND, DESCEND,
-    }
-
-    public enum SortTarget {
-        KEY, VERSION, CREATE, MOD, VALUE,
     }
 }

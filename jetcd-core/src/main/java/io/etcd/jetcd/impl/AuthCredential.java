@@ -66,6 +66,7 @@ class AuthCredential extends CallCredentials {
         meta = null;
     }
 
+    @SuppressWarnings("rawtypes")
     private void authenticate(MetadataApplier applier) {
         checkArgument(!manager.builder().user().isEmpty(), "username can not be empty.");
         checkArgument(!manager.builder().password().isEmpty(), "password can not be empty.");

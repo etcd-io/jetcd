@@ -24,16 +24,53 @@ import io.etcd.jetcd.KV;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class DeleteOption {
+    public static final DeleteOption DEFAULT = builder().build();
 
-    public static final DeleteOption DEFAULT = newBuilder().build();
+    private final ByteSequence endKey;
+    private final boolean prevKV;
+    private final boolean prefix;
 
+    private DeleteOption(ByteSequence endKey, boolean prevKV, boolean prefix) {
+        this.endKey = endKey;
+        this.prevKV = prevKV;
+        this.prefix = prefix;
+    }
+
+    public Optional<ByteSequence> getEndKey() {
+        return Optional.ofNullable(endKey);
+    }
+
+    /**
+     * Whether to get the previous key/value pairs before deleting them.
+     *
+     * @return true if get the previous key/value pairs before deleting them, otherwise false.
+     */
+    public boolean isPrevKV() {
+        return prevKV;
+    }
+
+    public boolean isPrefix() {
+        return prefix;
+    }
+
+    /**
+     * Returns the builder.
+     *
+     * @deprecated use {@link #builder()}
+     * @return     the builder
+     */
+    @SuppressWarnings("InlineMeSuggester")
+    @Deprecated
     public static Builder newBuilder() {
+        return builder();
+    }
+
+    public static Builder builder() {
         return new Builder();
     }
 
-    public static class Builder {
-
-        private Optional<ByteSequence> endKey = Optional.empty();
+    public static final class Builder {
+        private ByteSequence endKey;
         private boolean prevKV = false;
         private boolean prefix = false;
 
@@ -59,7 +96,7 @@ public final class DeleteOption {
          * @return        builder
          */
         public Builder withRange(ByteSequence endKey) {
-            this.endKey = Optional.ofNullable(endKey);
+            this.endKey = endKey;
             return this;
         }
 
@@ -111,32 +148,5 @@ public final class DeleteOption {
             return new DeleteOption(endKey, prevKV, prefix);
         }
 
-    }
-
-    private final Optional<ByteSequence> endKey;
-    private final boolean prevKV;
-    private final boolean prefix;
-
-    private DeleteOption(Optional<ByteSequence> endKey, boolean prevKV, boolean prefix) {
-        this.endKey = endKey;
-        this.prevKV = prevKV;
-        this.prefix = prefix;
-    }
-
-    public Optional<ByteSequence> getEndKey() {
-        return endKey;
-    }
-
-    /**
-     * Whether to get the previous key/value pairs before deleting them.
-     *
-     * @return true if get the previous key/value pairs before deleting them, otherwise false.
-     */
-    public boolean isPrevKV() {
-        return prevKV;
-    }
-
-    public boolean isPrefix() {
-        return prefix;
     }
 }

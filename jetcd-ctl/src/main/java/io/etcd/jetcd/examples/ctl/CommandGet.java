@@ -46,7 +46,7 @@ class CommandGet implements Runnable {
         try (Client client = Client.builder().endpoints(main.endpoints).build()) {
             GetResponse getResponse = client.getKVClient().get(
                 ByteSequence.from(key, UTF_8),
-                GetOption.newBuilder().withRevision(rev).build()).get();
+                GetOption.builder().withRevision(rev).build()).get();
 
             if (getResponse.getKvs().isEmpty()) {
                 // key does not exist

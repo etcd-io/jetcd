@@ -123,16 +123,13 @@ public final class Util {
 
     public static ThreadFactory createThreadFactory(String prefix, boolean daemon) {
         ThreadFactory backingThreadFactory = Executors.defaultThreadFactory();
-        return new ThreadFactory() {
 
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread t = backingThreadFactory.newThread(r);
-                t.setDaemon(daemon);
-                // set a proper name so it is easier to find out the where the thread was created
-                t.setName(prefix + t.getName());
-                return t;
-            }
+        return r -> {
+            Thread t = backingThreadFactory.newThread(r);
+            t.setDaemon(daemon);
+            // set a proper name so it is easier to find out the where the thread was created
+            t.setName(prefix + t.getName());
+            return t;
         };
     }
 }

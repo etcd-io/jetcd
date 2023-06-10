@@ -255,8 +255,8 @@ public class KVNamespaceTest {
             CompletableFuture<TxnResponse> txnFuture = txn
                 // cmpKey doesn't exist in this namespace
                 .If(new Cmp(cmpKey, Cmp.Op.EQUAL, CmpTarget.version(0)))
-                .Then(Op.put(key1, TestUtil.randomByteSequence(), PutOption.newBuilder().withPrevKV().build()))
-                .Else(Op.put(key2, TestUtil.randomByteSequence(), PutOption.newBuilder().withPrevKV().build())).commit();
+                .Then(Op.put(key1, TestUtil.randomByteSequence(), PutOption.builder().withPrevKV().build()))
+                .Else(Op.put(key2, TestUtil.randomByteSequence(), PutOption.builder().withPrevKV().build())).commit();
             TxnResponse txnResponse = txnFuture.get();
             assertThat(txnResponse.getPutResponses().size()).isEqualTo(1);
             assertThat(txnResponse.getPutResponses().get(0).hasPrevKv()).isTrue();
@@ -269,8 +269,8 @@ public class KVNamespaceTest {
             Txn txn = kvClientWithNamespace.txn();
             CompletableFuture<TxnResponse> txnFuture = txn
                 // key1 exists in this namespace
-                .If(new Cmp(key1, Cmp.Op.EQUAL, CmpTarget.version(0))).Then(Op.get(key1, GetOption.newBuilder().build()))
-                .Else(Op.get(key2, GetOption.newBuilder().build())).commit();
+                .If(new Cmp(key1, Cmp.Op.EQUAL, CmpTarget.version(0))).Then(Op.get(key1, GetOption.builder().build()))
+                .Else(Op.get(key2, GetOption.builder().build())).commit();
             TxnResponse txnResponse = txnFuture.get();
             assertThat(txnResponse.getGetResponses().size()).isEqualTo(1);
             assertThat(txnResponse.getGetResponses().get(0).getKvs().size()).isEqualTo(1);
@@ -284,8 +284,8 @@ public class KVNamespaceTest {
             CompletableFuture<TxnResponse> txnFuture = txn
                 // key1 exists in this namespace
                 .If(new Cmp(key1, Cmp.Op.GREATER, CmpTarget.version(0)))
-                .Then(Op.delete(key2, DeleteOption.newBuilder().withPrevKV(true).build()))
-                .Else(Op.delete(key1, DeleteOption.newBuilder().withPrevKV(true).build())).commit();
+                .Then(Op.delete(key2, DeleteOption.builder().withPrevKV(true).build()))
+                .Else(Op.delete(key1, DeleteOption.builder().withPrevKV(true).build())).commit();
             TxnResponse txnResponse = txnFuture.get();
             assertThat(txnResponse.getDeleteResponses().size()).isEqualTo(1);
             assertThat(txnResponse.getDeleteResponses().get(0).getPrevKvs().size()).isEqualTo(1);
@@ -323,14 +323,14 @@ public class KVNamespaceTest {
             ByteSequence nextValue1 = TestUtil.randomByteSequence();
             CompletableFuture<TxnResponse> txnFuture = txn.If(new Cmp(cmpKey1, Cmp.Op.EQUAL, CmpTarget.version(0)))
                 .Then(Op.txn(new Cmp[] { new Cmp(cmpKey2, Cmp.Op.GREATER, CmpTarget.version(0)) },
-                    new Op[] { Op.put(key1, nextValue1, PutOption.newBuilder().withPrevKV().build()) },
+                    new Op[] { Op.put(key1, nextValue1, PutOption.builder().withPrevKV().build()) },
                     new Op[] {
-                            Op.put(key2, TestUtil.randomByteSequence(), PutOption.newBuilder().withPrevKV().build()) }))
+                            Op.put(key2, TestUtil.randomByteSequence(), PutOption.builder().withPrevKV().build()) }))
                 .Else(Op.txn(new Cmp[] { new Cmp(cmpKey2, Cmp.Op.GREATER, CmpTarget.version(0)) },
                     new Op[] {
-                            Op.put(key2, TestUtil.randomByteSequence(), PutOption.newBuilder().withPrevKV().build()) },
+                            Op.put(key2, TestUtil.randomByteSequence(), PutOption.builder().withPrevKV().build()) },
                     new Op[] {
-                            Op.put(key1, TestUtil.randomByteSequence(), PutOption.newBuilder().withPrevKV().build()) }))
+                            Op.put(key1, TestUtil.randomByteSequence(), PutOption.builder().withPrevKV().build()) }))
                 .commit();
             TxnResponse response = txnFuture.get();
             assertThat(response.getTxnResponses().size()).isEqualTo(1);
@@ -378,7 +378,7 @@ public class KVNamespaceTest {
      */
     private static boolean putKVWithAssertion(KV kvClient, ByteSequence key, ByteSequence value, ByteSequence prevValue)
         throws Exception {
-        CompletableFuture<PutResponse> feature = kvClient.put(key, value, PutOption.newBuilder().withPrevKV().build());
+        CompletableFuture<PutResponse> feature = kvClient.put(key, value, PutOption.builder().withPrevKV().build());
         PutResponse response = feature.get();
         if (prevValue != null) {
             assertThat(response.hasPrevKv()).isTrue();
@@ -390,7 +390,7 @@ public class KVNamespaceTest {
 
     private static void deleteKVWithAssertion(KV kvClient, ByteSequence key, ByteSequence prevValue) throws Exception {
         CompletableFuture<DeleteResponse> deleteFuture = kvClient.delete(key,
-            DeleteOption.newBuilder().withPrevKV(true).build());
+            DeleteOption.builder().withPrevKV(true).build());
         DeleteResponse deleteResponse = deleteFuture.get();
         assertThat(deleteResponse.getDeleted()).isEqualTo(1);
         assertThat(deleteResponse.getPrevKvs().size()).isEqualTo(1);
@@ -407,7 +407,7 @@ public class KVNamespaceTest {
 
     private static void assertExistentKVs(KV kvClient, ByteSequence key, ByteSequence end, List<TestKeyValue> expectedKVs)
         throws Exception {
-        CompletableFuture<GetResponse> getFuture = kvClient.get(key, GetOption.newBuilder().withRange(end).build());
+        CompletableFuture<GetResponse> getFuture = kvClient.get(key, GetOption.builder().withRange(end).build());
         GetResponse getResponse = getFuture.get();
         assertThat(getResponse.getKvs().size()).isEqualTo(expectedKVs.size());
         for (KeyValue keyValue : getResponse.getKvs()) {
@@ -426,7 +426,7 @@ public class KVNamespaceTest {
     private static void deleteKVsWithAssertion(KV kvClient, ByteSequence key, ByteSequence end, List<TestKeyValue> previousKVs)
         throws Exception {
         CompletableFuture<DeleteResponse> deleteFuture = kvClient.delete(key,
-            DeleteOption.newBuilder().withRange(end).withPrevKV(true).build());
+            DeleteOption.builder().withRange(end).withPrevKV(true).build());
         DeleteResponse deleteResponse = deleteFuture.get();
         assertThat(deleteResponse.getDeleted()).isEqualTo(previousKVs.size());
         assertThat(deleteResponse.getPrevKvs().size()).isEqualTo(previousKVs.size());
