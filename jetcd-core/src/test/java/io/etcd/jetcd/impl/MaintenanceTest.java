@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.output.NullOutputStream;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,14 +56,14 @@ public class MaintenanceTest {
 
     private static Client client;
     private static Maintenance maintenance;
-    private static List<URI> endpoints;
+    private static List<String> endpoints;
 
     @TempDir
     static Path tempDir;
 
     @BeforeEach
     public void setUp() {
-        endpoints = cluster.clientEndpoints();
+        endpoints = cluster.clientEndpoints().stream().map(URI::toString).collect(Collectors.toList());
         client = TestUtil.client(cluster).build();
         maintenance = client.getMaintenanceClient();
     }
@@ -92,7 +93,7 @@ public class MaintenanceTest {
 
     @Test
     public void testSnapshotChunks() throws ExecutionException, InterruptedException {
-        final Long bytes = maintenance.snapshot(NullOutputStream.NULL_OUTPUT_STREAM).get();
+        final Long bytes = maintenance.snapshot(NullOutputStream.INSTANCE).get();
         final AtomicLong count = new AtomicLong();
         final CountDownLatch latcht = new CountDownLatch(1);
 
@@ -135,11 +136,11 @@ public class MaintenanceTest {
         maintenance.defragmentMember(endpoints.get(0)).get();
     }
 
-    //@Test
+    @Test
     public void testMoveLeader() throws ExecutionException, InterruptedException {
-        URI leaderEndpoint = null;
+        String leaderEndpoint = null;
         List<Long> followers = new ArrayList<>();
-        for (URI ep : endpoints) {
+        for (String ep : endpoints) {
             StatusResponse statusResponse = maintenance.statusMember(ep).get();
             long memberId = statusResponse.getHeader().getMemberId();
             if (memberId == statusResponse.getLeader()) {
