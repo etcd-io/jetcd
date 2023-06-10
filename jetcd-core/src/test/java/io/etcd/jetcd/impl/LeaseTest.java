@@ -38,6 +38,7 @@ import io.etcd.jetcd.options.PutOption;
 import io.etcd.jetcd.support.CloseableClient;
 import io.etcd.jetcd.support.Observers;
 import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.grpc.stub.StreamObserver;
 
 import com.google.common.base.Charsets;
 
@@ -164,6 +165,42 @@ public class LeaseTest {
         await().pollInterval(250, TimeUnit.MILLISECONDS).untilAsserted(() -> {
             assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(0);
         });
+    }
+
+    @Test
+    public void testKeepAliveClose() throws ExecutionException, InterruptedException {
+        try (Client c = TestUtil.client(cluster).build()) {
+            Lease lc = c.getLeaseClient();
+
+            AtomicReference<LeaseKeepAliveResponse> resp = new AtomicReference<>();
+            AtomicReference<Throwable> error = new AtomicReference<>();
+
+            StreamObserver<LeaseKeepAliveResponse> observer = Observers.<LeaseKeepAliveResponse> builder()
+                .onNext(resp::set)
+                .onError(error::set)
+                .build();
+
+            long leaseID = lc.grant(5, 10, TimeUnit.SECONDS).get().getID();
+
+            kvClient.put(KEY, VALUE, PutOption.newBuilder().withLeaseId(leaseID).build()).get();
+            assertThat(kvClient.get(KEY).get().getCount()).isEqualTo(1);
+
+            try (CloseableClient lcc = lc.keepAlive(leaseID, observer)) {
+                await().pollInterval(250, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+                    LeaseKeepAliveResponse response = resp.get();
+                    assertThat(response).isNotNull();
+                    assertThat(response.getTTL()).isGreaterThan(0);
+                });
+
+                assertThatNoException()
+                    .isThrownBy(c::close);
+
+                await().pollInterval(250, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+                    Throwable response = error.get();
+                    assertThat(response).isNotNull();
+                });
+            }
+        }
     }
 
     @Test
