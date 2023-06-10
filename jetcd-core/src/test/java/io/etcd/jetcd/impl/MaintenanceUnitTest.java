@@ -104,7 +104,7 @@ public class MaintenanceUnitTest {
             }
         });
 
-        assertThatThrownBy(() -> maintenance.snapshot(NullOutputStream.NULL_OUTPUT_STREAM).get())
+        assertThatThrownBy(() -> maintenance.snapshot(NullOutputStream.INSTANCE).get())
             .isInstanceOf(ExecutionException.class).hasCauseInstanceOf(EtcdException.class);
     }
 

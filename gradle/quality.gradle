@@ -28,6 +28,7 @@ tasks.withType(JavaCompile).configureEach {
         excludedPaths = '.*/generated/.*'
         disableWarningsInGeneratedCode = true
     }
+    options.deprecation = true
 }
 
 pmd {

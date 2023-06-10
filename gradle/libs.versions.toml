@@ -7,7 +7,7 @@ guava = "32.0.1-jre"
 assertj = "3.24.2"
 junit = "5.9.3"
 testcontainers = "1.18.3"
-protoc = "3.21.10"
+protoc = "3.23.2"
 failsafe = "2.4.4"
 awaitility = "4.2.0"
 commonsIo = "2.13.0"
@@ -17,15 +17,15 @@ errorprone = "2.19.1"
 vertx = "4.4.3"
 picocli = "4.7.4"
 
-versionsPlugin = "0.46.0"
-errorPronePlugin = "3.0.1"
-spotlessPlugin = "6.16.0"
+versionsPlugin = "0.47.0"
+errorPronePlugin = "3.1.0"
+spotlessPlugin = "6.19.0"
 shadowPlugin = "8.1.1"
 testLoggerPlugin = "3.2.0"
 protobufPlugin = "0.9.3"
-nexusPublishPlugin = "1.2.0"
-axionReleasePlugin = "1.14.4"
-testRetryPlugin = "1.5.2"
+nexusPublishPlugin = "1.3.0"
+axionReleasePlugin = "1.15.3"
+testRetryPlugin = "1.5.3"
 
 [libraries]
 slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
@@ -63,7 +63,7 @@ autoServiceProcessor = { module = "com.google.auto.service:auto-service", versio
 
 errorprone = { module = "com.google.errorprone:error_prone_core", version.ref = "errorprone" }
 errorproneAnnotations = { module = "com.google.errorprone:error_prone_annotations", version.ref = "errorprone" }
-errorproneJavac = { module = "com.google.errorprone:javac", version = "1+" }
+errorproneJavac = { module = "com.google.errorprone:javac", version = "9+" }
 
 [bundles]
 grpc    = [ "grpcCore", "grpcNetty", "grpcProtobuf", "grpcStub", "grpcGrpclb" ]
