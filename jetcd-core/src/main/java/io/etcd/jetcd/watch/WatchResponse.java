@@ -62,7 +62,8 @@ public class WatchResponse extends AbstractResponse<io.etcd.jetcd.api.WatchRespo
 
     public synchronized List<WatchEvent> getEvents() {
         if (events == null) {
-            events = getResponse().getEventsList().stream().map(event -> WatchResponse.toEvent(event, namespace))
+            events = getResponse().getEventsList().stream()
+                .map(event -> WatchResponse.toEvent(event, namespace))
                 .collect(Collectors.toList());
         }
 

@@ -54,12 +54,19 @@ public final class Requests {
         DeleteRangeRequest.Builder builder = DeleteRangeRequest.newBuilder()
             .setKey(Util.prefixNamespace(key, namespace))
             .setPrevKv(option.isPrevKV());
+
         defineRangeRequestEnd(key, option.getEndKey(), option.isPrefix(), namespace, builder::setRangeEnd);
+
         return builder.build();
     }
 
-    private static void defineRangeRequestEnd(ByteSequence key, Optional<ByteSequence> endKeyOptional,
-        boolean hasPrefix, ByteSequence namespace, Consumer<ByteString> setRangeEndConsumer) {
+    private static void defineRangeRequestEnd(
+        ByteSequence key,
+        Optional<ByteSequence> endKeyOptional,
+        boolean hasPrefix,
+        ByteSequence namespace,
+        Consumer<ByteString> setRangeEndConsumer) {
+
         if (endKeyOptional.isPresent()) {
             setRangeEndConsumer
                 .accept(Util.prefixNamespaceToRangeEnd(ByteString.copyFrom(endKeyOptional.get().getBytes()), namespace));

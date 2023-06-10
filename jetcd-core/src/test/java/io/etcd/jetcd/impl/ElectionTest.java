@@ -20,11 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -32,17 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.Client;
-import io.etcd.jetcd.Election;
-import io.etcd.jetcd.KV;
-import io.etcd.jetcd.KeyValue;
-import io.etcd.jetcd.Lease;
-import io.etcd.jetcd.election.CampaignResponse;
-import io.etcd.jetcd.election.LeaderKey;
-import io.etcd.jetcd.election.LeaderResponse;
-import io.etcd.jetcd.election.NoLeaderException;
-import io.etcd.jetcd.election.NotLeaderException;
+import io.etcd.jetcd.*;
+import io.etcd.jetcd.election.*;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 
@@ -87,7 +74,7 @@ public class ElectionTest {
         assertThat(campaignResponse.getLeader().getLease()).isEqualTo(leaseId);
         assertThat(campaignResponse.getLeader().getName()).isEqualTo(electionName);
         // election is backed by standard key in etcd. let us examine it
-        GetOption getOption = GetOption.newBuilder().isPrefix(true).build();
+        GetOption getOption = GetOption.builder().isPrefix(true).build();
         List<KeyValue> keys = kvClient.get(electionName, getOption).get().getKvs();
         assertThat(keys.size()).isEqualTo(1);
         assertThat(keys.get(0).getKey().toString()).isEqualTo(campaignResponse.getLeader().getKey().toString());
@@ -147,7 +134,7 @@ public class ElectionTest {
         assertThat(campaignResponse1.getLeader().getRevision()).isEqualTo(campaignResponse2.getLeader().getRevision());
 
         // latest proposal should be persisted
-        GetOption getOption = GetOption.newBuilder().isPrefix(true).build();
+        GetOption getOption = GetOption.builder().isPrefix(true).build();
         List<KeyValue> keys = kvClient.get(electionName, getOption).get().getKvs();
         assertThat(keys.size()).isEqualTo(1);
         assertThat(keys.get(0).getValue()).isEqualTo(secondProposal);
@@ -167,7 +154,7 @@ public class ElectionTest {
         } catch (ExecutionException e) {
             assertThat(e.getCause()).isInstanceOf(NotLeaderException.class);
         }
-        GetOption getOption = GetOption.newBuilder().isPrefix(true).build();
+        GetOption getOption = GetOption.builder().isPrefix(true).build();
         List<KeyValue> keys = kvClient.get(electionName, getOption).get().getKvs();
         assertThat(keys).isEmpty();
     }
@@ -248,7 +235,7 @@ public class ElectionTest {
         executor.awaitTermination(threadCount * OPERATION_TIMEOUT, TimeUnit.SECONDS);
         futures.forEach(f -> assertThat(f).isDone());
         assertThat(sharedVariable.get()).isEqualTo(threadCount);
-        GetOption getOption = GetOption.newBuilder().isPrefix(true).build();
+        GetOption getOption = GetOption.builder().isPrefix(true).build();
         assertThat(kvClient.get(electionName, getOption).get().getCount()).isEqualTo(0L);
         for (int i = 0; i < threadCount; ++i) {
             clients.get(i).getLeaseClient().revoke(leases.get(i)).get();

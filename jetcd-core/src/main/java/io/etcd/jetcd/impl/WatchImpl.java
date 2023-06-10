@@ -23,17 +23,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Watch;
-import io.etcd.jetcd.api.VertxWatchGrpc;
-import io.etcd.jetcd.api.WatchCancelRequest;
-import io.etcd.jetcd.api.WatchCreateRequest;
-import io.etcd.jetcd.api.WatchProgressRequest;
-import io.etcd.jetcd.api.WatchRequest;
-import io.etcd.jetcd.api.WatchResponse;
+import io.etcd.jetcd.api.*;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.options.OptionsUtil;
@@ -50,10 +46,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newClosedWatchClientException;
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newCompactedException;
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
+import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.*;
 
 /**
  * watch Implementation.
@@ -125,8 +118,8 @@ final class WatchImpl extends Impl implements Watch {
         private final AtomicBoolean closed;
 
         //private StreamObserver<WatchRequest> stream;
-        private AtomicReference<WriteStream<WatchRequest>> wstream;
-        private AtomicBoolean started;
+        private final AtomicReference<WriteStream<WatchRequest>> wstream;
+        private final AtomicBoolean started;
         private ReadStream<WatchResponse> rstream;
         private long revision;
         private long id;
@@ -355,8 +348,8 @@ final class WatchImpl extends Impl implements Watch {
         private void reschedule() {
             Futures.addCallback(executor.schedule(this::resume, 500, TimeUnit.MILLISECONDS), new FutureCallback<Object>() {
                 @Override
-                public void onFailure(Throwable throwable) {
-                    LOG.warn("scheduled resume failed", throwable);
+                public void onFailure(@NonNull Throwable t) {
+                    LOG.warn("scheduled resume failed", t);
                 }
 
                 @Override

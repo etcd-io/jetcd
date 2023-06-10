@@ -29,9 +29,12 @@ public class KeyValue {
 
     public KeyValue(io.etcd.jetcd.api.KeyValue kv, ByteSequence namespace) {
         this.kv = kv;
-        this.unprefixedKey = ByteSequence
-            .from(kv.getKey().isEmpty() ? kv.getKey() : Util.unprefixNamespace(kv.getKey(), namespace));
         this.value = ByteSequence.from(kv.getValue());
+
+        this.unprefixedKey = ByteSequence.from(
+            kv.getKey().isEmpty()
+                ? kv.getKey()
+                : Util.unprefixNamespace(kv.getKey(), namespace));
     }
 
     /**

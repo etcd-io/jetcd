@@ -165,7 +165,7 @@ public class WatchTest {
 
         final AtomicReference<Throwable> ref = new AtomicReference<>();
         // Try to listen from previous revision on
-        final WatchOption options = WatchOption.newBuilder().withRevision(getCompactedRevision(client, key)).build();
+        final WatchOption options = WatchOption.builder().withRevision(getCompactedRevision(client, key)).build();
         final Watch wc = client.getWatchClient();
 
         try (Watcher watcher = wc.watch(key, options, Watch.listener(TestUtil::noOpWatchResponseConsumer, ref::set))) {
@@ -258,7 +258,7 @@ public class WatchTest {
         PutResponse putResponse = client.getKVClient().put(key, value).get();
 
         long lastSeenRevision = putResponse.getHeader().getRevision();
-        WatchOption watchOption = WatchOption.newBuilder().withRevision(lastSeenRevision + 1).build();
+        WatchOption watchOption = WatchOption.builder().withRevision(lastSeenRevision + 1).build();
 
         try (Watcher watcher = client.getWatchClient().watch(key, watchOption, events::add)) {
 
@@ -320,7 +320,7 @@ public class WatchTest {
         final Watch wc = client.getWatchClient();
 
         long revision = getCompactedRevision(client, key);
-        final WatchOption options = WatchOption.newBuilder().withRevision(revision).build();
+        final WatchOption options = WatchOption.builder().withRevision(revision).build();
 
         final AtomicReference<Throwable> ref = new AtomicReference<>();
         final AtomicReference<Boolean> completed = new AtomicReference<>();

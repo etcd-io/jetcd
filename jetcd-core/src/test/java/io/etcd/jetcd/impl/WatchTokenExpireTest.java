@@ -111,7 +111,7 @@ public class WatchTokenExpireTest {
         // token is already expired when we attempt to create a watch
         Watch.Watcher watcher = authWatchClient.watch(
             key,
-            WatchOption.newBuilder().withRange(keyEnd).build(),
+            WatchOption.builder().withRange(keyEnd).build(),
             response -> {
                 modifications.incrementAndGet();
             },

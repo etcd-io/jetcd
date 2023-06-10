@@ -141,7 +141,7 @@ final class LeaseImpl extends Impl implements Lease {
         leaseStub
             .leaseKeepAlive(s -> s.write(LeaseKeepAliveRequest.newBuilder().setID(leaseId).build()))
             .handler(r -> future.complete(new LeaseKeepAliveResponse(r)))
-            .exceptionHandler(t -> future.completeExceptionally(t));
+            .exceptionHandler(future::completeExceptionally);
 
         return future;
     }

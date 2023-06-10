@@ -22,7 +22,9 @@ import java.util.stream.Collectors;
 /**
  * Util class for Cluster models.
  */
-public class Util {
+final class Util {
+    private Util() {
+    }
 
     /**
      * Converts a list of API member to a List of client side member.

@@ -17,14 +17,35 @@
 package io.etcd.jetcd.options;
 
 public class LeaseOption {
+    public static final LeaseOption DEFAULT = builder().build();
 
-    public static final LeaseOption DEFAULT = newBuilder().build();
+    private final boolean attachedKeys;
 
+    private LeaseOption(boolean attachedKeys) {
+        this.attachedKeys = attachedKeys;
+    }
+
+    public boolean isAttachedKeys() {
+        return attachedKeys;
+    }
+
+    /**
+     * Returns the builder.
+     *
+     * @deprecated use {@link #builder()}
+     * @return     the builder
+     */
+    @SuppressWarnings("InlineMeSuggester")
+    @Deprecated
     public static Builder newBuilder() {
+        return builder();
+    }
+
+    public static Builder builder() {
         return new Builder();
     }
 
-    public static class Builder {
+    public static final class Builder {
 
         private boolean attachedKeys;
 
@@ -44,16 +65,6 @@ public class LeaseOption {
         public LeaseOption build() {
             return new LeaseOption(this.attachedKeys);
         }
-    }
-
-    private final boolean attachedKeys;
-
-    private LeaseOption(boolean attachedKeys) {
-        this.attachedKeys = attachedKeys;
-    }
-
-    public boolean isAttachedKeys() {
-        return attachedKeys;
     }
 
 }

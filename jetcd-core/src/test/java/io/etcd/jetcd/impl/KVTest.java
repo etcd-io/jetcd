@@ -20,12 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -100,7 +95,7 @@ public class KVTest {
 
     @Test
     public void testPutWithNotExistLease() throws ExecutionException, InterruptedException {
-        PutOption option = PutOption.newBuilder().withLeaseId(99999).build();
+        PutOption option = PutOption.builder().withLeaseId(99999).build();
         CompletableFuture<PutResponse> future = kvClient.put(SAMPLE_KEY, SAMPLE_VALUE, option);
         assertThatExceptionOfType(ExecutionException.class)
             .isThrownBy(future::get).withMessageEndingWith("etcdserver: requested lease not found");
@@ -122,7 +117,7 @@ public class KVTest {
         CompletableFuture<PutResponse> feature = kvClient.put(SAMPLE_KEY_3, SAMPLE_VALUE);
         PutResponse putResp = feature.get();
         kvClient.put(SAMPLE_KEY_3, SAMPLE_VALUE_2).get();
-        GetOption option = GetOption.newBuilder().withRevision(putResp.getHeader().getRevision()).build();
+        GetOption option = GetOption.builder().withRevision(putResp.getHeader().getRevision()).build();
         CompletableFuture<GetResponse> getFeature = kvClient.get(SAMPLE_KEY_3, option);
         GetResponse response = getFeature.get();
         assertThat(response.getKvs()).hasSize(1);
@@ -135,7 +130,7 @@ public class KVTest {
         int numPrefix = 3;
         putKeysWithPrefix(prefix, numPrefix);
 
-        GetOption option = GetOption.newBuilder().withSortField(SortTarget.KEY).withSortOrder(SortOrder.DESCEND)
+        GetOption option = GetOption.builder().withSortField(SortTarget.KEY).withSortOrder(SortOrder.DESCEND)
             .isPrefix(true).build();
         CompletableFuture<GetResponse> getFeature = kvClient.get(bytesOf(prefix), option);
         GetResponse response = getFeature.get();
@@ -173,12 +168,12 @@ public class KVTest {
         putKeysWithPrefix(prefix, numPrefixes);
 
         // verify get withPrefix.
-        CompletableFuture<GetResponse> getFuture = kvClient.get(key, GetOption.newBuilder().isPrefix(true).build());
+        CompletableFuture<GetResponse> getFuture = kvClient.get(key, GetOption.builder().isPrefix(true).build());
         GetResponse getResp = getFuture.get();
         assertThat(getResp.getCount()).isEqualTo(numPrefixes);
 
         // verify del withPrefix.
-        DeleteOption deleteOpt = DeleteOption.newBuilder().isPrefix(true).build();
+        DeleteOption deleteOpt = DeleteOption.builder().isPrefix(true).build();
         CompletableFuture<DeleteResponse> delFuture = kvClient.delete(key, deleteOpt);
         DeleteResponse delResp = delFuture.get();
         assertThat(delResp.getDeleted()).isEqualTo(numPrefixes);
@@ -225,8 +220,8 @@ public class KVTest {
         //always false cmp
         Cmp cmp = new Cmp(sampleKey, Cmp.Op.EQUAL, CmpTarget.value(bytesOf("not_exists")));
         Op.PutOp putOp = Op.put(bytesOf("other_string"), bytesOf("other_value"), PutOption.DEFAULT);
-        Op.GetOp getByPrefix = Op.get(sampleKey, GetOption.newBuilder().isPrefix(true).build());
-        Op.DeleteOp delete = Op.delete(sampleKey, DeleteOption.newBuilder().isPrefix(true).withPrevKV(true).build());
+        Op.GetOp getByPrefix = Op.get(sampleKey, GetOption.builder().isPrefix(true).build());
+        Op.DeleteOp delete = Op.delete(sampleKey, DeleteOption.builder().isPrefix(true).withPrevKV(true).build());
         TxnResponse txnResponse = kvClient.txn().If(cmp)
             .Then(putOp).Else(getByPrefix, delete).commit().get();
         List<GetResponse> getResponse = txnResponse.getGetResponses();
