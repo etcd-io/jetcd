@@ -13,7 +13,7 @@ awaitility = "4.2.0"
 commonsIo = "2.13.0"
 commonCompress = "1.23.0"
 autoService = "1.1.1"
-errorprone = "2.19.1"
+errorprone = "2.20.0"
 vertx = "4.4.3"
 picocli = "4.7.4"
 
