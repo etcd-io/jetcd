@@ -14,7 +14,7 @@ commonsIo = "2.13.0"
 commonCompress = "1.23.0"
 autoService = "1.1.1"
 errorprone = "2.20.0"
-vertx = "4.4.3"
+vertx = "4.4.4"
 picocli = "4.7.4"
 
 versionsPlugin = "0.47.0"
