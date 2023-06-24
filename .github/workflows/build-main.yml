@@ -25,6 +25,9 @@ on:
     branches:
       - main
   workflow_dispatch:
+  schedule:
+  - cron: "0 0 * * *"
+
 
 jobs:
   build:
@@ -39,6 +42,7 @@ jobs:
         with:
           java-version: 11
           distribution: 'temurin'
+          cache: 'gradle'
       - name: Build Project
         env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
@@ -50,4 +54,13 @@ jobs:
           ./gradlew spotlessCheck
           ./gradlew test
           ./gradlew currentVersion
+
+      - name: Snapshot Project
+        if: github.event_name != 'schedule'
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+        run: |
+          export TC_USER="$(id -u):$(id -g)"
+          echo "tc user -> $TC_USER"
           ./gradlew publishToSonatype -Prelease.forceSnapshot

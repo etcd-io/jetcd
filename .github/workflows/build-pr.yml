@@ -26,6 +26,7 @@ on:
       - main
   workflow_dispatch:
 
+
 permissions:
   contents: read
   
@@ -47,6 +48,7 @@ jobs:
         with:
           java-version: 11
           distribution: 'temurin'
+          cache: 'gradle'
       - name: Build Project
         run: |
           export TC_USER="$(id -u):$(id -g)"
