@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.testcontainers.containers.Network;
+import org.testcontainers.shaded.com.google.common.base.Strings;
 
 public final class Etcd {
     public static final String CONTAINER_IMAGE = "gcr.io/etcd-development/etcd:v3.5.9";
@@ -34,12 +35,20 @@ public final class Etcd {
     private Etcd() {
     }
 
+    private static String resolveContainerImage() {
+        String image = System.getenv("ETCD_IMAGE");
+        if (!Strings.isNullOrEmpty(image)) {
+            return image;
+        }
+        return CONTAINER_IMAGE;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
 
     public static class Builder {
-        private String image = Etcd.CONTAINER_IMAGE;
+        private String image = Etcd.resolveContainerImage();
         private String clusterName = UUID.randomUUID().toString();
         private String prefix;
         private int nodes = 1;
