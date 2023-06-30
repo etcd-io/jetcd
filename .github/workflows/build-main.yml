@@ -54,7 +54,6 @@ jobs:
           
           ./gradlew spotlessCheck
           ./gradlew test
-          ./gradlew currentVersion
 
       - name: Snapshot Project
         if: github.event_name != 'schedule'
@@ -62,6 +61,5 @@ jobs:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
         run: |
-          export TC_USER="$(id -u):$(id -g)"
-          echo "tc user -> $TC_USER"
+          ./gradlew currentVersion
           ./gradlew publishToSonatype -Prelease.forceSnapshot
