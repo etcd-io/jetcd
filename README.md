@@ -23,7 +23,7 @@ Java 8 or above is required.
 </dependency>
 ```
 
-Development snapshots are available in [Sonatypes's snapshot repository](https://oss.sonatype.org/content/repositories/snapshots/io/etcd).
+Development snapshots are available in [Sonatypes's snapshot repository](https://oss.sonatype.org/content/repositories/snapshots/io/etcd/).
 
 ### Gradle
 
