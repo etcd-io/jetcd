@@ -40,6 +40,12 @@ jobs:
         uses: actions/dependency-review-action@v3
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        etcd:
+          - gcr.io/etcd-development/etcd:v3.5.9
+          - gcr.io/etcd-development/etcd:v3.4.26
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -50,6 +56,8 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
       - name: Build Project
+        env:
+          ETCD_IMAGE: ${{ matrix.etcd }}
         run: |
           export TC_USER="$(id -u):$(id -g)"
           echo "tc user -> $TC_USER"

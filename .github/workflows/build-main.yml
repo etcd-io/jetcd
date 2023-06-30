@@ -47,6 +47,7 @@ jobs:
         env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          ETCD_IMAGE: ${{ matrix.etcd }}
         run: |
           export TC_USER="$(id -u):$(id -g)"
           echo "tc user -> $TC_USER"
