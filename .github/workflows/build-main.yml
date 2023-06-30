@@ -49,4 +49,5 @@ jobs:
           
           ./gradlew spotlessCheck
           ./gradlew test
+          ./gradlew currentVersion
           ./gradlew publishToSonatype -Prelease.forceSnapshot
