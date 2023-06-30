@@ -28,10 +28,15 @@ on:
   schedule:
   - cron: "0 0 * * *"
 
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        etcd:
+          - gcr.io/etcd-development/etcd:v3.5.9
+          - gcr.io/etcd-development/etcd:v3.4.26
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -55,7 +60,7 @@ jobs:
           ./gradlew spotlessCheck
           ./gradlew test
 
-      - name: Snapshot Project
+      - name: Publish Snapshot
         if: github.event_name != 'schedule'
         env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
