@@ -32,17 +32,19 @@ public final class WatchOption {
     private final long revision;
     private final boolean prevKV;
     private final boolean progressNotify;
+    private final boolean createdNotify;
     private final boolean noPut;
     private final boolean noDelete;
     private final boolean requireLeader;
     private final boolean prefix;
 
-    private WatchOption(ByteSequence endKey, long revision, boolean prevKV, boolean progressNotify, boolean noPut,
-        boolean noDelete, boolean requireLeader, boolean prefix) {
+    private WatchOption(ByteSequence endKey, long revision, boolean prevKV, boolean progressNotify, boolean createdNotify,
+        boolean noPut, boolean noDelete, boolean requireLeader, boolean prefix) {
         this.endKey = endKey;
         this.revision = revision;
         this.prevKV = prevKV;
         this.progressNotify = progressNotify;
+        this.createdNotify = createdNotify;
         this.noPut = noPut;
         this.noDelete = noDelete;
         this.requireLeader = requireLeader;
@@ -78,6 +80,15 @@ public final class WatchOption {
      */
     public boolean isProgressNotify() {
         return progressNotify;
+    }
+
+    /**
+     * Whether watcher server send watch create event.
+     *
+     * @return if true, watcher server should send watch create event.
+     */
+    public boolean isCreatedNotify() {
+        return createdNotify;
     }
 
     /**
@@ -137,6 +148,7 @@ public final class WatchOption {
         private ByteSequence endKey;
         private boolean prevKV = false;
         private boolean progressNotify = false;
+        private boolean createNotify = false;
         private boolean noPut = false;
         private boolean noDelete = false;
         private boolean requireLeader = false;
@@ -209,6 +221,17 @@ public final class WatchOption {
         }
 
         /**
+         * When createNotify is set, the watch server sends event when watch is created.
+         *
+         * @param  createNotify configure the watcher to receive watch create event.
+         * @return              builder
+         */
+        public Builder withCreateNotify(boolean createNotify) {
+            this.createNotify = createNotify;
+            return this;
+        }
+
+        /**
          * filter out put event in server side.
          *
          * @param  noPut filter out put event
@@ -272,7 +295,8 @@ public final class WatchOption {
         }
 
         public WatchOption build() {
-            return new WatchOption(endKey, revision, prevKV, progressNotify, noPut, noDelete, requireLeader, prefix);
+            return new WatchOption(endKey, revision, prevKV, progressNotify, createNotify, noPut, noDelete, requireLeader,
+                prefix);
         }
 
     }
