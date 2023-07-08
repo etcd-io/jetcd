@@ -89,4 +89,23 @@ public class WatchResponse extends AbstractResponse<io.etcd.jetcd.api.WatchRespo
         return response.getEventsCount() == 0 && !response.getCreated() && !response.getCanceled()
             && response.getCompactRevision() == 0 && response.getHeader().getRevision() != 0;
     }
+
+    /**
+     * Returns true if the WatchResponse is created notification.
+     *
+     * @return true if the WatchResponse is created notification.
+     */
+    public boolean isCreatedNotify() {
+        return isCreatedNotify(getResponse());
+    }
+
+    /**
+     * Returns true if the WatchResponse is created notification.
+     *
+     * @param  response the response.
+     * @return          true if the WatchResponse is created notification.
+     */
+    public static boolean isCreatedNotify(io.etcd.jetcd.api.WatchResponse response) {
+        return response.getCreated() && !response.getCanceled();
+    }
 }

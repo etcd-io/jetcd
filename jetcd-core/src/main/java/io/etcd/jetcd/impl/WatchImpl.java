@@ -260,6 +260,9 @@ final class WatchImpl extends Impl implements Watch {
 
                 revision = Math.max(revision, response.getHeader().getRevision());
                 id = response.getWatchId();
+                if (option.isCreatedNotify()) {
+                    listener.onNext(new io.etcd.jetcd.watch.WatchResponse(response));
+                }
             } else if (response.getCanceled()) {
 
                 //

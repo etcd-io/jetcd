@@ -336,4 +336,19 @@ public class WatchTest {
             assertThat(completed.get()).isEqualTo(Boolean.TRUE);
         }
     }
+
+    @ParameterizedTest
+    @MethodSource("parameters")
+    public void testWatchWithCreatedNotify(final Client client) throws Exception {
+
+        final ByteSequence key = randomByteSequence();
+        final WatchOption options = WatchOption.builder().withCreateNotify(true).build();
+        final AtomicReference<WatchResponse> ref = new AtomicReference<>();
+
+        try (Watcher watcher = client.getWatchClient().watch(key, options, ref::set)) {
+            await().atMost(TIME_OUT_SECONDS, TimeUnit.SECONDS).untilAsserted(() -> assertThat(ref.get()).isNotNull());
+            assertThat(ref.get().getEvents().size()).isEqualTo(0);
+            assertThat(ref.get().isCreatedNotify()).isEqualTo(Boolean.TRUE);
+        }
+    }
 }
