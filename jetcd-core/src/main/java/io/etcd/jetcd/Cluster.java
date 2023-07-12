@@ -16,6 +16,7 @@
 
 package io.etcd.jetcd;
 
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -64,6 +65,16 @@ public interface Cluster extends CloseableClient {
     CompletableFuture<MemberRemoveResponse> removeMember(long memberID);
 
     /**
+     * removes an existing member from the cluster.
+     *
+     * @param  memberID the member(unsigned id) to remove.
+     * @return          the response
+     */
+    default CompletableFuture<MemberRemoveResponse> removeMember(BigInteger memberID) {
+        return removeMember(memberID.longValue());
+    }
+
+    /**
      * update peer addresses of the member.
      *
      * @param  memberID  the member id.
@@ -71,5 +82,16 @@ public interface Cluster extends CloseableClient {
      * @return           the response
      */
     CompletableFuture<MemberUpdateResponse> updateMember(long memberID, List<URI> peerAddrs);
+
+    /**
+     * update peer addresses of the member.
+     *
+     * @param  memberID  the member unsigned id.
+     * @param  peerAddrs the addresses.
+     * @return           the response
+     */
+    default CompletableFuture<MemberUpdateResponse> updateMember(BigInteger memberID, List<URI> peerAddrs) {
+        return updateMember(memberID.longValue(), peerAddrs);
+    }
 
 }

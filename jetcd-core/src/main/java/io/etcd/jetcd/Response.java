@@ -16,6 +16,8 @@
 
 package io.etcd.jetcd;
 
+import java.math.BigInteger;
+
 /**
  * represents a generic Jetcd response.
  */
@@ -38,11 +40,31 @@ public interface Response {
         long getClusterId();
 
         /**
+         * Returns the cluster id.
+         * The value is actually an unsigned int64 value, which may exceed the range of long.
+         *
+         * @return unsigned cluster id
+         */
+        default BigInteger getUnsignedClusterId() {
+            return new BigInteger(Long.toUnsignedString(getClusterId()));
+        }
+
+        /**
          * Returns the member id
          *
          * @return the member id.
          */
         long getMemberId();
+
+        /**
+         * Returns the member id.
+         * The value is actually an unsigned int64 value, which may exceed the range of long.
+         *
+         * @return unsigned member id
+         */
+        default BigInteger getUnsignedMemberId() {
+            return new BigInteger(Long.toUnsignedString(getMemberId()));
+        }
 
         /**
          * Returns the revision id

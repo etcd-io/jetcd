@@ -16,6 +16,7 @@
 
 package io.etcd.jetcd.cluster;
 
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.List;
 
@@ -36,6 +37,15 @@ public class Member {
      */
     public long getId() {
         return member.getID();
+    }
+
+    /**
+     * Returns the member ID for this member.
+     *
+     * @return the unsigned id.
+     */
+    public BigInteger getUnsignedId() {
+        return new BigInteger(Long.toUnsignedString(getId()));
     }
 
     /**
