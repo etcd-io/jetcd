@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: Build and Publish (Snapshot)
+name: Build and Publish (Tag)
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -22,11 +22,8 @@ concurrency:
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
-  schedule:
-  - cron: "0 0 * * *"
+    tags:
+      - "jetcd-*"
 
 jobs:
   build:
@@ -71,10 +68,13 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
       - name: Publish Snapshot
-        if: github.event_name != 'schedule'
         env:
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          OSS_TOKEN_USERNAME: ${{ secrets.OSS_TOKEN_USERNAME }}
+          OSS_TOKEN_PASSWORD: ${{ secrets.OSS_TOKEN_PASSWORD }}
         run: |
           ./gradlew currentVersion
-          ./gradlew publishToSonatype -Prelease.forceSnapshot
+          ./gradlew publishToSonatype
+          ./gradlew markNextVersion \
+            -Prelease.customUsername=${{ github.actor }} \
+            -Prelease.customPassword=${{ github.token }}
+
