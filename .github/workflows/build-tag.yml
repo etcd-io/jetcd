@@ -67,13 +67,15 @@ jobs:
           java-version: 11
           distribution: 'temurin'
           cache: 'gradle'
+      - name: Collect Info
+        run: |
+          ./gradlew currentVersion      
       - name: Publish Snapshot
         env:
           NEXUS_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
         run: |
-          ./gradlew currentVersion
-          ./gradlew publishToSonatype
+          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
           ./gradlew markNextVersion \
             -Prelease.customUsername=${{ github.actor }} \
             -Prelease.customPassword=${{ github.token }}
