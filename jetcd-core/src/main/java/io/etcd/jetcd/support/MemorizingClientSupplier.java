@@ -21,8 +21,8 @@ import java.util.function.Supplier;
 
 public class MemorizingClientSupplier<T extends CloseableClient> implements Supplier<T>, CloseableClient {
     final Supplier<T> delegate;
-    transient volatile boolean initialized;
-    transient T value;
+    volatile boolean initialized;
+    T value;
 
     public MemorizingClientSupplier(Supplier<T> delegate) {
         this.delegate = Objects.requireNonNull(delegate);
