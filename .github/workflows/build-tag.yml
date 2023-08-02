@@ -70,7 +70,7 @@ jobs:
       - name: Collect Info
         run: |
           ./gradlew currentVersion      
-      - name: Publish Snapshot
+      - name: Publish Release
         env:
           NEXUS_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
