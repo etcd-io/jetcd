@@ -69,8 +69,8 @@ jobs:
           cache: 'gradle'
       - name: Publish Snapshot
         env:
-          OSS_TOKEN_USERNAME: ${{ secrets.OSS_TOKEN_USERNAME }}
-          OSS_TOKEN_PASSWORD: ${{ secrets.OSS_TOKEN_PASSWORD }}
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
         run: |
           ./gradlew currentVersion
           ./gradlew publishToSonatype
