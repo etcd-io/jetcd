@@ -20,10 +20,10 @@ apply plugin: "io.github.gradle-nexus.publish-plugin"
 
 ext {
     if (!project.hasProperty('nexusUsername')) {
-        nexusUsername = "$System.env.OSS_TOKEN_USERNAME"
+        nexusUsername = "$System.env.NEXUS_USERNAME"
     }
     if (!project.hasProperty('nexusPassword')) {
-        nexusPassword = "$System.env.OSS_TOKEN_PASSWORD"
+        nexusPassword = "$System.env.NEXUS_PASSWORD"
     }
 }
 
