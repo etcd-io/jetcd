@@ -119,7 +119,7 @@ It recommmonds building the project before running tests so that you have artifa
 
 ## Contact
 
-* Mailing list: [etcd-dev](https://groups.google.com/forum/?hl=en#!forum/etcd-dev)
+* Mailing list: [etcd-dev](https://groups.google.com/g/etcd-dev)
 
 ## Contributing
 
