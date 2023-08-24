@@ -20,7 +20,7 @@ import java.util.Optional;
 
 import io.etcd.jetcd.ByteSequence;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * The option for watch operation.
@@ -273,7 +273,7 @@ public final class WatchOption {
          */
         @Deprecated
         public Builder withPrefix(ByteSequence prefix) {
-            checkNotNull(prefix, "prefix should not be null");
+            requireNonNull(prefix, "prefix should not be null");
             ByteSequence prefixEnd = OptionsUtil.prefixEndOf(prefix);
             this.withRange(prefixEnd);
             return this;

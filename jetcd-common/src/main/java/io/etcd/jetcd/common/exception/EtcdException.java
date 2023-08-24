@@ -16,7 +16,7 @@
 
 package io.etcd.jetcd.common.exception;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Objects;
 
 /**
  * Base exception type for all exceptions produced by the etcd service.
@@ -27,7 +27,7 @@ public class EtcdException extends RuntimeException {
 
     EtcdException(ErrorCode code, String message, Throwable cause) {
         super(message, cause);
-        this.code = checkNotNull(code);
+        this.code = Objects.requireNonNull(code, "Error code must not be null");
     }
 
     /**

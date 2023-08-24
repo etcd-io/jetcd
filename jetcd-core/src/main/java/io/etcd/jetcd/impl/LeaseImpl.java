@@ -40,8 +40,8 @@ import io.etcd.jetcd.support.Util;
 import io.grpc.stub.StreamObserver;
 import io.vertx.core.streams.WriteStream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.*;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Implementation of lease client.
@@ -103,7 +103,7 @@ final class LeaseImpl extends Impl implements Lease {
 
     @Override
     public CompletableFuture<LeaseTimeToLiveResponse> timeToLive(long leaseId, LeaseOption option) {
-        checkNotNull(option, "LeaseOption should not be null");
+        requireNonNull(option, "LeaseOption should not be null");
 
         LeaseTimeToLiveRequest leaseTimeToLiveRequest = LeaseTimeToLiveRequest.newBuilder()
             .setID(leaseId)

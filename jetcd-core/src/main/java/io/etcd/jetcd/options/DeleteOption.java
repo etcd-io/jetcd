@@ -21,7 +21,7 @@ import java.util.Optional;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KV;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 public final class DeleteOption {
     public static final DeleteOption DEFAULT = builder().build();
@@ -127,7 +127,7 @@ public final class DeleteOption {
          */
         @Deprecated
         public Builder withPrefix(ByteSequence prefix) {
-            checkNotNull(prefix, "prefix should not be null");
+            requireNonNull(prefix, "prefix should not be null");
             ByteSequence prefixEnd = OptionsUtil.prefixEndOf(prefix);
             this.withRange(prefixEnd);
             return this;

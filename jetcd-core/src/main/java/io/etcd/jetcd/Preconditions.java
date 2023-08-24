@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The jetcd authors
+ * Copyright 2016-2023 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-dependencies {
-    api project(':jetcd-api')
-    api project(':jetcd-launcher')
+package io.etcd.jetcd;
 
-    api libs.slf4j
-    api libs.bundles.grpc
-    api libs.bundles.grpcTest
+public class Preconditions {
 
-    api libs.junit
-    api libs.autoServiceAnnotations
+    public static void checkArgument(boolean expression, String errorMessage) {
+        if (!expression) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+    }
 
-    annotationProcessor libs.autoServiceProcessor
-
-    testRuntimeOnly libs.bundles.log4j
+    public static void checkState(boolean expression, String errorMessage) {
+        if (!expression) {
+            throw new IllegalStateException(errorMessage);
+        }
+    }
 }

@@ -31,7 +31,7 @@ import io.grpc.stub.MetadataUtils;
 
 import com.google.protobuf.ByteString;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static io.etcd.jetcd.Preconditions.checkArgument;
 
 /**
  * AuthTokenInterceptor fills header with Auth token of any rpc calls and

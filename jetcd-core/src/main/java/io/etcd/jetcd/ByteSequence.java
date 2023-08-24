@@ -17,8 +17,8 @@
 package io.etcd.jetcd;
 
 import java.nio.charset.Charset;
+import java.util.Objects;
 
-import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 
 /**
@@ -32,7 +32,7 @@ public final class ByteSequence {
     private final ByteString byteString;
 
     private ByteSequence(ByteString byteString) {
-        Preconditions.checkNotNull(byteString, "byteString should not be null");
+        Objects.requireNonNull(byteString, "byteString should not be null");
         this.byteString = byteString;
         this.hashVal = byteString.hashCode();
     }
@@ -58,7 +58,7 @@ public final class ByteSequence {
      * @return       a new {@code ByteSequence} instance
      */
     public ByteSequence concat(ByteSequence other) {
-        Preconditions.checkNotNull(other, "other byteSequence should not be null");
+        Objects.requireNonNull(other, "other byteSequence should not be null");
         return new ByteSequence(this.byteString.concat(other.byteString));
     }
 
@@ -69,7 +69,7 @@ public final class ByteSequence {
      * @return       a new {@code ByteSequence} instance
      */
     public ByteSequence concat(ByteString other) {
-        Preconditions.checkNotNull(other, "other byteSequence should not be null");
+        Objects.requireNonNull(other, "other byteSequence should not be null");
         return new ByteSequence(this.byteString.concat(other));
     }
 

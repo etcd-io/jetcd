@@ -19,6 +19,7 @@ package io.etcd.jetcd.test;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 
 import org.slf4j.Logger;
@@ -65,7 +66,7 @@ public class EtcdClusterNameResolver extends NameResolver {
         synchronized (lock) {
             Preconditions.checkState(this.listener == null, "already started");
             this.executor = SharedResourceHolder.get(GrpcUtil.SHARED_CHANNEL_EXECUTOR);
-            this.listener = Preconditions.checkNotNull(listener, "listener");
+            this.listener = Objects.requireNonNull(listener, "listener");
             resolve();
         }
     }

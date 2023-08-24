@@ -21,7 +21,6 @@ plugins {
 dependencies {
     api libs.slf4j
     api libs.vertxGrpc
-    api libs.guava
     api libs.bundles.grpc
 }
 
