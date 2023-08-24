@@ -28,7 +28,7 @@ import io.etcd.jetcd.lock.UnlockResponse;
 import io.etcd.jetcd.support.Errors;
 import io.etcd.jetcd.support.Util;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 final class LockImpl extends Impl implements Lock {
     private final VertxLockGrpc.LockVertxStub stub;
@@ -43,7 +43,7 @@ final class LockImpl extends Impl implements Lock {
 
     @Override
     public CompletableFuture<LockResponse> lock(ByteSequence name, long leaseId) {
-        checkNotNull(name);
+        requireNonNull(name);
 
         LockRequest request = LockRequest.newBuilder()
             .setName(Util.prefixNamespace(name, namespace))
@@ -58,7 +58,7 @@ final class LockImpl extends Impl implements Lock {
 
     @Override
     public CompletableFuture<UnlockResponse> unlock(ByteSequence lockKey) {
-        checkNotNull(lockKey);
+        requireNonNull(lockKey);
 
         UnlockRequest request = UnlockRequest.newBuilder()
             .setKey(Util.prefixNamespace(lockKey, namespace))

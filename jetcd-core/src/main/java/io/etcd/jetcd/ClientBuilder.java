@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.net.ssl.SSLException;
 
@@ -37,9 +38,7 @@ import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.Streams;
 
 /**
  * ClientBuilder knows how to create a Client instance.
@@ -131,7 +130,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws IllegalArgumentException if some endpoint is invalid
      */
     public ClientBuilder endpoints(Iterable<URI> endpoints) {
-        Preconditions.checkNotNull(endpoints, "endpoints can't be null");
+        Objects.requireNonNull(endpoints, "endpoints can't be null");
 
         endpoints.forEach(e -> {
             if (e.getHost() == null) {
@@ -139,7 +138,7 @@ public final class ClientBuilder implements Cloneable {
             }
         });
 
-        final String target = Streams.stream(endpoints)
+        final String target = StreamSupport.stream(endpoints.spliterator(), false)
             .map(e -> e.getHost() + (e.getPort() != -1 ? ":" + e.getPort() : ""))
             .distinct()
             .collect(Collectors.joining(","));
@@ -173,7 +172,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws NullPointerException if user is <code>null</code>
      */
     public ClientBuilder user(ByteSequence user) {
-        Preconditions.checkNotNull(user, "user can't be null");
+        Objects.requireNonNull(user, "user can't be null");
         this.user = user;
         return this;
     }
@@ -195,7 +194,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws NullPointerException if password is <code>null</code>
      */
     public ClientBuilder password(ByteSequence password) {
-        Preconditions.checkNotNull(password, "password can't be null");
+        Objects.requireNonNull(password, "password can't be null");
         this.password = password;
         return this;
     }
@@ -218,7 +217,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws NullPointerException if namespace is <code>null</code>
      */
     public ClientBuilder namespace(ByteSequence namespace) {
-        Preconditions.checkNotNull(namespace, "namespace can't be null");
+        Objects.requireNonNull(namespace, "namespace can't be null");
         this.namespace = namespace;
         return this;
     }
@@ -240,7 +239,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws NullPointerException if executorService is <code>null</code>
      */
     public ClientBuilder executorService(ExecutorService executorService) {
-        Preconditions.checkNotNull(executorService, "executorService can't be null");
+        Objects.requireNonNull(executorService, "executorService can't be null");
         this.executorService = executorService;
         return this;
     }
@@ -253,7 +252,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws NullPointerException if loadBalancerPolicy is <code>null</code>
      */
     public ClientBuilder loadBalancerPolicy(String loadBalancerPolicy) {
-        Preconditions.checkNotNull(loadBalancerPolicy, "loadBalancerPolicy can't be null");
+        Objects.requireNonNull(loadBalancerPolicy, "loadBalancerPolicy can't be null");
         this.loadBalancerPolicy = loadBalancerPolicy;
         return this;
     }

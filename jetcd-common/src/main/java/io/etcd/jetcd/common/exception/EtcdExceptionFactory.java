@@ -16,9 +16,10 @@
 
 package io.etcd.jetcd.common.exception;
 
+import java.util.Objects;
+
 import io.grpc.Status;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static io.grpc.Status.fromThrowable;
 
 /**
@@ -65,7 +66,7 @@ public final class EtcdExceptionFactory {
     }
 
     public static EtcdException toEtcdException(Throwable cause) {
-        checkNotNull(cause, "cause can't be null");
+        Objects.requireNonNull(cause, "cause can't be null");
         if (cause instanceof EtcdException) {
             return (EtcdException) cause;
         }
@@ -74,7 +75,7 @@ public final class EtcdExceptionFactory {
     }
 
     public static EtcdException toEtcdException(Status status) {
-        checkNotNull(status, "status can't be null");
+        Objects.requireNonNull(status, "status can't be null");
         return fromStatus(status);
     }
 

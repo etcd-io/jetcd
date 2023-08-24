@@ -55,7 +55,7 @@ import io.etcd.jetcd.auth.Permission;
 
 import com.google.protobuf.ByteString;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Implementation of etcd auth client.
@@ -88,8 +88,8 @@ final class AuthImpl extends Impl implements Auth {
 
     @Override
     public CompletableFuture<AuthUserAddResponse> userAdd(ByteSequence user, ByteSequence password) {
-        checkNotNull(user, "user can't be null");
-        checkNotNull(password, "password can't be null");
+        requireNonNull(user, "user can't be null");
+        requireNonNull(password, "password can't be null");
 
         AuthUserAddRequest addRequest = AuthUserAddRequest.newBuilder()
             .setNameBytes(ByteString.copyFrom(user.getBytes()))
@@ -103,7 +103,7 @@ final class AuthImpl extends Impl implements Auth {
 
     @Override
     public CompletableFuture<AuthUserDeleteResponse> userDelete(ByteSequence user) {
-        checkNotNull(user, "user can't be null");
+        requireNonNull(user, "user can't be null");
 
         AuthUserDeleteRequest deleteRequest = AuthUserDeleteRequest.newBuilder()
             .setNameBytes(ByteString.copyFrom(user.getBytes()))
@@ -116,8 +116,8 @@ final class AuthImpl extends Impl implements Auth {
 
     @Override
     public CompletableFuture<AuthUserChangePasswordResponse> userChangePassword(ByteSequence user, ByteSequence password) {
-        checkNotNull(user, "user can't be null");
-        checkNotNull(password, "password can't be null");
+        requireNonNull(user, "user can't be null");
+        requireNonNull(password, "password can't be null");
 
         AuthUserChangePasswordRequest changePasswordRequest = AuthUserChangePasswordRequest.newBuilder()
             .setNameBytes(ByteString.copyFrom(user.getBytes()))
@@ -131,7 +131,7 @@ final class AuthImpl extends Impl implements Auth {
 
     @Override
     public CompletableFuture<AuthUserGetResponse> userGet(ByteSequence user) {
-        checkNotNull(user, "user can't be null");
+        requireNonNull(user, "user can't be null");
 
         AuthUserGetRequest userGetRequest = AuthUserGetRequest.newBuilder()
             .setNameBytes(ByteString.copyFrom(user.getBytes()))
@@ -153,8 +153,8 @@ final class AuthImpl extends Impl implements Auth {
 
     @Override
     public CompletableFuture<AuthUserGrantRoleResponse> userGrantRole(ByteSequence user, ByteSequence role) {
-        checkNotNull(user, "user can't be null");
-        checkNotNull(role, "key can't be null");
+        requireNonNull(user, "user can't be null");
+        requireNonNull(role, "key can't be null");
 
         AuthUserGrantRoleRequest userGrantRoleRequest = AuthUserGrantRoleRequest.newBuilder()
             .setUserBytes(ByteString.copyFrom(user.getBytes()))
@@ -168,8 +168,8 @@ final class AuthImpl extends Impl implements Auth {
 
     @Override
     public CompletableFuture<AuthUserRevokeRoleResponse> userRevokeRole(ByteSequence user, ByteSequence role) {
-        checkNotNull(user, "user can't be null");
-        checkNotNull(role, "key can't be null");
+        requireNonNull(user, "user can't be null");
+        requireNonNull(role, "key can't be null");
 
         AuthUserRevokeRoleRequest userRevokeRoleRequest = AuthUserRevokeRoleRequest.newBuilder()
             .setNameBytes(ByteString.copyFrom(user.getBytes()))
@@ -183,7 +183,7 @@ final class AuthImpl extends Impl implements Auth {
 
     @Override
     public CompletableFuture<AuthRoleAddResponse> roleAdd(ByteSequence user) {
-        checkNotNull(user, "user can't be null");
+        requireNonNull(user, "user can't be null");
 
         AuthRoleAddRequest roleAddRequest = AuthRoleAddRequest.newBuilder().setNameBytes(ByteString.copyFrom(user.getBytes()))
             .build();
@@ -196,10 +196,10 @@ final class AuthImpl extends Impl implements Auth {
     @Override
     public CompletableFuture<AuthRoleGrantPermissionResponse> roleGrantPermission(ByteSequence role, ByteSequence key,
         ByteSequence rangeEnd, Permission.Type permType) {
-        checkNotNull(role, "role can't be null");
-        checkNotNull(key, "key can't be null");
-        checkNotNull(rangeEnd, "rangeEnd can't be null");
-        checkNotNull(permType, "permType can't be null");
+        requireNonNull(role, "role can't be null");
+        requireNonNull(key, "key can't be null");
+        requireNonNull(rangeEnd, "rangeEnd can't be null");
+        requireNonNull(permType, "permType can't be null");
 
         io.etcd.jetcd.api.Permission.Type type;
         switch (permType) {
@@ -235,7 +235,7 @@ final class AuthImpl extends Impl implements Auth {
 
     @Override
     public CompletableFuture<AuthRoleGetResponse> roleGet(ByteSequence role) {
-        checkNotNull(role, "role can't be null");
+        requireNonNull(role, "role can't be null");
 
         AuthRoleGetRequest roleGetRequest = AuthRoleGetRequest.newBuilder()
             .setRoleBytes(ByteString.copyFrom(role.getBytes()))
@@ -258,9 +258,9 @@ final class AuthImpl extends Impl implements Auth {
     @Override
     public CompletableFuture<AuthRoleRevokePermissionResponse> roleRevokePermission(ByteSequence role, ByteSequence key,
         ByteSequence rangeEnd) {
-        checkNotNull(role, "role can't be null");
-        checkNotNull(key, "key can't be null");
-        checkNotNull(rangeEnd, "rangeEnd can't be null");
+        requireNonNull(role, "role can't be null");
+        requireNonNull(key, "key can't be null");
+        requireNonNull(rangeEnd, "rangeEnd can't be null");
 
         AuthRoleRevokePermissionRequest roleRevokePermissionRequest = AuthRoleRevokePermissionRequest.newBuilder()
             .setRoleBytes(ByteString.copyFrom(role.getBytes()))
@@ -275,7 +275,7 @@ final class AuthImpl extends Impl implements Auth {
 
     @Override
     public CompletableFuture<AuthRoleDeleteResponse> roleDelete(ByteSequence role) {
-        checkNotNull(role, "role can't be null");
+        requireNonNull(role, "role can't be null");
         AuthRoleDeleteRequest roleDeleteRequest = AuthRoleDeleteRequest.newBuilder()
             .setRoleBytes(ByteString.copyFrom(role.getBytes()))
             .build();

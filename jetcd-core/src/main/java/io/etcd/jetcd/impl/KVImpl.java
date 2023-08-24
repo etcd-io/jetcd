@@ -36,7 +36,7 @@ import io.etcd.jetcd.options.PutOption;
 import io.etcd.jetcd.support.Errors;
 import io.etcd.jetcd.support.Requests;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Implementation of etcd kv client.
@@ -59,9 +59,9 @@ final class KVImpl extends Impl implements KV {
 
     @Override
     public CompletableFuture<PutResponse> put(ByteSequence key, ByteSequence value, PutOption option) {
-        checkNotNull(key, "key should not be null");
-        checkNotNull(value, "value should not be null");
-        checkNotNull(option, "option should not be null");
+        requireNonNull(key, "key should not be null");
+        requireNonNull(value, "value should not be null");
+        requireNonNull(option, "option should not be null");
         return execute(
             () -> stub.put(Requests.mapPutRequest(key, value, option, namespace)),
             response -> new PutResponse(response, namespace),
@@ -75,8 +75,8 @@ final class KVImpl extends Impl implements KV {
 
     @Override
     public CompletableFuture<GetResponse> get(ByteSequence key, GetOption option) {
-        checkNotNull(key, "key should not be null");
-        checkNotNull(option, "option should not be null");
+        requireNonNull(key, "key should not be null");
+        requireNonNull(option, "option should not be null");
 
         return execute(
             () -> stub.range(Requests.mapRangeRequest(key, option, namespace)),
@@ -91,8 +91,8 @@ final class KVImpl extends Impl implements KV {
 
     @Override
     public CompletableFuture<DeleteResponse> delete(ByteSequence key, DeleteOption option) {
-        checkNotNull(key, "key should not be null");
-        checkNotNull(option, "option should not be null");
+        requireNonNull(key, "key should not be null");
+        requireNonNull(option, "option should not be null");
 
         return execute(
             () -> stub.deleteRange(Requests.mapDeleteRequest(key, option, namespace)),
@@ -107,7 +107,7 @@ final class KVImpl extends Impl implements KV {
 
     @Override
     public CompletableFuture<CompactResponse> compact(long rev, CompactOption option) {
-        checkNotNull(option, "option should not be null");
+        requireNonNull(option, "option should not be null");
 
         CompactionRequest request = CompactionRequest.newBuilder()
             .setRevision(rev).setPhysical(option.isPhysical())

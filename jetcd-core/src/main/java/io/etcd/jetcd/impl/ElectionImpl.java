@@ -37,8 +37,8 @@ import io.grpc.StatusRuntimeException;
 
 import com.google.protobuf.ByteString;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
+import static java.util.Objects.requireNonNull;
 
 final class ElectionImpl extends Impl implements Election {
     private final VertxElectionGrpc.ElectionVertxStub stub;
@@ -53,8 +53,8 @@ final class ElectionImpl extends Impl implements Election {
 
     @Override
     public CompletableFuture<CampaignResponse> campaign(ByteSequence electionName, long leaseId, ByteSequence proposal) {
-        checkNotNull(electionName, "election name should not be null");
-        checkNotNull(proposal, "proposal should not be null");
+        requireNonNull(electionName, "election name should not be null");
+        requireNonNull(proposal, "proposal should not be null");
 
         CampaignRequest request = CampaignRequest.newBuilder()
             .setName(Util.prefixNamespace(electionName, namespace))
@@ -70,8 +70,8 @@ final class ElectionImpl extends Impl implements Election {
 
     @Override
     public CompletableFuture<ProclaimResponse> proclaim(LeaderKey leaderKey, ByteSequence proposal) {
-        checkNotNull(leaderKey, "leader key should not be null");
-        checkNotNull(proposal, "proposal should not be null");
+        requireNonNull(leaderKey, "leader key should not be null");
+        requireNonNull(proposal, "proposal should not be null");
 
         ProclaimRequest request = ProclaimRequest.newBuilder()
             .setLeader(
@@ -92,7 +92,7 @@ final class ElectionImpl extends Impl implements Election {
 
     @Override
     public CompletableFuture<LeaderResponse> leader(ByteSequence electionName) {
-        checkNotNull(electionName, "election name should not be null");
+        requireNonNull(electionName, "election name should not be null");
 
         LeaderRequest request = LeaderRequest.newBuilder()
             .setName(Util.prefixNamespace(electionName, namespace))
@@ -106,8 +106,8 @@ final class ElectionImpl extends Impl implements Election {
 
     @Override
     public void observe(ByteSequence electionName, Listener listener) {
-        checkNotNull(electionName, "election name should not be null");
-        checkNotNull(listener, "listener should not be null");
+        requireNonNull(electionName, "election name should not be null");
+        requireNonNull(listener, "listener should not be null");
 
         LeaderRequest request = LeaderRequest.newBuilder()
             .setName(ByteString.copyFrom(electionName.getBytes()))
@@ -121,7 +121,7 @@ final class ElectionImpl extends Impl implements Election {
 
     @Override
     public CompletableFuture<ResignResponse> resign(LeaderKey leaderKey) {
-        checkNotNull(leaderKey, "leader key should not be null");
+        requireNonNull(leaderKey, "leader key should not be null");
 
         ResignRequest request = ResignRequest.newBuilder()
             .setLeader(
