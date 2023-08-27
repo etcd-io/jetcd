@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -52,8 +53,12 @@ public class EtcdClusterExtension implements BeforeAllCallback, BeforeEachCallba
         return this.cluster;
     }
 
-    public void restart() {
-        this.cluster.restart();
+    public void restart(long delay, TimeUnit unit) {
+        try {
+            this.cluster.restart(delay, unit);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String clusterName() {
