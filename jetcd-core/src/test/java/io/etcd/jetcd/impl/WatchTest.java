@@ -262,7 +262,7 @@ public class WatchTest {
 
         try (Watcher watcher = client.getWatchClient().watch(key, watchOption, events::add)) {
 
-            cluster.restart(); // resumes (recreates) the watch
+            cluster.restart(0, TimeUnit.MILLISECONDS); // resumes (recreates) the watch
 
             Thread.sleep(2000); // await().duration() would be better but it's broken
             assertThat(events.isEmpty()).as("verify that received events list is empty").isTrue();

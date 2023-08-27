@@ -19,9 +19,10 @@ package io.etcd.jetcd.impl;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
@@ -35,7 +36,7 @@ import io.etcd.jetcd.watch.WatchResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-@Timeout(value = 30, unit = TimeUnit.SECONDS)
+@Timeout(value = 180, unit = TimeUnit.SECONDS)
 public class WatchResumeTest {
 
     @RegisterExtension
@@ -43,8 +44,9 @@ public class WatchResumeTest {
         .withNodes(3)
         .build();
 
-    @Test
-    public void testWatchOnPut() throws Exception {
+    @ParameterizedTest
+    @ValueSource(ints = { 0, 10, 30, 50, 60 })
+    public void testWatchOnPut(int delaySec) throws Exception {
         try (Client client = TestUtil.client(cluster).build()) {
             Watch watchClient = client.getWatchClient();
             KV kvClient = client.getKVClient();
@@ -54,7 +56,7 @@ public class WatchResumeTest {
             final AtomicReference<WatchResponse> ref = new AtomicReference<>();
 
             try (Watcher watcher = watchClient.watch(key, ref::set)) {
-                cluster.restart();
+                cluster.restart(delaySec, TimeUnit.SECONDS);
 
                 kvClient.put(key, value).get();
 

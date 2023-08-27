@@ -18,13 +18,19 @@ package io.etcd.jetcd.launcher;
 
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.testcontainers.lifecycle.Startable;
 
 public interface EtcdCluster extends Startable {
 
-    default void restart() {
+    default void restart(long delay, TimeUnit unit) throws InterruptedException {
         stop();
+
+        if (delay > 0) {
+            unit.sleep(delay);
+        }
+
         start();
     }
 

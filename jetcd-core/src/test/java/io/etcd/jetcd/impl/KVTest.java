@@ -308,7 +308,10 @@ public class KVTest {
             });
 
             // restart the cluster while uploading
-            executor.schedule(() -> cluster.restart(), 100, TimeUnit.MILLISECONDS);
+            executor.schedule(
+                () -> cluster.restart(0, TimeUnit.MILLISECONDS),
+                100,
+                TimeUnit.MILLISECONDS);
 
             executor.shutdown();
             assertThat(executor.awaitTermination(30, TimeUnit.SECONDS)).isTrue();
