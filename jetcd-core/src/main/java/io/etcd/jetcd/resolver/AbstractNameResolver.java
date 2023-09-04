@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The jetcd authors
+ * Copyright 2016-2023 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public abstract class AbstractNameResolver extends NameResolver {
             savedListener.onAddresses(groups, Attributes.EMPTY);
 
         } catch (Exception e) {
-            LOGGER.warn("Error wile getting list of servers", e);
+            LOGGER.warn("Error while getting list of servers", e);
             savedListener.onError(Status.NOT_FOUND);
         } finally {
             resolving = false;
