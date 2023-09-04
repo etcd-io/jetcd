@@ -36,7 +36,7 @@ jobs:
           - gcr.io/etcd-development/etcd:v3.4.26
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set Up Java
         uses: actions/setup-java@v3
         with:
@@ -58,7 +58,7 @@ jobs:
       - build
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Set Up Java
