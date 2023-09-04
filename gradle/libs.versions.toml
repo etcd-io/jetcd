@@ -2,7 +2,7 @@
 grpc = "1.57.2"
 log4j = "2.20.0"
 mockito = "5.5.0"
-slf4j = "2.0.7"
+slf4j = "2.0.9"
 guava = "32.1.2-jre"
 assertj = "3.24.2"
 junit = "5.10.0"
