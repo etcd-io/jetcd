@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The jetcd authors
+ * Copyright 2016-2023 The jetcd authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import io.etcd.jetcd.op.Op;
 /**
  * Txn is the interface that wraps mini-transactions.
  *
- * <h3>Usage examples</h3>
+ * <h2>Usage examples</h2>
  *
  * <pre>
  * {@code
