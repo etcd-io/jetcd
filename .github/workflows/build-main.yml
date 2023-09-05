@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2021 The jetcd authors
+# Copyright 2016-2023 The jetcd authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,12 +52,12 @@ jobs:
         run: |
           export TC_USER="$(id -u):$(id -g)"
           echo "tc user -> $TC_USER"
-          
+
           ./gradlew spotlessCheck
           ./gradlew test
   publish:
     runs-on: ubuntu-latest
-    needs: 
+    needs:
       - build
     steps:
       - name: Checkout
@@ -72,7 +72,7 @@ jobs:
           cache: 'gradle'
       - name: Collect Info
         run: |
-          ./gradlew currentVersion      
+          ./gradlew currentVersion
       - name: Publish Snapshot
         if: github.event_name != 'schedule'
         env:

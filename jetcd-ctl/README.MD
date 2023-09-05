@@ -8,9 +8,9 @@ Put `foo` `bar` into the cluster:
 $ gradle run --args="put foo bar"
 21:39:06.126|INFO |CommandPut - OK
  ```
- 
+
 Put `foo` `bar2` into the cluster:
- 
+
 ```bash
 $ gradle run --args="put foo bar2"
 21:39:06.126|INFO |CommandPut - OK

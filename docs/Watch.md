@@ -12,15 +12,15 @@ The Watch provide methods to watch on a key interval and cancel a watcher. If th
 
 4. Cancel watch request, the etcd client should process watch cancellation and filter all the notification after cancellation request.
 
-5. The watch client should be able to make a progress notify request that propagates the latest revision number to all watches
+5. The watch client should be able to make a progress notify request that propagates the latest revision number to all watches.
 
 # Implementation
 
-The etcd client process watch request with [watch function](#watch-function), process notification with [processEvents function](#processevents-function) , process resume with [resume function](#resume-function), process cancel with [cancelWatch function](#cancelwatch-function) and request progress with [requestProgress function](#requestProgress-function).
+The etcd client process watch request with [watch function](#watch-function), process notification with [processEvents function](#processevents-function), process resume with [resume function](#resume-function), process cancel with [cancelWatch function](#cancelwatch-function) and request progress with [requestProgress function](#requestProgress-function).
 
 ## watch function
 
-Watch watches on a key interval. 
+Watch watches on a key interval.
 
 1. Send create request to [requestStream](#requeststream-instance).
 2. If the watch is create successfully, the `onCreate` will be called and the ListenableFuture task will be completed.
