@@ -80,7 +80,7 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-@RegisterExtension 
+@RegisterExtension
 public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
         .withNodes(1)
         .build();

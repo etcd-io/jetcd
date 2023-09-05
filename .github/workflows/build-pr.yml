@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2021 The jetcd authors
+# Copyright 2016-2023 The jetcd authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ on:
     branches:
       - main
   workflow_dispatch:
-  
+
 jobs:
   deps:
     runs-on: ubuntu-latest
@@ -60,6 +60,6 @@ jobs:
         run: |
           export TC_USER="$(id -u):$(id -g)"
           echo "tc user -> $TC_USER"
-          
+
           ./gradlew check -x test
           ./gradlew test
