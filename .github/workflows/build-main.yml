@@ -34,6 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        java-version: [11, 17]
         etcd:
           - gcr.io/etcd-development/etcd:v3.5.9
           - gcr.io/etcd-development/etcd:v3.4.26
@@ -43,7 +44,7 @@ jobs:
       - name: Set Up Java
         uses: actions/setup-java@v3
         with:
-          java-version: 11
+          java-version: ${{ matrix.java-version }}
           distribution: 'temurin'
           cache: 'gradle'
       - name: Build Project
@@ -55,6 +56,7 @@ jobs:
 
           ./gradlew spotlessCheck
           ./gradlew test
+
   publish:
     runs-on: ubuntu-latest
     needs:
