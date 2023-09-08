@@ -58,10 +58,6 @@ class AuthCredential extends CallCredentials {
         }
     }
 
-    @Override
-    public void thisUsesUnstableApi() {
-    }
-
     public void refresh() {
         meta = null;
     }
