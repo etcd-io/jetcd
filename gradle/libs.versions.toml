@@ -1,5 +1,5 @@
 [versions]
-grpc = "1.57.2"
+grpc = "1.58.0"
 log4j = "2.20.0"
 mockito = "5.5.0"
 slf4j = "2.0.9"
@@ -49,6 +49,8 @@ grpcNetty = { module = "io.grpc:grpc-netty", version.ref = "grpc" }
 grpcProtobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
 grpcStub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
 grpcGrpclb = { module = "io.grpc:grpc-grpclb", version.ref = "grpc" }
+grpcInprocess = { module = "io.grpc:grpc-inprocess", version.ref = "grpc" }
+grpcUtil = { module = "io.grpc:grpc-util", version.ref = "grpc" }
 
 vertxGrpc = { module = "io.vertx:vertx-grpc", version.ref = "vertx" }
 
@@ -66,10 +68,11 @@ errorproneAnnotations = { module = "com.google.errorprone:error_prone_annotation
 errorproneJavac = { module = "com.google.errorprone:javac", version = "9+" }
 
 [bundles]
-grpc    = [ "grpcCore", "grpcNetty", "grpcProtobuf", "grpcStub", "grpcGrpclb" ]
-log4j   = [ "log4jApi", "log4jCore", "log4jSlf4j", "log4j12" ]
-mockito = [ "mockitoCore", "mockitoJunit" ]
-testing = ["junit", "assertj", "mockitoCore", "mockitoJunit"]
+grpc     = [ "grpcCore", "grpcNetty", "grpcProtobuf", "grpcStub", "grpcGrpclb", "grpcUtil"]
+grpcTest = [ "grpcInprocess"]
+log4j    = [ "log4jApi", "log4jCore", "log4jSlf4j", "log4j12" ]
+mockito  = [ "mockitoCore", "mockitoJunit" ]
+testing  = ["junit", "assertj", "mockitoCore", "mockitoJunit"]
 
 
 [plugins]

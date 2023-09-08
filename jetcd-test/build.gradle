@@ -21,6 +21,8 @@ dependencies {
     api libs.slf4j
     api libs.guava
     api libs.bundles.grpc
+    api libs.bundles.grpcTest
+
     api libs.junit
     api libs.autoServiceAnnotations
 
