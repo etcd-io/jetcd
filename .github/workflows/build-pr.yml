@@ -30,6 +30,17 @@ on:
   workflow_dispatch:
 
 jobs:
+  precheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the source
+        uses: actions/checkout@v4
+
+      - name: Run precheck script
+        run: bash ./.github/workflows/scripts/precheck.sh
+        shell: bash
+
   deps:
     runs-on: ubuntu-latest
     steps:
