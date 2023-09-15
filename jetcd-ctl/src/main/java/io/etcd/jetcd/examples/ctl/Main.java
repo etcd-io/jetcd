@@ -27,6 +27,12 @@ public class Main implements Runnable {
     @CommandLine.Option(names = { "--endpoints" }, description = "gRPC endpoints", defaultValue = "http://127.0.0.1:2379")
     String endpoints;
 
+    @CommandLine.Option(names = { "--waitForReady" }, description = "waitForReady", defaultValue = "true")
+    boolean waitForReady;
+
+    @CommandLine.Option(names = { "--connect-timeout" }, description = "connectTimeout", defaultValue = "120s")
+    String connectTimeout;
+
     @Override
     public void run() {
     }
