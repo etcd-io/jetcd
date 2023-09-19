@@ -1,0 +1,7 @@
+# See the OWNERS docs at https://go.k8s.io/owners
+
+approvers:
+  - fanminshi       # Fanmin Shi <fanmin.shi@coreos.com>
+  - lburgazzoli     # Luca Burgazzoli <lburgazzoli@gmail.com>
+  - xiang90         # Xiang Li <xiang.li@coreos.com>
+  - heyitsanthony   # Anthony Romano <anthony.romano@coreos.com>
