@@ -214,7 +214,9 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
 
         try {
             super.start();
-            execInContainer("chmod", "o+rwx", "-R", Etcd.ETCD_DATA_DIR);
+            if (shouldMountDataDirectory) {
+                execInContainer("chmod", "o+rwx", "-R", Etcd.ETCD_DATA_DIR);
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
