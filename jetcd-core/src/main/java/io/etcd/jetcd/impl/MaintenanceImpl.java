@@ -18,19 +18,12 @@ package io.etcd.jetcd.impl;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.etcd.jetcd.Maintenance;
-import io.etcd.jetcd.api.AlarmRequest;
+import io.etcd.jetcd.api.*;
 import io.etcd.jetcd.api.AlarmType;
-import io.etcd.jetcd.api.DefragmentRequest;
-import io.etcd.jetcd.api.HashKVRequest;
-import io.etcd.jetcd.api.MoveLeaderRequest;
-import io.etcd.jetcd.api.SnapshotRequest;
-import io.etcd.jetcd.api.StatusRequest;
-import io.etcd.jetcd.api.VertxMaintenanceGrpc;
 import io.etcd.jetcd.maintenance.AlarmResponse;
 import io.etcd.jetcd.maintenance.DefragmentResponse;
 import io.etcd.jetcd.maintenance.HashKVResponse;
@@ -79,11 +72,6 @@ final class MaintenanceImpl extends Impl implements Maintenance {
     }
 
     @Override
-    public CompletableFuture<DefragmentResponse> defragmentMember(URI endpoint) {
-        return defragmentMember(endpoint.toString());
-    }
-
-    @Override
     public CompletableFuture<DefragmentResponse> defragmentMember(String target) {
         return this.connectionManager().withNewChannel(
             target,
@@ -93,11 +81,6 @@ final class MaintenanceImpl extends Impl implements Maintenance {
                     .map(DefragmentResponse::new)
                     .toCompletionStage().toCompletableFuture();
             });
-    }
-
-    @Override
-    public CompletableFuture<StatusResponse> statusMember(URI endpoint) {
-        return statusMember(endpoint.toString());
     }
 
     @Override
@@ -117,11 +100,6 @@ final class MaintenanceImpl extends Impl implements Maintenance {
         return completable(
             this.stub.moveLeader(MoveLeaderRequest.newBuilder().setTargetID(transfereeID).build()),
             MoveLeaderResponse::new);
-    }
-
-    @Override
-    public CompletableFuture<HashKVResponse> hashKV(URI endpoint, long rev) {
-        return hashKV(endpoint.toString(), rev);
     }
 
     @Override
