@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.etcd.jetcd.Lease;
 import io.etcd.jetcd.api.*;
@@ -136,14 +137,19 @@ final class LeaseImpl extends Impl implements Lease {
 
     @Override
     public CompletableFuture<LeaseKeepAliveResponse> keepAliveOnce(long leaseId) {
+        final AtomicReference<WriteStream<LeaseKeepAliveRequest>> ref = new AtomicReference<>();
         final CompletableFuture<LeaseKeepAliveResponse> future = new CompletableFuture<>();
+        final LeaseKeepAliveRequest req = LeaseKeepAliveRequest.newBuilder().setID(leaseId).build();
 
         leaseStub
-            .leaseKeepAlive(s -> s.write(LeaseKeepAliveRequest.newBuilder().setID(leaseId).build()))
+            .leaseKeepAlive(s -> {
+                ref.set(s);
+                s.write(req);
+            })
             .handler(r -> future.complete(new LeaseKeepAliveResponse(r)))
             .exceptionHandler(future::completeExceptionally);
 
-        return future;
+        return future.whenComplete((r, t) -> ref.get().end(req));
     }
 
     @Override

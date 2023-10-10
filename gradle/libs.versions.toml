@@ -16,6 +16,7 @@ autoService = "1.1.1"
 errorprone = "2.22.0"
 vertx = "4.4.6"
 picocli = "4.7.5"
+restAssured = "5.3.2"
 
 versionsPlugin = "0.47.0"
 errorPronePlugin = "3.1.0"
@@ -37,6 +38,7 @@ protoc = { module = "com.google.protobuf:protoc", version.ref = "protoc" }
 failsafe = { module = "net.jodah:failsafe", version.ref = "failsafe" }
 awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
 picocli  = { module = "info.picocli:picocli", version.ref = "picocli"}
+restAssured = { module = "io.rest-assured:rest-assured", version.ref = "restAssured"}
 
 commonsIo = { module = "commons-io:commons-io", version.ref = "commonsIo" }
 commonsCompress = { module = "org.apache.commons:commons-compress", version.ref = "commonCompress" }

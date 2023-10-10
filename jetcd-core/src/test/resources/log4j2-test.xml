@@ -28,9 +28,9 @@
     <!-- package loggers -->
     <Logger name="org.testcontainers" level="INFO"/>
     <Logger name="com.github.dockerjava" level="INFO"/>
-    <Logger name="io.etcd.jetcd.launcher.EtcdCluster" level="DEBUG"/>
-    <Logger name="io.etcd.jetcd.launcher.EtcdContainer" level="DEBUG"/>
-    <Logger name="io.etcd" level="DEBUG"/>
+    <Logger name="io.etcd.jetcd.launcher.EtcdCluster" level="INFO"/>
+    <Logger name="io.etcd.jetcd.launcher.EtcdContainer" level="INFO"/>
+    <Logger name="io.etcd" level="INFO"/>
 
     <!-- main logger -->
     <Root level="INFO">

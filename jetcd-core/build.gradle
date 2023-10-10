@@ -30,6 +30,7 @@ dependencies {
     testImplementation project(':jetcd-launcher')
     testImplementation project(':jetcd-test')
 
+    testImplementation libs.restAssured
     testImplementation libs.awaitility
     testImplementation libs.commonsIo
     testImplementation libs.bundles.testing
