@@ -6,10 +6,14 @@ failed=0
 files=$(find . -type f \
     -not -path "./.git/*" \
     -not -path "*/.gradle/*" \
+    -not -path "*/.idea/*" \
+    -not -path "*/.vscode/*" \
     -not -path "*/build/*" \
+    -not -path "*/out/*" \
+    -not -path "*/bin/*" \
     -not -name "*.jar" \
     -not -name "*.java" \
-    -exec egrep -l " +$" {} \;)
+    -exec grep -E -l " +$" {} \;)
 
 count=0
 
@@ -27,7 +31,11 @@ fi
 files=$(find . -type f -size +0c \
     -not -path "./.git/*" \
     -not -path "*/.gradle/*" \
+    -not -path "*/.idea/*" \
+    -not -path "*/.vscode/*" \
     -not -path "*/build/*" \
+    -not -path "*/out/*" \
+    -not -path "*/bin/*" \
     -not -name "*.jar" \
     -not -name "*.java" \
     -exec bash -c 'if [[ $(tail -c1 "$0" | wc -l) -eq 0 ]]; then echo "$0"; fi' {} \;)

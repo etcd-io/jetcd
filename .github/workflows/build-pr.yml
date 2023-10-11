@@ -17,7 +17,7 @@
 name: Build PR
 
 concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
@@ -30,48 +30,22 @@ on:
   workflow_dispatch:
 
 jobs:
-  precheck:
-    runs-on: ubuntu-latest
+  checks:
+    uses: ./.github/workflows/checks.yml
 
-    steps:
-      - name: Checkout the source
-        uses: actions/checkout@v4
-
-      - name: Run precheck script
-        run: bash ./.github/workflows/scripts/precheck.sh
-        shell: bash
-
-  deps:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v3
   build:
-    runs-on: ubuntu-latest
+    needs:
+      - checks
     strategy:
-      fail-fast: false
       matrix:
-        java-version: [11, 17]
+        java-version:
+          - 11
+          - 17
+          - 21
         etcd:
           - gcr.io/etcd-development/etcd:v3.5.9
-          - gcr.io/etcd-development/etcd:v3.4.26
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set Up Java
-        uses: actions/setup-java@v3
-        with:
-          java-version: ${{ matrix.java-version }}
-          distribution: 'temurin'
-          cache: 'gradle'
-      - name: Build Project
-        env:
-          ETCD_IMAGE: ${{ matrix.etcd }}
-        run: |
-          export TC_USER="$(id -u):$(id -g)"
-          echo "tc user -> $TC_USER"
-
-          ./gradlew check -x test
-          ./gradlew test
+          - gcr.io/etcd-development/etcd:v3.4.27
+    uses: ./.github/workflows/build.yml
+    with:
+      javaVersion: "${{ matrix.java-version }}"
+      etcdImage: "${{ matrix.etcd }}"
