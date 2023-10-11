@@ -1,0 +1,36 @@
+name: Checks
+
+on:
+  workflow_call:
+
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 'Set Up Java'
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: 'temurin'
+          cache: 'gradle'
+      - name: 'Run check task'
+        run: |
+          ./gradlew check -x test
+      - name: 'Run check script'
+        run: |
+          bash ./.github/workflows/scripts/precheck.sh
+        shell: bash
+
+  deps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@v3
