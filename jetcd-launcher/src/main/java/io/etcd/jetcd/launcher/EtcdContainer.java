@@ -109,7 +109,8 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
         withNetworkAliases(node);
         withLogConsumer(new Slf4jLogConsumer(LOGGER).withPrefix(node));
         withCommand(createCommand());
-        withEnv("ETCD_LOG_LEVEL", "debug");
+        withEnv("ETCD_LOG_LEVEL", "info");
+        withEnv("ETCD_LOGGER", "zap");
 
         String user = System.getenv("TC_USER");
         if (user != null) {
