@@ -48,6 +48,8 @@ import org.testcontainers.containers.SelinuxContext;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
+import com.github.dockerjava.api.command.InspectContainerResponse;
+
 public class EtcdContainer extends GenericContainer<EtcdContainer> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EtcdContainer.class);
 
@@ -57,6 +59,7 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
 
     private String clusterToken;
     private boolean ssl;
+    private boolean debug;
     private Path dataDirectory;
     private Collection<String> additionalArgs;
     private boolean shouldMountDataDirectory = true;
@@ -73,6 +76,11 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
 
     public EtcdContainer withSll(boolean ssl) {
         this.ssl = ssl;
+        return self();
+    }
+
+    public EtcdContainer withDebug(boolean debug) {
+        this.debug = debug;
         return self();
     }
 
@@ -109,7 +117,7 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
         withNetworkAliases(node);
         withLogConsumer(new Slf4jLogConsumer(LOGGER).withPrefix(node));
         withCommand(createCommand());
-        withEnv("ETCD_LOG_LEVEL", "info");
+        withEnv("ETCD_LOG_LEVEL", this.debug ? "debug" : "info");
         withEnv("ETCD_LOGGER", "zap");
 
         String user = System.getenv("TC_USER");
@@ -151,9 +159,13 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
         cmd.add((ssl ? "https" : "http") + "://0.0.0.0:" + Etcd.ETCD_CLIENT_PORT);
         cmd.add("--listen-client-urls");
         cmd.add((ssl ? "https" : "http") + "://0.0.0.0:" + Etcd.ETCD_CLIENT_PORT);
+
         if (shouldMountDataDirectory) {
             cmd.add("--data-dir");
             cmd.add(Etcd.ETCD_DATA_DIR);
+        } else {
+            cmd.add("--data-dir");
+            cmd.add("/tmp/etcd-data");
         }
 
         if (ssl) {
@@ -214,17 +226,23 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
     }
 
     @Override
-    public void start() {
-        LOGGER.debug("starting etcd container {} with command: {}", node, String.join(" ", getCommandParts()));
+    protected void containerIsStarting(InspectContainerResponse containerInfo) {
 
         try {
-            super.start();
+            super.containerIsStarting(containerInfo);
+
             if (shouldMountDataDirectory) {
                 execInContainer("chmod", "o+rwx", "-R", Etcd.ETCD_DATA_DIR);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void start() {
+        LOGGER.debug("starting etcd container {} with command: {}", node, String.join(" ", getCommandParts()));
+        super.start();
     }
 
     @Override
