@@ -30,10 +30,10 @@
     <Logger name="com.github.dockerjava" level="INFO"/>
     <Logger name="io.etcd.jetcd.launcher.EtcdCluster" level="DEBUG"/>
     <Logger name="io.etcd.jetcd.launcher.EtcdContainer" level="DEBUG"/>
-    <Logger name="io.etcd" level="TRACE"/>
+    <Logger name="io.etcd" level="DEBUG"/>
 
     <!-- main logger -->
-    <Root level="TRACE">
+    <Root level="INFO">
       <AppenderRef ref="STDOUT" />
     </Root>
   </Loggers>

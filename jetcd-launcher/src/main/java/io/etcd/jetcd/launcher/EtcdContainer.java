@@ -117,7 +117,11 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
             withCreateContainerCmdModifier(c -> c.withUser(user));
         }
 
-        waitingFor(Wait.forLogMessage(".*ready to serve client requests.*", 1));
+        if (ssl) {
+            waitingFor(Wait.forHttps("/health").forPort(Etcd.ETCD_CLIENT_PORT).allowInsecure());
+        } else {
+            waitingFor(Wait.forHttp("/health").forPort(Etcd.ETCD_CLIENT_PORT));
+        }
     }
 
     private Path createDataDirectory(String name) {
