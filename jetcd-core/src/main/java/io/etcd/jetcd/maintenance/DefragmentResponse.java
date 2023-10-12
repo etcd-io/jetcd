@@ -16,13 +16,11 @@
 
 package io.etcd.jetcd.maintenance;
 
-import java.net.URI;
-
 import io.etcd.jetcd.Maintenance;
 import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
- * DefragmentResponse returned by {@link Maintenance#defragmentMember(URI)} contains a header.
+ * DefragmentResponse returned by {@link Maintenance#defragmentMember(String)} contains a header.
  */
 public class DefragmentResponse extends AbstractResponse<io.etcd.jetcd.api.DefragmentResponse> {
 
