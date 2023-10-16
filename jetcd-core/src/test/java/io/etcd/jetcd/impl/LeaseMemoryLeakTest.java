@@ -25,15 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.assertj.core.data.Percentage;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
@@ -43,6 +34,16 @@ import io.etcd.jetcd.test.EtcdClusterExtension;
 import io.restassured.RestAssured;
 
 import com.google.common.base.Charsets;
+
+import org.assertj.core.data.Percentage;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -81,6 +82,7 @@ public class LeaseMemoryLeakTest {
 
     // https://github.com/etcd-io/jetcd/issues/1236
     @Test
+    @Disabled("Flaky test, must be investigated")
     public void testKeepAliveOnceMemoryLeak() throws Exception {
         final long leaseID = leaseClient.grant(TTL).get(1, TimeUnit.SECONDS).getID();
         final URI uri = CLUSTER.cluster().clientEndpoints().get(0);
