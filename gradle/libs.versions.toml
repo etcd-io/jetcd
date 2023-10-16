@@ -8,7 +8,7 @@ assertj = "3.24.2"
 junit = "5.10.0"
 testcontainers = "1.19.1"
 protoc = "3.23.2"
-failsafe = "2.4.4"
+failsafe = "3.3.2"
 awaitility = "4.2.0"
 commonsIo = "2.14.0"
 commonCompress = "1.24.0"
@@ -35,7 +35,7 @@ assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 junit = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protoc" }
-failsafe = { module = "net.jodah:failsafe", version.ref = "failsafe" }
+failsafe = { module = "dev.failsafe:failsafe", version.ref = "failsafe" }
 awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
 picocli  = { module = "info.picocli:picocli", version.ref = "picocli"}
 restAssured = { module = "io.rest-assured:rest-assured", version.ref = "restAssured"}

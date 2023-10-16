@@ -13,8 +13,9 @@ import io.etcd.jetcd.support.Errors;
 import io.grpc.Status;
 import io.vertx.core.Future;
 
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
+import dev.failsafe.Failsafe;
+import dev.failsafe.RetryPolicy;
+import dev.failsafe.RetryPolicyBuilder;
 
 import static io.etcd.jetcd.support.Errors.isAuthStoreExpired;
 import static io.etcd.jetcd.support.Errors.isInvalidTokenError;
@@ -116,21 +117,21 @@ abstract class Impl {
     }
 
     protected <S> RetryPolicy<S> retryPolicy(Predicate<Status> doRetry) {
-        RetryPolicy<S> policy = new RetryPolicy<S>()
+        RetryPolicyBuilder<S> policy = RetryPolicy.<S> builder()
             .onFailure(e -> {
                 logger.warn("retry failure (attempt: {}, error: {})",
                     e.getAttemptCount(),
-                    e.getFailure() != null ? e.getFailure().getMessage() : "<none>");
+                    e.getException() != null ? e.getException().getMessage() : "<none>");
             })
             .onRetry(e -> {
                 logger.debug("retry (attempt: {}, error: {})",
                     e.getAttemptCount(),
-                    e.getLastFailure() != null ? e.getLastFailure().getMessage() : "<none>");
+                    e.getLastException() != null ? e.getLastException().getMessage() : "<none>");
             })
             .onRetriesExceeded(e -> {
                 logger.warn("maximum number of auto retries reached (attempt: {}, error: {})",
                     e.getAttemptCount(),
-                    e.getFailure() != null ? e.getFailure().getMessage() : "<none>");
+                    e.getException() != null ? e.getException().getMessage() : "<none>");
             })
             .handleIf(throwable -> {
                 Status status = Status.fromThrowable(throwable);
@@ -152,6 +153,6 @@ abstract class Impl {
             policy = policy.withMaxDuration(connectionManager.builder().retryMaxDuration());
         }
 
-        return policy;
+        return policy.build();
     }
 }
