@@ -16,6 +16,7 @@
 
 package io.etcd.jetcd.examples.ctl;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
@@ -29,8 +30,6 @@ import io.etcd.jetcd.Watch.Watcher;
 import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.watch.WatchEvent;
 import io.etcd.jetcd.watch.WatchResponse;
-
-import com.google.common.base.Charsets;
 
 import picocli.CommandLine;
 
@@ -54,15 +53,17 @@ class CommandWatch implements Runnable {
         CountDownLatch latch = new CountDownLatch(maxEvents != null ? maxEvents : Integer.MAX_VALUE);
 
         try (Client client = Client.builder().endpoints(main.endpoints).build()) {
-            ByteSequence watchKey = ByteSequence.from(key, Charsets.UTF_8);
+            ByteSequence watchKey = ByteSequence.from(key, StandardCharsets.UTF_8);
             WatchOption watchOpts = WatchOption.builder().withRevision(rev != null ? rev : 0).build();
 
             Consumer<WatchResponse> consumer = response -> {
                 for (WatchEvent event : response.getEvents()) {
                     LOGGER.info("type={}, key={}, value={}",
                         event.getEventType().toString(),
-                        Optional.ofNullable(event.getKeyValue().getKey()).map(bs -> bs.toString(Charsets.UTF_8)).orElse(""),
-                        Optional.ofNullable(event.getKeyValue().getValue()).map(bs -> bs.toString(Charsets.UTF_8)).orElse(""));
+                        Optional.ofNullable(event.getKeyValue().getKey()).map(bs -> bs.toString(StandardCharsets.UTF_8))
+                            .orElse(""),
+                        Optional.ofNullable(event.getKeyValue().getValue()).map(bs -> bs.toString(StandardCharsets.UTF_8))
+                            .orElse(""));
                 }
 
                 latch.countDown();

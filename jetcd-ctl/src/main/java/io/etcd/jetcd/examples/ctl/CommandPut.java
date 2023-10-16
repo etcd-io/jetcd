@@ -16,13 +16,13 @@
 
 package io.etcd.jetcd.examples.ctl;
 
+import java.nio.charset.StandardCharsets;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
-
-import com.google.common.base.Charsets;
 
 import picocli.CommandLine;
 
@@ -42,8 +42,8 @@ class CommandPut implements Runnable {
     public void run() {
         try (Client client = Client.builder().endpoints(main.endpoints).build()) {
             client.getKVClient().put(
-                ByteSequence.from(key, Charsets.UTF_8),
-                ByteSequence.from(val, Charsets.UTF_8)).get();
+                ByteSequence.from(key, StandardCharsets.UTF_8),
+                ByteSequence.from(val, StandardCharsets.UTF_8)).get();
 
             LOGGER.info("OK");
         } catch (Exception e) {

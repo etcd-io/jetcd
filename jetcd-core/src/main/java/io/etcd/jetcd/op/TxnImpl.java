@@ -17,6 +17,7 @@
 package io.etcd.jetcd.op;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -27,7 +28,6 @@ import io.etcd.jetcd.api.TxnRequest;
 import io.etcd.jetcd.kv.TxnResponse;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 
 /**
  * Build an etcd transaction.
@@ -60,7 +60,7 @@ public class TxnImpl implements Txn {
 
     @Override
     public TxnImpl If(Cmp... cmps) {
-        return If(ImmutableList.copyOf(cmps));
+        return If(Arrays.asList(cmps));
     }
 
     TxnImpl If(List<Cmp> cmps) {
@@ -77,7 +77,7 @@ public class TxnImpl implements Txn {
 
     @Override
     public TxnImpl Then(Op... ops) {
-        return Then(ImmutableList.copyOf(ops));
+        return Then(Arrays.asList(ops));
     }
 
     TxnImpl Then(List<Op> ops) {
@@ -93,7 +93,7 @@ public class TxnImpl implements Txn {
 
     @Override
     public TxnImpl Else(Op... ops) {
-        return Else(ImmutableList.copyOf(ops));
+        return Else(Arrays.asList(ops));
     }
 
     TxnImpl Else(List<Op> ops) {

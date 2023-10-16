@@ -16,6 +16,8 @@
 
 package io.etcd.jetcd.examples.ctl;
 
+import java.nio.charset.StandardCharsets;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,8 +27,6 @@ import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.options.GetOption;
 
 import picocli.CommandLine;
-
-import static com.google.common.base.Charsets.UTF_8;
 
 @CommandLine.Command(name = "get", description = "Gets the key")
 class CommandGet implements Runnable {
@@ -45,7 +45,7 @@ class CommandGet implements Runnable {
     public void run() {
         try (Client client = Client.builder().endpoints(main.endpoints).build()) {
             GetResponse getResponse = client.getKVClient().get(
-                ByteSequence.from(key, UTF_8),
+                ByteSequence.from(key, StandardCharsets.UTF_8),
                 GetOption.builder().withRevision(rev).build()).get();
 
             if (getResponse.getKvs().isEmpty()) {
@@ -54,7 +54,7 @@ class CommandGet implements Runnable {
             }
 
             LOGGER.info(key);
-            LOGGER.info(getResponse.getKvs().get(0).getValue().toString(UTF_8));
+            LOGGER.info(getResponse.getKvs().get(0).getValue().toString(StandardCharsets.UTF_8));
         } catch (Exception e) {
             LOGGER.warn(e.getMessage());
         }
