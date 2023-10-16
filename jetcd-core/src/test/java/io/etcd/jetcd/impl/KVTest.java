@@ -20,7 +20,12 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -45,7 +50,6 @@ import io.etcd.jetcd.options.GetOption.SortTarget;
 import io.etcd.jetcd.options.PutOption;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 
-import static com.google.common.base.Charsets.UTF_8;
 import static io.etcd.jetcd.impl.TestUtil.bytesOf;
 import static io.etcd.jetcd.impl.TestUtil.randomString;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -81,7 +85,8 @@ public class KVTest {
         ByteSequence key = bytesOf(keyString);
         ByteSequence prefixedKey = prefix.concat(subPrefix).concat(key);
         assertThat(prefixedKey.startsWith(prefix)).isTrue();
-        assertThat(prefixedKey.substring(prefix.size() + subPrefix.size()).toString(UTF_8)).isEqualTo(keyString);
+        assertThat(prefixedKey.substring(prefix.size() + subPrefix.size()).toString(StandardCharsets.UTF_8))
+            .isEqualTo(keyString);
         assertThat(prefixedKey.substring(prefix.size(), prefix.size() + subPrefix.size())).isEqualTo(subPrefix);
     }
 
@@ -108,7 +113,8 @@ public class KVTest {
         CompletableFuture<GetResponse> getFeature = kvClient.get(SAMPLE_KEY_2);
         GetResponse response = getFeature.get();
         assertThat(response.getKvs()).hasSize(1);
-        assertThat(response.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(SAMPLE_VALUE_2.toString(UTF_8));
+        assertThat(response.getKvs().get(0).getValue().toString(StandardCharsets.UTF_8))
+            .isEqualTo(SAMPLE_VALUE_2.toString(StandardCharsets.UTF_8));
         assertThat(!response.isMore()).isTrue();
     }
 
@@ -121,7 +127,8 @@ public class KVTest {
         CompletableFuture<GetResponse> getFeature = kvClient.get(SAMPLE_KEY_3, option);
         GetResponse response = getFeature.get();
         assertThat(response.getKvs()).hasSize(1);
-        assertThat(response.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(SAMPLE_VALUE.toString(UTF_8));
+        assertThat(response.getKvs().get(0).getValue().toString(StandardCharsets.UTF_8))
+            .isEqualTo(SAMPLE_VALUE.toString(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -137,8 +144,10 @@ public class KVTest {
 
         assertThat(response.getKvs()).hasSize(numPrefix);
         for (int i = 0; i < numPrefix; i++) {
-            assertThat(response.getKvs().get(i).getKey().toString(UTF_8)).isEqualTo(prefix + (numPrefix - i - 1));
-            assertThat(response.getKvs().get(i).getValue().toString(UTF_8)).isEqualTo(String.valueOf(numPrefix - i - 1));
+            assertThat(response.getKvs().get(i).getKey().toString(StandardCharsets.UTF_8))
+                .isEqualTo(prefix + (numPrefix - i - 1));
+            assertThat(response.getKvs().get(i).getValue().toString(StandardCharsets.UTF_8))
+                .isEqualTo(String.valueOf(numPrefix - i - 1));
         }
     }
 
@@ -207,7 +216,8 @@ public class KVTest {
         // get the value
         GetResponse getResp = kvClient.get(sampleKey).get();
         assertThat(getResp.getKvs()).hasSize(1);
-        assertThat(getResp.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(putValue.toString(UTF_8));
+        assertThat(getResp.getKvs().get(0).getValue().toString(StandardCharsets.UTF_8))
+            .isEqualTo(putValue.toString(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -255,7 +265,8 @@ public class KVTest {
         // get the value
         GetResponse getResp = kvClient.get(sampleKey).get();
         assertThat(getResp.getKvs()).hasSize(1);
-        assertThat(getResp.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(putValue.toString(UTF_8));
+        assertThat(getResp.getKvs().get(0).getValue().toString(StandardCharsets.UTF_8))
+            .isEqualTo(putValue.toString(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -276,11 +287,13 @@ public class KVTest {
 
         GetResponse getResp = kvClient.get(foo).get();
         assertThat(getResp.getKvs()).hasSize(1);
-        assertThat(getResp.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(bar.toString(UTF_8));
+        assertThat(getResp.getKvs().get(0).getValue().toString(StandardCharsets.UTF_8))
+            .isEqualTo(bar.toString(StandardCharsets.UTF_8));
 
         GetResponse getResp2 = kvClient.get(abc).get();
         assertThat(getResp2.getKvs()).hasSize(1);
-        assertThat(getResp2.getKvs().get(0).getValue().toString(UTF_8)).isEqualTo(oneTwoThree.toString(UTF_8));
+        assertThat(getResp2.getKvs().get(0).getValue().toString(StandardCharsets.UTF_8))
+            .isEqualTo(oneTwoThree.toString(StandardCharsets.UTF_8));
     }
 
     @Test

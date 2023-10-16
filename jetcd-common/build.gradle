@@ -17,6 +17,7 @@
 
 dependencies {
     api libs.slf4j
+    api libs.guava
     api libs.grpcCore
 
     testImplementation libs.bundles.testing

@@ -16,6 +16,7 @@
 
 package io.etcd.jetcd.impl;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -40,9 +41,9 @@ import io.etcd.jetcd.support.Observers;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 import io.grpc.stub.StreamObserver;
 
-import com.google.common.base.Charsets;
-
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
 
 @Timeout(value = 30, unit = TimeUnit.SECONDS)
@@ -57,9 +58,9 @@ public class LeaseTest {
     private Client client;
     private Lease leaseClient;
 
-    private static final ByteSequence KEY = ByteSequence.from("foo", Charsets.UTF_8);
-    private static final ByteSequence KEY_2 = ByteSequence.from("foo2", Charsets.UTF_8);
-    private static final ByteSequence VALUE = ByteSequence.from("bar", Charsets.UTF_8);
+    private static final ByteSequence KEY = ByteSequence.from("foo", StandardCharsets.UTF_8);
+    private static final ByteSequence KEY_2 = ByteSequence.from("foo2", StandardCharsets.UTF_8);
+    private static final ByteSequence VALUE = ByteSequence.from("bar", StandardCharsets.UTF_8);
 
     @BeforeEach
     public void setUp() {

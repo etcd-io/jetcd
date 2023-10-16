@@ -16,6 +16,7 @@
 
 package io.etcd.jetcd.impl;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -41,8 +42,6 @@ import io.etcd.jetcd.lease.LeaseGrantResponse;
 import io.etcd.jetcd.lock.LockResponse;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 
-import com.google.common.base.Charsets;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -57,9 +56,9 @@ public class LockTest {
     private static Lease leaseClient;
     private Set<ByteSequence> locksToRelease;
 
-    private static final ByteSequence SAMPLE_NAME = ByteSequence.from("sample_name", Charsets.UTF_8);
-    private static final ByteSequence namespace = ByteSequence.from("test-ns/", Charsets.UTF_8);
-    private static final ByteSequence namespace2 = ByteSequence.from("test-ns2/", Charsets.UTF_8);
+    private static final ByteSequence SAMPLE_NAME = ByteSequence.from("sample_name", StandardCharsets.UTF_8);
+    private static final ByteSequence namespace = ByteSequence.from("test-ns/", StandardCharsets.UTF_8);
+    private static final ByteSequence namespace2 = ByteSequence.from("test-ns2/", StandardCharsets.UTF_8);
 
     @BeforeAll
     public static void setUp() {

@@ -19,6 +19,7 @@ package io.etcd.jetcd.impl;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
@@ -27,19 +28,16 @@ import io.etcd.jetcd.launcher.EtcdCluster;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 import io.etcd.jetcd.watch.WatchResponse;
 
-import com.google.common.base.Charsets;
 import com.google.protobuf.ByteString;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class TestUtil {
 
     public static ByteSequence bytesOf(final String string) {
-        return ByteSequence.from(string, UTF_8);
+        return ByteSequence.from(string, StandardCharsets.UTF_8);
     }
 
     public static ByteString byteStringOf(final String string) {
-        return ByteString.copyFrom(string.getBytes(UTF_8));
+        return ByteString.copyFrom(string.getBytes(StandardCharsets.UTF_8));
     }
 
     public static String randomString() {
@@ -47,7 +45,7 @@ public class TestUtil {
     }
 
     public static ByteSequence randomByteSequence() {
-        return ByteSequence.from(randomString(), Charsets.UTF_8);
+        return ByteSequence.from(randomString(), StandardCharsets.UTF_8);
     }
 
     public static int findNextAvailablePort() throws IOException {

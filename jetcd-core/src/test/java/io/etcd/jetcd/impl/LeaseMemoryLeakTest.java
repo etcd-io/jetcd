@@ -17,6 +17,7 @@
 package io.etcd.jetcd.impl;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -24,16 +25,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.Client;
-import io.etcd.jetcd.KV;
-import io.etcd.jetcd.Lease;
-import io.etcd.jetcd.options.PutOption;
-import io.etcd.jetcd.test.EtcdClusterExtension;
-import io.restassured.RestAssured;
-
-import com.google.common.base.Charsets;
 
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.AfterEach;
@@ -44,6 +35,14 @@ import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.Client;
+import io.etcd.jetcd.KV;
+import io.etcd.jetcd.Lease;
+import io.etcd.jetcd.options.PutOption;
+import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.restassured.RestAssured;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -63,8 +62,8 @@ public class LeaseMemoryLeakTest {
     private static final long TTL = 10;
     private static final int ITERATIONS = 5;
     private static final Pattern GO_ROUTINES_EXTRACT_PATTERN = Pattern.compile("go_goroutines (\\d+)");
-    private static final ByteSequence KEY = ByteSequence.from("foo", Charsets.UTF_8);
-    private static final ByteSequence VALUE = ByteSequence.from("bar", Charsets.UTF_8);
+    private static final ByteSequence KEY = ByteSequence.from("foo", StandardCharsets.UTF_8);
+    private static final ByteSequence VALUE = ByteSequence.from("bar", StandardCharsets.UTF_8);
 
     @BeforeEach
     public void setUp() {

@@ -19,6 +19,7 @@ dependencies {
     api project(':jetcd-launcher')
 
     api libs.slf4j
+    api libs.guava
     api libs.bundles.grpc
     api libs.bundles.grpcTest
 
