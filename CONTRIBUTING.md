@@ -25,7 +25,7 @@ This is a rough outline of what a contributor's workflow looks like:
 - Make sure commit messages are in the proper format (see below).
 - Push changes in a topic branch to a personal fork of the repository.
 - Submit a pull request to etcd-io/jetcd.
-- The PR must receive a LGTM from at least one maintainer found in the [MAINTAINERS](https://github.com/etcd-io/etcd/blob/master/MAINTAINERS) file.
+- The PR must receive a LGTM from at least one maintainer found in the [OWNERS](https://github.com/etcd-io/jetcd/blob/main/OWNERS) file.
 
 Thanks for contributing!
 
