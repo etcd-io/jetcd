@@ -58,7 +58,7 @@ public class LeaseMemoryLeakTest {
     private KV kvClient;
     private Lease leaseClient;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LeaseMemoryLeakTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LeaseOnceErrorTest.class);
     private static final long TTL = 10;
     private static final int ITERATIONS = 5;
     private static final Pattern GO_ROUTINES_EXTRACT_PATTERN = Pattern.compile("go_goroutines (\\d+)");

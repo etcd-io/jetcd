@@ -143,6 +143,11 @@ public class EtcdClusterExtension implements BeforeAllCallback, BeforeEachCallba
             return this;
         }
 
+        public Builder withDebug(boolean debug) {
+            builder.withDebug(debug);
+            return this;
+        }
+
         public Builder withAdditionalArgs(Collection<String> additionalArgs) {
             builder.withAdditionalArgs(additionalArgs);
             return this;
