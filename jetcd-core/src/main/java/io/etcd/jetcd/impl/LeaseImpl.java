@@ -27,7 +27,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.etcd.jetcd.Lease;
-import io.etcd.jetcd.api.*;
+import io.etcd.jetcd.api.LeaseGrantRequest;
+import io.etcd.jetcd.api.LeaseKeepAliveRequest;
+import io.etcd.jetcd.api.LeaseRevokeRequest;
+import io.etcd.jetcd.api.LeaseTimeToLiveRequest;
+import io.etcd.jetcd.api.VertxLeaseGrpc;
 import io.etcd.jetcd.common.Service;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.lease.LeaseGrantResponse;
@@ -40,7 +44,9 @@ import io.etcd.jetcd.support.Util;
 import io.grpc.stub.StreamObserver;
 import io.vertx.core.streams.WriteStream;
 
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.*;
+import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newClosedLeaseClientException;
+import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
+import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -146,7 +152,14 @@ final class LeaseImpl extends Impl implements Lease {
                 ref.set(s);
                 s.write(req);
             })
-            .handler(r -> future.complete(new LeaseKeepAliveResponse(r)))
+            .handler(r -> {
+                if (r.getTTL() != 0) {
+                    future.complete(new LeaseKeepAliveResponse(r));
+                } else {
+                    future.completeExceptionally(
+                        newEtcdException(ErrorCode.NOT_FOUND, "etcdserver: requested lease not found"));
+                }
+            })
             .exceptionHandler(future::completeExceptionally);
 
         return future.whenComplete((r, t) -> ref.get().end(req));

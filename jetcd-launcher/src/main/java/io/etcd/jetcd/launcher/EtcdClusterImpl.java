@@ -40,6 +40,7 @@ public class EtcdClusterImpl implements EtcdCluster {
         String prefix,
         int nodes,
         boolean ssl,
+        boolean debug,
         Collection<String> additionalArgs,
         Network network,
         boolean shouldMountDataDirectory) {
@@ -53,6 +54,7 @@ public class EtcdClusterImpl implements EtcdCluster {
             .map(e -> new EtcdContainer(image, e, endpoints)
                 .withClusterToken(clusterName)
                 .withSll(ssl)
+                .withDebug(debug)
                 .withAdditionalArgs(additionalArgs)
                 .withNetwork(network)
                 .withShouldMountDataDirectory(shouldMountDataDirectory))

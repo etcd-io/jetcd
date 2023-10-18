@@ -54,6 +54,7 @@ public final class Etcd {
         private String prefix;
         private int nodes = 1;
         private boolean ssl = false;
+        private boolean debug = false;
         private List<String> additionalArgs;
         private Network network;
         private boolean shouldMountDataDirectory = true;
@@ -75,6 +76,11 @@ public final class Etcd {
 
         public Builder withSsl(boolean ssl) {
             this.ssl = ssl;
+            return this;
+        }
+
+        public Builder withDebug(boolean debug) {
+            this.debug = debug;
             return this;
         }
 
@@ -105,6 +111,7 @@ public final class Etcd {
                 prefix,
                 nodes,
                 ssl,
+                debug,
                 additionalArgs,
                 network != null ? network : Network.newNetwork(),
                 shouldMountDataDirectory);
