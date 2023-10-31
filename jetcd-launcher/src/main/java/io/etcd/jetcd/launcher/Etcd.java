@@ -28,7 +28,7 @@ import org.testcontainers.containers.Network;
 import com.google.common.base.Strings;
 
 public final class Etcd {
-    public static final String CONTAINER_IMAGE = "gcr.io/etcd-development/etcd:v3.5.9";
+    public static final String CONTAINER_IMAGE = "gcr.io/etcd-development/etcd:v3.5.10";
     public static final int ETCD_CLIENT_PORT = 2379;
     public static final int ETCD_PEER_PORT = 2380;
     public static final String ETCD_DATA_DIR = "/data.etcd";

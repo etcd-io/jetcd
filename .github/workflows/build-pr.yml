@@ -43,7 +43,7 @@ jobs:
           - 17
           - 21
         etcd:
-          - gcr.io/etcd-development/etcd:v3.5.9
+          - gcr.io/etcd-development/etcd:v3.5.10
           - gcr.io/etcd-development/etcd:v3.4.27
     uses: ./.github/workflows/build.yml
     with:
