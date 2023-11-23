@@ -113,7 +113,7 @@ public final class Etcd {
                 ssl,
                 debug,
                 additionalArgs,
-                network != null ? network : Network.newNetwork(),
+                network != null ? network : Network.SHARED,
                 shouldMountDataDirectory);
         }
 
