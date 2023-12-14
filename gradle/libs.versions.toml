@@ -14,7 +14,7 @@ commonsIo = "2.15.1"
 commonCompress = "1.25.0"
 autoService = "1.1.1"
 errorprone = "2.23.0"
-vertx = "4.5.0"
+vertx = "4.5.1"
 picocli = "4.7.5"
 restAssured = "5.3.2"
 
