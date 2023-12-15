@@ -97,7 +97,7 @@ public class LeaseMemoryLeakTest {
             int start = extractGoRoutinesCount(uri);
             assertThat(start).isGreaterThan(0);
 
-            scheduler.scheduleAtFixedRate(() -> {
+            var unused = scheduler.scheduleAtFixedRate(() -> {
                 try {
                     if (latch.getCount() == 0) {
                         return;
