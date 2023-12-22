@@ -1,5 +1,5 @@
 [versions]
-grpc = "1.60.0"
+grpc = "1.60.1"
 log4j = "2.22.0"
 mockito = "5.8.0"
 slf4j = "2.0.9"
