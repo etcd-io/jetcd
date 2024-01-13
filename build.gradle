@@ -63,7 +63,7 @@ subprojects {
     }
 
     compileJava {
-        options.release = 8
+        options.release = 11
     }
 
     test {
