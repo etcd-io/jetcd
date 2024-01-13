@@ -22,6 +22,7 @@ dependencies {
     api libs.slf4j
     api libs.vertxGrpc
     api libs.bundles.grpc
+    api libs.bundles.javax
 }
 
 protobuf {

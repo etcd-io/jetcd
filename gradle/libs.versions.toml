@@ -17,6 +17,7 @@ errorprone = "2.24.1"
 vertx = "4.5.1"
 picocli = "4.7.5"
 restAssured = "5.4.0"
+javaxAnnotation = "1.3.2"
 
 versionsPlugin = "0.50.0"
 errorPronePlugin = "3.1.0"
@@ -27,6 +28,7 @@ protobufPlugin = "0.9.4"
 nexusPublishPlugin = "1.3.0"
 axionReleasePlugin = "1.16.1"
 testRetryPlugin = "1.5.8"
+
 
 [libraries]
 slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
@@ -64,6 +66,7 @@ log4j12 = { module = "org.apache.logging.log4j:log4j-1.2-api", version.ref = "lo
 autoServiceAnnotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "autoService"}
 autoServiceProcessor = { module = "com.google.auto.service:auto-service", version.ref = "autoService"}
 
+javaxAnnotation = { module = "javax.annotation:javax.annotation-api", version.ref = "javaxAnnotation" }
 
 errorprone = { module = "com.google.errorprone:error_prone_core", version.ref = "errorprone" }
 errorproneAnnotations = { module = "com.google.errorprone:error_prone_annotations", version.ref = "errorprone" }
@@ -75,6 +78,7 @@ grpcTest = [ "grpcInprocess"]
 log4j    = [ "log4jApi", "log4jCore", "log4jSlf4j", "log4j12" ]
 mockito  = [ "mockitoCore", "mockitoJunit" ]
 testing  = ["junit", "assertj", "mockitoCore", "mockitoJunit"]
+javax    = [ "javaxAnnotation" ]
 
 
 [plugins]
