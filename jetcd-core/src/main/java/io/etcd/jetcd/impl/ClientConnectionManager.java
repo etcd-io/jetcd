@@ -187,7 +187,7 @@ final class ClientConnectionManager {
         if (builder.loadBalancerPolicy() != null) {
             channelBuilder.defaultLoadBalancingPolicy(builder.loadBalancerPolicy());
         } else {
-            channelBuilder.defaultLoadBalancingPolicy("pick_first");
+            channelBuilder.defaultLoadBalancingPolicy("round_robin");
         }
 
         if (builder.headers() != null) {
