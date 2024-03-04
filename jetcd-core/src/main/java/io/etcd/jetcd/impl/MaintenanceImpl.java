@@ -119,19 +119,20 @@ final class MaintenanceImpl extends Impl implements Maintenance {
         final CompletableFuture<Long> answer = new CompletableFuture<>();
         final AtomicLong bytes = new AtomicLong(0);
 
-        this.stub.snapshot(SnapshotRequest.getDefaultInstance())
-            .handler(r -> {
+        this.stub.snapshotWithHandler(
+            SnapshotRequest.getDefaultInstance(),
+            r -> {
                 try {
                     r.getBlob().writeTo(outputStream);
                     bytes.addAndGet(r.getBlob().size());
                 } catch (IOException e) {
                     answer.completeExceptionally(toEtcdException(e));
                 }
-            })
-            .endHandler(event -> {
+            },
+            event -> {
                 answer.complete(bytes.get());
-            })
-            .exceptionHandler(e -> {
+            },
+            e -> {
                 answer.completeExceptionally(toEtcdException(e));
             });
 
@@ -141,9 +142,10 @@ final class MaintenanceImpl extends Impl implements Maintenance {
     @Override
     public void snapshot(StreamObserver<io.etcd.jetcd.maintenance.SnapshotResponse> observer) {
 
-        this.stub.snapshot(SnapshotRequest.getDefaultInstance())
-            .handler(r -> observer.onNext(new io.etcd.jetcd.maintenance.SnapshotResponse(r)))
-            .endHandler(event -> observer.onCompleted())
-            .exceptionHandler(e -> observer.onError(toEtcdException(e)));
+        this.stub.snapshotWithHandler(
+            SnapshotRequest.getDefaultInstance(),
+            r -> observer.onNext(new io.etcd.jetcd.maintenance.SnapshotResponse(r)),
+            event -> observer.onCompleted(),
+            e -> observer.onError(toEtcdException(e)));
     }
 }

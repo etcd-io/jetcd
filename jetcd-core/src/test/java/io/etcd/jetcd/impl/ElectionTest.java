@@ -198,6 +198,39 @@ public class ElectionTest {
     }
 
     @Test
+    public void testObserveExistingLeader() throws Exception {
+        final AtomicInteger electionsSeen = new AtomicInteger(0);
+        ByteSequence electionName = ByteSequence.from(randomString(), StandardCharsets.UTF_8);
+
+        long leaseId = leaseClient.grant(10).get().getID();
+
+        ByteSequence proposal = ByteSequence.from(randomString(), StandardCharsets.UTF_8);
+        electionClient.campaign(electionName, leaseId, proposal)
+            .get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
+
+        electionClient.observe(electionName, new Election.Listener() {
+            @Override
+            public void onNext(LeaderResponse response) {
+                electionsSeen.incrementAndGet();
+            }
+
+            @Override
+            public void onError(Throwable error) {
+            }
+
+            @Override
+            public void onCompleted() {
+            }
+        });
+
+        TestUtil.waitForCondition(
+            () -> electionsSeen.get() == 1, OPERATION_TIMEOUT * 1000,
+            "Observer did not receive expected notifications, got: " + electionsSeen.get());
+
+        leaseClient.revoke(leaseId).get();
+    }
+
+    @Test
     public void testSynchronizationBarrier() throws Exception {
         final int threadCount = 5;
         final Random random = new Random();
