@@ -262,10 +262,12 @@ final class LeaseImpl extends Impl implements Lease {
             }
         }
 
-        private synchronized void handleException(Throwable unused) {
+        private synchronized void handleException(Throwable throwable) {
             if (!this.isRunning()) {
                 return;
             }
+
+            keepAlives.values().forEach(ka -> ka.onError(throwable));
 
             restart = connectionManager().vertx().setTimer(
                 500,
