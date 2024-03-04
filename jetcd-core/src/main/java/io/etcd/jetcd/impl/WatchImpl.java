@@ -178,13 +178,15 @@ final class WatchImpl extends Impl implements Watch {
                     builder.addFilters(WatchCreateRequest.FilterType.NOPUT);
                 }
 
-                rstream = Util.applyRequireLeader(option.withRequireLeader(), stub).watchWithExceptionHandler(stream -> {
-                    wstream.set(stream);
-                    stream.write(WatchRequest.newBuilder().setCreateRequest(builder).build());
-                }, this::onError);
-
-                rstream.handler(this::onNext);
-                rstream.endHandler(event -> onCompleted());
+                rstream = Util.applyRequireLeader(option.withRequireLeader(), stub)
+                    .watchWithHandler(
+                        stream -> {
+                            wstream.set(stream);
+                            stream.write(WatchRequest.newBuilder().setCreateRequest(builder).build());
+                        },
+                        this::onNext,
+                        event -> onCompleted(),
+                        this::onError);
             }
         }
 

@@ -148,19 +148,21 @@ final class LeaseImpl extends Impl implements Lease {
         final LeaseKeepAliveRequest req = LeaseKeepAliveRequest.newBuilder().setID(leaseId).build();
 
         leaseStub
-            .leaseKeepAlive(s -> {
-                ref.set(s);
-                s.write(req);
-            })
-            .handler(r -> {
-                if (r.getTTL() != 0) {
-                    future.complete(new LeaseKeepAliveResponse(r));
-                } else {
-                    future.completeExceptionally(
-                        newEtcdException(ErrorCode.NOT_FOUND, "etcdserver: requested lease not found"));
-                }
-            })
-            .exceptionHandler(future::completeExceptionally);
+            .leaseKeepAliveWithHandler(
+                s -> {
+                    ref.set(s);
+                    s.write(req);
+                },
+                r -> {
+                    if (r.getTTL() != 0) {
+                        future.complete(new LeaseKeepAliveResponse(r));
+                    } else {
+                        future.completeExceptionally(
+                            newEtcdException(ErrorCode.NOT_FOUND, "etcdserver: requested lease not found"));
+                    }
+                },
+                null,
+                future::completeExceptionally);
 
         return future.whenComplete((r, t) -> ref.get().end(req));
     }
@@ -194,9 +196,11 @@ final class LeaseImpl extends Impl implements Lease {
 
         @Override
         public void doStart() {
-            leaseStub.leaseKeepAlive(this::writeHandler)
-                .handler(this::handleResponse)
-                .exceptionHandler(this::handleException);
+            leaseStub.leaseKeepAliveWithHandler(
+                this::writeHandler,
+                this::handleResponse,
+                null,
+                this::handleException);
         }
 
         @Override

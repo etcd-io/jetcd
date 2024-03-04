@@ -113,10 +113,10 @@ final class ElectionImpl extends Impl implements Election {
             .setName(ByteString.copyFrom(electionName.getBytes()))
             .build();
 
-        stub.observe(request)
-            .handler(value -> listener.onNext(new LeaderResponse(value, namespace)))
-            .endHandler(ignored -> listener.onCompleted())
-            .exceptionHandler(error -> listener.onError(toEtcdException(error)));
+        stub.observeWithHandler(request,
+            value -> listener.onNext(new LeaderResponse(value, namespace)),
+            ignored -> listener.onCompleted(),
+            error -> listener.onError(toEtcdException(error)));
     }
 
     @Override
