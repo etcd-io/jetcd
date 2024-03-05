@@ -48,6 +48,7 @@ import io.grpc.stub.StreamObserver;
 import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.timeout;
@@ -57,6 +58,7 @@ import static org.mockito.Mockito.verify;
 @Timeout(value = 1, unit = TimeUnit.MINUTES)
 @ExtendWith(MockitoExtension.class)
 public class LeaseUnitTest {
+    private static final long TIME_OUT_SECONDS = 30;
 
     private Lease leaseCli;
     private AtomicReference<StreamObserver<LeaseKeepAliveResponse>> responseObserverRef;
@@ -230,8 +232,10 @@ public class LeaseUnitTest {
 
     @Test
     public void testKeepAliveResetOnStreamErrors() {
-        final StreamObserver<io.etcd.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.observer(response -> {
-        });
+        final AtomicReference<Throwable> errorRecorder = new AtomicReference<>();
+        final StreamObserver<io.etcd.jetcd.lease.LeaseKeepAliveResponse> observer = Observers.<io.etcd.jetcd.lease.LeaseKeepAliveResponse> builder()
+            .onError(errorRecorder::set)
+            .build();
 
         try (CloseableClient client = this.leaseCli.keepAlive(LEASE_ID_1, observer)) {
             Throwable t = Status.ABORTED.asRuntimeException();
@@ -241,6 +245,7 @@ public class LeaseUnitTest {
 
             // expect keep alive requests are still sending even with reset.
             verify(this.requestStreamObserverMock, timeout(2000).atLeast(3)).onNext(argThat(hasLeaseID(LEASE_ID_1)));
+            await().atMost(TIME_OUT_SECONDS, TimeUnit.SECONDS).untilAsserted(() -> assertThat(errorRecorder.get()).isNotNull());
         }
     }
 
