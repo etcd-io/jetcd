@@ -34,6 +34,22 @@ final class LockImpl extends Impl implements Lock {
     private final VertxLockGrpc.LockVertxStub stub;
     private final ByteSequence namespace;
 
+    // Lock operations are done in a context where a client is trying to implement
+    // some strict mutual exclusion use case; in that type of context, it makes sense to always
+    // apply require leader, since we don't want a client connected to a non-raft-leader server
+    // to have a lock method just go silent if the server the client happens to be connected to
+    // becomes partitioned from the actual raft-leader server in the etcd servers cluster:
+    // in that scenario and without required leader, an attempt to lock could block forever
+    // not because some other client is already holding a lock, but because the server the client
+    // is connected to is partitioned and can't tell.
+    // With require leader, in that case the call will fail and the client has the ability to
+    // (a) know (b) retry on a different server.
+    // The retry on a different server should happen automatically if the connection manager is using
+    // a round robin strategy.
+    private VertxLockGrpc.LockVertxStub stubWithLeader() {
+        return Util.applyRequireLeader(true, stub);
+    }
+
     LockImpl(ClientConnectionManager connectionManager) {
         super(connectionManager);
 
@@ -51,7 +67,7 @@ final class LockImpl extends Impl implements Lock {
             .build();
 
         return execute(
-            () -> stub.lock(request),
+            () -> stubWithLeader().lock(request),
             response -> new LockResponse(response, namespace),
             Errors::isRetryable);
     }
@@ -65,7 +81,7 @@ final class LockImpl extends Impl implements Lock {
             .build();
 
         return execute(
-            () -> stub.unlock(request),
+            () -> stubWithLeader().unlock(request),
             UnlockResponse::new,
             Errors::isRetryable);
     }
