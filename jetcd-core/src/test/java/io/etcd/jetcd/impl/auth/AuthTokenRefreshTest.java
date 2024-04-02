@@ -1,5 +1,15 @@
 package io.etcd.jetcd.impl.auth;
 
+import java.io.File;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
@@ -7,34 +17,24 @@ import io.etcd.jetcd.auth.Permission;
 import io.etcd.jetcd.impl.TestUtil;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.test.EtcdClusterExtension;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.RegisterExtension;
-
-import java.io.File;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 @Timeout(value = 30)
 public class AuthTokenRefreshTest {
 
     @RegisterExtension
     public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
-            .withNodes(1)
-            .withSsl(true)
-            .withAdditionalArgs(
-                    List.of(
-                            "--auth-token",
-                            "jwt,pub-key=/etc/ssl/etcd/server.pem,priv-key=/etc/ssl/etcd/server-key.pem,sign-method=RS256,ttl=300s"))
-            .build();
+        .withNodes(1)
+        .withSsl(true)
+        .withAdditionalArgs(
+            List.of(
+                "--auth-token",
+                "jwt,pub-key=/etc/ssl/etcd/server.pem,priv-key=/etc/ssl/etcd/server-key.pem,sign-method=RS256,ttl=300s"))
+        .build();
 
     private static final ByteSequence key = TestUtil.bytesOf("key");
     private static final ByteSequence keyEnd = TestUtil.bytesOf("key1");
     private static final ByteSequence user = TestUtil.bytesOf("root");
     private static final ByteSequence password = TestUtil.randomByteSequence();
-
 
     @Test
     public void testTokenIsRefreshedWhenRevisionsIsOld() throws Exception {
@@ -63,14 +63,13 @@ public class AuthTokenRefreshTest {
         Assertions.assertEquals(value, getResponse.getKvs().get(0).getValue());
     }
 
-
     private void setUpEnvironment() throws Exception {
         final File caFile = new File(Objects.requireNonNull(getClass().getResource("/ssl/cert/ca.pem")).toURI());
 
         Client client = TestUtil.client(cluster)
-                .authority("etcd0")
-                .sslContext(b -> b.trustManager(caFile))
-                .build();
+            .authority("etcd0")
+            .sslContext(b -> b.trustManager(caFile))
+            .build();
 
         // enable authentication to enforce usage of access token
         ByteSequence role = TestUtil.bytesOf("root");
@@ -88,12 +87,11 @@ public class AuthTokenRefreshTest {
         final File caFile = new File(Objects.requireNonNull(getClass().getResource("/ssl/cert/ca.pem")).toURI());
 
         return TestUtil.client(cluster)
-                .user(user)
-                .password(password)
-                .authority("etcd0")
-                .sslContext(b -> b.trustManager(caFile))
-                .build();
+            .user(user)
+            .password(password)
+            .authority("etcd0")
+            .sslContext(b -> b.trustManager(caFile))
+            .build();
     }
 
 }
-

@@ -27,7 +27,8 @@ public final class Errors {
     }
 
     public static boolean isRetryable(Status status) {
-        return Status.UNAVAILABLE.getCode().equals(status.getCode()) || isInvalidTokenError(status) || isAuthStoreExpired(status);
+        return Status.UNAVAILABLE.getCode().equals(status.getCode()) || isInvalidTokenError(status)
+            || isAuthStoreExpired(status);
     }
 
     public static boolean isInvalidTokenError(Throwable e) {
