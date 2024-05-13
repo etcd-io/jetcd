@@ -143,7 +143,8 @@ final class WatchImpl extends Impl implements Watch {
         //
         // ************************
 
-        boolean isClosed() {
+        @Override
+        public boolean isClosed() {
             return this.closed.get() || WatchImpl.this.closed.get();
         }
 

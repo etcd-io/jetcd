@@ -427,8 +427,7 @@ public class WatchUnitTest {
             assertThat(ref.get()).isNotNull();
             assertThat(ref.get()).isInstanceOf(EtcdException.class)
                 .hasMessageContaining(Errors.NO_LEADER_ERROR_MESSAGE);
-            final WatchImpl.WatcherImpl wimpl = (WatchImpl.WatcherImpl) watcher;
-            assertThat(wimpl.isClosed()).isTrue();
+            assertThat(watcher.isClosed()).isTrue();
         }
     }
 }
