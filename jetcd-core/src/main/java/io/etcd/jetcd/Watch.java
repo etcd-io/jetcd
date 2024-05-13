@@ -227,6 +227,11 @@ public interface Watch extends CloseableClient {
         void close();
 
         /**
+         * Returns if watcher is already closed
+         */
+        boolean isClosed();
+
+        /**
          * Requests the latest revision processed and propagates it to listeners
          */
         void requestProgress();
