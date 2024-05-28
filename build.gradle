@@ -83,6 +83,11 @@ subprojects {
     }
 
     tasks.register('allDeps', DependencyReportTask)
+
+    tasks.withType(AbstractArchiveTask).configureEach {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
 }
 
 
