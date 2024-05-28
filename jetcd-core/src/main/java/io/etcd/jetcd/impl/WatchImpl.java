@@ -29,7 +29,12 @@ import org.slf4j.LoggerFactory;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Watch;
-import io.etcd.jetcd.api.*;
+import io.etcd.jetcd.api.VertxWatchGrpc;
+import io.etcd.jetcd.api.WatchCancelRequest;
+import io.etcd.jetcd.api.WatchCreateRequest;
+import io.etcd.jetcd.api.WatchProgressRequest;
+import io.etcd.jetcd.api.WatchRequest;
+import io.etcd.jetcd.api.WatchResponse;
 import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.options.OptionsUtil;
@@ -37,7 +42,6 @@ import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.support.Errors;
 import io.etcd.jetcd.support.Util;
 import io.grpc.Status;
-import io.vertx.core.streams.ReadStream;
 import io.vertx.core.streams.WriteStream;
 
 import com.google.common.base.Strings;
@@ -46,7 +50,10 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
-import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.*;
+import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newClosedWatchClientException;
+import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newCompactedException;
+import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.newEtcdException;
+import static io.etcd.jetcd.common.exception.EtcdExceptionFactory.toEtcdException;
 
 /**
  * watch Implementation.
@@ -117,10 +124,8 @@ final class WatchImpl extends Impl implements Watch {
         private final Listener listener;
         private final AtomicBoolean closed;
 
-        //private StreamObserver<WatchRequest> stream;
         private final AtomicReference<WriteStream<WatchRequest>> wstream;
         private final AtomicBoolean started;
-        private ReadStream<WatchResponse> rstream;
         private long revision;
         private long id;
 
@@ -132,7 +137,6 @@ final class WatchImpl extends Impl implements Watch {
 
             this.started = new AtomicBoolean();
             this.wstream = new AtomicReference<>();
-            this.rstream = null;
             this.id = -1;
             this.revision = this.option.getRevision();
         }
@@ -154,7 +158,7 @@ final class WatchImpl extends Impl implements Watch {
             }
 
             if (started.compareAndSet(false, true)) {
-                // id is not really useful today but it may be in etcd 3.4
+                // id is not really useful today, but it may be in etcd 3.4
                 id = -1;
 
                 WatchCreateRequest.Builder builder = WatchCreateRequest.newBuilder()
@@ -166,7 +170,7 @@ final class WatchImpl extends Impl implements Watch {
                     .map(endKey -> Util.prefixNamespaceToRangeEnd(endKey, namespace))
                     .ifPresent(builder::setRangeEnd);
 
-                if (!option.getEndKey().isPresent() && option.isPrefix()) {
+                if (option.getEndKey().isEmpty() && option.isPrefix()) {
                     ByteSequence endKey = OptionsUtil.prefixEndOf(key);
                     builder.setRangeEnd(Util.prefixNamespaceToRangeEnd(endKey, namespace));
                 }
@@ -179,7 +183,7 @@ final class WatchImpl extends Impl implements Watch {
                     builder.addFilters(WatchCreateRequest.FilterType.NOPUT);
                 }
 
-                rstream = Util.applyRequireLeader(option.withRequireLeader(), stub)
+                var ignored = Util.applyRequireLeader(option.withRequireLeader(), stub)
                     .watchWithHandler(
                         stream -> {
                             wstream.set(stream);

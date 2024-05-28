@@ -19,15 +19,15 @@ picocli = "4.7.6"
 restAssured = "5.4.0"
 javaxAnnotation = "1.3.2"
 
-versionsPlugin = "0.50.0"
+versionsPlugin = "0.51.0"
 errorPronePlugin = "3.1.0"
-spotlessPlugin = "6.23.3"
+spotlessPlugin = "6.25.0"
 shadowPlugin = "8.1.1"
 testLoggerPlugin = "4.0.0"
 protobufPlugin = "0.9.4"
-nexusPublishPlugin = "1.3.0"
-axionReleasePlugin = "1.16.1"
-testRetryPlugin = "1.5.8"
+nexusPublishPlugin = "2.0.0"
+axionReleasePlugin = "1.17.2"
+testRetryPlugin = "1.5.9"
 
 
 [libraries]
