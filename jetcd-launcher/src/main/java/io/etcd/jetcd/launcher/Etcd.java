@@ -58,6 +58,7 @@ public final class Etcd {
         private List<String> additionalArgs;
         private Network network;
         private boolean shouldMountDataDirectory = true;
+        private String user;
 
         public Builder withClusterName(String clusterName) {
             this.clusterName = clusterName;
@@ -114,11 +115,17 @@ public final class Etcd {
                 debug,
                 additionalArgs,
                 network != null ? network : Network.SHARED,
-                shouldMountDataDirectory);
+                shouldMountDataDirectory,
+                user);
         }
 
         public Builder withMountedDataDirectory(boolean shouldMountDataDirectory) {
             this.shouldMountDataDirectory = shouldMountDataDirectory;
+            return this;
+        }
+
+        public Builder withUser(String user) {
+            this.user = user;
             return this;
         }
     }
