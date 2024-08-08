@@ -26,9 +26,28 @@ public final class Errors {
     private Errors() {
     }
 
-    public static boolean isRetryable(Status status) {
+    public static boolean isSafeRetryImmutableRPC(Status status) {
+        // similar to go etcd client isSafeRetryImmutableRPC
+
         return Status.UNAVAILABLE.getCode().equals(status.getCode()) || isInvalidTokenError(status)
             || isAuthStoreExpired(status);
+    }
+
+    public static boolean isSafeRetryMutableRPC(Status status) {
+        // similar to  go etcd client isSafeRetryMutableRPC
+
+        if (isInvalidTokenError(status) || isAuthStoreExpired(status)) {
+            return true;
+        }
+        if (!Status.UNAVAILABLE.getCode().equals(status.getCode())) {
+            return false;
+        }
+        String desc = status.getDescription();
+        if (desc == null) {
+            return false;
+        }
+
+        return desc.equals("there is no address available") || desc.equals("there is no connection available");
     }
 
     public static boolean isInvalidTokenError(Throwable e) {

@@ -65,7 +65,7 @@ final class KVImpl extends Impl implements KV {
         return execute(
             () -> stub.put(Requests.mapPutRequest(key, value, option, namespace)),
             response -> new PutResponse(response, namespace),
-            Errors::isRetryable);
+            Errors::isSafeRetryMutableRPC);
     }
 
     @Override
@@ -81,7 +81,7 @@ final class KVImpl extends Impl implements KV {
         return execute(
             () -> stub.range(Requests.mapRangeRequest(key, option, namespace)),
             response -> new GetResponse(response, namespace),
-            Errors::isRetryable);
+            Errors::isSafeRetryImmutableRPC);
     }
 
     @Override
@@ -97,7 +97,7 @@ final class KVImpl extends Impl implements KV {
         return execute(
             () -> stub.deleteRange(Requests.mapDeleteRequest(key, option, namespace)),
             response -> new DeleteResponse(response, namespace),
-            Errors::isRetryable);
+            Errors::isSafeRetryMutableRPC);
     }
 
     @Override
@@ -116,7 +116,7 @@ final class KVImpl extends Impl implements KV {
         return execute(
             () -> stub.compact(request),
             CompactResponse::new,
-            Errors::isRetryable);
+            Errors::isSafeRetryMutableRPC);
     }
 
     @Override
@@ -124,7 +124,7 @@ final class KVImpl extends Impl implements KV {
         return TxnImpl.newTxn(
             request -> execute(
                 () -> stub.txn(request),
-                response -> new TxnResponse(response, namespace), Errors::isRetryable),
+                response -> new TxnResponse(response, namespace), Errors::isSafeRetryMutableRPC),
             namespace);
     }
 }

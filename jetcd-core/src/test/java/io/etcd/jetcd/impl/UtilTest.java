@@ -39,16 +39,29 @@ class UtilTest {
     }
 
     @Test
-    public void testAuthErrorIsNotRetryable() {
+    public void testAuthErrorIsSafeRetryImmutableRPC() {
         Status authErrorStatus = Status.UNAUTHENTICATED
             .withDescription("etcdserver: invalid auth token");
         Status status = Status.fromThrowable(new StatusException(authErrorStatus));
-        assertThat(Errors.isRetryable(status)).isTrue();
+        assertThat(Errors.isSafeRetryImmutableRPC(status)).isTrue();
     }
 
     @Test
-    public void testUnavailableErrorIsRetryable() {
+    public void testUnavailableErrorIsSafeRetryImmutableRPC() {
         Status status = Status.fromThrowable(new StatusException(Status.UNAVAILABLE));
-        assertThat(Errors.isRetryable(status)).isTrue();
+        assertThat(Errors.isSafeRetryImmutableRPC(status)).isTrue();
+    }
+
+    @Test
+    public void testUnavailableErrorIsSafeRetryMutableRPC() {
+        Status status = Status.fromThrowable(new StatusException(Status.UNAVAILABLE));
+        assertThat(Errors.isSafeRetryMutableRPC(status)).isFalse();
+    }
+
+    @Test
+    public void testNoAddressAvailableIsSafeRetryMutableRPC() {
+        Status status = Status.UNAVAILABLE
+                .withDescription("there is no address available");
+        assertThat(Errors.isSafeRetryMutableRPC(status)).isTrue();
     }
 }
