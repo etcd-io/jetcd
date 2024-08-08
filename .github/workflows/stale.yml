@@ -29,6 +29,7 @@ jobs:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         days-before-stale: 60
         days-before-close: 7
+        only-labels: 'waiting-for-feedbacks'
         stale-issue-label: stale
         exempt-issue-label: never-stale
         stale-pr-label: stale
