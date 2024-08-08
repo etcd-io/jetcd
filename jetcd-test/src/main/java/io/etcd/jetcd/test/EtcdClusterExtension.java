@@ -168,6 +168,11 @@ public class EtcdClusterExtension implements BeforeAllCallback, BeforeEachCallba
             return this;
         }
 
+        public Builder withUser(String user) {
+            builder.withUser(user);
+            return this;
+        }
+
         public EtcdClusterExtension build() {
             return new EtcdClusterExtension(builder.build());
         }

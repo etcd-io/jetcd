@@ -63,6 +63,7 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
     private Path dataDirectory;
     private Collection<String> additionalArgs;
     private boolean shouldMountDataDirectory = true;
+    private String user;
 
     public EtcdContainer(String image, String node, Collection<String> nodes) {
         super(image);
@@ -102,6 +103,18 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
         return self();
     }
 
+    /**
+     * Optional values are {@code [ user | user:group | uid | uid:gid | user:gid | uid:group ]}.
+     * See <a href="https://docs.docker.com/engine/reference/run/#user">User</a> .
+     *
+     * @param  user Refer to {@link com.github.dockerjava.api.command.CreateContainerCmd#withUser(String)}
+     * @return      self container.
+     */
+    public EtcdContainer withUser(String user) {
+        this.user = user;
+        return self();
+    }
+
     @Override
     protected void configure() {
         if (!configured.compareAndSet(false, true)) {
@@ -120,9 +133,13 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
         withEnv("ETCD_LOG_LEVEL", this.debug ? "debug" : "info");
         withEnv("ETCD_LOGGER", "zap");
 
-        String user = System.getenv("TC_USER");
-        if (user != null) {
-            withCreateContainerCmdModifier(c -> c.withUser(user));
+        String tempUser = this.user;
+        if (tempUser == null) {
+            tempUser = System.getenv("TC_USER");
+        }
+        if (tempUser != null) {
+            String finalUser = tempUser;
+            withCreateContainerCmdModifier(c -> c.withUser(finalUser));
         }
 
         if (ssl) {

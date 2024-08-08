@@ -43,7 +43,8 @@ public class EtcdClusterImpl implements EtcdCluster {
         boolean debug,
         Collection<String> additionalArgs,
         Network network,
-        boolean shouldMountDataDirectory) {
+        boolean shouldMountDataDirectory,
+        String user) {
 
         this.clusterName = clusterName;
         this.endpoints = IntStream.range(0, nodes)
@@ -57,7 +58,8 @@ public class EtcdClusterImpl implements EtcdCluster {
                 .withDebug(debug)
                 .withAdditionalArgs(additionalArgs)
                 .withNetwork(network)
-                .withShouldMountDataDirectory(shouldMountDataDirectory))
+                .withShouldMountDataDirectory(shouldMountDataDirectory)
+                .withUser(user))
             .collect(toList());
     }
 
