@@ -15,8 +15,8 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 **To Reproduce**
-Steps or reproducer to reproduce the behavior.
-This section *must* be provided, if not, the issue may not get attention.
+Steps or reproducer to reproduce the behavior in a form of a unit test.
+This section *must* be provided, if not, the issue may not get attention since the maintainers have very limited capacity.
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
