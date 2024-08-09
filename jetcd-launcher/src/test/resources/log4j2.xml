@@ -27,9 +27,6 @@
   <Loggers>
     <!-- package loggers -->
     <Logger name="org.testcontainers" level="INFO"/>
-    <Logger name="🐳 [gcr.io/etcd-development/etcd:v3.3]" level="WARN"/>
-    <Logger name="🐳 [gcr.io/etcd-development/etcd:v3.4]" level="WARN"/>
-    <Logger name="🐳 [gcr.io/etcd-development/etcd:v3.4.7]" level="WARN"/>
     <Logger name="io.etcd.jetcd.internal.infrastructure" level="INFO"/>
     <Logger name="io.etcd.jetcd.launcher.EtcdCluster" level="WARN"/>
 
