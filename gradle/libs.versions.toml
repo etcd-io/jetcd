@@ -1,5 +1,5 @@
 [versions]
-grpc = "1.68.0"
+grpc = "1.68.1"
 log4j = "2.24.1"
 mockito = "5.14.2"
 slf4j = "2.0.16"
@@ -26,8 +26,8 @@ shadowPlugin = "8.1.1"
 testLoggerPlugin = "4.0.0"
 protobufPlugin = "0.9.4"
 nexusPublishPlugin = "2.0.0"
-axionReleasePlugin = "1.18.4"
-testRetryPlugin = "1.5.10"
+axionReleasePlugin = "1.18.15"
+testRetryPlugin = "1.6.0"
 
 
 [libraries]
