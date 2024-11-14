@@ -20,7 +20,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Executor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +30,6 @@ import io.grpc.Attributes;
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
 import io.grpc.Status;
-import io.grpc.internal.GrpcUtil;
-import io.grpc.internal.SharedResourceHolder;
 
 import com.google.common.base.Preconditions;
 
@@ -47,7 +44,6 @@ public class EtcdClusterNameResolver extends NameResolver {
     private volatile boolean shutdown;
     private volatile boolean resolving;
 
-    private Executor executor;
     private Listener listener;
 
     public EtcdClusterNameResolver(URI targetUri) {
@@ -65,7 +61,6 @@ public class EtcdClusterNameResolver extends NameResolver {
     public void start(Listener listener) {
         synchronized (lock) {
             Preconditions.checkState(this.listener == null, "already started");
-            this.executor = SharedResourceHolder.get(GrpcUtil.SHARED_CHANNEL_EXECUTOR);
             this.listener = Objects.requireNonNull(listener, "listener");
             resolve();
         }
@@ -82,21 +77,14 @@ public class EtcdClusterNameResolver extends NameResolver {
             return;
         }
         shutdown = true;
-
-        synchronized (lock) {
-            if (executor != null) {
-                executor = SharedResourceHolder.release(GrpcUtil.SHARED_CHANNEL_EXECUTOR, executor);
-            }
-        }
     }
 
     private void resolve() {
         if (resolving || shutdown) {
             return;
         }
-        synchronized (lock) {
-            executor.execute(this::doResolve);
-        }
+
+        doResolve();
     }
 
     private void doResolve() {
