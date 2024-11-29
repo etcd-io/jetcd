@@ -90,8 +90,8 @@ abstract class Impl {
     protected <S, T> CompletableFuture<T> execute(
         Supplier<Future<S>> supplier,
         Function<S, T> resultConvert) {
-
-        return execute(supplier, resultConvert, Errors::isRetryable);
+        // TODO: in go etcd client lease operations are 'repeatable'
+        return execute(supplier, resultConvert, Errors::isSafeRetryMutableRPC);
     }
 
     /**
