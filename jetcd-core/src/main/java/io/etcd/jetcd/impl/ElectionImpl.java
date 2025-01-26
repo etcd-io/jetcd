@@ -88,7 +88,7 @@ final class ElectionImpl extends Impl implements Election {
             execute(
                 () -> stubWithLeader().campaign(request),
                 CampaignResponse::new,
-                Errors::isRetryable));
+                Errors::isSafeRetryMutableRPC));
     }
 
     @Override
@@ -111,7 +111,7 @@ final class ElectionImpl extends Impl implements Election {
             execute(
                 () -> stubWithLeader().proclaim(request),
                 ProclaimResponse::new,
-                Errors::isRetryable));
+                Errors::isSafeRetryMutableRPC));
     }
 
     @Override
@@ -126,7 +126,7 @@ final class ElectionImpl extends Impl implements Election {
             execute(
                 () -> stubWithLeader().leader(request),
                 response -> new LeaderResponse(response, namespace),
-                Errors::isRetryable));
+                Errors::isSafeRetryImmutableRPC));
     }
 
     @Override
@@ -162,7 +162,7 @@ final class ElectionImpl extends Impl implements Election {
             execute(
                 () -> stubWithLeader().resign(request),
                 ResignResponse::new,
-                Errors::isRetryable));
+                Errors::isSafeRetryMutableRPC));
     }
 
     private <S> CompletableFuture<S> wrapConvertException(CompletableFuture<S> future) {
