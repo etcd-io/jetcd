@@ -26,9 +26,18 @@ public final class Errors {
     private Errors() {
     }
 
-    public static boolean isRetryable(Status status) {
-        return Status.UNAVAILABLE.getCode().equals(status.getCode()) || isInvalidTokenError(status)
-            || isAuthStoreExpired(status);
+    // isRetryable implementation for idempotent operations.
+    public static boolean isRetryableForSafeRedoOp(Status status) {
+        return Status.UNAVAILABLE.getCode().equals(status.getCode()) || isAlwaysSafeToRetry(status);
+    }
+
+    // isRetryable implementation for non-idempotent operations
+    public static boolean isRetryableForNoSafeRedoOp(Status status) {
+        return isAlwaysSafeToRetry(status);
+    }
+
+    public static boolean isAlwaysSafeToRetry(Status status) {
+        return isInvalidTokenError(status) || isAuthStoreExpired(status);
     }
 
     public static boolean isInvalidTokenError(Throwable e) {

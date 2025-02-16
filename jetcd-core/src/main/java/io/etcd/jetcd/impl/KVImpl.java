@@ -33,6 +33,7 @@ import io.etcd.jetcd.options.CompactOption;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
+import io.etcd.jetcd.options.TxnOption;
 import io.etcd.jetcd.support.Errors;
 import io.etcd.jetcd.support.Requests;
 
@@ -65,7 +66,7 @@ final class KVImpl extends Impl implements KV {
         return execute(
             () -> stub.put(Requests.mapPutRequest(key, value, option, namespace)),
             response -> new PutResponse(response, namespace),
-            Errors::isRetryable);
+            option.isAutoRetry() ? Errors::isRetryableForSafeRedoOp : Errors::isRetryableForNoSafeRedoOp);
     }
 
     @Override
@@ -81,7 +82,7 @@ final class KVImpl extends Impl implements KV {
         return execute(
             () -> stub.range(Requests.mapRangeRequest(key, option, namespace)),
             response -> new GetResponse(response, namespace),
-            Errors::isRetryable);
+            Errors::isRetryableForSafeRedoOp);
     }
 
     @Override
@@ -97,7 +98,7 @@ final class KVImpl extends Impl implements KV {
         return execute(
             () -> stub.deleteRange(Requests.mapDeleteRequest(key, option, namespace)),
             response -> new DeleteResponse(response, namespace),
-            Errors::isRetryable);
+            option.isAutoRetry() ? Errors::isRetryableForSafeRedoOp : Errors::isRetryableForNoSafeRedoOp);
     }
 
     @Override
@@ -116,15 +117,21 @@ final class KVImpl extends Impl implements KV {
         return execute(
             () -> stub.compact(request),
             CompactResponse::new,
-            Errors::isRetryable);
+            Errors::isRetryableForSafeRedoOp);
     }
 
     @Override
     public Txn txn() {
+        return txn(TxnOption.DEFAULT);
+    }
+
+    @Override
+    public Txn txn(TxnOption option) {
         return TxnImpl.newTxn(
             request -> execute(
                 () -> stub.txn(request),
-                response -> new TxnResponse(response, namespace), Errors::isRetryable),
+                response -> new TxnResponse(response, namespace),
+                option.isAutoRetry() ? Errors::isRetryableForSafeRedoOp : Errors::isRetryableForNoSafeRedoOp),
             namespace);
     }
 }

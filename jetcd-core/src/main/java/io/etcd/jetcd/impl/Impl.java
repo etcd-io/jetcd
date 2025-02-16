@@ -89,9 +89,11 @@ abstract class Impl {
      */
     protected <S, T> CompletableFuture<T> execute(
         Supplier<Future<S>> supplier,
-        Function<S, T> resultConvert) {
+        Function<S, T> resultConvert,
+        boolean autoRetry) {
 
-        return execute(supplier, resultConvert, Errors::isRetryable);
+        return execute(supplier, resultConvert,
+            autoRetry ? Errors::isRetryableForSafeRedoOp : Errors::isRetryableForNoSafeRedoOp);
     }
 
     /**

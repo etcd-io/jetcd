@@ -84,7 +84,8 @@ final class LeaseImpl extends Impl implements Lease {
                 LeaseGrantRequest.newBuilder()
                     .setTTL(ttl)
                     .build()),
-            LeaseGrantResponse::new);
+            LeaseGrantResponse::new,
+            true);
     }
 
     @Override
@@ -94,7 +95,8 @@ final class LeaseImpl extends Impl implements Lease {
                 LeaseGrantRequest.newBuilder()
                     .setTTL(ttl)
                     .build()),
-            LeaseGrantResponse::new);
+            LeaseGrantResponse::new,
+            true);
     }
 
     @Override
@@ -104,7 +106,8 @@ final class LeaseImpl extends Impl implements Lease {
                 LeaseRevokeRequest.newBuilder()
                     .setID(leaseId)
                     .build()),
-            LeaseRevokeResponse::new);
+            LeaseRevokeResponse::new,
+            true);
     }
 
     @Override
@@ -118,7 +121,8 @@ final class LeaseImpl extends Impl implements Lease {
 
         return execute(
             () -> this.stub.leaseTimeToLive(leaseTimeToLiveRequest),
-            LeaseTimeToLiveResponse::new);
+            LeaseTimeToLiveResponse::new,
+            true);
     }
 
     @Override
