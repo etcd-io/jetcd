@@ -29,11 +29,13 @@ public final class DeleteOption {
     private final ByteSequence endKey;
     private final boolean prevKV;
     private final boolean prefix;
+    private final boolean autoRetry;
 
-    private DeleteOption(ByteSequence endKey, boolean prevKV, boolean prefix) {
+    private DeleteOption(ByteSequence endKey, boolean prevKV, boolean prefix, final boolean autoRetry) {
         this.endKey = endKey;
         this.prevKV = prevKV;
         this.prefix = prefix;
+        this.autoRetry = autoRetry;
     }
 
     public Optional<ByteSequence> getEndKey() {
@@ -49,8 +51,23 @@ public final class DeleteOption {
         return prevKV;
     }
 
+    /**
+     * Whether to treat this deletion as deletion by prefix
+     *
+     * @return true if deletion by prefix.
+     */
     public boolean isPrefix() {
         return prefix;
+    }
+
+    /**
+     * Whether to treat a delete operation as idempotent from the point of view of automated retries.
+     * Note under failure scenarios this may mean a single delete is attempted more than once.
+     *
+     * @return true if automated retries should happen.
+     */
+    public boolean isAutoRetry() {
+        return autoRetry;
     }
 
     /**
@@ -65,6 +82,11 @@ public final class DeleteOption {
         return builder();
     }
 
+    /**
+     * Returns the builder.
+     *
+     * @return the builder
+     */
     public static Builder builder() {
         return new Builder();
     }
@@ -73,6 +95,7 @@ public final class DeleteOption {
         private ByteSequence endKey;
         private boolean prevKV = false;
         private boolean prefix = false;
+        private boolean autoRetry = false;
 
         private Builder() {
         }
@@ -144,8 +167,22 @@ public final class DeleteOption {
             return this;
         }
 
+        /**
+         * When autoRetry is set, the delete operation is treated as idempotent from the point of view of automated retries.
+         * Note under some failure scenarios true may make a delete operation be attempted more than once, where
+         * a first attempt succeeded but its result did not reach the client; by default (autoRetry=false),
+         * the client won't retry since it is not safe to assume on such a failure the operation did not happen.
+         * Requesting withAutoRetry means the client is explicitly asking for retry nevertheless.
+         *
+         * @return builder
+         */
+        public Builder withAutoRetry() {
+            this.autoRetry = true;
+            return this;
+        }
+
         public DeleteOption build() {
-            return new DeleteOption(endKey, prevKV, prefix);
+            return new DeleteOption(endKey, prevKV, prefix, autoRetry);
         }
 
     }

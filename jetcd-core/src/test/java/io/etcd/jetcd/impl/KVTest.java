@@ -316,7 +316,7 @@ public class KVTest {
                 for (int i = 0; i < putCount; ++i) {
                     ByteSequence value = ByteSequence
                         .from(Integer.toString(i), StandardCharsets.UTF_8);
-                    customClient.getKVClient().put(key, value).join();
+                    customClient.getKVClient().put(key, value, PutOption.builder().withAutoRetry().build()).join();
                 }
             });
 

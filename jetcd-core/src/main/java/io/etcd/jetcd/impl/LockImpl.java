@@ -69,7 +69,7 @@ final class LockImpl extends Impl implements Lock {
         return execute(
             () -> stubWithLeader().lock(request),
             response -> new LockResponse(response, namespace),
-            Errors::isRetryable);
+            Errors::isRetryableForSafeRedoOp);
     }
 
     @Override
@@ -83,6 +83,6 @@ final class LockImpl extends Impl implements Lock {
         return execute(
             () -> stubWithLeader().unlock(request),
             UnlockResponse::new,
-            Errors::isRetryable);
+            Errors::isRetryableForSafeRedoOp);
     }
 }

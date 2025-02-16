@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KV;
+import io.etcd.jetcd.kv.GetResponse;
 
 import static java.util.Objects.requireNonNull;
 
@@ -76,56 +77,158 @@ public final class GetOption {
     /**
      * Get the maximum number of keys to return for a get request.
      *
+     * <p>
+     * Note this filter does not affect the count field in GetResponse.
+     * {@link GetResponse#getCount()} always counts the number of keys matched on a range, independent of filters.
+     * </p>
+     *
+     *
      * @return the maximum number of keys to return.
      */
     public long getLimit() {
         return this.limit;
     }
 
+    /**
+     * Get the end key for a range request
+     *
+     * @return the end key for a range request
+     */
     public Optional<ByteSequence> getEndKey() {
         return Optional.ofNullable(this.endKey);
     }
 
+    /**
+     * Get the revision for the request
+     *
+     * @return the revision for the request
+     */
     public long getRevision() {
         return revision;
     }
 
+    /**
+     * Get the sort order for the request
+     *
+     * @return the sort order for the request
+     */
     public SortOrder getSortOrder() {
         return sortOrder;
     }
 
+    /**
+     * Get the sort field for the request
+     *
+     * @return the sort field for the request
+     */
     public SortTarget getSortField() {
         return sortTarget;
     }
 
+    /**
+     * Return if the consistency level for this request is "serializable".
+     * Note serializable is a lower than default consistency, and implies
+     * the possibility of getting stale data.
+     *
+     * @return true if this request is only serializable consistency
+     */
     public boolean isSerializable() {
         return serializable;
     }
 
+    /**
+     * True if this request should get only keys in a range and there is no
+     * need to retrieve the values.
+     *
+     * @return true if only get keys
+     */
     public boolean isKeysOnly() {
         return keysOnly;
     }
 
+    /**
+     * True if this request should only populate the count of keys matching
+     * a range, and no other data.
+     *
+     * @return true if only get the count of keys
+     */
     public boolean isCountOnly() {
         return countOnly;
     }
 
+    /**
+     * Only populate results for keys that match a
+     * minimum value for a created revision.
+     *
+     * <p>
+     * Note this filter does not affect the count field in GetResponse.
+     * {@link GetResponse#getCount()} always counts the number of keys matched on a range, independent of filters.
+     * For the same reason, it would be meaningless to mix setting a min create revision option
+     * with the count only option.
+     * </p>
+     *
+     * @return minimum created revision to match, or zero for any.
+     */
     public long getMinCreateRevision() {
         return this.minCreateRevision;
     }
 
+    /**
+     * Only populate results for keys that match a
+     * maximum value for a created revision.
+     *
+     * <p>
+     * Note this filter does not affect the count field in GetResponse.
+     * {@link GetResponse#getCount()} always counts the number of keys matched on a range, independent of filters.
+     * For the same reason, it would be meaningless to mix setting a max create revision option
+     * with the count only option.
+     * </p>
+     *
+     * @return maximum created revision to match, or zero for any.
+     */
     public long getMaxCreateRevision() {
         return this.maxCreateRevision;
     }
 
+    /**
+     * Only populate results for keys that match a
+     * minimum value for a modified revision.
+     *
+     * <p>
+     * Note this filter does not affect the count field in GetResponse.
+     * {@link GetResponse#getCount()} always counts the number of keys matched on a range, independent of filters.
+     * For the same reason, it would be meaningless to mix setting a min mod revision option
+     * with the count only option.
+     * </p>
+     *
+     * @return minimum modified revision to match, or zero for any.
+     */
     public long getMinModRevision() {
         return this.minModRevision;
     }
 
+    /**
+     * Only populate results for keys that match a
+     * maximum value for a modified revision.
+     *
+     * <p>
+     * Note this filter does not affect the count field in GetResponse.
+     * {@link GetResponse#getCount()} always counts the number of keys matched on a range, independent of filters.
+     * For the same reason, it would be meaningless to mix setting a max mod revision option
+     * with the count only option.
+     * </p>
+     *
+     * @return maximum modified revision to match, or zero for any.
+     */
     public long getMaxModRevision() {
         return this.maxModRevision;
     }
 
+    /**
+     * True if this Get request should do prefix match
+     *
+     * @return true if this Get request should do prefix match
+     */
     public boolean isPrefix() {
         return prefix;
     }
@@ -175,6 +278,13 @@ public final class GetOption {
 
         /**
          * Limit the number of keys to return for a get request. By default is 0 - no limitation.
+         *
+         * <p>
+         * Note this filter does not affect the count field in GetResponse.
+         * {@link GetResponse#getCount()} always counts the number of keys matched on a range, independent of filters.
+         * For the same reason, it would be meaningless to mix setting this option
+         * with the count only option.
+         * </p>
          *
          * @param  limit the maximum number of keys to return for a get request.
          * @return       builder
@@ -229,7 +339,9 @@ public final class GetOption {
          * <p>
          * Get requests are linearizable by
          * default. For better performance, a serializable get request is served locally without needing
-         * to reach consensus with other nodes in the cluster.
+         * to reach consensus with other nodes in the cluster. Note this is a tradeoff with strict
+         * consistency so it should be used with care in situations where reading stale
+         * is acceptable.
          *
          * @param  serializable is the get request a serializable get request.
          * @return              builder
@@ -316,9 +428,16 @@ public final class GetOption {
         }
 
         /**
-         * Limit returned keys to those with create revision greater than the provided value.
+         * Limit returned keys to those with create revision greater or equal than the provided value.
          * min_create_revision is the lower bound for returned key create revisions; all keys with
          * lesser create revisions will be filtered away.
+         *
+         * <p>
+         * Note this filter does not affect the count field in GetResponse.
+         * {@link GetResponse#getCount()} always counts the number of keys matched on a range, independent of filters.
+         * For the same reason, it would be meaningless to mix setting this option
+         * with the count only option.
+         * </p>
          *
          * @param  createRevision create revision
          * @return                builder
@@ -329,9 +448,16 @@ public final class GetOption {
         }
 
         /**
-         * Limit returned keys to those with create revision less than the provided value.
+         * Limit returned keys to those with create revision less or equal than the provided value.
          * max_create_revision is the upper bound for returned key create revisions; all keys with
          * greater create revisions will be filtered away.
+         *
+         * <p>
+         * Note this filter does not affect the count field in GetResponse.
+         * {@link GetResponse#getCount()} always counts the number of keys matched on a range, independent of filters.
+         * For the same reason, it would be meaningless to mix setting this option
+         * with the count only option.
+         * </p>
          *
          * @param  createRevision create revision
          * @return                builder
@@ -342,9 +468,16 @@ public final class GetOption {
         }
 
         /**
-         * Limit returned keys to those with mod revision greater than the provided value.
+         * Limit returned keys to those with mod revision greater or equal than the provided value.
          * min_mod_revision is the lower bound for returned key mod revisions; all keys with lesser mod
          * revisions will be filtered away.
+         *
+         * <p>
+         * Note this filter does not affect the count field in GetResponse.
+         * {@link GetResponse#getCount()} always counts the number of keys matched on a range, independent of filters.
+         * For the same reason, it would be meaningless to mix setting this option
+         * with the count only option.
+         * </p>
          *
          * @param  modRevision mod revision
          * @return             this builder instance
@@ -355,9 +488,16 @@ public final class GetOption {
         }
 
         /**
-         * Limit returned keys to those with mod revision less than the provided value. max_mod_revision
+         * Limit returned keys to those with mod revision less or equal than the provided value. max_mod_revision
          * is the upper bound for returned key mod revisions; all keys with greater mod revisions will
          * be filtered away.
+         *
+         * <p>
+         * Note this filter does not affect the count field in GetResponse.
+         * {@link GetResponse#getCount()} always counts the number of keys matched on a range, independent of filters.
+         * For the same reason, it would be meaningless to mix setting this option
+         * with the count only option.
+         * </p>
          *
          * @param  modRevision mod revision
          * @return             this builder instance

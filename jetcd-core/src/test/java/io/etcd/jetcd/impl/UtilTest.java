@@ -39,16 +39,18 @@ class UtilTest {
     }
 
     @Test
-    public void testAuthErrorIsNotRetryable() {
+    public void testAuthErrorIsRetryable() {
         Status authErrorStatus = Status.UNAUTHENTICATED
             .withDescription("etcdserver: invalid auth token");
         Status status = Status.fromThrowable(new StatusException(authErrorStatus));
-        assertThat(Errors.isRetryable(status)).isTrue();
+        assertThat(Errors.isRetryableForNoSafeRedoOp(status)).isTrue();
+        assertThat(Errors.isRetryableForSafeRedoOp(status)).isTrue();
     }
 
     @Test
     public void testUnavailableErrorIsRetryable() {
         Status status = Status.fromThrowable(new StatusException(Status.UNAVAILABLE));
-        assertThat(Errors.isRetryable(status)).isTrue();
+        assertThat(Errors.isRetryableForNoSafeRedoOp(status)).isFalse();
+        assertThat(Errors.isRetryableForSafeRedoOp(status)).isTrue();
     }
 }
