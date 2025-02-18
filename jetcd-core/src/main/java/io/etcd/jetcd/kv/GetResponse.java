@@ -58,7 +58,7 @@ public class GetResponse extends AbstractResponse<RangeResponse> {
     }
 
     /**
-     * Returns the number of keys within the range when requested.
+     * Returns the number of keys within the range requested.
      * Note this value is never affected by filtering options (limit, min or max created or modified revisions)
      * Count is the count for keys on the range part of a request.
      * Filters for limit and created or modified revision ranges restrict the
