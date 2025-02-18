@@ -16,7 +16,7 @@ autoService = "1.1.1"
 errorprone = "2.30.0"
 vertx = "4.5.13"
 picocli = "4.7.6"
-restAssured = "5.5.0"
+restAssured = "5.5.1"
 javaxAnnotation = "1.3.2"
 
 versionsPlugin = "0.51.0"
