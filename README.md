@@ -111,7 +111,7 @@ The project is tested against a three node `etcd` setup started with the Launche
 
 ```sh
 $ ./gradlew test
-````
+```
 
 ### Troubleshooting
 
