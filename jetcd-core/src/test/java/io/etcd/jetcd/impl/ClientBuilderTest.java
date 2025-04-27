@@ -51,6 +51,11 @@ public class ClientBuilderTest {
     }
 
     @Test
+    public void testVertx_Null() {
+        assertThatThrownBy(() -> Client.builder().vertx(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     public void testEndPoints_Verify_Empty() {
         assertThatThrownBy(() -> Client.builder().endpoints(new URI(""))).isInstanceOf(IllegalArgumentException.class);
     }

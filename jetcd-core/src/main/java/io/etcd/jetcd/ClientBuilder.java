@@ -37,6 +37,7 @@ import io.grpc.Metadata;
 import io.grpc.netty.GrpcSslContexts;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.vertx.core.Vertx;
 
 import com.google.common.base.Strings;
 
@@ -68,6 +69,7 @@ public final class ClientBuilder implements Cloneable {
     private Duration retryMaxDuration;
     private Duration connectTimeout;
     private boolean waitForReady = true;
+    private Vertx vertx;
 
     ClientBuilder() {
     }
@@ -704,6 +706,30 @@ public final class ClientBuilder implements Cloneable {
      */
     public ClientBuilder waitForReady(boolean waitForReady) {
         this.waitForReady = waitForReady;
+        return this;
+    }
+
+    /**
+     * Gets the Vertx instance.
+     *
+     * @return the vertx instance.
+     */
+    public Vertx vertx() {
+        return vertx;
+    }
+
+    /**
+     * configure Vertx instance.
+     *
+     * @param  vertx                    Vertx instance to use.
+     * @return                          this builder to train
+     * @throws IllegalArgumentException if vertx is null
+     */
+    public ClientBuilder vertx(Vertx vertx) {
+        Preconditions.checkArgument(vertx != null, "vertx can't be null");
+
+        this.vertx = vertx;
+
         return this;
     }
 
