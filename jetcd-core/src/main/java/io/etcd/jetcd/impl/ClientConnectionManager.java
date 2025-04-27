@@ -61,6 +61,10 @@ final class ClientConnectionManager {
         } else {
             this.executorService = builder.executorService();
         }
+
+        if (builder.vertx() != null) {
+            this.vertx = builder.vertx();
+        }
     }
 
     ManagedChannel getChannel() {
