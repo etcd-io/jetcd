@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -357,7 +356,7 @@ final class WatchImpl extends Impl implements Watch {
         private void reschedule() {
             Futures.addCallback(executor.schedule(this::resume, 500, TimeUnit.MILLISECONDS), new FutureCallback<Object>() {
                 @Override
-                public void onFailure(@NonNull Throwable t) {
+                public void onFailure(Throwable t) {
                     LOG.warn("scheduled resume failed", t);
                 }
 

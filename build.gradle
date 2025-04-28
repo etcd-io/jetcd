@@ -76,6 +76,13 @@ subprojects {
             maxFailures = 5
         }
     }
+    testing {
+        suites {
+            test {
+                useJUnitJupiter()
+            }
+        }
+    }
 
     testlogger {
         theme 'mocha-parallel'
