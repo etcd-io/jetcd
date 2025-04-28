@@ -15,7 +15,7 @@ commonCompress = "1.27.1"
 autoService = "1.1.1"
 errorprone = "2.30.0"
 vertx = "4.5.14"
-picocli = "4.7.6"
+picocli = "4.7.7"
 restAssured = "5.5.1"
 javaxAnnotation = "1.3.2"
 
