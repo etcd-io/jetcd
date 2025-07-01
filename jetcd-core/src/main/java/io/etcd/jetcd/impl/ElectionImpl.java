@@ -135,7 +135,7 @@ final class ElectionImpl extends Impl implements Election {
         requireNonNull(listener, "listener should not be null");
 
         LeaderRequest request = LeaderRequest.newBuilder()
-            .setName(ByteString.copyFrom(electionName.getBytes()))
+            .setName(Util.prefixNamespace(electionName, namespace))
             .build();
 
         stubWithLeader().observeWithHandler(request,
