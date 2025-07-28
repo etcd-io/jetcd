@@ -72,6 +72,15 @@ public class MaintenanceTest {
     public void testStatusMember() throws ExecutionException, InterruptedException {
         StatusResponse statusResponse = maintenance.statusMember(endpoints.get(0)).get();
         assertThat(statusResponse.getDbSize()).isGreaterThan(0);
+        assertThat(statusResponse.getRaftIndex()).isGreaterThan(0);
+        assertThat(statusResponse.getRaftAppliedIndex())
+            .isGreaterThan(0)
+            .isLessThanOrEqualTo(statusResponse.getRaftIndex());
+        assertThat(statusResponse.getDbSizeInUse())
+            .isGreaterThan(0)
+            .isLessThanOrEqualTo(statusResponse.getDbSize());
+        assertThat(statusResponse.isLearner()).isFalse();
+        assertThat(statusResponse.getErrorList().size()).isEqualTo(0);
     }
 
     @Test
