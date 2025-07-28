@@ -99,6 +99,9 @@ service Cluster {
 
   // MemberList lists all the members in the cluster.
   rpc MemberList(MemberListRequest) returns (MemberListResponse) {}
+
+  // MemberPromote promotes a member from raft learner (non-voting) to raft voting member.
+  rpc MemberPromote(MemberPromoteRequest) returns (MemberPromoteResponse) {}
 }
 
 service Maintenance {
@@ -656,6 +659,17 @@ message MemberListRequest {
 message MemberListResponse {
   ResponseHeader header = 1;
   // members is a list of all members associated with the cluster.
+  repeated Member members = 2;
+}
+
+message MemberPromoteRequest {
+  // ID is the member ID of the member to promote.
+  uint64 ID = 1;
+}
+
+message MemberPromoteResponse {
+  ResponseHeader header = 1;
+  // members is a list of all members after promoting the member.
   repeated Member members = 2;
 }
 
