@@ -41,8 +41,8 @@ import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.support.Errors;
 import io.etcd.jetcd.support.Util;
 import io.grpc.Status;
-import io.vertx.core.streams.WriteStream;
 import io.grpc.stub.ClientCallStreamObserver;
+import io.vertx.core.streams.WriteStream;
 import io.vertx.grpc.stub.GrpcWriteStream;
 
 import com.google.common.base.Strings;
