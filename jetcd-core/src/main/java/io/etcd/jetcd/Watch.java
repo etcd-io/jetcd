@@ -232,7 +232,7 @@ public interface Watch extends CloseableClient {
         boolean isClosed();
 
         /**
-         * cancel the watch
+         * cancel the watcher
          */
         void cancel();
 
