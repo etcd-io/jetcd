@@ -226,13 +226,20 @@ final class WatchImpl extends Impl implements Watch {
 
         @Override
         public void cancel() {
-            WriteStream<WatchRequest> ws = wstream.get();
-            if (ws instanceof GrpcWriteStream<?>) {
-                GrpcWriteStream<?> gws = (GrpcWriteStream<?>) ws;
-                var observer = gws.streamObserver();
-                if (observer instanceof ClientCallStreamObserver<?>) {
-                    ClientCallStreamObserver<?> callObs = (ClientCallStreamObserver<?>) observer;
-                    callObs.cancel("Watcher cancelled", null);
+            synchronized (WatchImpl.this.lock) {
+                if (closed.compareAndSet(false, true)) {
+                    WriteStream<WatchRequest> ws = wstream.get();
+                    if (ws instanceof GrpcWriteStream<?>) {
+                        GrpcWriteStream<?> gws = (GrpcWriteStream<?>) ws;
+                        var observer = gws.streamObserver();
+                        if (observer instanceof ClientCallStreamObserver<?>) {
+                            ClientCallStreamObserver<?> callObs = (ClientCallStreamObserver<?>) observer;
+                            callObs.cancel("Watcher cancelled", null);
+                        }
+                    }
+                    id = -1;
+                    listener.onCompleted();
+                    watchers.remove(this);
                 }
             }
         }
