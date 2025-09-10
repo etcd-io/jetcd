@@ -232,6 +232,11 @@ public interface Watch extends CloseableClient {
         boolean isClosed();
 
         /**
+         * cancel the watch
+         */
+        void cancel();
+
+        /**
          * Requests the latest revision processed and propagates it to listeners
          */
         void requestProgress();

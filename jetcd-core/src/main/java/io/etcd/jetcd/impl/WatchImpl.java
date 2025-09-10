@@ -42,6 +42,8 @@ import io.etcd.jetcd.support.Errors;
 import io.etcd.jetcd.support.Util;
 import io.grpc.Status;
 import io.vertx.core.streams.WriteStream;
+import io.grpc.stub.ClientCallStreamObserver;
+import io.vertx.grpc.stub.GrpcWriteStream;
 
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.FutureCallback;
@@ -218,6 +220,20 @@ final class WatchImpl extends Impl implements Watch {
 
                     // remote the watcher from the watchers list
                     watchers.remove(this);
+                }
+            }
+        }
+
+        @Override
+        public void cancel() {
+            System.out.println("cancel-10");
+            WriteStream<WatchRequest> ws = wstream.get();
+            if (ws != null && ws instanceof GrpcWriteStream) {
+                GrpcWriteStream<WatchRequest> gws = (GrpcWriteStream<WatchRequest>) ws;
+                var observer = gws.streamObserver();
+                if (observer instanceof ClientCallStreamObserver) {
+                    ClientCallStreamObserver<WatchRequest> callObs = (ClientCallStreamObserver<WatchRequest>) observer;
+                    callObs.cancel("Watcher cancelled", null);
                 }
             }
         }
