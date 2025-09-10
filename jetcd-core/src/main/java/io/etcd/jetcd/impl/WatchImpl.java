@@ -226,7 +226,6 @@ final class WatchImpl extends Impl implements Watch {
 
         @Override
         public void cancel() {
-            System.out.println("cancel-12");
             WriteStream<WatchRequest> ws = wstream.get();
             if (ws instanceof GrpcWriteStream<?>) {
                 GrpcWriteStream<?> gws = (GrpcWriteStream<?>) ws;
