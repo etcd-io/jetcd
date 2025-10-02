@@ -65,7 +65,7 @@ kvClient.delete(key).get();
 ```
 To build one ssl secured client, refer to [secured client config](docs/SslConfig.md).
 
-For full etcd v3 API, plesase refer to the [official API documentation](https://etcd.io/docs/current/learning/api/).
+For full etcd v3 API, pleases refer to the [official API documentation](https://etcd.io/docs/current/learning/api/).
 
 ### Examples
 
@@ -115,7 +115,7 @@ $ ./gradlew test
 
 ### Troubleshooting
 
-It recommmonds building the project before running tests so that you have artifacts locally. It will solve some problems if the latest snapshot hasn't been uploaded or network issues.
+It recommends building the project before running tests so that you have artifacts locally. It will solve some problems if the latest snapshot hasn't been uploaded or network issues.
 
 ## Contact
 
