@@ -203,15 +203,6 @@ final class WatchImpl extends Impl implements Watch {
             synchronized (WatchImpl.this.lock) {
                 if (closed.compareAndSet(false, true)) {
                     if (wstream.get() != null) {
-                        if (id != -1) {
-                            final WatchCancelRequest watchCancelRequest = WatchCancelRequest.newBuilder().setWatchId(this.id)
-                                .build();
-                            final WatchRequest request = WatchRequest.newBuilder().setCancelRequest(watchCancelRequest).build();
-
-                            wstream.get().end(request);
-                        } else {
-                            wstream.get().end();
-                        }
                         WriteStream<WatchRequest> ws = wstream.get();
                         if (ws instanceof GrpcWriteStream<?>) {
                             GrpcWriteStream<?> gws = (GrpcWriteStream<?>) ws;
