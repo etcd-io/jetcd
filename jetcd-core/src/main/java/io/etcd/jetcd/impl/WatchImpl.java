@@ -212,6 +212,15 @@ final class WatchImpl extends Impl implements Watch {
                         } else {
                             wstream.get().end();
                         }
+                        WriteStream<WatchRequest> ws = wstream.get();
+                        if (ws instanceof GrpcWriteStream<?>) {
+                            GrpcWriteStream<?> gws = (GrpcWriteStream<?>) ws;
+                            var observer = gws.streamObserver();
+                            if (observer instanceof ClientCallStreamObserver<?>) {
+                                ClientCallStreamObserver<?> callObs = (ClientCallStreamObserver<?>) observer;
+                                callObs.cancel("Watcher cancelled", null);
+                            }
+                        }
                     }
 
                     id = -1;
@@ -219,26 +228,6 @@ final class WatchImpl extends Impl implements Watch {
                     listener.onCompleted();
 
                     // remote the watcher from the watchers list
-                    watchers.remove(this);
-                }
-            }
-        }
-
-        @Override
-        public void cancel() {
-            synchronized (WatchImpl.this.lock) {
-                if (closed.compareAndSet(false, true)) {
-                    WriteStream<WatchRequest> ws = wstream.get();
-                    if (ws instanceof GrpcWriteStream<?>) {
-                        GrpcWriteStream<?> gws = (GrpcWriteStream<?>) ws;
-                        var observer = gws.streamObserver();
-                        if (observer instanceof ClientCallStreamObserver<?>) {
-                            ClientCallStreamObserver<?> callObs = (ClientCallStreamObserver<?>) observer;
-                            callObs.cancel("Watcher cancelled", null);
-                        }
-                    }
-                    id = -1;
-                    listener.onCompleted();
                     watchers.remove(this);
                 }
             }
