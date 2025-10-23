@@ -430,4 +430,33 @@ public class WatchUnitTest {
             assertThat(watcher.isClosed()).isTrue();
         }
     }
+
+    @Test
+    public void testWatcherCloseSendsRstStream() throws InterruptedException {
+        CountDownLatch closeLatch = new CountDownLatch(1);
+        Watch.Listener listener = Watch.listener(
+            TestUtil::noOpWatchResponseConsumer,
+            () -> closeLatch.countDown());
+
+        Watch.Watcher watcher = watchClient.watch(KEY, listener);
+        try {
+            WatchResponse createdResponse = createWatchResponse(0);
+            responseObserverRef.get().onNext(createdResponse);
+
+            Thread.sleep(100);
+
+            watcher.close();
+
+            boolean closedCompleted = closeLatch.await(1, TimeUnit.SECONDS);
+            assertThat(closedCompleted).isTrue();
+
+            assertThat(watcher.isClosed()).isTrue();
+
+            verify(requestStreamObserverMock, timeout(100).atLeast(1)).onNext(argThat(hasCreateKey(KEY)));
+        } finally {
+            if (!watcher.isClosed()) {
+                watcher.close();
+            }
+        }
+    }
 }
