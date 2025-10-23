@@ -443,8 +443,6 @@ public class WatchUnitTest {
             WatchResponse createdResponse = createWatchResponse(0);
             responseObserverRef.get().onNext(createdResponse);
 
-            Thread.sleep(100);
-
             watcher.close();
 
             boolean closedCompleted = closeLatch.await(1, TimeUnit.SECONDS);
