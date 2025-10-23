@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.api.VertxWatchGrpc;
-import io.etcd.jetcd.api.WatchCancelRequest;
 import io.etcd.jetcd.api.WatchCreateRequest;
 import io.etcd.jetcd.api.WatchProgressRequest;
 import io.etcd.jetcd.api.WatchRequest;
