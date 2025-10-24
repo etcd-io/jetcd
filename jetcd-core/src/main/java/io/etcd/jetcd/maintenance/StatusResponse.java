@@ -16,6 +16,8 @@
 
 package io.etcd.jetcd.maintenance;
 
+import java.util.List;
+
 import io.etcd.jetcd.Maintenance;
 import io.etcd.jetcd.impl.AbstractResponse;
 
@@ -72,5 +74,41 @@ public class StatusResponse extends AbstractResponse<io.etcd.jetcd.api.StatusRes
      */
     public long getRaftTerm() {
         return getResponse().getRaftTerm();
+    }
+
+    /**
+     * Returns the current raft applied index of the responding member.
+     *
+     * @return the raft applied index.
+     */
+    public long getRaftAppliedIndex() {
+        return getResponse().getRaftAppliedIndex();
+    }
+
+    /**
+     * Return the information corresponding to the alarms, health and status.
+     *
+     * @return the list of errors
+     */
+    public List<String> getErrorList() {
+        return getResponse().getErrorsList();
+    }
+
+    /**
+     * Returns the size of the backend database logically in use, in bytes, of the responding member.
+     *
+     * @return dbSizeInUse
+     */
+    public long getDbSizeInUse() {
+        return getResponse().getDbSizeInUse();
+    }
+
+    /**
+     * Returns if the member is a raft learner.
+     *
+     * @return if the member is a raft learner
+     */
+    public boolean isLearner() {
+        return getResponse().getIsLearner();
     }
 }
