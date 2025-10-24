@@ -1,6 +1,6 @@
 [versions]
 grpc = "1.75.0"
-log4j = "2.25.1"
+log4j = "2.25.2"
 mockito = "5.20.0"
 slf4j = "2.0.17"
 guava = "33.4.8-jre"
