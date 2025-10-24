@@ -22,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 
 import io.etcd.jetcd.cluster.MemberAddResponse;
 import io.etcd.jetcd.cluster.MemberListResponse;
+import io.etcd.jetcd.cluster.MemberPromoteResponse;
 import io.etcd.jetcd.cluster.MemberRemoveResponse;
 import io.etcd.jetcd.cluster.MemberUpdateResponse;
 import io.etcd.jetcd.support.CloseableClient;
@@ -72,4 +73,11 @@ public interface Cluster extends CloseableClient {
      */
     CompletableFuture<MemberUpdateResponse> updateMember(long memberID, List<URI> peerAddrs);
 
+    /**
+     * Promotes a member from raft learner (non-voting) to raft voting member.
+     *
+     * @param  memberID the raft learner to be promoted to a raft voting member.
+     * @return          the response
+     */
+    CompletableFuture<MemberPromoteResponse> promoteMember(long memberID);
 }

@@ -18,6 +18,7 @@ package io.etcd.jetcd.impl;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -29,9 +30,11 @@ import org.testcontainers.containers.Network;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Cluster;
 import io.etcd.jetcd.cluster.Member;
+import io.etcd.jetcd.cluster.MemberPromoteResponse;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 @Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class ClusterMembersTest {
@@ -111,5 +114,24 @@ public class ClusterMembersTest {
         List<Member> members = clusterClient.listMember().get().getMembers();
         assertThat(members).hasSize(2);
         assertThat(members.stream().filter(Member::isLearner).findAny()).isPresent();
+    }
+
+    @Test
+    public void testMemberManagementAddLearnerAndPromote() throws ExecutionException, InterruptedException, TimeoutException {
+        final Client client = Client.builder().endpoints(n1.clientEndpoints()).build();
+        final Cluster clusterClient = client.getClusterClient();
+
+        Member m2 = clusterClient.addMember(n2.peerEndpoints(), true)
+            .get(5, TimeUnit.SECONDS)
+            .getMember();
+
+        assertThat(m2).isNotNull();
+        assertThat(m2.isLearner()).isTrue();
+
+        // Now attempt to promote a member; although it fails, it confirms that the API was executed.
+        Future<MemberPromoteResponse> promoteResponseFuture = clusterClient.promoteMember(m2.getId());
+        assertThatExceptionOfType(ExecutionException.class)
+            .isThrownBy(promoteResponseFuture::get).withMessageEndingWith(
+                "io.etcd.jetcd.common.exception.EtcdException: etcdserver: can only promote a learner member which is in sync with leader");
     }
 }
