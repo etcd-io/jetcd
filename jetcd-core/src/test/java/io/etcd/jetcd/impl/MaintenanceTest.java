@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.output.NullOutputStream;
@@ -105,11 +106,17 @@ public class MaintenanceTest {
         final Long bytes = maintenance.snapshot(NullOutputStream.INSTANCE).get();
         final AtomicLong count = new AtomicLong();
         final CountDownLatch latcht = new CountDownLatch(1);
+        ReentrantLock reentrantLock = new ReentrantLock(true);
 
         maintenance.snapshot(new StreamObserver<SnapshotResponse>() {
             @Override
             public void onNext(SnapshotResponse value) {
-                count.addAndGet(value.getBlob().size());
+                reentrantLock.lock();
+                try {
+                    count.addAndGet(value.getBlob().size());
+                } finally {
+                    reentrantLock.unlock();
+                }
             }
 
             @Override
@@ -119,7 +126,12 @@ public class MaintenanceTest {
 
             @Override
             public void onCompleted() {
-                latcht.countDown();
+                reentrantLock.lock();
+                try {
+                    latcht.countDown();
+                } finally {
+                    reentrantLock.unlock();
+                }
             }
         });
 
