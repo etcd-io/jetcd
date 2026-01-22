@@ -23,6 +23,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.vertx.core.Context;
+import io.vertx.core.Vertx;
+import io.vertx.core.streams.ReadStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,6 +155,13 @@ final class WatchImpl extends Impl implements Watch {
             return this.closed.get() || WatchImpl.this.closed.get();
         }
 
+        public void executeOrdered(
+            SerializingExecutor serializingExecutor,
+            Runnable runnable
+        ) {
+            serializingExecutor.execute(() -> connectionManager().getExecutorService().execute(runnable));
+        }
+
         void resume() {
             if (isClosed()) {
                 return;
@@ -183,15 +193,62 @@ final class WatchImpl extends Impl implements Watch {
                     builder.addFilters(WatchCreateRequest.FilterType.NOPUT);
                 }
 
-                var ignored = Util.applyRequireLeader(option.withRequireLeader(), stub)
-                    .watchWithHandler(
-                        stream -> {
-                            wstream.set(stream);
-                            stream.write(WatchRequest.newBuilder().setCreateRequest(builder).build());
-                        },
-                        this::onNext,
-                        event -> onCompleted(),
-                        this::onError);
+                ReadStream<WatchResponse> readStream = Util.applyRequireLeader(option.withRequireLeader(), stub)
+                    .watch(
+                    stream -> {
+                        wstream.set(stream);
+                        stream.write(WatchRequest.newBuilder().setCreateRequest(builder).build());
+                    });
+
+                SerializingExecutor serializingExecutor = new SerializingExecutor();
+
+                readStream
+                    .handler(response -> {
+                        readStream.pause();
+                        executeOrdered(serializingExecutor, () -> {
+                            try {
+                                onNext(response);
+                            } catch (Throwable t) {
+                                cancelStream();
+                                return;
+                            }
+                            Context context = Vertx.currentContext();
+                            if (context != null) {
+                                context.runOnContext(v -> readStream.resume());
+                            } else {
+                                // In test InProcess channel
+                                readStream.resume();
+                            }
+                        });
+                    })
+                    .exceptionHandler(t -> executeOrdered(serializingExecutor, () -> {
+                        try {
+                            onError(t);
+                        } catch (Throwable ex) {
+                            LOG.error("Unhandled exception in watch onError handler", ex);
+                        }
+                    }))
+                    .endHandler(v -> executeOrdered(serializingExecutor, () -> {
+                        try {
+                            onCompleted();
+                        } catch (Throwable t) {
+                            LOG.error("Unhandled exception in watch onCompleted handler", t);
+                        }
+                    }));
+            }
+        }
+
+        private void cancelStream() {
+            if (wstream.get() != null) {
+                WriteStream<WatchRequest> ws = wstream.get();
+                if (ws instanceof GrpcWriteStream<?>) {
+                    GrpcWriteStream<?> gws = (GrpcWriteStream<?>) ws;
+                    var observer = gws.streamObserver();
+                    if (observer instanceof ClientCallStreamObserver<?>) {
+                        ClientCallStreamObserver<?> callObs = (ClientCallStreamObserver<?>) observer;
+                        callObs.cancel("Watcher cancelled", null);
+                    }
+                }
             }
         }
 
@@ -201,17 +258,7 @@ final class WatchImpl extends Impl implements Watch {
             // sync with onError()
             synchronized (WatchImpl.this.lock) {
                 if (closed.compareAndSet(false, true)) {
-                    if (wstream.get() != null) {
-                        WriteStream<WatchRequest> ws = wstream.get();
-                        if (ws instanceof GrpcWriteStream<?>) {
-                            GrpcWriteStream<?> gws = (GrpcWriteStream<?>) ws;
-                            var observer = gws.streamObserver();
-                            if (observer instanceof ClientCallStreamObserver<?>) {
-                                ClientCallStreamObserver<?> callObs = (ClientCallStreamObserver<?>) observer;
-                                callObs.cancel("Watcher cancelled", null);
-                            }
-                        }
-                    }
+                    cancelStream();
 
                     id = -1;
 
