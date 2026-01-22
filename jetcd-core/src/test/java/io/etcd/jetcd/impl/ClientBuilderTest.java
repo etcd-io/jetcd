@@ -29,7 +29,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
-import io.vertx.grpc.VertxChannelBuilder;
+import io.grpc.netty.NettyChannelBuilder;
 
 import static io.etcd.jetcd.impl.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -75,10 +75,10 @@ public class ClientBuilderTest {
     public void testMaxInboundMessageSize() throws URISyntaxException {
         final int value = 1024 + new Random().nextInt(10);
         final ClientBuilder builder = Client.builder().endpoints(new URI("http://127.0.0.1:2379")).maxInboundMessageSize(value);
-        final VertxChannelBuilder channelBuilder = (VertxChannelBuilder) new ClientConnectionManager(builder)
+        final NettyChannelBuilder channelBuilder = (NettyChannelBuilder) new ClientConnectionManager(builder)
             .defaultChannelBuilder();
 
-        assertThat(channelBuilder.nettyBuilder()).hasFieldOrPropertyWithValue("maxInboundMessageSize", value);
+        assertThat(channelBuilder).hasFieldOrPropertyWithValue("maxInboundMessageSize", value);
     }
 
     @Test
