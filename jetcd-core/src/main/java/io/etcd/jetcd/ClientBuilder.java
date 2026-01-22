@@ -70,6 +70,7 @@ public final class ClientBuilder implements Cloneable {
     private Duration connectTimeout;
     private boolean waitForReady = true;
     private Vertx vertx;
+    private boolean useVertx = false;
 
     ClientBuilder() {
     }
@@ -710,6 +711,25 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
+     * Returns whether to use Vertx for gRPC channel creation.
+     *
+     * @return true if using Vertx for gRPC channel creation.
+     */
+    public boolean isUsingVertx() {
+        return useVertx;
+    }
+
+    /**
+     * Use Vertx for gRPC channel creation instead of default grpc-netty.
+     *
+     * @return this builder
+     */
+    public ClientBuilder useVertx() {
+        useVertx = true;
+        return this;
+    }
+
+    /**
      * Gets the Vertx instance.
      *
      * @return the vertx instance.
@@ -729,6 +749,7 @@ public final class ClientBuilder implements Cloneable {
         Preconditions.checkArgument(vertx != null, "vertx can't be null");
 
         this.vertx = vertx;
+        this.useVertx = true;
 
         return this;
     }

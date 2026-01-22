@@ -29,6 +29,7 @@ import io.etcd.jetcd.support.Util;
 import io.grpc.*;
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall;
 import io.grpc.netty.NegotiationType;
+import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.AbstractStub;
 import io.netty.channel.ChannelOption;
 import io.vertx.core.Vertx;
@@ -159,7 +160,15 @@ final class ClientConnectionManager {
             throw new IllegalArgumentException("At least one endpoint should be provided");
         }
 
-        final VertxChannelBuilder channelBuilder = VertxChannelBuilder.forTarget(vertx(), target);
+        final ManagedChannelBuilder channelBuilder;
+        final NettyChannelBuilder nettyChannelBuilder;
+        if (builder.isUsingVertx()) {
+            channelBuilder = VertxChannelBuilder.forTarget(vertx(), target);
+            nettyChannelBuilder = ((VertxChannelBuilder) channelBuilder).nettyBuilder();
+        } else {
+            channelBuilder = NettyChannelBuilder.forTarget(target);
+            nettyChannelBuilder = (NettyChannelBuilder) channelBuilder;
+        }
 
         if (builder.authority() != null) {
             channelBuilder.overrideAuthority(builder.authority());
@@ -168,10 +177,10 @@ final class ClientConnectionManager {
             channelBuilder.maxInboundMessageSize(builder.maxInboundMessageSize());
         }
         if (builder.sslContext() != null) {
-            channelBuilder.nettyBuilder().negotiationType(NegotiationType.TLS);
-            channelBuilder.nettyBuilder().sslContext(builder.sslContext());
+            nettyChannelBuilder.negotiationType(NegotiationType.TLS);
+            nettyChannelBuilder.sslContext(builder.sslContext());
         } else {
-            channelBuilder.nettyBuilder().negotiationType(NegotiationType.PLAINTEXT);
+            nettyChannelBuilder.negotiationType(NegotiationType.PLAINTEXT);
         }
 
         if (builder.keepaliveTime() != null) {
@@ -184,7 +193,7 @@ final class ClientConnectionManager {
             channelBuilder.keepAliveWithoutCalls(builder.keepaliveWithoutCalls());
         }
         if (builder.connectTimeout() != null) {
-            channelBuilder.nettyBuilder().withOption(ChannelOption.CONNECT_TIMEOUT_MILLIS,
+            nettyChannelBuilder.withOption(ChannelOption.CONNECT_TIMEOUT_MILLIS,
                 (int) builder.connectTimeout().toMillis());
         }
 
