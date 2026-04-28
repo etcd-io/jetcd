@@ -16,7 +16,6 @@
 
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
-apply plugin: 'signing'
 
 java {
     withJavadocJar()
@@ -75,18 +74,6 @@ publishing {
             }
         }
     }
-}
-
-signing {
-    required {
-        !version.endsWith('SNAPSHOT')
-    }
-
-    if (!version.endsWith('SNAPSHOT')) {
-        useGpgCmd()
-    }
-
-    sign publishing.publications."${project.name}"
 }
 
 check.dependsOn javadoc

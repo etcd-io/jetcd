@@ -22,7 +22,7 @@ buildscript {
         classpath "com.github.ben-manes:gradle-versions-plugin:${libs.versions.versionsPlugin.get()}"
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${libs.versions.spotlessPlugin.get()}"
         classpath "net.ltgt.gradle:gradle-errorprone-plugin:${libs.versions.errorPronePlugin.get()}"
-        classpath "io.github.gradle-nexus:publish-plugin:${libs.versions.nexusPublishPlugin.get()}"
+        classpath "org.jreleaser:jreleaser-gradle-plugin:${libs.versions.jreleaserPlugin.get()}"
         classpath "com.adarshr:gradle-test-logger-plugin:${libs.versions.testLoggerPlugin.get()}"
         classpath "pl.allegro.tech.build:axion-release-plugin:${libs.versions.axionReleasePlugin.get()}"
         classpath "org.gradle:test-retry-gradle-plugin:${libs.versions.testRetryPlugin.get()}"
@@ -30,8 +30,8 @@ buildscript {
 }
 
 apply from: "${rootProject.projectDir}/gradle/versions.gradle"
-apply from: "${rootProject.projectDir}/gradle/publish.gradle"
 apply from: "${rootProject.projectDir}/gradle/release.gradle"
+apply from: "${rootProject.projectDir}/gradle/publish.gradle"
 
 group = 'io.etcd'
 
@@ -96,5 +96,3 @@ subprojects {
         reproducibleFileOrder = true
     }
 }
-
-
