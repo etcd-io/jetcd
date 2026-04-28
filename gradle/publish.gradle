@@ -14,29 +14,140 @@
  * limitations under the License.
  */
 
-apply plugin: "signing"
-apply plugin: "maven-publish"
-apply plugin: "io.github.gradle-nexus.publish-plugin"
+apply plugin: 'base'
+apply plugin: 'org.jreleaser'
 
-ext {
-    if (!project.hasProperty('nexusUsername')) {
-        nexusUsername = "$System.env.NEXUS_USERNAME"
-    }
-    if (!project.hasProperty('nexusPassword')) {
-        nexusPassword = "$System.env.NEXUS_PASSWORD"
-    }
+def jreleaserStagingDirectory = rootProject.layout.buildDirectory.dir('staging-deploy')
+def hasJReleaserPublicKey = providers.environmentVariable('JRELEASER_GPG_PUBLIC_KEY').isPresent()
+def hasJReleaserSecretKey = providers.environmentVariable('JRELEASER_GPG_SECRET_KEY').isPresent()
+def hasJReleaserMemoryKeys = hasJReleaserPublicKey && hasJReleaserSecretKey
+
+if (hasJReleaserPublicKey != hasJReleaserSecretKey) {
+    throw new GradleException(
+        'Both JRELEASER_GPG_PUBLIC_KEY and JRELEASER_GPG_SECRET_KEY must be set when using JReleaser memory signing.'
+    )
 }
 
-nexusPublishing {
-    repositories {
-        sonatype {
-            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
-
-            username = nexusUsername
-            password = nexusPassword
+subprojects {
+    plugins.withId('maven-publish') {
+        publishing {
+            repositories {
+                maven {
+                    name = 'JReleaserStaging'
+                    url = jreleaserStagingDirectory
+                }
+            }
         }
     }
 }
 
-//afterReleaseBuild.dependsOn publishToSonatype
+jreleaser {
+    project {
+        name = 'jetcd'
+    }
+
+    signing {
+        pgp {
+            active = 'RELEASE'
+            armored = true
+            mode = hasJReleaserMemoryKeys ? 'MEMORY' : 'COMMAND'
+
+            if (!hasJReleaserMemoryKeys) {
+                command {
+                    executable = findProperty('signing.gnupg.executable') ?: 'gpg'
+
+                    if (findProperty('signing.gnupg.keyName')) {
+                        keyName = findProperty('signing.gnupg.keyName')
+                    }
+
+                    if (findProperty('signing.gnupg.passphrase')) {
+                        passphrase = findProperty('signing.gnupg.passphrase')
+                    }
+                }
+            }
+        }
+    }
+
+    deploy {
+        maven {
+            mavenCentral {
+                'release-deploy' {
+                    active = 'RELEASE'
+                    url = 'https://central.sonatype.com/api/v1/publisher'
+                    username = findProperty('nexusUsername')
+                    password = findProperty('nexusPassword')
+                    stagingRepository(jreleaserStagingDirectory.get().asFile.path)
+                }
+            }
+            nexus2 {
+                'snapshot-deploy' {
+                    active = 'SNAPSHOT'
+                    snapshotUrl = 'https://central.sonatype.com/repository/maven-snapshots/'
+                    applyMavenCentralRules = false
+                    snapshotSupported = true
+                    closeRepository = true
+                    releaseRepository = true
+                    username = findProperty('nexusUsername')
+                    password = findProperty('nexusPassword')
+                    stagingRepository(jreleaserStagingDirectory.get().asFile.path)
+                }
+            }
+        }
+    }
+}
+
+tasks.register('stageArtifacts') {
+    group = 'publishing'
+    description = 'Stages all Maven publications locally for JReleaser.'
+}
+
+tasks.register('deployArtifacts') {
+    group = 'publishing'
+    description = 'Stages and deploys all Maven publications with JReleaser.'
+    dependsOn tasks.named('stageArtifacts')
+    dependsOn tasks.named('jreleaserDeploy')
+}
+
+tasks.register('publishArtifacts') {
+    group = 'publishing'
+    description = 'Alias for deployArtifacts.'
+    dependsOn tasks.named('deployArtifacts')
+}
+
+tasks.register('publishSnapshot') {
+    group = 'publishing'
+    description = 'Publishes a SNAPSHOT version with JReleaser.'
+    dependsOn tasks.named('publishArtifacts')
+}
+
+tasks.register('publishRelease') {
+    group = 'publishing'
+    description = 'Publishes a release version with JReleaser.'
+    dependsOn tasks.named('publishArtifacts')
+}
+
+gradle.projectsEvaluated {
+    def stagingTasks = subprojects.collect {
+        it.tasks.named('publishAllPublicationsToJReleaserStagingRepository')
+    }
+
+    tasks.named('stageArtifacts') {
+        dependsOn stagingTasks
+    }
+
+    tasks.named('jreleaserDeploy') {
+        mustRunAfter tasks.named('stageArtifacts')
+    }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    def version = rootProject.version.toString()
+
+    if (graph.hasTask(':publishSnapshot') && !version.endsWith('-SNAPSHOT')) {
+        throw new GradleException("publishSnapshot requires a SNAPSHOT version, but Axion resolved ${version}")
+    }
+
+    if (graph.hasTask(':publishRelease') && version.endsWith('-SNAPSHOT')) {
+        throw new GradleException("publishRelease requires a release version, but Axion resolved ${version}")
+    }
+}

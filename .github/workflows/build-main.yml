@@ -70,7 +70,7 @@ jobs:
       - name: 'Publish Snapshot'
         if: github.event_name != 'schedule'
         env:
-          NEXUS_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          NEXUS_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          ORG_GRADLE_PROJECT_nexusUsername: ${{ secrets.SONATYPE_USR }}
+          ORG_GRADLE_PROJECT_nexusPassword: ${{ secrets.SONATYPE_PWD }}
         run: |
-          ./gradlew publishToSonatype -Prelease.forceSnapshot
+          ./gradlew publishSnapshot -Prelease.forceSnapshot
