@@ -41,7 +41,6 @@ jobs:
           - 11
           - 17
           - 21
-          - 25
         etcd:
           - quay.io/coreos/etcd:v3.5.29
           - quay.io/coreos/etcd:v3.6.11
