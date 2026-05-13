@@ -129,7 +129,10 @@ public class WatchTest {
             latch.await(4, TimeUnit.SECONDS);
 
             await().atMost(TIME_OUT_SECONDS, TimeUnit.SECONDS).untilAsserted(() -> assertThat(res).hasSize(2));
-            assertThat(res.get(0)).usingRecursiveComparison().isEqualTo(res.get(1));
+            // Same KV event; headers can differ: see docs/Watch.md ("jetcd: WatchResponse headers and parallel watchers").
+            assertThat(res.get(0)).usingRecursiveComparison()
+                .ignoringFields("responseHeader.memberId_")
+                .isEqualTo(res.get(1));
             assertThat(res.get(0).getEvents().size()).isEqualTo(1);
             assertThat(res.get(0).getEvents().get(0).getEventType()).isEqualTo(EventType.PUT);
             assertThat(res.get(0).getEvents().get(0).getKeyValue().getKey()).isEqualTo(key);

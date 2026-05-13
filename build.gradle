@@ -69,7 +69,9 @@ subprojects {
     test {
         useJUnitPlatform()
 
-        maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
+        def processors = Runtime.runtime.availableProcessors() ?: 1
+        def onCi = System.getenv('CI')?.equalsIgnoreCase('true')
+        maxParallelForks = onCi ? Math.min(2, processors) : processors
 
         retry {
             maxRetries = 1

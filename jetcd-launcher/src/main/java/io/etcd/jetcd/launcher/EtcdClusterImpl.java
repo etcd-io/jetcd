@@ -80,15 +80,36 @@ public class EtcdClusterImpl implements EtcdCluster {
             }).start();
         }
 
+        long timeoutMinutes = startTimeoutMinutes();
+        boolean allStarted;
         try {
-            latch.await(1, TimeUnit.MINUTES);
+            allStarted = latch.await(timeoutMinutes, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
+        }
+
+        if (!allStarted) {
+            long pending = latch.getCount();
+            throw new IllegalStateException(
+                String.format(
+                    "etcd cluster '%s' start timed out after %d minute(s); %d container(s) still starting",
+                    clusterName,
+                    timeoutMinutes,
+                    pending));
         }
 
         if (failedToStart.get() != null) {
             throw new IllegalStateException("Cluster failed to start", failedToStart.get());
         }
+    }
+
+    private static long startTimeoutMinutes() {
+        String ci = System.getenv("CI");
+        if (ci != null && ci.equalsIgnoreCase("true")) {
+            return 3L;
+        }
+        return 1L;
     }
 
     @Override

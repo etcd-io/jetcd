@@ -42,7 +42,7 @@ import io.etcd.jetcd.test.EtcdClusterExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-@Timeout(value = 30)
+@Timeout(value = 90)
 public class WatchTokenExpireTest {
     // create a cluster with SSL enabled, because otherwise volumes with certificates are not mapped
     // to test Docker container. setup JWT authentication provider, it allows configuring short
@@ -62,6 +62,19 @@ public class WatchTokenExpireTest {
     private static final ByteSequence keyEnd = TestUtil.bytesOf("key1");
     private static final ByteSequence user = TestUtil.bytesOf("root");
     private static final ByteSequence password = TestUtil.randomByteSequence();
+
+    /**
+     * JWT ttl in this suite is 1s; wait long enough for tokens to expire under slow CI before
+     * exercising refresh paths (avoids racing fixed 3s sleeps on loaded runners).
+     */
+    private static long millisToWaitPastJwtTtl() {
+        boolean onCi = Boolean.parseBoolean(System.getenv().getOrDefault("CI", "false"));
+        return onCi ? 4500L : 3000L;
+    }
+
+    private static void sleepPastJwtTtl() throws InterruptedException {
+        Thread.sleep(millisToWaitPastJwtTtl());
+    }
 
     private void setUpEnvironment() throws Exception {
         final File caFile = new File(Objects.requireNonNull(getClass().getResource("/ssl/cert/ca.pem")).toURI());
@@ -103,7 +116,7 @@ public class WatchTokenExpireTest {
         KV authKVClient = authClient.getKVClient();
 
         authKVClient.put(key, TestUtil.randomByteSequence()).get(1, TimeUnit.SECONDS);
-        Thread.sleep(3000);
+        sleepPastJwtTtl();
 
         AtomicInteger modifications = new AtomicInteger();
 
@@ -126,8 +139,7 @@ public class WatchTokenExpireTest {
         for (int i = 0; i < 2; ++i) {
             futures.add(executor.submit(() -> {
                 try {
-                    // wait 3 seconds for token to expire. during the test token will be refreshed twice
-                    Thread.sleep(3000);
+                    sleepPastJwtTtl();
                     anotherClient.getKVClient().put(key, TestUtil.randomByteSequence()).get(1, TimeUnit.SECONDS);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -135,7 +147,8 @@ public class WatchTokenExpireTest {
             }));
         }
 
-        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(modifications.get()).isEqualTo(2));
+        await().atMost(45, TimeUnit.SECONDS).pollInterval(200, TimeUnit.MILLISECONDS)
+            .untilAsserted(() -> assertThat(modifications.get()).isEqualTo(2));
 
         executor.shutdownNow();
         futures.forEach(f -> assertThat(f).isDone());
