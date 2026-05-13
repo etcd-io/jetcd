@@ -117,3 +117,37 @@ Resume all the the watchers on new requestStream.
 
 1. Build new watch creation request for old watcher with last revision + 1.
 2. Call `watch` function with the new watch creation request.
+
+---
+
+## jetcd: `WatchResponse` headers and parallel watchers
+
+This section documents behavior of the **jetcd** `Watch` implementation (`io.etcd.jetcd.impl.WatchImpl`) and how it interacts with etcd’s gRPC API. It is useful when writing tests or comparing watch notifications.
+
+### What etcd puts in `ResponseHeader.member_id`
+
+In the etcd v3 API, every response carries a [`ResponseHeader`](https://etcd.io/docs/v3.6/learning/api/#response-header) that includes `member_id`: the ID of the **member that generated that RPC response**, not an identifier of the logical key or watch.
+
+So two responses that describe the **same** store revision and the **same** `events` can still carry **different** `member_id` values if they were produced by **different** etcd members.
+
+### One jetcd watcher ⇒ one gRPC `Watch` stream
+
+In jetcd, each `Watch.watch(...)` returns a `Watcher` whose `resume()` opens **its own** bidirectional gRPC `Watch` call (`watchWithHandler` on the stub). There is **no** shared multiplexed `requestStream` for all watchers on the client (unlike the narrative elsewhere in this document, which follows the upstream Go client layout).
+
+Practical consequence: **two** watchers on the same client are **two** independent streams.
+
+### Multi-endpoint clients and load balancing
+
+When the client is built with several endpoints (for example tests using `Client.builder().target("cluster://" + clusterName)`), gRPC uses a single `ManagedChannel` with a load-balancing policy over those addresses. Each **new** `Watch` RPC can be assigned to a **different** backend member.
+
+So for two parallel watchers, it is normal that:
+
+- `cluster_id`, `revision`, `raft_term`, and `events` match for the same logical update, but  
+- `header.member_id` (backed by protobuf `ResponseHeader.member_id`) **differs**, because each stream is answered by whichever member is serving that connection.
+
+If both streams happen to land on the **same** member, `member_id` may match as well; relying on equality of full protobuf headers across watchers is therefore **flaky** on multi-member clusters.
+
+### Recommendations
+
+- When asserting that two watchers saw the “same” event, compare **events** (and revision-related fields you care about), not the entire raw header including `member_id`.  
+- Do not assume `member_id` identifies the watcher or the key; it identifies the **responding member** for that message only.

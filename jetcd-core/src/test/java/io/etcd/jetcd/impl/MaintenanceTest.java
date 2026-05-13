@@ -16,6 +16,7 @@
 
 package io.etcd.jetcd.impl;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
@@ -44,7 +45,7 @@ import io.etcd.jetcd.test.EtcdClusterExtension;
 import io.grpc.stub.StreamObserver;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Fail.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class MaintenanceTest {
@@ -101,20 +102,27 @@ public class MaintenanceTest {
     }
 
     @Test
-    public void testSnapshotChunks() throws ExecutionException, InterruptedException {
-        final Long bytes = maintenance.snapshot(NullOutputStream.INSTANCE).get();
-        final AtomicLong count = new AtomicLong();
+    public void testSnapshotChunks() throws InterruptedException {
+        // One snapshot only: comparing two snapshot() calls is flaky because etcd state
+        // (WAL, raft index) can change between them, so totals need not match.
+        final AtomicLong chunkSum = new AtomicLong();
+        final ByteArrayOutputStream captured = new ByteArrayOutputStream();
         final CountDownLatch latcht = new CountDownLatch(1);
 
         maintenance.snapshot(new StreamObserver<SnapshotResponse>() {
             @Override
             public void onNext(SnapshotResponse value) {
-                count.addAndGet(value.getBlob().size());
+                try {
+                    chunkSum.addAndGet(value.getBlob().size());
+                    value.getBlob().writeTo(captured);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             @Override
             public void onError(Throwable t) {
-                fail("Should not throw exception");
+                fail("Should not throw exception", t);
             }
 
             @Override
@@ -125,7 +133,7 @@ public class MaintenanceTest {
 
         latcht.await(10, TimeUnit.SECONDS);
 
-        assertThat(bytes).isEqualTo(count.get());
+        assertThat(chunkSum.get()).isEqualTo((long) captured.size());
     }
 
     @Test
