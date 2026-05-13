@@ -142,12 +142,12 @@ When the client is built with several endpoints (for example tests using `Client
 
 So for two parallel watchers, it is normal that:
 
-- `cluster_id`, `revision`, `raft_term`, and `events` match for the same logical update, but  
+- `cluster_id`, `revision`, `raft_term`, and `events` match for the same logical update, but
 - `header.member_id` (backed by protobuf `ResponseHeader.member_id`) **differs**, because each stream is answered by whichever member is serving that connection.
 
 If both streams happen to land on the **same** member, `member_id` may match as well; relying on equality of full protobuf headers across watchers is therefore **flaky** on multi-member clusters.
 
 ### Recommendations
 
-- When asserting that two watchers saw the “same” event, compare **events** (and revision-related fields you care about), not the entire raw header including `member_id`.  
+- When asserting that two watchers saw the “same” event, compare **events** (and revision-related fields you care about), not the entire raw header including `member_id`.
 - Do not assume `member_id` identifies the watcher or the key; it identifies the **responding member** for that message only.
