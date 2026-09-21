@@ -129,6 +129,11 @@ abstract class Impl {
                 logger.debug("retry (attempt: {}, error: {})",
                     e.getAttemptCount(),
                     e.getLastException() != null ? e.getLastException().getMessage() : "<none>");
+
+                if (e.getLastException() != null
+                    && Status.fromThrowable(e.getLastException()).getCode() == Status.Code.UNAVAILABLE) {
+                    connectionManager.getChannel().resetConnectBackoff();
+                }
             })
             .onRetriesExceeded(e -> {
                 logger.warn("maximum number of auto retries reached (attempt: {}, error: {})",
