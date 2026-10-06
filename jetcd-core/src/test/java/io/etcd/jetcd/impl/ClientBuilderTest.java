@@ -45,6 +45,39 @@ public class ClientBuilderTest {
             Arguments.of(bytesOf("namespace2/"), bytesOf("namespace2/")));
     }
 
+    static Stream<Arguments> endpointsProvider() {
+        return Stream.of(
+            Arguments.of(new String[] { "http://127.0.0.1:2379" }, "/127.0.0.1:2379"),
+            Arguments.of(new String[] { "http://[2001:db8::1]:2379" }, "/[2001:db8::1]:2379"),
+            Arguments.of(new String[] { "http://[2001:db8::1]:2379", "http://[2001:db8::2]:2380" },
+                "/[2001:db8::1]:2379,[2001:db8::2]:2380"),
+            Arguments.of(new String[] { "http://[::1]", "http://127.0.0.1:2379" }, "/[::1],127.0.0.1:2379"),
+            Arguments.of(new String[] { "http://[::1]:2379", "http://[::1]:2379" }, "/[::1]:2379"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("endpointsProvider")
+    public void testEndPoints_TargetUri(String[] endpoints, String expectedPath) {
+        final ClientBuilder builder = Client.builder().endpoints(endpoints);
+        assertThat(URI.create(builder.target()).getPath()).isEqualTo(expectedPath);
+
+        try (Client client = builder.build()) {
+            assertThat(client.getKVClient()).isNotNull();
+        }
+    }
+
+    @Test
+    public void testEndPoints_WithAuthority() {
+        final ClientBuilder builder = Client.builder().authority("etcd.example.org").endpoints("http://[::1]:2379");
+        final URI target = URI.create(builder.target());
+        assertThat(target.getAuthority()).isEqualTo("etcd.example.org");
+        assertThat(target.getPath()).isEqualTo("/[::1]:2379");
+
+        try (Client client = builder.build()) {
+            assertThat(client.getKVClient()).isNotNull();
+        }
+    }
+
     @Test
     public void testEndPoints_Null() {
         assertThatThrownBy(() -> Client.builder().endpoints((URI) null)).isInstanceOf(NullPointerException.class);

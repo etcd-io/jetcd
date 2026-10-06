@@ -17,6 +17,7 @@
 package io.etcd.jetcd;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -150,12 +151,12 @@ public final class ClientBuilder implements Cloneable {
             throw new IllegalArgumentException("Unable to compute target from endpoints: '" + endpoints + "'");
         }
 
-        return target(
-            String.format(
-                "%s://%s/%s",
-                IPNameResolver.SCHEME,
-                authority != null ? authority : "",
-                target));
+        try {
+            return target(
+                new URI(IPNameResolver.SCHEME, authority != null ? authority : "", "/" + target, null, null).toString());
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Unable to compute target from endpoints: '" + endpoints + "'", e);
+        }
     }
 
     /**
