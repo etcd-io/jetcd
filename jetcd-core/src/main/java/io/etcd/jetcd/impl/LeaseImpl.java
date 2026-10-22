@@ -165,7 +165,8 @@ final class LeaseImpl extends Impl implements Lease {
                             newEtcdException(ErrorCode.NOT_FOUND, "etcdserver: requested lease not found"));
                     }
                 },
-                null,
+                ignored -> future.completeExceptionally(
+                    newEtcdException(ErrorCode.UNAVAILABLE, "keep alive stream ended without a response")),
                 future::completeExceptionally);
 
         return future.whenComplete((r, t) -> ref.get().end(req));
@@ -203,7 +204,7 @@ final class LeaseImpl extends Impl implements Lease {
             leaseStub.leaseKeepAliveWithHandler(
                 this::writeHandler,
                 this::handleResponse,
-                null,
+                this::handleEnd,
                 this::handleException);
         }
 
@@ -277,6 +278,22 @@ final class LeaseImpl extends Impl implements Lease {
 
             keepAlives.values().forEach(ka -> ka.onError(throwable));
 
+            scheduleRestart();
+        }
+
+        /**
+         * The server ended the stream without an error, e.g. a member shutting down gracefully. The leases are
+         * still valid, so observers are not notified; the stream is reopened so they keep being renewed.
+         */
+        private synchronized void handleEnd(Void ignored) {
+            // isRunning() is false only once the client has stopped or closed the service, which also ends the stream.
+            if (this.isRunning()) {
+                logger().info("keepAlive stream ended by server; reopening ({} leases)", keepAlives.size());
+                scheduleRestart();
+            }
+        }
+
+        private void scheduleRestart() {
             restart = connectionManager().vertx().setTimer(
                 500,
                 l -> {
