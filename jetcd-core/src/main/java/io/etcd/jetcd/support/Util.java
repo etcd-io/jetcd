@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Constants;
+import io.etcd.jetcd.options.OptionsUtil;
 import io.grpc.Metadata;
 import io.grpc.stub.AbstractStub;
 
@@ -62,21 +63,7 @@ public final class Util {
         }
 
         if (end.size() == 1 && end.getBytes()[0] == 0) {
-            // range end is '\0', calculate the prefixed range end by (key + 1)
-            byte[] prefixedEndArray = namespace.getBytes();
-            boolean ok = false;
-            for (int i = prefixedEndArray.length - 1; i >= 0; i--) {
-                prefixedEndArray[i] = (byte) (prefixedEndArray[i] + 1);
-                if (prefixedEndArray[i] != 0) {
-                    ok = true;
-                    break;
-                }
-            }
-            if (!ok) {
-                // 0xff..ff => 0x00
-                prefixedEndArray = Constants.NULL_KEY.getBytes();
-            }
-            return ByteString.copyFrom(prefixedEndArray);
+            return ByteString.copyFrom(OptionsUtil.prefixEndOf(namespace).getBytes());
         } else {
             return ByteString.copyFrom(namespace.concat(end).getBytes());
         }
@@ -88,21 +75,7 @@ public final class Util {
         }
 
         if (end.size() == 1 && end.toByteArray()[0] == 0) {
-            // range end is '\0', calculate the prefixed range end by (key + 1)
-            byte[] prefixedEndArray = namespace.getBytes();
-            boolean ok = false;
-            for (int i = prefixedEndArray.length - 1; i >= 0; i--) {
-                prefixedEndArray[i] = (byte) (prefixedEndArray[i] + 1);
-                if (prefixedEndArray[i] != 0) {
-                    ok = true;
-                    break;
-                }
-            }
-            if (!ok) {
-                // 0xff..ff => 0x00
-                prefixedEndArray = Constants.NULL_KEY.getBytes();
-            }
-            return ByteString.copyFrom(prefixedEndArray);
+            return ByteString.copyFrom(OptionsUtil.prefixEndOf(namespace).getBytes());
         } else {
             return ByteString.copyFrom(namespace.concat(end).getBytes());
         }
