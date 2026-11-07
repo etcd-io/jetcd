@@ -73,7 +73,7 @@ public final class Observers {
             return new StreamObserver<V>() {
                 @Override
                 public void onNext(V value) {
-                    if (onNext != null) {
+                    if (doOnNext != null) {
                         doOnNext.accept(value);
                     }
                 }
