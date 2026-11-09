@@ -16,3 +16,6 @@ updates:
       - area/dependencies
     ignore:
       - dependency-name: com.google.protobuf:protoc
+      # Vert.x 5 raised the minimum Java version to 17
+      - dependency-name: "io.vertx:*"
+        versions: ["[5,)"]
