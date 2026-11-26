@@ -774,7 +774,12 @@ public final class ClientBuilder implements Cloneable {
      */
     public ClientBuilder copy() {
         try {
-            return (ClientBuilder) super.clone();
+            ClientBuilder copy = (ClientBuilder) super.clone();
+            copy.headers = headers == null ? null : new HashMap<>(headers);
+            copy.authHeaders = authHeaders == null ? null : new HashMap<>(authHeaders);
+            copy.interceptors = interceptors == null ? null : new ArrayList<>(interceptors);
+            copy.authInterceptors = authInterceptors == null ? null : new ArrayList<>(authInterceptors);
+            return copy;
         } catch (CloneNotSupportedException e) {
             throw EtcdExceptionFactory.toEtcdException(e);
         }
