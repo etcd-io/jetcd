@@ -6,8 +6,6 @@
 
 jetcd is the official java client for [etcd](https://github.com/etcd-io/etcd) v3.
 
-> Note: jetcd is work-in-progress and may break backward compatibility.
-
 ## Java Versions
 
 Java 11 or above is required.
