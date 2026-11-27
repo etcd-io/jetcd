@@ -17,11 +17,9 @@
 dependencies {
     api libs.slf4j
     api libs.guava
-    api libs.commonsCompress
     api libs.testcontainers
 
     testImplementation libs.awaitility
-    testImplementation libs.commonsIo
     testImplementation libs.bundles.testing
 
     testRuntimeOnly libs.bundles.log4j

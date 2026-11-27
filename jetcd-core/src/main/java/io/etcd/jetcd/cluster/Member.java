@@ -21,10 +21,18 @@ import java.util.List;
 
 import io.etcd.jetcd.support.Util;
 
+/**
+ * Represents a member of an etcd cluster.
+ */
 public class Member {
 
     private final io.etcd.jetcd.api.Member member;
 
+    /**
+     * Creates a new Member from the gRPC member.
+     *
+     * @param member the gRPC member
+     */
     public Member(io.etcd.jetcd.api.Member member) {
         this.member = member;
     }

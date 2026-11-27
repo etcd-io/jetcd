@@ -20,7 +20,7 @@ spotless {
     java {
         removeUnusedImports()
         trimTrailingWhitespace()
-        indentWithSpaces(4)
+        leadingTabsToSpaces(4)
         endWithNewline()
         importOrderFile(rootProject.file('etc/eclipse.importorder'))
         eclipse().configFile(rootProject.file('etc/eclipse-formatter-config.xml'))

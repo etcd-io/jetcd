@@ -40,7 +40,7 @@ class CommandPut implements Runnable {
 
     @Override
     public void run() {
-        try (Client client = Client.builder().endpoints(main.endpoints).build()) {
+        try (Client client = Client.builder(main.endpoints).build()) {
             client.getKVClient().put(
                 ByteSequence.from(key, StandardCharsets.UTF_8),
                 ByteSequence.from(val, StandardCharsets.UTF_8)).get();

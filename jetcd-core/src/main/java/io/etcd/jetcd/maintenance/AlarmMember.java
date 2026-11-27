@@ -16,32 +16,11 @@
 
 package io.etcd.jetcd.maintenance;
 
-public class AlarmMember {
-
-    private long memberId;
-    private AlarmType alarmType;
-
-    public AlarmMember(long memberId, AlarmType alarmType) {
-        this.memberId = memberId;
-        this.alarmType = alarmType;
-    }
-
-    /**
-     * Returns the ID of the member associated with the raised alarm.
-     *
-     * @return the member id.
-     */
-    public long getMemberId() {
-        return memberId;
-    }
-
-    /**
-     *
-     * Returns the type of alarm which has been raised.
-     *
-     * @return the alarm type.
-     */
-    public AlarmType getAlarmType() {
-        return alarmType;
-    }
+/**
+ * Represents an alarm raised on a cluster member.
+ *
+ * @param memberId  the ID of the member associated with the raised alarm
+ * @param alarmType the type of alarm which has been raised
+ */
+public record AlarmMember(long memberId, AlarmType alarmType) {
 }

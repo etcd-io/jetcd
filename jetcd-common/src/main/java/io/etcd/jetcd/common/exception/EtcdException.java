@@ -23,8 +23,16 @@ import java.util.Objects;
  */
 public class EtcdException extends RuntimeException {
 
+    /** The error code. */
     private final ErrorCode code;
 
+    /**
+     * Package-private constructor for creating etcd exceptions.
+     *
+     * @param code    the error code
+     * @param message the error message
+     * @param cause   the underlying cause
+     */
     EtcdException(ErrorCode code, String message, Throwable cause) {
         super(message, cause);
         this.code = Objects.requireNonNull(code, "Error code must not be null");

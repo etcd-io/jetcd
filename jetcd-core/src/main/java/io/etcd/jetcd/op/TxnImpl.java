@@ -34,6 +34,13 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public class TxnImpl implements Txn {
 
+    /**
+     * Creates a new transaction implementation.
+     *
+     * @param  f         the function to execute the transaction
+     * @param  namespace the namespace
+     * @return           the transaction implementation
+     */
     public static TxnImpl newTxn(Function<TxnRequest, CompletableFuture<TxnResponse>> f, ByteSequence namespace) {
         return new TxnImpl(f, namespace);
     }

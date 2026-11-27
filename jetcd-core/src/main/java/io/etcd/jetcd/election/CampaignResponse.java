@@ -19,9 +19,17 @@ package io.etcd.jetcd.election;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.impl.AbstractResponse;
 
+/**
+ * Response from an election campaign operation.
+ */
 public class CampaignResponse extends AbstractResponse<io.etcd.jetcd.api.CampaignResponse> {
     private final LeaderKey leaderKey;
 
+    /**
+     * Creates a new CampaignResponse from the gRPC response.
+     *
+     * @param response the gRPC campaign response
+     */
     public CampaignResponse(io.etcd.jetcd.api.CampaignResponse response) {
         super(response, response.getHeader());
 

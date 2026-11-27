@@ -16,7 +16,6 @@
 
 package io.etcd.jetcd.launcher;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -25,19 +24,16 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,11 +41,16 @@ import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.ContainerLaunchException;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.SelinuxContext;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
 
+/**
+ * Testcontainer wrapper for a single etcd node.
+ * Supports configuration for SSL, clustering, custom networks, and data persistence.
+ * Can be used standalone or as part of an {@link EtcdCluster}.
+ */
 public class EtcdContainer extends GenericContainer<EtcdContainer> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EtcdContainer.class);
 
@@ -64,7 +65,15 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
     private Collection<String> additionalArgs;
     private boolean shouldMountDataDirectory = true;
     private String user;
+    private Consumer<OutputFrame> logConsumer;
 
+    /**
+     * Creates a new etcd container.
+     *
+     * @param image the Docker image to use
+     * @param node  the node name for this container
+     * @param nodes all node names in the cluster (for multi-node setups)
+     */
     public EtcdContainer(String image, String node, Collection<String> nodes) {
         super(image);
 
@@ -75,26 +84,72 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
         this.nodes.add(node);
     }
 
-    public EtcdContainer withSll(boolean ssl) {
+    /**
+     * Enables or disables SSL/TLS for secure communication.
+     * When enabled, uses auto-generated certificates from the classpath.
+     *
+     * @param  ssl true to enable SSL/TLS
+     * @return     this container
+     */
+    public EtcdContainer withSsl(boolean ssl) {
         this.ssl = ssl;
         return self();
     }
 
+    /**
+     * Enables debug mode with verbose logging.
+     *
+     * @param  debug true to enable debug mode
+     * @return       this container
+     */
     public EtcdContainer withDebug(boolean debug) {
         this.debug = debug;
         return self();
     }
 
-    public EtcdContainer withShouldMountDataDirectory(boolean shouldMountDataDiretory) {
-        this.shouldMountDataDirectory = shouldMountDataDiretory;
+    /**
+     * Configure the log consumer for this container.
+     *
+     * @param  logConsumer the log consumer, or null to disable logging
+     * @return             this container
+     */
+    @Override
+    public EtcdContainer withLogConsumer(Consumer<OutputFrame> logConsumer) {
+        this.logConsumer = logConsumer;
         return self();
     }
 
+    /**
+     * Enables mounting of the etcd data directory to the host filesystem.
+     * This allows data to persist between container restarts.
+     *
+     * @param  shouldMountDataDirectory true to mount the data directory
+     * @return                          this container
+     */
+    public EtcdContainer withShouldMountDataDirectory(boolean shouldMountDataDirectory) {
+        this.shouldMountDataDirectory = shouldMountDataDirectory;
+        return self();
+    }
+
+    /**
+     * Sets the cluster token for initial cluster bootstrap.
+     * Used to identify the cluster during initial setup.
+     *
+     * @param  clusterToken the cluster token
+     * @return              this container
+     */
     public EtcdContainer withClusterToken(String clusterToken) {
         this.clusterToken = clusterToken;
         return self();
     }
 
+    /**
+     * Adds additional command-line arguments to pass to the etcd process.
+     * Useful for custom etcd configuration beyond the standard options.
+     *
+     * @param  additionalArgs collection of additional arguments
+     * @return                this container
+     */
     public EtcdContainer withAdditionalArgs(Collection<String> additionalArgs) {
         if (additionalArgs != null) {
             this.additionalArgs = Collections.unmodifiableCollection(new ArrayList<>(additionalArgs));
@@ -128,14 +183,16 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
 
         withExposedPorts(Etcd.ETCD_PEER_PORT, Etcd.ETCD_CLIENT_PORT);
         withNetworkAliases(node);
-        withLogConsumer(new Slf4jLogConsumer(LOGGER).withPrefix(node));
+        if (logConsumer != null) {
+            withLogConsumer(logConsumer);
+        }
         withCommand(createCommand());
         withEnv("ETCD_LOG_LEVEL", this.debug ? "debug" : "info");
         withEnv("ETCD_LOGGER", "zap");
 
         String tempUser = this.user;
         if (tempUser == null) {
-            tempUser = System.getenv("TC_USER");
+            tempUser = EtcdSupport.getHostUser();
         }
         if (tempUser != null) {
             String finalUser = tempUser;
@@ -152,16 +209,20 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
     private Path createDataDirectory(String name) {
         try {
             final String prefix = "jetcd_test_" + name + "_";
+            Path dir;
             if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
                 // https://github.com/etcd-io/jetcd/issues/489
                 // Resolve symlink (/var -> /private/var) to don't fail for MacOS because of
                 // docker thing with /var/folders
+                // Use rwxrwx--- (770) instead of rwxrwxrwx (777) for better security
                 final FileAttribute<?> attribute = PosixFilePermissions
-                    .asFileAttribute(EnumSet.allOf(PosixFilePermission.class));
-                return Files.createTempDirectory(prefix, attribute).toRealPath();
+                    .asFileAttribute(PosixFilePermissions.fromString("rwxrwx---"));
+                dir = Files.createTempDirectory(prefix, attribute).toRealPath();
             } else {
-                return Files.createTempDirectory(prefix).toRealPath();
+                dir = Files.createTempDirectory(prefix).toRealPath();
             }
+            EtcdSupport.registerDirectoryForCleanup(dir);
+            return dir;
         } catch (IOException e) {
             throw new ContainerLaunchException("Error creating data directory", e);
         }
@@ -226,66 +287,99 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
         return cmd.toArray(new String[0]);
     }
 
-    private static void deleteDataDirectory(Path dir) {
-        if (dir != null && Files.exists(dir)) {
-            try {
-                try (Stream<Path> stream = Files.walk(dir)) {
-                    stream.sorted(Comparator.reverseOrder())
-                        .map(Path::toFile)
-                        .forEach(File::delete);
-                } catch (IOException e) {
-                    LOGGER.error("Error deleting directory {}", dir, e);
-                }
-            } catch (Exception e) {
-                LOGGER.error("Error deleting directory {}", dir, e);
-            }
-        }
+    @Override
+    protected void containerIsStarting(InspectContainerResponse containerInfo) {
+        LOGGER.info("Container {} is starting, ID: {}", node, containerInfo.getId());
+        super.containerIsStarting(containerInfo);
     }
 
     @Override
-    protected void containerIsStarting(InspectContainerResponse containerInfo) {
-
-        try {
-            super.containerIsStarting(containerInfo);
-
-            if (shouldMountDataDirectory) {
-                execInContainer("chmod", "o+rwx", "-R", Etcd.ETCD_DATA_DIR);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    protected void containerIsStarted(InspectContainerResponse containerInfo) {
+        LOGGER.info("Container {} started successfully, ID: {}", node, containerInfo.getId());
+        super.containerIsStarted(containerInfo);
     }
 
     @Override
     public void start() {
-        LOGGER.debug("starting etcd container {} with command: {}", node, String.join(" ", getCommandParts()));
-        super.start();
+        long startTime = System.currentTimeMillis();
+        LOGGER.info("Starting etcd container '{}' with command: {}", node, String.join(" ", getCommandParts()));
+        LOGGER.debug("Container {} configuration: ssl={}, debug={}, shouldMountDataDirectory={}, network={}",
+            node, ssl, debug, shouldMountDataDirectory, getNetwork());
+
+        try {
+            super.start();
+            long duration = System.currentTimeMillis() - startTime;
+            LOGGER.info("Container '{}' started successfully in {}ms", node, duration);
+        } catch (Exception e) {
+            long duration = System.currentTimeMillis() - startTime;
+            LOGGER.error("Failed to start container '{}' after {}ms", node, duration, e);
+
+            // Try to get container logs if available
+            try {
+                String logs = getLogs();
+                if (logs != null && !logs.isEmpty()) {
+                    LOGGER.error("Container '{}' logs:\n{}", node, logs);
+                }
+            } catch (Exception logException) {
+                LOGGER.warn("Could not retrieve logs for failed container '{}'", node, logException);
+            }
+
+            throw e;
+        }
     }
 
     @Override
     public void close() {
         super.close();
-        deleteDataDirectory(dataDirectory);
+        if (dataDirectory != null) {
+            EtcdSupport.unregisterDirectoryForCleanup(dataDirectory);
+            EtcdSupport.deleteDataDirectory(dataDirectory);
+        }
     }
 
+    /**
+     * Returns the node name for this container.
+     *
+     * @return the node name
+     */
     public String node() {
         return this.node;
     }
 
+    /**
+     * Returns the client address for connecting to this etcd node.
+     *
+     * @return the client socket address (host and mapped port)
+     */
     public InetSocketAddress getClientAddress() {
         return new InetSocketAddress(getHost(), getMappedPort(Etcd.ETCD_CLIENT_PORT));
     }
 
+    /**
+     * Returns the client endpoint URI for connecting to this etcd node.
+     *
+     * @return the client endpoint URI
+     */
     public URI clientEndpoint() {
         return newURI(
             getHost(),
             getMappedPort(Etcd.ETCD_CLIENT_PORT));
     }
 
+    /**
+     * Returns the peer address used for cluster member communication.
+     *
+     * @return the peer socket address (host and mapped port)
+     */
     public InetSocketAddress getPeerAddress() {
         return new InetSocketAddress(getHost(), getMappedPort(Etcd.ETCD_PEER_PORT));
     }
 
+    /**
+     * Returns the peer endpoint URI used for cluster member communication.
+     *
+     * @return the peer endpoint URI
+     */
     public URI peerEndpoint() {
         return newURI(
             getHost(),
@@ -300,6 +394,11 @@ public class EtcdContainer extends GenericContainer<EtcdContainer> {
         }
     }
 
+    /**
+     * Checks if the data directory is mounted to the host filesystem.
+     *
+     * @return true if the data directory is mounted
+     */
     public boolean hasDataDirectoryMounted() {
         return dataDirectory != null;
     }

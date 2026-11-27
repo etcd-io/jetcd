@@ -27,6 +27,12 @@ public class KeyValue {
     private final ByteSequence unprefixedKey;
     private final ByteSequence value;
 
+    /**
+     * Creates a KeyValue from a gRPC key-value response.
+     *
+     * @param kv        the gRPC key-value
+     * @param namespace the namespace for key un-prefixing
+     */
     public KeyValue(io.etcd.jetcd.api.KeyValue kv, ByteSequence namespace) {
         this.kv = kv;
         this.value = ByteSequence.from(kv.getValue());

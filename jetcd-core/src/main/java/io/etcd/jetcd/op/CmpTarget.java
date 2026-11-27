@@ -24,6 +24,8 @@ import com.google.protobuf.ByteString;
 
 /**
  * Cmp target used in {@link Txn}.
+ *
+ * @param <T> the type of value being compared
  */
 public abstract class CmpTarget<T> {
 
@@ -70,6 +72,12 @@ public abstract class CmpTarget<T> {
     private final Compare.CompareTarget target;
     private final T targetValue;
 
+    /**
+     * Creates a new comparison target.
+     *
+     * @param target      the compare target type
+     * @param targetValue the target value
+     */
     protected CmpTarget(Compare.CompareTarget target, T targetValue) {
         this.target = target;
         this.targetValue = targetValue;
@@ -93,6 +101,9 @@ public abstract class CmpTarget<T> {
         return targetValue;
     }
 
+    /**
+     * Comparison target for version.
+     */
     public static final class VersionCmpTarget extends CmpTarget<Long> {
 
         VersionCmpTarget(Long targetValue) {
@@ -100,6 +111,9 @@ public abstract class CmpTarget<T> {
         }
     }
 
+    /**
+     * Comparison target for create revision.
+     */
     public static final class CreateRevisionCmpTarget extends CmpTarget<Long> {
 
         CreateRevisionCmpTarget(Long targetValue) {
@@ -107,6 +121,9 @@ public abstract class CmpTarget<T> {
         }
     }
 
+    /**
+     * Comparison target for modification revision.
+     */
     public static final class ModRevisionCmpTarget extends CmpTarget<Long> {
 
         ModRevisionCmpTarget(Long targetValue) {
@@ -114,6 +131,9 @@ public abstract class CmpTarget<T> {
         }
     }
 
+    /**
+     * Comparison target for value.
+     */
     public static final class ValueCmpTarget extends CmpTarget<ByteString> {
 
         ValueCmpTarget(ByteString targetValue) {

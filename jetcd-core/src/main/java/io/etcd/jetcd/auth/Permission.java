@@ -27,10 +27,27 @@ public class Permission {
     private final ByteSequence key;
     private final ByteSequence rangeEnd;
 
+    /**
+     * Permission types.
+     */
     public enum Type {
-        READ, WRITE, READWRITE, UNRECOGNIZED,
+        /** Read permission. */
+        READ,
+        /** Write permission. */
+        WRITE,
+        /** Read and write permission. */
+        READWRITE,
+        /** Unrecognized permission type. */
+        UNRECOGNIZED,
     }
 
+    /**
+     * Creates a new Permission.
+     *
+     * @param permType the permission type
+     * @param key      the key
+     * @param rangeEnd the range end key
+     */
     public Permission(Type permType, ByteSequence key, ByteSequence rangeEnd) {
         this.permType = permType;
         this.key = key;
@@ -46,10 +63,20 @@ public class Permission {
         return permType;
     }
 
+    /**
+     * Returns the key this permission applies to.
+     *
+     * @return the key
+     */
     public ByteSequence getKey() {
         return key;
     }
 
+    /**
+     * Returns the range end key.
+     *
+     * @return the range end key
+     */
     public ByteSequence getRangeEnd() {
         return rangeEnd;
     }

@@ -28,14 +28,31 @@ import com.google.protobuf.ByteString;
  */
 public class Cmp {
 
+    /**
+     * Comparison operations.
+     */
     public enum Op {
-        EQUAL, GREATER, LESS, NOT_EQUAL
+        /** Equal comparison. */
+        EQUAL,
+        /** Greater than comparison. */
+        GREATER,
+        /** Less than comparison. */
+        LESS,
+        /** Not equal comparison. */
+        NOT_EQUAL
     }
 
     private final ByteString key;
     private final Op op;
     private final CmpTarget<?> target;
 
+    /**
+     * Creates a new comparison.
+     *
+     * @param key       the key to compare
+     * @param compareOp the comparison operation
+     * @param target    the comparison target
+     */
     public Cmp(ByteSequence key, Op compareOp, CmpTarget<?> target) {
         this.key = ByteString.copyFrom(key.getBytes());
         this.op = compareOp;
@@ -44,42 +61,25 @@ public class Cmp {
 
     Compare toCompare(ByteSequence namespace) {
         Compare.Builder compareBuilder = Compare.newBuilder().setKey(Util.prefixNamespace(this.key, namespace));
-        switch (this.op) {
-            case EQUAL:
-                compareBuilder.setResult(Compare.CompareResult.EQUAL);
-                break;
-            case GREATER:
-                compareBuilder.setResult(Compare.CompareResult.GREATER);
-                break;
-            case LESS:
-                compareBuilder.setResult(Compare.CompareResult.LESS);
-                break;
-            case NOT_EQUAL:
-                compareBuilder.setResult(Compare.CompareResult.NOT_EQUAL);
-                break;
-            default:
-                throw new IllegalArgumentException("Unexpected compare type (" + this.op + ")");
-        }
+        Compare.CompareResult result = switch (this.op) {
+            case EQUAL -> Compare.CompareResult.EQUAL;
+            case GREATER -> Compare.CompareResult.GREATER;
+            case LESS -> Compare.CompareResult.LESS;
+            case NOT_EQUAL -> Compare.CompareResult.NOT_EQUAL;
+            default -> throw new IllegalArgumentException("Unexpected compare type (" + this.op + ")");
+        };
+        compareBuilder.setResult(result);
 
         Compare.CompareTarget target = this.target.getTarget();
         Object value = this.target.getTargetValue();
 
         compareBuilder.setTarget(target);
         switch (target) {
-            case VERSION:
-                compareBuilder.setVersion((Long) value);
-                break;
-            case VALUE:
-                compareBuilder.setValue((ByteString) value);
-                break;
-            case MOD:
-                compareBuilder.setModRevision((Long) value);
-                break;
-            case CREATE:
-                compareBuilder.setCreateRevision((Long) value);
-                break;
-            default:
-                throw new IllegalArgumentException("Unexpected target type (" + target + ")");
+            case VERSION -> compareBuilder.setVersion((Long) value);
+            case VALUE -> compareBuilder.setValue((ByteString) value);
+            case MOD -> compareBuilder.setModRevision((Long) value);
+            case CREATE -> compareBuilder.setCreateRevision((Long) value);
+            default -> throw new IllegalArgumentException("Unexpected target type (" + target + ")");
         }
 
         return compareBuilder.build();

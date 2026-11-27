@@ -23,6 +23,11 @@ import io.etcd.jetcd.impl.AbstractResponse;
  */
 public class AuthUserChangePasswordResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserChangePasswordResponse> {
 
+    /**
+     * Creates a new AuthUserChangePasswordResponse from the gRPC response.
+     *
+     * @param response the gRPC auth user change password response
+     */
     public AuthUserChangePasswordResponse(io.etcd.jetcd.api.AuthUserChangePasswordResponse response) {
         super(response, response.getHeader());
     }

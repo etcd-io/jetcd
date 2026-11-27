@@ -22,14 +22,27 @@ package io.etcd.jetcd.common.exception;
  */
 public class CompactedException extends EtcdException {
 
+    /** The revision at which compaction occurred. */
     private long compactedRevision;
 
+    /**
+     * Package-private constructor for creating compacted exceptions.
+     *
+     * @param code         the error code
+     * @param message      the error message
+     * @param compactedRev the revision at which compaction occurred
+     */
     CompactedException(ErrorCode code, String message, long compactedRev) {
         super(code, message, null);
         this.compactedRevision = compactedRev;
     }
 
-    // get the current compacted revision of etcd server.
+    /**
+     * Returns the current compacted revision of the etcd server.
+     * Revisions at or below this value have been compacted and are no longer available.
+     *
+     * @return the compacted revision
+     */
     public long getCompactedRevision() {
         return compactedRevision;
     }

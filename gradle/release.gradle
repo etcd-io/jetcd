@@ -23,6 +23,7 @@ scmVersion {
     }
 }
 
+def releaseVersion = scmVersion.version
 allprojects {
-    project.version = scmVersion.version
+    project.version = releaseVersion
 }

@@ -23,6 +23,11 @@ import io.etcd.jetcd.impl.AbstractResponse;
  */
 public class AuthUserGrantRoleResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserGrantRoleResponse> {
 
+    /**
+     * Creates a new AuthUserGrantRoleResponse from the gRPC response.
+     *
+     * @param response the gRPC auth user grant role response
+     */
     public AuthUserGrantRoleResponse(io.etcd.jetcd.api.AuthUserGrantRoleResponse response) {
         super(response, response.getHeader());
     }

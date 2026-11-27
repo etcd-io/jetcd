@@ -34,6 +34,8 @@ public interface Election extends CloseableClient {
      * representing the leadership if successful. The leader key can then be used
      * to issue new values on the election, transactionally guard API requests on
      * leadership still being held, and resign from the election.
+     * Cancelling the returned future requests cancellation of a pending campaign.
+     * If etcd grants leadership first, leadership remains subject to the normal resignation and lease rules.
      *
      * @param  electionName election name
      * @param  leaseId      lease identifier
@@ -61,8 +63,8 @@ public interface Election extends CloseableClient {
     CompletableFuture<LeaderResponse> leader(ByteSequence electionName);
 
     /**
-     * Listens to election proclamations in-order as made by the election's
-     * elected leaders.
+     * Delivers election proclamations in order. Callbacks for an observation run serially on worker threads.
+     * If a proclamation callback throws, the observation is canceled and the listener receives the error.
      *
      * @param electionName election name
      * @param listener     listener

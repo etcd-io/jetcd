@@ -1,33 +1,28 @@
 [versions]
-grpc = "1.85.1"
 log4j = "2.26.1"
-mockito = "5.24.0"
 slf4j = "2.0.20"
-guava = "33.7.1-jre"
+guava = "33.8.0-jre"
 assertj = "3.27.7"
-junit = "5.13.4"
+junit = "6.1.3"
 testcontainers = "2.0.5"
-protoc = "3.25.1"
+protobuf = "4.36.2"
 failsafe = "3.3.2"
 awaitility = "4.3.0"
-commonsIo = "2.22.0"
-commonCompress = "1.28.0"
-autoService = "1.1.1"
-errorprone = "2.30.0"
-vertx = "4.5.32"
+checkerFramework = "4.4.0"
+errorprone = "2.53.0"
+vertx = "5.2.3"
 picocli = "4.7.7"
-restAssured = "5.5.6"
-javaxAnnotation = "1.3.2"
+restAssured = "6.3.0"
 
-versionsPlugin = "0.52.0"
-errorPronePlugin = "4.0.1"
-spotlessPlugin = "6.25.0"
-shadowPlugin = "8.1.1"
+versionsPlugin = "0.67.0"
+errorPronePlugin = "5.2.0"
+spotlessPlugin = "8.12.0"
+shadowPlugin = "9.6.1"
 testLoggerPlugin = "4.0.0"
 protobufPlugin = "0.10.1"
-jreleaserPlugin = "1.23.0"
-axionReleasePlugin = "1.18.17"
-testRetryPlugin = "1.6.2"
+jreleaser = "1.27.0"
+axionReleasePlugin = "1.21.5"
+testRetryPlugin = "1.6.6"
 
 
 [libraries]
@@ -36,50 +31,34 @@ guava = { module = "com.google.guava:guava", version.ref = "guava" }
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 junit = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
-protoc = { module = "com.google.protobuf:protoc", version.ref = "protoc" }
 failsafe = { module = "dev.failsafe:failsafe", version.ref = "failsafe" }
 awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
 picocli  = { module = "info.picocli:picocli", version.ref = "picocli"}
 restAssured = { module = "io.rest-assured:rest-assured", version.ref = "restAssured"}
 
-commonsIo = { module = "commons-io:commons-io", version.ref = "commonsIo" }
-commonsCompress = { module = "org.apache.commons:commons-compress", version.ref = "commonCompress" }
+protobufBom = { module = "com.google.protobuf:protobuf-bom", version.ref = "protobuf" }
+protobufJava = { module = "com.google.protobuf:protobuf-java" }
+protobufJavaUtil = { module = "com.google.protobuf:protobuf-java-util", version.ref = "protobuf" }
 
-mockitoCore = { module = "org.mockito:mockito-core", version.ref = "mockito" }
-mockitoJunit = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
-
-grpcCore = { module = "io.grpc:grpc-core", version.ref = "grpc" }
-grpcNetty = { module = "io.grpc:grpc-netty", version.ref = "grpc" }
-grpcProtobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
-grpcStub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
-grpcInprocess = { module = "io.grpc:grpc-inprocess", version.ref = "grpc" }
-grpcUtil = { module = "io.grpc:grpc-util", version.ref = "grpc" }
-
-vertxGrpc = { module = "io.vertx:vertx-grpc", version.ref = "vertx" }
+vertxGrpcCommon = { module = "io.vertx:vertx-grpc-common", version.ref = "vertx" }
+vertxGrpcClient = { module = "io.vertx:vertx-grpc-client", version.ref = "vertx" }
+vertxGrpcServer = { module = "io.vertx:vertx-grpc-server", version.ref = "vertx" }
 
 log4jApi = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j" }
 log4jCore = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 log4jSlf4j = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
 log4j12 = { module = "org.apache.logging.log4j:log4j-1.2-api", version.ref = "log4j" }
 
-autoServiceAnnotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "autoService"}
-autoServiceProcessor = { module = "com.google.auto.service:auto-service", version.ref = "autoService"}
-
-javaxAnnotation = { module = "javax.annotation:javax.annotation-api", version.ref = "javaxAnnotation" }
+checkerQual = { module = "org.checkerframework:checker-qual", version.ref = "checkerFramework" }
 
 errorprone = { module = "com.google.errorprone:error_prone_core", version.ref = "errorprone" }
 errorproneAnnotations = { module = "com.google.errorprone:error_prone_annotations", version.ref = "errorprone" }
-errorproneJavac = { module = "com.google.errorprone:javac", version = "9+" }
 
 [bundles]
-grpc     = [ "grpcCore", "grpcNetty", "grpcProtobuf", "grpcStub", "grpcUtil"]
-grpcTest = [ "grpcInprocess"]
 log4j    = [ "log4jApi", "log4jCore", "log4jSlf4j", "log4j12" ]
-mockito  = [ "mockitoCore", "mockitoJunit" ]
-testing  = ["junit", "assertj", "mockitoCore", "mockitoJunit"]
-javax    = [ "javaxAnnotation" ]
+testing  = ["junit", "assertj" ]
 
 
 [plugins]
-shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadowPlugin" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadowPlugin" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobufPlugin" }

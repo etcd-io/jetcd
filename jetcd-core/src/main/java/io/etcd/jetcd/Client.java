@@ -16,6 +16,14 @@
 
 package io.etcd.jetcd;
 
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
+
+import io.etcd.jetcd.resolver.ServiceResolver;
+import io.etcd.jetcd.resolver.ServiceResolvers;
+import io.vertx.core.net.SocketAddress;
+
 /**
  * Etcd Client.
  *
@@ -85,11 +93,58 @@ public interface Client extends AutoCloseable {
     void close();
 
     /**
-     * Returns a new {@link ClientBuilder}.
+     * Asynchronously closes the client and all its resources.
+     * Provides better control over shutdown timeout compared to synchronous close().
      *
-     * @return the builder.
+     * @return CompletableFuture that completes when client is fully closed
      */
-    static ClientBuilder builder() {
-        return new ClientBuilder();
+    java.util.concurrent.CompletableFuture<Void> closeAsync();
+
+    /**
+     * Returns a new {@link ClientBuilder} preconfigured with static addresses.
+     *
+     * @param  addresses etcd server addresses (host:port format)
+     * @return           the builder.
+     */
+    static ClientBuilder builder(String... addresses) {
+        return new ClientBuilder(ServiceResolvers.endpoints(addresses));
+    }
+
+    /**
+     * Returns a new {@link ClientBuilder} preconfigured with static addresses from URIs.
+     * Supports both varargs and array usage: builder(uri1, uri2) or builder(uriArray)
+     *
+     * @param  addresses etcd server URIs
+     * @return           the builder.
+     */
+    static ClientBuilder builder(URI... addresses) {
+        String[] addressStrings = Arrays.stream(addresses)
+            .map(URI::toString)
+            .toArray(String[]::new);
+        return new ClientBuilder(ServiceResolvers.endpoints(addressStrings));
+    }
+
+    /**
+     * Returns a new {@link ClientBuilder} preconfigured with static addresses from a collection of URIs.
+     *
+     * @param  addresses collection of etcd server URIs
+     * @return           the builder.
+     */
+    static ClientBuilder builder(Collection<URI> addresses) {
+        String[] addressStrings = addresses.stream()
+            .map(URI::toString)
+            .toArray(String[]::new);
+        return new ClientBuilder(ServiceResolvers.endpoints(addressStrings));
+    }
+
+    /**
+     * Returns a new {@link ClientBuilder} with a custom endpoint resolver.
+     * Use this for advanced service discovery scenarios.
+     *
+     * @param  serviceResolver custom endpoint resolver
+     * @return                 the builder.
+     */
+    static ClientBuilder builder(ServiceResolver<SocketAddress> serviceResolver) {
+        return new ClientBuilder(serviceResolver);
     }
 }

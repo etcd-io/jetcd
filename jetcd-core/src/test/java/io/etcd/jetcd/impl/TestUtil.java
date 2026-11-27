@@ -25,6 +25,7 @@ import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.launcher.EtcdCluster;
+import io.etcd.jetcd.test.EtcdClusterEndpointResolver;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 import io.etcd.jetcd.watch.WatchResponse;
 
@@ -71,9 +72,10 @@ public class TestUtil {
     public static void waitForCondition(final TestCondition testCondition, final long maxWaitMs,
         String conditionDetails) throws InterruptedException {
         final long startTime = System.currentTimeMillis();
-        boolean testConditionMet = false;
-        while (!(testConditionMet = testCondition.conditionMet()) && (System.currentTimeMillis() - startTime) < maxWaitMs) {
+        boolean testConditionMet = testCondition.conditionMet();
+        while (!testConditionMet && (System.currentTimeMillis() - startTime) < maxWaitMs) {
             Thread.sleep(Math.min(maxWaitMs, 500L));
+            testConditionMet = testCondition.conditionMet();
         }
         if (!testConditionMet) {
             conditionDetails = conditionDetails != null ? conditionDetails : "";
@@ -86,10 +88,10 @@ public class TestUtil {
     }
 
     public static ClientBuilder client(EtcdClusterExtension extension) {
-        return Client.builder().target("cluster://" + extension.clusterName());
+        return Client.builder(EtcdClusterEndpointResolver.create(extension.cluster()));
     }
 
     public static ClientBuilder client(EtcdCluster cluster) {
-        return Client.builder().target("cluster://" + cluster.clusterName());
+        return Client.builder(EtcdClusterEndpointResolver.create(cluster));
     }
 }

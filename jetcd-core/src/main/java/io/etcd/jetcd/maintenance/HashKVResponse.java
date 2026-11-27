@@ -24,6 +24,11 @@ import io.etcd.jetcd.impl.AbstractResponse;
  */
 public class HashKVResponse extends AbstractResponse<io.etcd.jetcd.api.HashKVResponse> {
 
+    /**
+     * Creates a new HashKVResponse from the gRPC response.
+     *
+     * @param response the gRPC hash KV response
+     */
     public HashKVResponse(io.etcd.jetcd.api.HashKVResponse response) {
         super(response, response.getHeader());
     }

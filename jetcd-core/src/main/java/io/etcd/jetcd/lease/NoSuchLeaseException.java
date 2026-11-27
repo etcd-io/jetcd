@@ -21,6 +21,11 @@ package io.etcd.jetcd.lease;
  */
 public class NoSuchLeaseException extends Exception {
 
+    /**
+     * Creates a NoSuchLeaseException for the given lease ID.
+     *
+     * @param leaseId the lease ID that was not found
+     */
     public NoSuchLeaseException(long leaseId) {
         super("No such lease: " + leaseId);
     }

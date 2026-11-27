@@ -18,8 +18,16 @@ package io.etcd.jetcd.lease;
 
 import io.etcd.jetcd.impl.AbstractResponse;
 
+/**
+ * Response from a lease keep alive operation.
+ */
 public class LeaseKeepAliveResponse extends AbstractResponse<io.etcd.jetcd.api.LeaseKeepAliveResponse> {
 
+    /**
+     * Creates a new LeaseKeepAliveResponse from the gRPC response.
+     *
+     * @param response the gRPC lease keep alive response
+     */
     public LeaseKeepAliveResponse(io.etcd.jetcd.api.LeaseKeepAliveResponse response) {
         super(response, response.getHeader());
     }

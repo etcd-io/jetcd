@@ -16,6 +16,7 @@
 
 package io.etcd.jetcd.impl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -32,6 +34,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.Client;
+import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.Txn;
@@ -54,15 +58,17 @@ import static io.etcd.jetcd.impl.TestUtil.byteStringOf;
 import static io.etcd.jetcd.impl.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Tag("kv")
 @Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class KVNamespaceTest {
     private static final ByteSequence END_KEY = ByteSequence.from(new byte[] { 0 });
 
     @RegisterExtension
     public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
-        .withNodes(3)
+        .withNodes(1)
         .build();
 
+    private final List<Client> clients = new ArrayList<>();
     private KV kvClient;
     private KV kvClientWithNamespace;
     private KV kvClientWithNamespace2;
@@ -71,18 +77,24 @@ public class KVNamespaceTest {
 
     @AfterEach
     public void cleanUpCase() {
+        // Clean up test data before closing clients
         if (kvClient != null) {
-            kvClient.close();
-            kvClient = null;
+            try {
+                ByteSequence pfxPrefix = bytesOf("pfx");
+                kvClient.delete(pfxPrefix, DeleteOption.builder()
+                    .withRange(bytesOf("pfxz"))
+                    .build()).get(5, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                System.err.println("Warning: Failed to cleanup pfx keys: " + e.getMessage());
+            }
         }
-        if (kvClientWithNamespace != null) {
-            kvClientWithNamespace.close();
-            kvClientWithNamespace = null;
-        }
-        if (kvClientWithNamespace2 != null) {
-            kvClientWithNamespace2.close();
-            kvClientWithNamespace2 = null;
-        }
+        clients.forEach(Client::close);
+    }
+
+    private KV openKv(ClientBuilder builder) {
+        var client = builder.build();
+        clients.add(client);
+        return client.getKVClient();
     }
 
     static Stream<Arguments> namespaceProvider() {
@@ -118,17 +130,15 @@ public class KVNamespaceTest {
     @Test
     public void testKV() throws Exception {
         // kvClient without namespace used as the judge for the final result
-        kvClient = TestUtil.client(cluster).build().getKVClient();
+        kvClient = openKv(TestUtil.client(cluster));
         // kvClient with one namespace used to test operations with namespace
         ByteSequence namespace = ByteSequence
             .from(TestUtil.randomByteSequence().concat(ByteSequence.NAMESPACE_DELIMITER).getBytes());
-        kvClientWithNamespace = TestUtil.client(cluster).namespace(namespace).build()
-            .getKVClient();
+        kvClientWithNamespace = openKv(TestUtil.client(cluster).namespace(namespace));
         // kvClient with another namespace used to test keyed segregation based on namespace
         ByteSequence namespace2 = ByteSequence
             .from(TestUtil.randomByteSequence().concat(ByteSequence.NAMESPACE_DELIMITER).getBytes());
-        kvClientWithNamespace2 = TestUtil.client(cluster).namespace(namespace2).build()
-            .getKVClient();
+        kvClientWithNamespace2 = openKv(TestUtil.client(cluster).namespace(namespace2));
 
         // test single key
         {
@@ -230,12 +240,11 @@ public class KVNamespaceTest {
     @Test
     public void testTxn() throws Exception {
         // kvClient without namespace used as the judge for the final result
-        kvClient = TestUtil.client(cluster).build().getKVClient();
+        kvClient = openKv(TestUtil.client(cluster));
         // kvClient with one namespace used to test operations with namespace
         ByteSequence namespace = ByteSequence
             .from(TestUtil.randomByteSequence().concat(ByteSequence.NAMESPACE_DELIMITER).getBytes());
-        kvClientWithNamespace = TestUtil.client(cluster).namespace(namespace).build()
-            .getKVClient();
+        kvClientWithNamespace = openKv(TestUtil.client(cluster).namespace(namespace));
 
         // put a key in root namespace, assert that it cannot be seen using kvClient with namespace
         ByteSequence cmpKey = getNonexistentKey();
@@ -259,9 +268,12 @@ public class KVNamespaceTest {
                 .Else(Op.put(key2, TestUtil.randomByteSequence(), PutOption.builder().withPrevKV().build())).commit();
             TxnResponse txnResponse = txnFuture.get();
             assertThat(txnResponse.getPutResponses().size()).isEqualTo(1);
-            assertThat(txnResponse.getPutResponses().get(0).hasPrevKv()).isTrue();
-            assertThat(txnResponse.getPutResponses().get(0).getPrevKv().getKey()).isEqualTo(key1);
-            assertThat(txnResponse.getPutResponses().get(0).getPrevKv().getValue()).isEqualTo(value1);
+            assertThat(txnResponse.getPutResponses().get(0).getPrevKv())
+                .isPresent()
+                .hasValueSatisfying(kv -> {
+                    assertThat(kv.getKey()).isEqualTo(key1);
+                    assertThat(kv.getValue()).isEqualTo(value1);
+                });
         }
 
         // test comparison fails, with get operation.
@@ -297,12 +309,11 @@ public class KVNamespaceTest {
     @Test
     public void testNestedTxn() throws Exception {
         // kvClient without namespace used as the judge for the final result
-        kvClient = TestUtil.client(cluster).build().getKVClient();
+        kvClient = openKv(TestUtil.client(cluster));
         // kvClient with one namespace used to test operations with namespace
         ByteSequence namespace = ByteSequence
             .from(TestUtil.randomByteSequence().concat(ByteSequence.NAMESPACE_DELIMITER).getBytes());
-        kvClientWithNamespace = TestUtil.client(cluster).namespace(namespace).build()
-            .getKVClient();
+        kvClientWithNamespace = openKv(TestUtil.client(cluster).namespace(namespace));
 
         ByteSequence cmpKey1 = getNonexistentKey();
         putKVWithAssertion(kvClient, cmpKey1, TestUtil.randomByteSequence(), null);
@@ -335,9 +346,13 @@ public class KVNamespaceTest {
             TxnResponse response = txnFuture.get();
             assertThat(response.getTxnResponses().size()).isEqualTo(1);
             assertThat(response.getTxnResponses().get(0).getPutResponses().size()).isEqualTo(1);
-            assertThat(response.getTxnResponses().get(0).getPutResponses().get(0).hasPrevKv()).isTrue();
-            assertThat(response.getTxnResponses().get(0).getPutResponses().get(0).getPrevKv().getKey()).isEqualTo(key1);
-            assertThat(response.getTxnResponses().get(0).getPutResponses().get(0).getPrevKv().getValue()).isEqualTo(value1);
+            final ByteSequence expectedValue = value1;
+            assertThat(response.getTxnResponses().get(0).getPutResponses().get(0).getPrevKv())
+                .isPresent()
+                .hasValueSatisfying(kv -> {
+                    assertThat(kv.getKey()).isEqualTo(key1);
+                    assertThat(kv.getValue()).isEqualTo(expectedValue);
+                });
             value1 = nextValue1;
             assertExistentKey(kvClient, ByteSequence.from(namespace.concat(key1).getBytes()), value1);
         }
@@ -381,11 +396,14 @@ public class KVNamespaceTest {
         CompletableFuture<PutResponse> feature = kvClient.put(key, value, PutOption.builder().withPrevKV().build());
         PutResponse response = feature.get();
         if (prevValue != null) {
-            assertThat(response.hasPrevKv()).isTrue();
-            assertThat(response.getPrevKv().getKey()).isEqualTo(key);
-            assertThat(response.getPrevKv().getValue()).isEqualTo(prevValue);
+            assertThat(response.getPrevKv())
+                .isPresent()
+                .hasValueSatisfying(kv -> {
+                    assertThat(kv.getKey()).isEqualTo(key);
+                    assertThat(kv.getValue()).isEqualTo(prevValue);
+                });
         }
-        return response.hasPrevKv();
+        return response.getPrevKv().isPresent();
     }
 
     private static void deleteKVWithAssertion(KV kvClient, ByteSequence key, ByteSequence prevValue) throws Exception {

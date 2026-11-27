@@ -20,8 +20,16 @@ import io.etcd.jetcd.impl.AbstractResponse;
 
 import com.google.protobuf.ByteString;
 
+/**
+ * Response from a snapshot operation.
+ */
 public class SnapshotResponse extends AbstractResponse<io.etcd.jetcd.api.SnapshotResponse> {
 
+    /**
+     * Creates a new SnapshotResponse from the gRPC response.
+     *
+     * @param response the gRPC snapshot response
+     */
     public SnapshotResponse(io.etcd.jetcd.api.SnapshotResponse response) {
         super(response, response.getHeader());
     }

@@ -20,6 +20,7 @@ package mvccpb;
 
 option java_multiple_files = true;
 option java_package = "io.etcd.jetcd.api";
+option java_outer_classname = "KvProto";
 
 message KeyValue {
   // key is the key in bytes. An empty key is not allowed.

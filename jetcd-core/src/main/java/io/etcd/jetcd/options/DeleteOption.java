@@ -23,21 +23,27 @@ import io.etcd.jetcd.KV;
 
 import static java.util.Objects.requireNonNull;
 
-public final class DeleteOption {
+/**
+ * The option for delete operation.
+ *
+ * @param endKey    end key for range delete
+ * @param prevKV    whether to return previous key-value
+ * @param prefix    whether to delete by prefix
+ * @param autoRetry whether to automatically retry on failure
+ */
+public record DeleteOption(
+    ByteSequence endKey,
+    boolean prevKV,
+    boolean prefix,
+    boolean autoRetry) {
+
     public static final DeleteOption DEFAULT = builder().build();
 
-    private final ByteSequence endKey;
-    private final boolean prevKV;
-    private final boolean prefix;
-    private final boolean autoRetry;
-
-    private DeleteOption(ByteSequence endKey, boolean prevKV, boolean prefix, final boolean autoRetry) {
-        this.endKey = endKey;
-        this.prevKV = prevKV;
-        this.prefix = prefix;
-        this.autoRetry = autoRetry;
-    }
-
+    /**
+     * Returns the end key of the range.
+     *
+     * @return the end key, or empty if not set
+     */
     public Optional<ByteSequence> getEndKey() {
         return Optional.ofNullable(endKey);
     }
@@ -47,7 +53,8 @@ public final class DeleteOption {
      *
      * @return true if get the previous key/value pairs before deleting them, otherwise false.
      */
-    public boolean isPrevKV() {
+    @Override
+    public boolean prevKV() {
         return prevKV;
     }
 
@@ -56,7 +63,8 @@ public final class DeleteOption {
      *
      * @return true if deletion by prefix.
      */
-    public boolean isPrefix() {
+    @Override
+    public boolean prefix() {
         return prefix;
     }
 
@@ -66,20 +74,9 @@ public final class DeleteOption {
      *
      * @return true if automated retries should happen.
      */
-    public boolean isAutoRetry() {
+    @Override
+    public boolean autoRetry() {
         return autoRetry;
-    }
-
-    /**
-     * Returns the builder.
-     *
-     * @deprecated use {@link #builder()}
-     * @return     the builder
-     */
-    @SuppressWarnings("InlineMeSuggester")
-    @Deprecated
-    public static Builder newBuilder() {
-        return builder();
     }
 
     /**
@@ -91,6 +88,9 @@ public final class DeleteOption {
         return new Builder();
     }
 
+    /**
+     * Builder for DeleteOption.
+     */
     public static final class Builder {
         private ByteSequence endKey;
         private boolean prevKV = false;
@@ -126,12 +126,10 @@ public final class DeleteOption {
         /**
          * Enables 'Delete' requests to delete all the keys by prefix.
          *
-         * <p>
-         *
          * @param  prefix flag to delete all the keys by prefix
          * @return        builder
          */
-        public DeleteOption.Builder isPrefix(boolean prefix) {
+        public Builder isPrefix(boolean prefix) {
             this.prefix = prefix;
             return this;
         }
@@ -181,6 +179,11 @@ public final class DeleteOption {
             return this;
         }
 
+        /**
+         * Builds the DeleteOption.
+         *
+         * @return the DeleteOption
+         */
         public DeleteOption build() {
             return new DeleteOption(endKey, prevKV, prefix, autoRetry);
         }

@@ -20,9 +20,18 @@ import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.impl.AbstractResponse;
 
+/**
+ * Response from an election leader query operation.
+ */
 public class LeaderResponse extends AbstractResponse<io.etcd.jetcd.api.LeaderResponse> {
     private final KeyValue kv;
 
+    /**
+     * Creates a new LeaderResponse from the gRPC response.
+     *
+     * @param response  the gRPC leader response
+     * @param namespace the namespace used
+     */
     public LeaderResponse(io.etcd.jetcd.api.LeaderResponse response, ByteSequence namespace) {
         super(response, response.getHeader());
         this.kv = new KeyValue(getResponse().getKv(), namespace);

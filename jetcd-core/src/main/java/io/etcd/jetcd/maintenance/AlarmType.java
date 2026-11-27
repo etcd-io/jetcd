@@ -20,7 +20,10 @@ package io.etcd.jetcd.maintenance;
  * represents type of alarm which can be raised.
  */
 public enum AlarmType {
-    NONE, // default, used to query if any alarm is active
-    NOSPACE, // space quota is exhausted
+    /** Default, used to query if any alarm is active. */
+    NONE,
+    /** Space quota is exhausted. */
+    NOSPACE,
+    /** Unrecognized alarm type. */
     UNRECOGNIZED,
 }

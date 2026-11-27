@@ -16,15 +16,30 @@
 
 package io.etcd.jetcd.maintenance;
 
+/**
+ * Wraps a snapshot response or an error.
+ */
 public class SnapshotReaderResponseWithError {
 
+    /** The snapshot response, if successful. */
     public SnapshotResponse snapshotResponse;
+    /** The error, if any. */
     public Exception error;
 
+    /**
+     * Creates a wrapper with a successful response.
+     *
+     * @param snapshotResponse the snapshot response
+     */
     public SnapshotReaderResponseWithError(SnapshotResponse snapshotResponse) {
         this.snapshotResponse = snapshotResponse;
     }
 
+    /**
+     * Creates a wrapper with an error.
+     *
+     * @param e the exception
+     */
     public SnapshotReaderResponseWithError(Exception e) {
         this.error = e;
     }

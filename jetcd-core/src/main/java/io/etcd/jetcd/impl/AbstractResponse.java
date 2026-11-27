@@ -19,12 +19,23 @@ package io.etcd.jetcd.impl;
 import io.etcd.jetcd.Response;
 import io.etcd.jetcd.api.ResponseHeader;
 
+/**
+ * Abstract base class for etcd responses.
+ *
+ * @param <R> the type of gRPC response
+ */
 public class AbstractResponse<R> implements Response {
 
     private final R response;
     private final ResponseHeader responseHeader;
     private final Header header;
 
+    /**
+     * Creates a new response wrapper.
+     *
+     * @param response       the gRPC response
+     * @param responseHeader the response header
+     */
     public AbstractResponse(R response, ResponseHeader responseHeader) {
         this.response = response;
         this.responseHeader = responseHeader;
@@ -42,10 +53,20 @@ public class AbstractResponse<R> implements Response {
         return response.toString();
     }
 
+    /**
+     * Returns the underlying gRPC response.
+     *
+     * @return the gRPC response
+     */
     protected final R getResponse() {
         return this.response;
     }
 
+    /**
+     * Returns the response header.
+     *
+     * @return the response header
+     */
     protected final ResponseHeader getResponseHeader() {
         return this.responseHeader;
     }

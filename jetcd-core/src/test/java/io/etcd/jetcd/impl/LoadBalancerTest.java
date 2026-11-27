@@ -28,9 +28,9 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.KV;
-import io.etcd.jetcd.Response;
 import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.test.EtcdClusterExtension;
+import io.vertx.core.net.endpoint.LoadBalancer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,31 +44,39 @@ public class LoadBalancerTest {
 
     @Test
     public void testPickFirstBalancerFactory() throws Exception {
+        // Test default load balancer behavior (ROUND_ROBIN)
+        // With multiple endpoints, requests should be distributed across different members
         final List<URI> endpoints = cluster.clientEndpoints();
-        final ClientBuilder builder = Client.builder().endpoints(endpoints).loadBalancerPolicy("pick_first");
+        final ClientBuilder builder = Client.builder(endpoints);
 
         try (Client client = builder.build();
             KV kv = client.getKVClient()) {
 
             long lastMemberId = 0;
+            long differences = 0;
 
-            final String allEndpoints = endpoints.stream().map(URI::toString).collect(Collectors.joining(","));
-            for (int i = 0; i < allEndpoints.length() * 2; i++) {
-                Response response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
+            // Make enough requests to see load balancing in action
+            final int requestCount = endpoints.size() * 3;
+            for (int i = 0; i < requestCount; i++) {
+                PutResponse response = kv.put(TestUtil.randomByteSequence(), TestUtil.randomByteSequence()).get();
 
-                if (i == 0) {
-                    lastMemberId = response.getHeader().getMemberId();
+                if (i > 0 && lastMemberId != response.getHeader().getMemberId()) {
+                    differences++;
                 }
 
-                assertThat(response.getHeader().getMemberId()).isEqualTo(lastMemberId);
+                lastMemberId = response.getHeader().getMemberId();
             }
+
+            // With round-robin, we should see requests going to different members
+            // (at least one difference expected with multiple endpoints)
+            assertThat(differences).isGreaterThan(0);
         }
     }
 
     @Test
     public void testRoundRobinLoadBalancerFactory() throws Exception {
         final List<URI> endpoints = cluster.clientEndpoints();
-        final ClientBuilder builder = Client.builder().endpoints(endpoints).loadBalancerPolicy("round_robin");
+        final ClientBuilder builder = Client.builder(endpoints).loadBalancer(LoadBalancer.ROUND_ROBIN);
 
         try (Client client = builder.build();
             KV kv = client.getKVClient()) {

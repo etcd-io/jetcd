@@ -16,35 +16,28 @@
 
 package io.etcd.jetcd.options;
 
-public final class CompactOption {
+/**
+ * The option for compact operation.
+ *
+ * @param physical whether to wait for physical compaction
+ */
+public record CompactOption(
+    boolean physical) {
+
     public static final CompactOption DEFAULT = builder().build();
 
-    private final boolean physical;
-
-    private CompactOption(boolean physical) {
-        this.physical = physical;
-    }
-
-    public boolean isPhysical() {
-        return physical;
-    }
-
     /**
-     * Returns the builder.
+     * Creates a new builder for CompactOption.
      *
-     * @deprecated use {@link #builder()}
-     * @return     the builder
+     * @return a new builder instance
      */
-    @SuppressWarnings("InlineMeSuggester")
-    @Deprecated
-    public static Builder newBuilder() {
-        return builder();
-    }
-
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * Builder for CompactOption.
+     */
     public static final class Builder {
         private boolean physical = false;
 
@@ -65,6 +58,11 @@ public final class CompactOption {
             return this;
         }
 
+        /**
+         * Builds the CompactOption.
+         *
+         * @return the CompactOption
+         */
         public CompactOption build() {
             return new CompactOption(this.physical);
         }

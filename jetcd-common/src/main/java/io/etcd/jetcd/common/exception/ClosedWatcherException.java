@@ -16,8 +16,15 @@
 
 package io.etcd.jetcd.common.exception;
 
+/**
+ * Thrown when operations are attempted on a watcher that has been closed.
+ * This exception indicates the watcher is no longer receiving watch events.
+ */
 public class ClosedWatcherException extends EtcdException {
 
+    /**
+     * Creates a new ClosedWatcherException.
+     */
     public ClosedWatcherException() {
         super(ErrorCode.CANCELLED, "Watcher has been closed", null);
     }

@@ -18,19 +18,34 @@ package io.etcd.jetcd.examples.ctl;
 
 import picocli.CommandLine;
 
+/**
+ * Main entry point for jetcdctl command-line tool.
+ * Provides subcommands for interacting with etcd: watch, get, and put operations.
+ */
 @CommandLine.Command(name = "jetcdctl", version = "1.0", mixinStandardHelpOptions = true, subcommands = {
         CommandWatch.class,
         CommandGet.class,
         CommandPut.class
 })
 public class Main implements Runnable {
-    @CommandLine.Option(names = { "--endpoints" }, description = "gRPC endpoints", defaultValue = "http://127.0.0.1:2379")
+    @CommandLine.Option(names = { "--endpoints" }, description = "gRPC endpoints", defaultValue = "127.0.0.1:2379")
     String endpoints;
+
+    /**
+     * Creates a new Main instance.
+     */
+    public Main() {
+    }
 
     @Override
     public void run() {
     }
 
+    /**
+     * Application entry point.
+     *
+     * @param args command-line arguments
+     */
     public static void main(String[] args) {
         int exitCode = new CommandLine(new Main()).execute(args);
         System.exit(exitCode);

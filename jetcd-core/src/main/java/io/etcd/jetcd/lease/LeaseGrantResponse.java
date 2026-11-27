@@ -18,8 +18,16 @@ package io.etcd.jetcd.lease;
 
 import io.etcd.jetcd.impl.AbstractResponse;
 
+/**
+ * Response from a lease grant operation.
+ */
 public class LeaseGrantResponse extends AbstractResponse<io.etcd.jetcd.api.LeaseGrantResponse> {
 
+    /**
+     * Creates a new LeaseGrantResponse from the gRPC response.
+     *
+     * @param response the gRPC lease grant response
+     */
     public LeaseGrantResponse(io.etcd.jetcd.api.LeaseGrantResponse response) {
         super(response, response.getHeader());
     }

@@ -24,6 +24,11 @@ import io.etcd.jetcd.impl.AbstractResponse;
  */
 public class AuthDisableResponse extends AbstractResponse<io.etcd.jetcd.api.AuthDisableResponse> {
 
+    /**
+     * Creates a new AuthDisableResponse from the gRPC response.
+     *
+     * @param response the gRPC auth disable response
+     */
     public AuthDisableResponse(io.etcd.jetcd.api.AuthDisableResponse response) {
         super(response, response.getHeader());
     }

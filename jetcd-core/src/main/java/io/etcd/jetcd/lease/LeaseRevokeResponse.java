@@ -18,8 +18,16 @@ package io.etcd.jetcd.lease;
 
 import io.etcd.jetcd.impl.AbstractResponse;
 
+/**
+ * Response from a lease revoke operation.
+ */
 public class LeaseRevokeResponse extends AbstractResponse<io.etcd.jetcd.api.LeaseRevokeResponse> {
 
+    /**
+     * Creates a new LeaseRevokeResponse from the gRPC response.
+     *
+     * @param revokeResponse the gRPC lease revoke response
+     */
     public LeaseRevokeResponse(io.etcd.jetcd.api.LeaseRevokeResponse revokeResponse) {
         super(revokeResponse, revokeResponse.getHeader());
     }

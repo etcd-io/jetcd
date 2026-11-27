@@ -26,6 +26,11 @@ import io.etcd.jetcd.impl.AbstractResponse;
  */
 public class AuthUserAddResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserAddResponse> {
 
+    /**
+     * Creates a new AuthUserAddResponse from the gRPC response.
+     *
+     * @param response the gRPC auth user add response
+     */
     public AuthUserAddResponse(io.etcd.jetcd.api.AuthUserAddResponse response) {
         super(response, response.getHeader());
     }

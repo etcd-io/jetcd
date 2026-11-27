@@ -18,7 +18,14 @@
 dependencies {
     api libs.slf4j
     api libs.guava
-    api libs.grpcCore
+    api platform(libs.protobufBom)
+    api libs.protobufJava
+    // For GrpcStatus and InvalidStatusException used in exception handling
+    api libs.vertxGrpcCommon
+    api libs.vertxGrpcClient
+    api libs.failsafe
+
+    runtimeOnly libs.protobufJavaUtil
 
     testImplementation libs.bundles.testing
     testRuntimeOnly libs.bundles.log4j

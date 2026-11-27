@@ -19,33 +19,23 @@ package io.etcd.jetcd.watch;
 import io.etcd.jetcd.KeyValue;
 
 /**
- * Watch event, return by watch, contain put, delete event.
+ * Watch event returned by watch, containing put or delete event information.
+ *
+ * @param keyValue  the key-value pair for the event
+ * @param prevKV    the previous key-value pair (may be null)
+ * @param eventType the type of event (PUT, DELETE, or UNRECOGNIZED)
  */
-public class WatchEvent {
+public record WatchEvent(KeyValue keyValue, KeyValue prevKV, EventType eventType) {
 
-    private final KeyValue keyValue;
-    private final KeyValue prevKV;
-    private final EventType eventType;
-
-    public WatchEvent(KeyValue keyValue, KeyValue prevKV, EventType eventType) {
-        this.keyValue = keyValue;
-        this.prevKV = prevKV;
-        this.eventType = eventType;
-    }
-
-    public KeyValue getKeyValue() {
-        return keyValue;
-    }
-
-    public KeyValue getPrevKV() {
-        return prevKV;
-    }
-
-    public EventType getEventType() {
-        return eventType;
-    }
-
+    /**
+     * Watch event type.
+     */
     public enum EventType {
-        PUT, DELETE, UNRECOGNIZED,
+        /** Put event. */
+        PUT,
+        /** Delete event. */
+        DELETE,
+        /** Unrecognized event type. */
+        UNRECOGNIZED,
     }
 }

@@ -28,6 +28,9 @@ public interface Response {
      */
     Header getHeader();
 
+    /**
+     * Response header interface.
+     */
     interface Header {
 
         /**

@@ -20,16 +20,33 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.etcd.jetcd.*;
-import io.etcd.jetcd.election.*;
+import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.Client;
+import io.etcd.jetcd.Election;
+import io.etcd.jetcd.KV;
+import io.etcd.jetcd.KeyValue;
+import io.etcd.jetcd.Lease;
+import io.etcd.jetcd.election.CampaignResponse;
+import io.etcd.jetcd.election.LeaderKey;
+import io.etcd.jetcd.election.LeaderResponse;
+import io.etcd.jetcd.election.NoLeaderException;
+import io.etcd.jetcd.election.NotLeaderException;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 
@@ -37,6 +54,7 @@ import static io.etcd.jetcd.impl.TestUtil.randomByteSequence;
 import static io.etcd.jetcd.impl.TestUtil.randomString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.awaitility.Awaitility.await;
 
 @Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class ElectionTest {
@@ -44,19 +62,27 @@ public class ElectionTest {
 
     @RegisterExtension
     public static final EtcdClusterExtension cluster = EtcdClusterExtension.builder()
-        .withNodes(3)
+        .withNodes(1)
         .build();
 
+    private static Client client;
     private static Election electionClient;
     private static Lease leaseClient;
     private static KV kvClient;
 
     @BeforeAll
     public static void setUp() {
-        Client client = TestUtil.client(cluster).build();
+        client = TestUtil.client(cluster).build();
         electionClient = client.getElectionClient();
         leaseClient = client.getLeaseClient();
         kvClient = client.getKVClient();
+    }
+
+    @AfterAll
+    public static void tearDown() throws Exception {
+        if (client != null) {
+            client.close();
+        }
     }
 
     @Test
@@ -71,22 +97,22 @@ public class ElectionTest {
         CampaignResponse campaignResponse = electionClient.campaign(electionName, leaseId, firstProposal)
             .get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
         assertThat(campaignResponse.getLeader()).isNotNull();
-        assertThat(campaignResponse.getLeader().getLease()).isEqualTo(leaseId);
-        assertThat(campaignResponse.getLeader().getName()).isEqualTo(electionName);
+        assertThat(campaignResponse.getLeader().lease()).isEqualTo(leaseId);
+        assertThat(campaignResponse.getLeader().name()).isEqualTo(electionName);
         // election is backed by standard key in etcd. let us examine it
         GetOption getOption = GetOption.builder().isPrefix(true).build();
         List<KeyValue> keys = kvClient.get(electionName, getOption).get().getKvs();
         assertThat(keys.size()).isEqualTo(1);
-        assertThat(keys.get(0).getKey().toString()).isEqualTo(campaignResponse.getLeader().getKey().toString());
+        assertThat(keys.get(0).getKey().toString()).isEqualTo(campaignResponse.getLeader().key().toString());
         assertThat(keys.get(0).getValue()).isEqualTo(firstProposal);
 
         // check that we really are the leader (just to test API)
         LeaderResponse leaderResponse = electionClient.leader(electionName)
             .get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
-        assertThat(leaderResponse.getKv().getKey()).isEqualTo(campaignResponse.getLeader().getKey());
+        assertThat(leaderResponse.getKv().getKey()).isEqualTo(campaignResponse.getLeader().key());
         assertThat(leaderResponse.getKv().getValue()).isEqualTo(firstProposal);
         assertThat(leaderResponse.getKv().getLease()).isEqualTo(leaseId);
-        assertThat(leaderResponse.getKv().getCreateRevision()).isEqualTo(campaignResponse.getLeader().getRevision());
+        assertThat(leaderResponse.getKv().getCreateRevision()).isEqualTo(campaignResponse.getLeader().revision());
 
         // as a leader change your proposal
         ByteSequence secondProposal = ByteSequence.from("proposal2", StandardCharsets.UTF_8);
@@ -101,6 +127,34 @@ public class ElectionTest {
         assertThat(keys).isEmpty();
 
         leaseClient.revoke(leaseId).get();
+    }
+
+    @Test
+    void testCancelQueuedCampaign() throws Exception {
+        var electionName = randomByteSequence();
+        long leaderLease = leaseClient.grant(60).get(OPERATION_TIMEOUT, TimeUnit.SECONDS).getID();
+        long contenderLease = leaseClient.grant(60).get(OPERATION_TIMEOUT, TimeUnit.SECONDS).getID();
+        try {
+            var leader = electionClient.campaign(electionName, leaderLease, randomByteSequence())
+                .get(OPERATION_TIMEOUT, TimeUnit.SECONDS).getLeader();
+            var contender = electionClient.campaign(electionName, contenderLease, randomByteSequence());
+            var range = GetOption.builder().isPrefix(true).build();
+            await().atMost(OPERATION_TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+                var queued = kvClient.get(electionName, range).get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
+                assertThat(queued.getKvs()).extracting(KeyValue::getLease).containsExactlyInAnyOrder(leaderLease,
+                    contenderLease);
+            });
+
+            assertThat(contender.cancel(false)).isTrue();
+            assertThat(contender).isCancelled();
+            await().atMost(OPERATION_TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+                var queued = kvClient.get(electionName, range).get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
+                assertThat(queued.getKvs()).extracting(KeyValue::getKey).containsExactly(leader.key());
+            });
+        } finally {
+            leaseClient.revoke(contenderLease).get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
+            leaseClient.revoke(leaderLease).get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
+        }
     }
 
     @Test
@@ -129,9 +183,9 @@ public class ElectionTest {
 
         // check that for sure we are the leader
         LeaderResponse leaderResponse = electionClient.leader(electionName).get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
-        assertThat(leaderResponse.getKv().getKey()).isEqualTo(campaignResponse1.getLeader().getKey());
-        assertThat(campaignResponse1.getLeader().getKey()).isEqualTo(campaignResponse2.getLeader().getKey());
-        assertThat(campaignResponse1.getLeader().getRevision()).isEqualTo(campaignResponse2.getLeader().getRevision());
+        assertThat(leaderResponse.getKv().getKey()).isEqualTo(campaignResponse1.getLeader().key());
+        assertThat(campaignResponse1.getLeader().key()).isEqualTo(campaignResponse2.getLeader().key());
+        assertThat(campaignResponse1.getLeader().revision()).isEqualTo(campaignResponse2.getLeader().revision());
 
         // latest proposal should be persisted
         GetOption getOption = GetOption.builder().isPrefix(true).build();
@@ -162,72 +216,36 @@ public class ElectionTest {
     @Test
     public void testObserveElections() throws Exception {
         int electionCount = 3;
-        final AtomicInteger electionsSeen = new AtomicInteger(0);
         ByteSequence electionName = ByteSequence.from(randomString(), StandardCharsets.UTF_8);
 
-        electionClient.observe(electionName, new Election.Listener() {
-            @Override
-            public void onNext(LeaderResponse response) {
-                electionsSeen.incrementAndGet();
-            }
-
-            @Override
-            public void onError(Throwable error) {
-            }
-
-            @Override
-            public void onCompleted() {
-            }
-        });
-
-        long leaseId = leaseClient.grant(10).get().getID();
+        var observer = new ElectionObserver();
+        electionClient.observe(electionName, observer);
+        long leaseId = leaseClient.grant(30).get(OPERATION_TIMEOUT, TimeUnit.SECONDS).getID();
 
         for (int i = 0; i < electionCount; ++i) {
             ByteSequence proposal = ByteSequence.from(randomString(), StandardCharsets.UTF_8);
             CampaignResponse campaignResponse = electionClient.campaign(electionName, leaseId, proposal)
                 .get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
-            Thread.sleep(100);
+            assertThat(observer.nextProposal()).isEqualTo(proposal);
             electionClient.resign(campaignResponse.getLeader()).get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
         }
-
-        TestUtil.waitForCondition(
-            () -> electionsSeen.get() == electionCount, OPERATION_TIMEOUT * 1000,
-            "Observer did not receive expected notifications, got: " + electionsSeen.get());
-
-        leaseClient.revoke(leaseId).get();
+        leaseClient.revoke(leaseId).get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
     }
 
     @Test
     public void testObserveExistingLeader() throws Exception {
-        final AtomicInteger electionsSeen = new AtomicInteger(0);
         ByteSequence electionName = ByteSequence.from(randomString(), StandardCharsets.UTF_8);
 
-        long leaseId = leaseClient.grant(10).get().getID();
+        long leaseId = leaseClient.grant(30).get(OPERATION_TIMEOUT, TimeUnit.SECONDS).getID();
 
         ByteSequence proposal = ByteSequence.from(randomString(), StandardCharsets.UTF_8);
         electionClient.campaign(electionName, leaseId, proposal)
             .get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
 
-        electionClient.observe(electionName, new Election.Listener() {
-            @Override
-            public void onNext(LeaderResponse response) {
-                electionsSeen.incrementAndGet();
-            }
-
-            @Override
-            public void onError(Throwable error) {
-            }
-
-            @Override
-            public void onCompleted() {
-            }
-        });
-
-        TestUtil.waitForCondition(
-            () -> electionsSeen.get() == 1, OPERATION_TIMEOUT * 1000,
-            "Observer did not receive expected notifications, got: " + electionsSeen.get());
-
-        leaseClient.revoke(leaseId).get();
+        var observer = new ElectionObserver();
+        electionClient.observe(electionName, observer);
+        assertThat(observer.nextProposal()).isEqualTo(proposal);
+        leaseClient.revoke(leaseId).get(OPERATION_TIMEOUT, TimeUnit.SECONDS);
     }
 
     @Test
@@ -273,6 +291,31 @@ public class ElectionTest {
         for (int i = 0; i < threadCount; ++i) {
             clients.get(i).getLeaseClient().revoke(leases.get(i)).get();
             clients.get(i).close();
+        }
+    }
+
+    private static final class ElectionObserver implements Election.Listener {
+        private final BlockingQueue<CompletableFuture<ByteSequence>> proposals = new LinkedBlockingQueue<>();
+
+        @Override
+        public void onNext(LeaderResponse response) {
+            proposals.add(CompletableFuture.completedFuture(response.getKv().getValue()));
+        }
+
+        @Override
+        public void onError(Throwable error) {
+            proposals.add(CompletableFuture.failedFuture(error));
+        }
+
+        @Override
+        public void onCompleted() {
+            onError(new IllegalStateException("Election observation completed before the expected proclamation"));
+        }
+
+        ByteSequence nextProposal() throws InterruptedException, ExecutionException {
+            var proposal = proposals.poll(OPERATION_TIMEOUT, TimeUnit.SECONDS);
+            assertThat(proposal).as("an observed proclamation").isNotNull();
+            return proposal.get();
         }
     }
 }

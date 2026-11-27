@@ -16,33 +16,51 @@
 
 package io.etcd.jetcd.kv;
 
+import java.util.Optional;
+import java.util.function.Supplier;
+
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.KeyValue;
+import io.etcd.jetcd.common.suppliers.Suppliers;
 import io.etcd.jetcd.impl.AbstractResponse;
 
+/**
+ * Response from a put operation.
+ */
 public class PutResponse extends AbstractResponse<io.etcd.jetcd.api.PutResponse> {
 
-    private final ByteSequence namespace;
+    private final Supplier<Optional<KeyValue>> prevKv;
 
+    /**
+     * Creates a new PutResponse from the gRPC response.
+     *
+     * @param putResponse the gRPC put response
+     * @param namespace   the namespace used
+     */
     public PutResponse(io.etcd.jetcd.api.PutResponse putResponse, ByteSequence namespace) {
         super(putResponse, putResponse.getHeader());
-        this.namespace = namespace;
+
+        this.prevKv = Suppliers.memoizingOptional(() -> getResponse().hasPrevKv()
+            ? new KeyValue(getResponse().getPrevKv(), namespace)
+            : null);
     }
 
     /**
-     * Returns previous key-value pair.
+     * Returns previous key-value pair if present.
      *
-     * @return prev kv.
+     * @return Optional containing prev kv, or empty if not present
      */
-    public KeyValue getPrevKv() {
-        return new KeyValue(getResponse().getPrevKv(), namespace);
+    public Optional<KeyValue> getPrevKv() {
+        return prevKv.get();
     }
 
     /**
      * Returns whether a previous key-value pair is present.
      *
-     * @return if has prev kv.
+     * @return     if has prev kv
+     * @deprecated Use {@link #getPrevKv()}.isPresent() instead
      */
+    @Deprecated
     public boolean hasPrevKv() {
         return getResponse().hasPrevKv();
     }

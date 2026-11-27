@@ -16,169 +16,316 @@
 
 package io.etcd.jetcd.impl;
 
+import java.time.Duration;
+import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Lease;
-import io.etcd.jetcd.api.LeaseGrpc.LeaseImplBase;
-import io.etcd.jetcd.api.LeaseKeepAliveRequest;
-import io.etcd.jetcd.api.LeaseKeepAliveResponse;
+import io.etcd.jetcd.common.exception.ClosedClientException;
+import io.etcd.jetcd.common.exception.ErrorCode;
 import io.etcd.jetcd.common.exception.EtcdException;
-import io.etcd.jetcd.support.Observers;
-import io.etcd.jetcd.test.GrpcServerExtension;
-import io.grpc.stub.StreamObserver;
+import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
+import io.etcd.jetcd.test.EtcdConstants;
+import io.vertx.core.Context;
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.ThreadingModel;
+import io.vertx.core.VerticleBase;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+import io.vertx.grpc.common.GrpcMessageDecoder;
+import io.vertx.grpc.common.GrpcMessageEncoder;
+import io.vertx.grpc.common.ServiceMethod;
+import io.vertx.grpc.server.GrpcServer;
+import io.vertx.grpc.server.GrpcServerRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
-/**
- * Keep-alive behaviour when the server ends a {@code LeaseKeepAlive} stream with status OK rather than an
- * error, as an etcd member does when it shuts down gracefully or a proxy in front of it closes the stream.
- */
-@Timeout(value = 1, unit = TimeUnit.MINUTES)
-public class LeaseKeepAliveStreamEndTest {
-    private static final long TTL_SECONDS = 3;
-    private static final long FIRST_LEASE_ID = 1;
-    private static final long SECOND_LEASE_ID = 2;
-
-    @RegisterExtension
-    public final GrpcServerExtension grpcServer = new GrpcServerExtension().directExecutor();
-
-    private StreamEndingLease leaseService;
-    private Lease leaseClient;
-
-    @BeforeEach
-    public void setUp() {
-        leaseService = new StreamEndingLease();
-        grpcServer.getServiceRegistry().addService(leaseService);
-        leaseClient = new LeaseImpl(new ClientConnectionManager(Client.builder(), grpcServer.getChannel()));
-    }
+@Timeout(15)
+class LeaseKeepAliveStreamEndTest {
+    private final AtomicInteger streamsOpened = new AtomicInteger();
+    private Vertx vertx;
+    private Client client;
 
     @AfterEach
-    public void tearDown() {
-        leaseClient.close();
+    void tearDown() throws Exception {
+        try {
+            if (client != null) {
+                client.close();
+            }
+        } finally {
+            if (vertx != null) {
+                vertx.close().toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+            }
+        }
     }
 
     @Test
-    public void keepAliveContinuesAfterTheServerEndsTheStream() {
-        leaseService.endFirstStreamAfterFirstResponse();
-        AtomicInteger renewals = new AtomicInteger();
+    void renewsExistingAndNewLeasesAfterCleanEnd() throws Exception {
+        Lease lease = startServer(true);
+        var renewals = new AtomicInteger();
+        var listenerError = new AtomicReference<Throwable>();
+        var secondLeaseRenewed = new CompletableFuture<LeaseKeepAliveResponse>();
 
-        leaseClient.keepAlive(FIRST_LEASE_ID, Observers.observer(response -> renewals.incrementAndGet()));
+        lease.keepAlive(1, response -> renewals.incrementAndGet(), listenerError::set);
+        await().until(() -> renewals.get() > 0);
+        lease.keepAlive(2, secondLeaseRenewed::complete, listenerError::set);
 
-        await().atMost(TTL_SECONDS * 3, TimeUnit.SECONDS).untilAsserted(() -> assertThat(renewals).hasValueGreaterThan(1));
+        assertThat(secondLeaseRenewed.get(5, TimeUnit.SECONDS).getID()).isEqualTo(2);
+        await().during(Duration.ofMillis(750)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            assertThat(renewals).hasValueGreaterThan(1);
+            assertThat(streamsOpened).hasValue(2);
+            assertThat(listenerError).hasValue(null);
+        });
     }
 
     @Test
-    public void keepAliveRenewsALeaseAddedAfterTheServerEndsTheStream() {
-        leaseService.endFirstStreamAfterFirstResponse();
-        leaseClient.keepAlive(FIRST_LEASE_ID, Observers.observer(response -> {
-        }));
-        await().atMost(TTL_SECONDS, TimeUnit.SECONDS).until(leaseService::firstStreamEnded);
-        AtomicInteger renewals = new AtomicInteger();
+    void closeDoesNotReopenTheStream() throws Exception {
+        Lease lease = startServer(true);
+        var renewed = new CompletableFuture<LeaseKeepAliveResponse>();
 
-        leaseClient.keepAlive(SECOND_LEASE_ID, Observers.observer(response -> renewals.incrementAndGet()));
+        lease.keepAlive(1, renewed::complete, renewed::completeExceptionally);
+        renewed.get(5, TimeUnit.SECONDS);
+        lease.close();
 
-        await().atMost(TTL_SECONDS * 3, TimeUnit.SECONDS).untilAsserted(() -> assertThat(renewals).hasValueGreaterThan(0));
+        await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3))
+            .until(() -> streamsOpened.get() == 1);
     }
 
     @Test
-    public void keepAliveReopensTheStreamOnceAfterTheServerEndsIt() {
-        leaseService.endFirstStreamAfterFirstResponse();
+    void keepAliveOnceFailsWhenTheStreamEndsWithoutAReply() throws Exception {
+        Lease lease = startServer(false);
 
-        leaseClient.keepAlive(FIRST_LEASE_ID, Observers.observer(response -> {
-        }));
-
-        await().atMost(TTL_SECONDS * 3, TimeUnit.SECONDS)
-            .during(TTL_SECONDS, TimeUnit.SECONDS)
-            .until(leaseService::streamsOpened, streams -> streams == 2);
+        assertThatThrownBy(() -> lease.keepAliveOnce(1).get(5, TimeUnit.SECONDS))
+            .cause()
+            .isInstanceOfSatisfying(EtcdException.class,
+                error -> assertThat(error.getErrorCode()).isEqualTo(ErrorCode.UNAVAILABLE));
     }
 
     @Test
-    public void keepAliveOnceFailsWhenTheServerEndsTheStreamWithoutAResponse() {
-        leaseService.endFirstStreamWithoutResponding();
+    void blockedListenerKeepsOnlyLatestHeartbeatWhileOtherListenersContinue() throws Exception {
+        var renewals = new HashMap<Long, Integer>();
+        Lease lease = startServer(new VertxOptions().setEventLoopPoolSize(1).setWorkerPoolSize(2), request -> {
+            request.handler(message -> {
+                long leaseId = message.getID();
+                int renewal = renewals.merge(leaseId, 1, Integer::sum);
+                int lastRenewal = leaseId == 1 ? 3 : 2;
+                request.response().write(heartbeat(leaseId, renewal, renewal == lastRenewal ? 30 : 3));
+            });
+            request.endHandler(ignored -> request.response().end());
+        });
 
-        CompletableFuture<io.etcd.jetcd.lease.LeaseKeepAliveResponse> renewal = leaseClient.keepAliveOnce(FIRST_LEASE_ID);
+        var slowStarted = new CompletableFuture<Boolean>();
+        var releaseSlow = new CompletableFuture<Void>();
+        var slowCaughtUp = new CompletableFuture<Void>();
+        var fastSameLease = new CompletableFuture<Void>();
+        var fastOtherLease = new CompletableFuture<Void>();
+        var slowRevisions = new ConcurrentLinkedQueue<Long>();
+        lease.keepAlive(1, response -> {
+            long revision = response.getHeader().getRevision();
+            slowRevisions.add(revision);
+            if (revision == 1) {
+                slowStarted.complete(Context.isOnWorkerThread());
+                releaseSlow.orTimeout(10, TimeUnit.SECONDS).join();
+            } else if (revision == 3) {
+                slowCaughtUp.complete(null);
+            }
+        });
 
-        assertThatThrownBy(() -> renewal.get(TTL_SECONDS, TimeUnit.SECONDS)).hasCauseInstanceOf(EtcdException.class);
+        try {
+            assertThat(slowStarted.get(5, TimeUnit.SECONDS)).isTrue();
+            lease.keepAlive(1, response -> {
+                if (response.getHeader().getRevision() == 3) {
+                    fastSameLease.complete(null);
+                }
+            }, fastSameLease::completeExceptionally);
+            lease.keepAlive(2, response -> {
+                if (response.getHeader().getRevision() == 2) {
+                    fastOtherLease.complete(null);
+                }
+            }, fastOtherLease::completeExceptionally);
+            CompletableFuture.allOf(fastSameLease, fastOtherLease).get(6, TimeUnit.SECONDS);
+            assertThat(slowRevisions).containsExactly(1L);
+        } finally {
+            releaseSlow.complete(null);
+        }
+        slowCaughtUp.get(5, TimeUnit.SECONDS);
+        assertThat(slowRevisions).containsExactly(1L, 3L);
     }
 
-    /**
-     * A lease service that answers every keep-alive request with {@link #TTL_SECONDS}, and can end the first
-     * {@code LeaseKeepAlive} stream it is opened with status OK.
-     */
-    private static final class StreamEndingLease extends LeaseImplBase {
-        private final AtomicInteger streamsOpened = new AtomicInteger();
-        private volatile boolean endFirstStream;
-        private volatile boolean respondBeforeEnding;
-        private volatile boolean firstStreamEnded;
+    @Test
+    void deliversPendingHeartbeatBeforeLeaseNotFound() throws Exception {
+        Lease lease = startServer(new VertxOptions().setEventLoopPoolSize(1).setWorkerPoolSize(2), request -> {
+            request.handler(message -> {
+                if (message.getID() == 1) {
+                    request.response().write(heartbeat(1, 1, 30))
+                        .compose(ignored -> request.response().write(heartbeat(1, 2, 30)))
+                        .compose(ignored -> request.response().write(heartbeat(1, 3, 0)));
+                } else {
+                    request.response().write(heartbeat(2, 1, 30));
+                }
+            });
+            request.endHandler(ignored -> request.response().end());
+        });
 
-        void endFirstStreamAfterFirstResponse() {
-            endFirstStream = true;
-            respondBeforeEnding = true;
+        var slowStarted = new CompletableFuture<Void>();
+        var releaseSlow = new CompletableFuture<Void>();
+        var otherLeaseRenewed = new CompletableFuture<Void>();
+        var terminal = new CompletableFuture<Throwable>();
+        var revisions = new ConcurrentLinkedQueue<Long>();
+        lease.keepAlive(1, response -> {
+            long revision = response.getHeader().getRevision();
+            revisions.add(revision);
+            if (revision == 1) {
+                slowStarted.complete(null);
+                releaseSlow.orTimeout(10, TimeUnit.SECONDS).join();
+            }
+        }, terminal::complete, () -> terminal.complete(null));
+
+        try {
+            slowStarted.get(5, TimeUnit.SECONDS);
+            lease.keepAlive(2, response -> otherLeaseRenewed.complete(null), otherLeaseRenewed::completeExceptionally);
+            otherLeaseRenewed.get(5, TimeUnit.SECONDS);
+            assertThat(terminal).isNotDone();
+        } finally {
+            releaseSlow.complete(null);
+        }
+        assertThat(terminal.get(5, TimeUnit.SECONDS)).isInstanceOfSatisfying(EtcdException.class,
+            error -> assertThat(error.getErrorCode()).isEqualTo(ErrorCode.NOT_FOUND));
+        assertThat(revisions).containsExactly(1L, 2L);
+    }
+
+    @Test
+    void blockedListenerReceivesOnlyLatestPendingReconnectErrorBeforeTermination() throws Exception {
+        vertx = Vertx.vertx();
+        var started = new CompletableFuture<Void>();
+        var release = new CompletableFuture<Void>();
+        var callbacks = new ConcurrentLinkedQueue<String>();
+        var initialError = new IllegalStateException("initial reconnect error");
+        var terminalError = new IllegalStateException("lease not found");
+        var listener = new LeaseKeepAliveListener(vertx, Lease.listener(
+            response -> callbacks.add("heartbeat " + response.getHeader().getRevision()),
+            error -> {
+                callbacks.add(error.getMessage());
+                if (initialError.equals(error)) {
+                    started.complete(null);
+                    release.orTimeout(10, TimeUnit.SECONDS).join();
+                }
+            },
+            () -> callbacks.add("completed")));
+
+        listener.onReconnectError(initialError);
+        try {
+            started.get(5, TimeUnit.SECONDS);
+            listener.onReconnectError(new IllegalStateException("superseded reconnect error"));
+            listener.onNext(new LeaseKeepAliveResponse(heartbeat(1, 2, 30)));
+            listener.onReconnectError(new IllegalStateException("latest reconnect error"));
+            listener.terminate(registered -> registered.onError(terminalError));
+            assertThat(callbacks).containsExactly("initial reconnect error");
+        } finally {
+            release.complete(null);
         }
 
-        void endFirstStreamWithoutResponding() {
-            endFirstStream = true;
-            respondBeforeEnding = false;
-        }
+        listener.drained().get(5, TimeUnit.SECONDS);
+        assertThat(callbacks).containsExactly("initial reconnect error", "heartbeat 2", "latest reconnect error",
+            "lease not found");
+    }
 
-        boolean firstStreamEnded() {
-            return firstStreamEnded;
-        }
+    @Test
+    void renewsWhenStartedFromTheOnlyWorkerAndAllowsReentrantClose() throws Exception {
+        var callbackStarted = new CompletableFuture<Void>();
+        var releaseCallback = new CompletableFuture<Void>();
+        var renewedWhileBlocked = new CompletableFuture<Void>();
+        Lease lease = startServer(new VertxOptions().setEventLoopPoolSize(1).setWorkerPoolSize(1), request -> {
+            request.handler(message -> {
+                if (callbackStarted.isDone() && !releaseCallback.isDone()) {
+                    renewedWhileBlocked.complete(null);
+                }
+                request.response().write(heartbeat(message.getID(), 1, 3));
+            });
+            request.endHandler(ignored -> request.response().end());
+        });
 
-        int streamsOpened() {
-            return streamsOpened.get();
-        }
-
-        @Override
-        public StreamObserver<LeaseKeepAliveRequest> leaseKeepAlive(StreamObserver<LeaseKeepAliveResponse> responses) {
-            boolean endThisStream = streamsOpened.incrementAndGet() == 1 && endFirstStream;
-
-            return new StreamObserver<LeaseKeepAliveRequest>() {
-                private boolean ended;
-
+        var returnedFromClose = new CompletableFuture<Void>();
+        var terminal = new CompletableFuture<Throwable>();
+        try {
+            vertx.deployVerticle(new VerticleBase() {
                 @Override
-                public synchronized void onNext(LeaseKeepAliveRequest request) {
-                    if (ended) {
-                        return;
-                    }
-                    if (!endThisStream || respondBeforeEnding) {
-                        responses
-                            .onNext(LeaseKeepAliveResponse.newBuilder().setID(request.getID()).setTTL(TTL_SECONDS).build());
-                    }
-                    if (endThisStream) {
-                        end();
-                        firstStreamEnded = true;
-                    }
+                public Future<?> start() {
+                    lease.keepAlive(1, response -> {
+                        if (callbackStarted.complete(null)) {
+                            releaseCallback.orTimeout(10, TimeUnit.SECONDS).join();
+                            lease.close();
+                            returnedFromClose.complete(null);
+                        }
+                    }, terminal::complete);
+                    return Future.succeededFuture();
                 }
+            }, new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER))
+                .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
 
-                @Override
-                public synchronized void onError(Throwable throwable) {
-                    ended = true;
-                }
-
-                @Override
-                public synchronized void onCompleted() {
-                    end();
-                }
-
-                private void end() {
-                    if (!ended) {
-                        ended = true;
-                        responses.onCompleted();
-                    }
-                }
-            };
+            callbackStarted.get(5, TimeUnit.SECONDS);
+            renewedWhileBlocked.get(5, TimeUnit.SECONDS);
+            assertThat(terminal).isNotDone();
+        } finally {
+            releaseCallback.complete(null);
         }
+        returnedFromClose.get(5, TimeUnit.SECONDS);
+        assertThat(terminal.get(5, TimeUnit.SECONDS)).isInstanceOf(ClosedClientException.class);
+    }
+
+    private Lease startServer(boolean respondOnFirstStream) throws Exception {
+        return startServer(new VertxOptions(), request -> {
+            boolean first = streamsOpened.incrementAndGet() == 1;
+            request.handler(message -> {
+                var response = heartbeat(message.getID(), 1, 3);
+                if (!first) {
+                    request.response().write(response);
+                } else if (respondOnFirstStream) {
+                    request.response().end(response);
+                } else {
+                    request.response().end();
+                }
+            });
+            if (!first) {
+                request.endHandler(ignored -> request.response().end());
+            }
+        });
+    }
+
+    private Lease startServer(VertxOptions options,
+        Handler<GrpcServerRequest<io.etcd.jetcd.api.LeaseKeepAliveRequest, io.etcd.jetcd.api.LeaseKeepAliveResponse>> handler)
+        throws Exception {
+        vertx = Vertx.vertx(options);
+        var keepAlive = io.etcd.jetcd.api.LeaseGrpcClient.LeaseKeepAlive;
+        ServiceMethod<io.etcd.jetcd.api.LeaseKeepAliveRequest, io.etcd.jetcd.api.LeaseKeepAliveResponse> method = ServiceMethod
+            .server(keepAlive.serviceName(), keepAlive.methodName(), keepAlive.cardinality(), GrpcMessageEncoder.encoder(),
+                GrpcMessageDecoder.decoder(io.etcd.jetcd.api.LeaseKeepAliveRequest.getDefaultInstance()));
+        var grpcServer = GrpcServer.server(vertx).callHandler(method, handler);
+        var server = vertx.createHttpServer().requestHandler(grpcServer).listen(0, EtcdConstants.LOCALHOST)
+            .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+
+        client = Client.builder("http://" + EtcdConstants.LOCALHOST + ":" + server.actualPort()).vertx(vertx).build();
+        return client.getLeaseClient();
+    }
+
+    private static io.etcd.jetcd.api.LeaseKeepAliveResponse heartbeat(long leaseId, long revision, long ttl) {
+        return io.etcd.jetcd.api.LeaseKeepAliveResponse.newBuilder()
+            .setHeader(io.etcd.jetcd.api.ResponseHeader.newBuilder().setRevision(revision))
+            .setID(leaseId)
+            .setTTL(ttl)
+            .build();
     }
 }

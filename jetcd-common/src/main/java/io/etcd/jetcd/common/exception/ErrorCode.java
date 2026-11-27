@@ -20,52 +20,69 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import io.grpc.Status;
+import io.vertx.grpc.common.GrpcStatus;
 
 /**
- * ErrorCode is a wrapper around grpc Error code.
+ * ErrorCode is a wrapper around gRPC Error code.
  *
  * <P>
  * Modification Notice:
  * This is a modification of ErrorCode.java from Google-cloud-spanner java api.
+ * Updated to use Vert.x GrpcStatus instead of grpc-java Status.
  */
 public enum ErrorCode {
 
-    CANCELLED(Status.CANCELLED),
-    UNKNOWN(Status.UNKNOWN),
-    INVALID_ARGUMENT(Status.INVALID_ARGUMENT),
-    DEADLINE_EXCEEDED(Status.DEADLINE_EXCEEDED),
-    NOT_FOUND(Status.NOT_FOUND),
-    ALREADY_EXISTS(Status.ALREADY_EXISTS),
-    PERMISSION_DENIED(Status.PERMISSION_DENIED),
-    UNAUTHENTICATED(Status.UNAUTHENTICATED),
-    RESOURCE_EXHAUSTED(Status.RESOURCE_EXHAUSTED),
-    FAILED_PRECONDITION(Status.FAILED_PRECONDITION),
-    ABORTED(Status.ABORTED),
-    OUT_OF_RANGE(Status.OUT_OF_RANGE),
-    UNIMPLEMENTED(Status.UNIMPLEMENTED),
-    INTERNAL(Status.INTERNAL),
-    UNAVAILABLE(Status.UNAVAILABLE),
-    DATA_LOSS(Status.DATA_LOSS),;
+    /** The operation was cancelled. */
+    CANCELLED(GrpcStatus.CANCELLED),
+    /** Unknown error occurred. */
+    UNKNOWN(GrpcStatus.UNKNOWN),
+    /** Client specified an invalid argument. */
+    INVALID_ARGUMENT(GrpcStatus.INVALID_ARGUMENT),
+    /** Deadline expired before operation could complete. */
+    DEADLINE_EXCEEDED(GrpcStatus.DEADLINE_EXCEEDED),
+    /** Some requested entity was not found. */
+    NOT_FOUND(GrpcStatus.NOT_FOUND),
+    /** An entity that we attempted to create already exists. */
+    ALREADY_EXISTS(GrpcStatus.ALREADY_EXISTS),
+    /** The caller does not have permission to execute the specified operation. */
+    PERMISSION_DENIED(GrpcStatus.PERMISSION_DENIED),
+    /** The request does not have valid authentication credentials. */
+    UNAUTHENTICATED(GrpcStatus.UNAUTHENTICATED),
+    /** Some resource has been exhausted. */
+    RESOURCE_EXHAUSTED(GrpcStatus.RESOURCE_EXHAUSTED),
+    /** Operation was rejected because the system is not in a state required for execution. */
+    FAILED_PRECONDITION(GrpcStatus.FAILED_PRECONDITION),
+    /** The operation was aborted. */
+    ABORTED(GrpcStatus.ABORTED),
+    /** Operation was attempted past the valid range. */
+    OUT_OF_RANGE(GrpcStatus.OUT_OF_RANGE),
+    /** Operation is not implemented or not supported. */
+    UNIMPLEMENTED(GrpcStatus.UNIMPLEMENTED),
+    /** Internal errors. */
+    INTERNAL(GrpcStatus.INTERNAL),
+    /** The service is currently unavailable. */
+    UNAVAILABLE(GrpcStatus.UNAVAILABLE),
+    /** Unrecoverable data loss or corruption. */
+    DATA_LOSS(GrpcStatus.DATA_LOSS),;
 
     private static final Map<Integer, ErrorCode> errorByRpcCode;
 
     static {
         Map<Integer, ErrorCode> realMap = new LinkedHashMap<>();
-        for (ErrorCode errorCode : ErrorCode.values()) {
+        for (ErrorCode errorCode : values()) {
             realMap.put(errorCode.getCode(), errorCode);
         }
         errorByRpcCode = Collections.unmodifiableMap(realMap);
     }
 
-    private final Status.Code code;
+    private final int code;
 
-    ErrorCode(Status status) {
-        this.code = status.getCode();
+    ErrorCode(GrpcStatus status) {
+        this.code = status.code;
     }
 
     int getCode() {
-        return this.code.value();
+        return this.code;
     }
 
     /**
@@ -83,8 +100,8 @@ public enum ErrorCode {
     /**
      * Returns the error code corresponding to a gRPC status, or {@code UNKNOWN} if not recognized.
      */
-    static ErrorCode fromGrpcStatus(Status status) {
-        ErrorCode code = errorByRpcCode.get(status.getCode().value());
+    static ErrorCode fromGrpcStatus(GrpcStatus status) {
+        ErrorCode code = errorByRpcCode.get(status.code);
         return code == null ? UNKNOWN : code;
     }
 }

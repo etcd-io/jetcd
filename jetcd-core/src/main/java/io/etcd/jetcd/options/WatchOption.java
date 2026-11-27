@@ -16,6 +16,7 @@
 
 package io.etcd.jetcd.options;
 
+import java.time.Duration;
 import java.util.Optional;
 
 import io.etcd.jetcd.ByteSequence;
@@ -24,33 +25,51 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * The option for watch operation.
+ *
+ * @param endKey                end key for range watch
+ * @param revision              revision to watch from
+ * @param prevKV                whether to include previous key-value
+ * @param progressNotify        whether to receive progress notifications
+ * @param createdNotify         whether to receive creation notification
+ * @param noPut                 whether to filter put events
+ * @param noDelete              whether to filter delete events
+ * @param requireLeader         whether to require leader
+ * @param prefix                whether to watch by prefix
+ * @param fragment              whether to enable splitting large revisions into multiple watch responses
+ * @param maxReconnectAttempts  maximum number of reconnection attempts
+ * @param initialReconnectDelay initial delay before reconnection
+ * @param maxReconnectDelay     maximum delay between reconnection attempts
+ * @param reconnectJitter       maximum random variance added to retry delays to prevent
+ *                              synchronized retry storms. Set to Duration.ZERO to disable.
  */
-public final class WatchOption {
+public record WatchOption(
+    ByteSequence endKey,
+    long revision,
+    boolean prevKV,
+    boolean progressNotify,
+    boolean createdNotify,
+    boolean noPut,
+    boolean noDelete,
+    boolean requireLeader,
+    boolean prefix,
+    boolean fragment,
+    int maxReconnectAttempts,
+    Duration initialReconnectDelay,
+    Duration maxReconnectDelay,
+    Duration reconnectJitter) {
+
+    public static final int DEFAULT_MAX_RECONNECT_ATTEMPTS = 10;
+    public static final Duration DEFAULT_INITIAL_RECONNECT_DELAY = Duration.ofMillis(500);
+    public static final Duration DEFAULT_MAX_RECONNECT_DELAY = Duration.ofSeconds(30);
+    public static final Duration DEFAULT_RECONNECT_JITTER = Duration.ofMillis(250);
+
     public static final WatchOption DEFAULT = builder().build();
 
-    private final ByteSequence endKey;
-    private final long revision;
-    private final boolean prevKV;
-    private final boolean progressNotify;
-    private final boolean createdNotify;
-    private final boolean noPut;
-    private final boolean noDelete;
-    private final boolean requireLeader;
-    private final boolean prefix;
-
-    private WatchOption(ByteSequence endKey, long revision, boolean prevKV, boolean progressNotify, boolean createdNotify,
-        boolean noPut, boolean noDelete, boolean requireLeader, boolean prefix) {
-        this.endKey = endKey;
-        this.revision = revision;
-        this.prevKV = prevKV;
-        this.progressNotify = progressNotify;
-        this.createdNotify = createdNotify;
-        this.noPut = noPut;
-        this.noDelete = noDelete;
-        this.requireLeader = requireLeader;
-        this.prefix = prefix;
-    }
-
+    /**
+     * Returns the end key for range watches.
+     *
+     * @return the end key, or empty if not set
+     */
     public Optional<ByteSequence> getEndKey() {
         return Optional.ofNullable(this.endKey);
     }
@@ -60,7 +79,8 @@ public final class WatchOption {
      *
      * @return the revision.
      */
-    public long getRevision() {
+    @Override
+    public long revision() {
         return revision;
     }
 
@@ -69,7 +89,8 @@ public final class WatchOption {
      *
      * @return if true, watcher receives the previous KV before the event happens.
      */
-    public boolean isPrevKV() {
+    @Override
+    public boolean prevKV() {
         return prevKV;
     }
 
@@ -78,7 +99,8 @@ public final class WatchOption {
      *
      * @return if true, watcher server should send periodic progress updates.
      */
-    public boolean isProgressNotify() {
+    @Override
+    public boolean progressNotify() {
         return progressNotify;
     }
 
@@ -87,7 +109,8 @@ public final class WatchOption {
      *
      * @return if true, watcher server should send watch create event.
      */
-    public boolean isCreatedNotify() {
+    @Override
+    public boolean createdNotify() {
         return createdNotify;
     }
 
@@ -96,7 +119,8 @@ public final class WatchOption {
      *
      * @return if true, filter put event in server side
      */
-    public boolean isNoPut() {
+    @Override
+    public boolean noPut() {
         return noPut;
     }
 
@@ -105,7 +129,8 @@ public final class WatchOption {
      *
      * @return if true, filter delete event in server side
      */
-    public boolean isNoDelete() {
+    @Override
+    public boolean noDelete() {
         return noDelete;
     }
 
@@ -123,26 +148,69 @@ public final class WatchOption {
         return requireLeader;
     }
 
-    public boolean isPrefix() {
-        return prefix;
+    /**
+     * Returns the maximum number of reconnection attempts.
+     *
+     * @return the maximum number of reconnection attempts
+     */
+    @Override
+    public int maxReconnectAttempts() {
+        return maxReconnectAttempts;
     }
 
     /**
-     * Returns the builder.
+     * Returns the initial delay before the first reconnection attempt.
      *
-     * @deprecated use {@link #builder()}
-     * @return     the builder
+     * @return the initial reconnection delay
      */
-    @SuppressWarnings("InlineMeSuggester")
-    @Deprecated
-    public static Builder newBuilder() {
-        return builder();
+    @Override
+    public Duration initialReconnectDelay() {
+        return initialReconnectDelay;
     }
 
+    /**
+     * Returns the maximum delay between reconnection attempts.
+     *
+     * @return the maximum reconnection delay
+     */
+    @Override
+    public Duration maxReconnectDelay() {
+        return maxReconnectDelay;
+    }
+
+    /**
+     * Whether fragment is enabled for splitting large revisions into multiple watch responses.
+     *
+     * @return if true, enable fragmenting large watch responses
+     */
+    @Override
+    public boolean fragment() {
+        return fragment;
+    }
+
+    /**
+     * Returns the maximum random variance added to retry delays.
+     * Jitter prevents synchronized retry storms when multiple clients fail simultaneously.
+     *
+     * @return the reconnection jitter duration
+     */
+    @Override
+    public Duration reconnectJitter() {
+        return reconnectJitter;
+    }
+
+    /**
+     * Creates a new builder.
+     *
+     * @return the builder
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * Builder for WatchOption.
+     */
     public static final class Builder {
         private long revision = 0L;
         private ByteSequence endKey;
@@ -153,6 +221,11 @@ public final class WatchOption {
         private boolean noDelete = false;
         private boolean requireLeader = false;
         private boolean prefix = false;
+        private boolean fragment = false;
+        private int maxReconnectAttempts = DEFAULT_MAX_RECONNECT_ATTEMPTS;
+        private Duration initialReconnectDelay = DEFAULT_INITIAL_RECONNECT_DELAY;
+        private Duration maxReconnectDelay = DEFAULT_MAX_RECONNECT_DELAY;
+        private Duration reconnectJitter = DEFAULT_RECONNECT_JITTER;
 
         private Builder() {
         }
@@ -259,7 +332,7 @@ public final class WatchOption {
          * @param  prefix flag to watch all the keys by prefix
          * @return        builder
          */
-        public WatchOption.Builder isPrefix(boolean prefix) {
+        public Builder isPrefix(boolean prefix) {
             this.prefix = prefix;
             return this;
         }
@@ -294,9 +367,85 @@ public final class WatchOption {
             return this;
         }
 
+        /**
+         * Sets the maximum number of reconnection attempts before giving up.
+         *
+         * @param  maxReconnectAttempts the maximum number of attempts (default: 10)
+         * @return                      builder
+         */
+        public Builder withMaxReconnectAttempts(int maxReconnectAttempts) {
+            this.maxReconnectAttempts = maxReconnectAttempts;
+            return this;
+        }
+
+        /**
+         * Sets the initial delay before the first reconnection attempt.
+         * Subsequent attempts use exponential backoff up to maxReconnectDelay.
+         *
+         * @param  initialReconnectDelay the initial delay (default: 500ms)
+         * @return                       builder
+         */
+        public Builder withInitialReconnectDelay(Duration initialReconnectDelay) {
+            this.initialReconnectDelay = requireNonNull(initialReconnectDelay);
+            return this;
+        }
+
+        /**
+         * Sets the maximum delay between reconnection attempts.
+         *
+         * @param  maxReconnectDelay the maximum delay (default: 30s)
+         * @return                   builder
+         */
+        public Builder withMaxReconnectDelay(Duration maxReconnectDelay) {
+            this.maxReconnectDelay = requireNonNull(maxReconnectDelay);
+            return this;
+        }
+
+        /**
+         * Lets etcd split large watch responses into smaller messages on the wire.
+         * Jetcd assembles the fragments before delivering the response to the listener.
+         *
+         * @param  fragment whether to enable fragmenting
+         * @return          builder
+         */
+        public Builder withFragment(boolean fragment) {
+            this.fragment = fragment;
+            return this;
+        }
+
+        /**
+         * Sets the maximum random variance added to retry delays.
+         * Jitter prevents synchronized retry storms when multiple clients fail simultaneously.
+         *
+         * @param  jitter maximum random time to add to retry delays (default: 100ms)
+         * @return        builder
+         */
+        public Builder withReconnectJitter(Duration jitter) {
+            this.reconnectJitter = requireNonNull(jitter);
+            return this;
+        }
+
+        /**
+         * Builds the WatchOption.
+         *
+         * @return the watch option
+         */
         public WatchOption build() {
-            return new WatchOption(endKey, revision, prevKV, progressNotify, createNotify, noPut, noDelete, requireLeader,
-                prefix);
+            return new WatchOption(
+                endKey,
+                revision,
+                prevKV,
+                progressNotify,
+                createNotify,
+                noPut,
+                noDelete,
+                requireLeader,
+                prefix,
+                fragment,
+                maxReconnectAttempts,
+                initialReconnectDelay,
+                maxReconnectDelay,
+                reconnectJitter);
         }
 
     }

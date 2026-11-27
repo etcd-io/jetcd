@@ -17,9 +17,10 @@
 package io.etcd.jetcd.maintenance;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 import io.etcd.jetcd.Maintenance;
+import io.etcd.jetcd.common.suppliers.Suppliers;
 import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
@@ -28,24 +29,26 @@ import io.etcd.jetcd.impl.AbstractResponse;
  */
 public class AlarmResponse extends AbstractResponse<io.etcd.jetcd.api.AlarmResponse> {
 
-    private List<AlarmMember> alarms;
+    private final Supplier<List<AlarmMember>> alarms;
 
+    /**
+     * Creates a new AlarmResponse from the gRPC response.
+     *
+     * @param response the gRPC alarm response
+     */
     public AlarmResponse(io.etcd.jetcd.api.AlarmResponse response) {
         super(response, response.getHeader());
+
+        this.alarms = Suppliers.memoizing(
+            () -> getResponse().getAlarmsList().stream().map(AlarmResponse::toAlarmMember).toList());
     }
 
     private static AlarmMember toAlarmMember(io.etcd.jetcd.api.AlarmMember alarmMember) {
-        AlarmType type;
-        switch (alarmMember.getAlarm()) {
-            case NONE:
-                type = AlarmType.NONE;
-                break;
-            case NOSPACE:
-                type = AlarmType.NOSPACE;
-                break;
-            default:
-                type = AlarmType.UNRECOGNIZED;
-        }
+        AlarmType type = switch (alarmMember.getAlarm()) {
+            case NONE -> AlarmType.NONE;
+            case NOSPACE -> AlarmType.NOSPACE;
+            default -> AlarmType.UNRECOGNIZED;
+        };
         return new AlarmMember(alarmMember.getMemberID(), type);
     }
 
@@ -54,11 +57,7 @@ public class AlarmResponse extends AbstractResponse<io.etcd.jetcd.api.AlarmRespo
      *
      * @return the alarms.
      */
-    public synchronized List<AlarmMember> getAlarms() {
-        if (alarms == null) {
-            alarms = getResponse().getAlarmsList().stream().map(AlarmResponse::toAlarmMember).collect(Collectors.toList());
-        }
-
-        return alarms;
+    public List<AlarmMember> getAlarms() {
+        return alarms.get();
     }
 }

@@ -1,0 +1,56 @@
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+
+plugins {
+    id 'java'
+}
+
+def jetcdRepository = providers.gradleProperty('jetcdRepository').get()
+def jetcdVersion = providers.gradleProperty('jetcdVersion').get()
+def pomOnly = providers.gradleProperty('pomOnly').isPresent()
+
+repositories {
+    exclusiveContent {
+        forRepository {
+            maven {
+                url = uri(jetcdRepository)
+                metadataSources {
+                    if (pomOnly) {
+                        mavenPom()
+                        ignoreGradleMetadataRedirection()
+                    } else {
+                        gradleMetadata()
+                    }
+                }
+            }
+        }
+        filter { includeGroup('io.etcd') }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    implementation "io.etcd:jetcd-core:${jetcdVersion}"
+}
+
+tasks.register('verifyPublishedClient', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'smoke.PublishedClientSmoke'
+
+    doFirst {
+        def modules = configurations.runtimeClasspath.incoming.artifacts.artifacts
+            .collect { it.id.componentIdentifier }
+            .findAll { it instanceof ModuleComponentIdentifier }
+        def grpcJava = modules.findAll { it.group == 'io.grpc' }
+        if (grpcJava) {
+            throw new GradleException("Found grpc-java on the published runtime classpath: ${grpcJava}")
+        }
+
+        // Netty's tcnative artifacts follow their own version line.
+        def netty = modules.findAll { it.group == 'io.netty' && !it.module.startsWith('netty-tcnative') }
+        def nettyVersions = netty.collect { it.version }.toSet()
+        if (nettyVersions.size() != 1 || !nettyVersions.first().startsWith('4.2.')) {
+            throw new GradleException("Expected one Netty 4.2 version on the published runtime classpath: ${netty}")
+        }
+        logger.lifecycle("Published runtime uses Netty ${nettyVersions.first()} with no grpc-java modules")
+    }
+}

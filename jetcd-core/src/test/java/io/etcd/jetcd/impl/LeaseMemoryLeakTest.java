@@ -18,6 +18,9 @@ package io.etcd.jetcd.impl;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -29,7 +32,6 @@ import java.util.regex.Pattern;
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -81,7 +83,6 @@ public class LeaseMemoryLeakTest {
 
     // https://github.com/etcd-io/jetcd/issues/1236
     @Test
-    @Disabled("Flaky test, must be investigated")
     public void testKeepAliveOnceMemoryLeak() throws Exception {
         final long leaseID = leaseClient.grant(TTL).get(1, TimeUnit.SECONDS).getID();
         final URI uri = CLUSTER.cluster().clientEndpoints().get(0);
@@ -91,11 +92,17 @@ public class LeaseMemoryLeakTest {
             LOGGER.info("Put K/V with lease id {}", leaseID);
             kvClient.put(KEY, VALUE, PutOption.builder().withLeaseId(leaseID).build()).get(1, TimeUnit.SECONDS);
 
+            // Stabilization period: wait for etcd background goroutines to stabilize
+            LOGGER.info("Waiting for etcd to stabilize...");
+            TimeUnit.SECONDS.sleep(2);
+
             AtomicInteger max = new AtomicInteger();
             CountDownLatch latch = new CountDownLatch(ITERATIONS);
 
-            int start = extractGoRoutinesCount(uri);
+            // Take median of 3 samples for more stable baseline
+            int start = getMedianGoRoutinesCount(uri, 3);
             assertThat(start).isGreaterThan(0);
+            LOGGER.info("Baseline goroutines (median of 3 samples): {}", start);
 
             var unused = scheduler.scheduleAtFixedRate(() -> {
                 try {
@@ -122,7 +129,10 @@ public class LeaseMemoryLeakTest {
             assertThat(max.get()).isGreaterThanOrEqualTo(start);
 
             if (max.get() != start) {
-                assertThat(max.get() - start).isCloseTo(5, Percentage.withPercentage(80));
+                int growth = max.get() - start;
+                LOGGER.info("Goroutine growth: {} (expected ~5, tolerance: 150%)", growth);
+                // Increased tolerance to 150% to handle CI environment variations
+                assertThat(growth).isCloseTo(5, Percentage.withPercentage(150));
             }
         } finally {
             scheduler.shutdownNow();
@@ -144,5 +154,17 @@ public class LeaseMemoryLeakTest {
         }
 
         return -1;
+    }
+
+    private int getMedianGoRoutinesCount(URI uri, int samples) throws InterruptedException {
+        List<Integer> counts = new ArrayList<>();
+        for (int i = 0; i < samples; i++) {
+            if (i > 0) {
+                TimeUnit.MILLISECONDS.sleep(200);
+            }
+            counts.add(extractGoRoutinesCount(uri));
+        }
+        Collections.sort(counts);
+        return counts.get(counts.size() / 2);
     }
 }

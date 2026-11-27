@@ -27,6 +27,11 @@ import io.etcd.jetcd.impl.AbstractResponse;
  */
 public class AuthRoleListResponse extends AbstractResponse<io.etcd.jetcd.api.AuthRoleListResponse> {
 
+    /**
+     * Creates a new AuthRoleListResponse from the gRPC response.
+     *
+     * @param response the gRPC auth role list response
+     */
     public AuthRoleListResponse(io.etcd.jetcd.api.AuthRoleListResponse response) {
         super(response, response.getHeader());
     }
