@@ -24,6 +24,11 @@ import io.etcd.jetcd.impl.AbstractResponse;
  */
 public class MoveLeaderResponse extends AbstractResponse<io.etcd.jetcd.api.MoveLeaderResponse> {
 
+    /**
+     * Creates a new MoveLeaderResponse from the gRPC response.
+     *
+     * @param response the gRPC move leader response
+     */
     public MoveLeaderResponse(io.etcd.jetcd.api.MoveLeaderResponse response) {
         super(response, response.getHeader());
     }

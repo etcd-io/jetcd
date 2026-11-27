@@ -26,6 +26,11 @@ import io.etcd.jetcd.impl.AbstractResponse;
  */
 public class AuthUserRevokeRoleResponse extends AbstractResponse<io.etcd.jetcd.api.AuthUserRevokeRoleResponse> {
 
+    /**
+     * Creates a new AuthUserRevokeRoleResponse from the gRPC response.
+     *
+     * @param response the gRPC auth user revoke role response
+     */
     public AuthUserRevokeRoleResponse(io.etcd.jetcd.api.AuthUserRevokeRoleResponse response) {
         super(response, response.getHeader());
     }

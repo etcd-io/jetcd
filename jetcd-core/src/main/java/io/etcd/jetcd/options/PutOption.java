@@ -16,30 +16,33 @@
 
 package io.etcd.jetcd.options;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static io.etcd.jetcd.common.Preconditions.checkArgument;
 
 /**
  * The options for put operation.
+ *
+ * @param leaseId     lease ID to associate with the key
+ * @param prevKV      whether to return previous key-value
+ * @param autoRetry   whether to automatically retry on failure
+ * @param ignoreValue if true, update key using current value (error if key does not exist)
+ * @param ignoreLease if true, update key using current lease (error if key does not exist)
  */
-public final class PutOption {
+public record PutOption(
+    long leaseId,
+    boolean prevKV,
+    boolean autoRetry,
+    boolean ignoreValue,
+    boolean ignoreLease) {
+
     public static final PutOption DEFAULT = builder().build();
-
-    private final long leaseId;
-    private final boolean prevKV;
-    private final boolean autoRetry;
-
-    private PutOption(long leaseId, boolean prevKV, boolean autoRetry) {
-        this.leaseId = leaseId;
-        this.prevKV = prevKV;
-        this.autoRetry = autoRetry;
-    }
 
     /**
      * Get the lease id.
      *
      * @return the lease id
      */
-    public long getLeaseId() {
+    @Override
+    public long leaseId() {
         return this.leaseId;
     }
 
@@ -48,7 +51,8 @@ public final class PutOption {
      *
      * @return the prevKV
      */
-    public boolean getPrevKV() {
+    @Override
+    public boolean prevKV() {
         return this.prevKV;
     }
 
@@ -58,22 +62,38 @@ public final class PutOption {
      *
      * @return true if automated retries should happen.
      */
-    public boolean isAutoRetry() {
+    @Override
+    public boolean autoRetry() {
         return autoRetry;
     }
 
     /**
-     * Returns the builder.
+     * If true, etcd updates the key using its current value.
+     * Returns an error if the key does not exist.
      *
-     * @deprecated use {@link #builder()}
-     * @return     the builder
+     * @return true if key should be updated using current value
      */
-    @SuppressWarnings("InlineMeSuggester")
-    @Deprecated
-    public static Builder newBuilder() {
-        return builder();
+    @Override
+    public boolean ignoreValue() {
+        return ignoreValue;
     }
 
+    /**
+     * If true, etcd updates the key using its current lease.
+     * Returns an error if the key does not exist.
+     *
+     * @return true if key should be updated using current lease
+     */
+    @Override
+    public boolean ignoreLease() {
+        return ignoreLease;
+    }
+
+    /**
+     * Creates a new builder for PutOption.
+     *
+     * @return the builder
+     */
     public static Builder builder() {
         return new Builder();
     }
@@ -86,6 +106,8 @@ public final class PutOption {
         private long leaseId = 0L;
         private boolean prevKV = false;
         private boolean autoRetry = false;
+        private boolean ignoreValue = false;
+        private boolean ignoreLease = false;
 
         private Builder() {
         }
@@ -98,7 +120,7 @@ public final class PutOption {
          * @throws IllegalArgumentException if lease is less than zero.
          */
         public Builder withLeaseId(long leaseId) {
-            checkArgument(leaseId >= 0, "leaseId should greater than or equal to zero: leaseId=%s", leaseId);
+            checkArgument(leaseId >= 0, "leaseId should greater than or equal to zero: leaseId=" + leaseId);
             this.leaseId = leaseId;
             return this;
         }
@@ -129,12 +151,36 @@ public final class PutOption {
         }
 
         /**
+         * When ignoreValue is set, etcd updates the key using its current value.
+         * This is useful when you want to update only the lease without changing the value.
+         * Returns an error if the key does not exist.
+         *
+         * @return builder
+         */
+        public Builder withIgnoreValue() {
+            this.ignoreValue = true;
+            return this;
+        }
+
+        /**
+         * When ignoreLease is set, etcd updates the key using its current lease.
+         * This is useful when you want to update only the value without changing the lease.
+         * Returns an error if the key does not exist.
+         *
+         * @return builder
+         */
+        public Builder withIgnoreLease() {
+            this.ignoreLease = true;
+            return this;
+        }
+
+        /**
          * build the put option.
          *
          * @return the put option
          */
         public PutOption build() {
-            return new PutOption(this.leaseId, this.prevKV, this.autoRetry);
+            return new PutOption(this.leaseId, this.prevKV, this.autoRetry, this.ignoreValue, this.ignoreLease);
         }
 
     }

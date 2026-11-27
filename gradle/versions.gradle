@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-apply plugin: 'com.github.ben-manes.versions'
+apply plugin: 'io.github.ben-manes.versions'
 
 dependencyUpdates.configure {
 

@@ -16,8 +16,15 @@
 
 package io.etcd.jetcd.common.exception;
 
+/**
+ * Thrown when operations are attempted on a keep-alive listener that has been closed.
+ * This exception indicates the listener is no longer processing keep-alive responses.
+ */
 public class ClosedKeepAliveListenerException extends EtcdException {
 
+    /**
+     * Creates a new ClosedKeepAliveListenerException.
+     */
     public ClosedKeepAliveListenerException() {
         super(ErrorCode.CANCELLED, "KeepAliveListener has been closed", null);
     }

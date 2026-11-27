@@ -26,7 +26,7 @@ on:
       - main
   workflow_dispatch:
   schedule:
-  - cron: "0 0 * * *"
+    - cron: "0 0 * * *"
 
 jobs:
   checks:
@@ -38,39 +38,50 @@ jobs:
     strategy:
       matrix:
         java-version:
-          - 11
-          - 17
           - 21
         etcd:
-          - quay.io/coreos/etcd:v3.5.29
-          - quay.io/coreos/etcd:v3.6.11
+          - quay.io/coreos/etcd:v3.5.36
+          - quay.io/coreos/etcd:v3.6.17
+          - quay.io/coreos/etcd:v3.7.4
+        test-group:
+          - name: kv
+            include-tags: kv
+            exclude-tags: ""
+          - name: watch
+            include-tags: watch
+            exclude-tags: ""
+          - name: other
+            include-tags: ""
+            exclude-tags: kv,watch
     uses: ./.github/workflows/build.yml
     with:
       javaVersion: "${{ matrix.java-version }}"
       etcdImage: "${{ matrix.etcd }}"
+      includeTags: "${{ matrix.test-group.include-tags }}"
+      excludeTags: "${{ matrix.test-group.exclude-tags }}"
 
   publish:
     runs-on: ubuntu-latest
     needs:
       - build
     steps:
-      - name: 'Checkout'
+      - name: "Checkout"
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: 'Set Up Java'
+      - name: "Set Up Java"
         uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
-          java-version: 11
-          distribution: 'temurin'
-          cache: 'gradle'
-      - name: 'Collect Info'
+          java-version: 21
+          distribution: "temurin"
+          cache: "gradle"
+      - name: "Collect Info"
         run: |
           ./gradlew currentVersion
-      - name: 'Publish Snapshot'
+      - name: "Publish Snapshot"
         if: github.event_name != 'schedule'
         env:
-          ORG_GRADLE_PROJECT_nexusUsername: ${{ secrets.SONATYPE_USR }}
-          ORG_GRADLE_PROJECT_nexusPassword: ${{ secrets.SONATYPE_PWD }}
+          JRELEASER_NEXUS2_USERNAME: ${{ secrets.SONATYPE_USR }}
+          JRELEASER_NEXUS2_PASSWORD: ${{ secrets.SONATYPE_PWD }}
         run: |
           ./gradlew publishSnapshot -Prelease.forceSnapshot

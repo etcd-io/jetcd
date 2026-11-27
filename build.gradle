@@ -19,10 +19,9 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
-        classpath "com.github.ben-manes:gradle-versions-plugin:${libs.versions.versionsPlugin.get()}"
+        classpath "io.github.ben-manes:gradle-versions-plugin:${libs.versions.versionsPlugin.get()}"
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${libs.versions.spotlessPlugin.get()}"
         classpath "net.ltgt.gradle:gradle-errorprone-plugin:${libs.versions.errorPronePlugin.get()}"
-        classpath "org.jreleaser:jreleaser-gradle-plugin:${libs.versions.jreleaserPlugin.get()}"
         classpath "com.adarshr:gradle-test-logger-plugin:${libs.versions.testLoggerPlugin.get()}"
         classpath "pl.allegro.tech.build:axion-release-plugin:${libs.versions.axionReleasePlugin.get()}"
         classpath "org.gradle:test-retry-gradle-plugin:${libs.versions.testRetryPlugin.get()}"
@@ -31,9 +30,10 @@ buildscript {
 
 apply from: "${rootProject.projectDir}/gradle/versions.gradle"
 apply from: "${rootProject.projectDir}/gradle/release.gradle"
-apply from: "${rootProject.projectDir}/gradle/publish.gradle"
 
 group = 'io.etcd'
+
+apply from: "${rootProject.projectDir}/gradle/publish.gradle"
 
 allprojects {
     repositories {
@@ -53,25 +53,35 @@ subprojects {
     apply plugin: 'org.gradle.test-retry'
 
     configurations.api {
-        exclude group: 'com.google.code.gson', module: 'gson'
-        exclude group: 'com.google.android', module: 'annotations'
         exclude group: 'com.google.j2objc', module: 'j2objc-annotations'
-        exclude group: 'org.codehaus.mojo', module: 'animal-sniffer-annotations'
         exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
-        exclude group: 'com.google.code.findbugs', module: 'jsr305'
-        exclude group: 'org.checkerframework', module: 'checker-compat-qual'
     }
 
     compileJava {
-        options.release = 11
+        options.release = 21
     }
 
     test {
-        useJUnitPlatform()
+        useJUnitPlatform {
+            if (project.hasProperty('includeTags')) {
+                project.property('includeTags').split(',').each { tag ->
+                    includeTags tag.trim()
+                }
+            }
+            if (project.hasProperty('excludeTags')) {
+                project.property('excludeTags').split(',').each { tag ->
+                    excludeTags tag.trim()
+                }
+            }
+        }
 
         def processors = Runtime.runtime.availableProcessors() ?: 1
         def onCi = System.getenv('CI')?.equalsIgnoreCase('true')
-        maxParallelForks = onCi ? Math.min(2, processors) : processors
+        maxParallelForks = Math.min(processors, onCi ? 2 : 8)
+        maxHeapSize = '2g'
+        minHeapSize = '512m'
+
+        jvmArgs '-XX:+UseG1GC', '-XX:MaxGCPauseMillis=100'
 
         retry {
             maxRetries = 1
@@ -81,14 +91,14 @@ subprojects {
     testing {
         suites {
             test {
-                useJUnitJupiter()
+                useJUnitJupiter(rootProject.libs.versions.junit.get())
             }
         }
     }
 
     testlogger {
-        theme 'mocha-parallel'
-        showStandardStreams false
+        theme = 'mocha-parallel'
+        showStandardStreams = false
     }
 
     tasks.register('allDeps', DependencyReportTask)

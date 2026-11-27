@@ -3,35 +3,36 @@ name: Checks
 on:
   workflow_call:
 
-
 jobs:
   check:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 'Checkout'
+      - name: "Checkout"
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: 'Set Up Java'
+      - name: "Set Up Java"
         uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
-          java-version: 11
-          distribution: 'temurin'
-          cache: 'gradle'
-      - name: 'Run check task'
+          java-version: 21
+          distribution: "temurin"
+          cache: "gradle"
+      - name: "Run check task"
         run: |
           ./gradlew check -x test
-      - name: 'Run check script'
+      - name: "Run check script"
         run: |
           bash ./.github/workflows/scripts/precheck.sh
         shell: bash
+      - name: "Verify published client"
+        run: bash ./.github/workflows/scripts/verify-published-client.sh
 
   deps:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - name: 'Checkout'
+      - name: "Checkout"
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: 'Dependency Review'
+      - name: "Dependency Review"
         uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1

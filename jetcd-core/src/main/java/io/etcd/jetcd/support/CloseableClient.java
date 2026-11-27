@@ -16,6 +16,10 @@
 
 package io.etcd.jetcd.support;
 
+/**
+ * A closeable client interface that extends AutoCloseable.
+ * Provides a default no-op close implementation that can be overridden.
+ */
 public interface CloseableClient extends AutoCloseable {
 
     /**

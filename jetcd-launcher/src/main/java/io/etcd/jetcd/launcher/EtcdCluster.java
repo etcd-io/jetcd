@@ -22,8 +22,20 @@ import java.util.concurrent.TimeUnit;
 
 import org.testcontainers.lifecycle.Startable;
 
+/**
+ * Represents a testcontainers-based etcd cluster for integration testing.
+ * Provides lifecycle management and access to cluster endpoints.
+ */
 public interface EtcdCluster extends Startable {
 
+    /**
+     * Restarts all nodes in the cluster with a delay between restarts.
+     * Useful for testing resilience, recovery, and failure scenarios.
+     *
+     * @param  delay                the delay between node restarts
+     * @param  unit                 the time unit of the delay
+     * @throws InterruptedException if the sleep is interrupted
+     */
     default void restart(long delay, TimeUnit unit) throws InterruptedException {
         stop();
 
@@ -34,11 +46,33 @@ public interface EtcdCluster extends Startable {
         start();
     }
 
+    /**
+     * Returns the cluster name used to identify this cluster instance.
+     *
+     * @return the cluster name
+     */
     String clusterName();
 
+    /**
+     * Returns the client endpoints for connecting to the cluster.
+     * These are the endpoints that clients should use to communicate with etcd.
+     *
+     * @return list of client endpoint URIs
+     */
     List<URI> clientEndpoints();
 
+    /**
+     * Returns the peer endpoints used for cluster member communication.
+     * These are used internally by etcd nodes for cluster coordination.
+     *
+     * @return list of peer endpoint URIs
+     */
     List<URI> peerEndpoints();
 
+    /**
+     * Returns the individual container instances that make up the cluster.
+     *
+     * @return unmodifiable list of etcd containers
+     */
     List<EtcdContainer> containers();
 }

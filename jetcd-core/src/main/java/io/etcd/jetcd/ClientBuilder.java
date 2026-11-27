@@ -16,147 +16,61 @@
 
 package io.etcd.jetcd;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
-import javax.net.ssl.SSLException;
-
+import io.etcd.jetcd.common.Preconditions;
 import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.common.exception.EtcdExceptionFactory;
-import io.etcd.jetcd.impl.ClientImpl;
-import io.etcd.jetcd.resolver.IPNameResolver;
-import io.grpc.ClientInterceptor;
-import io.grpc.Metadata;
-import io.grpc.netty.GrpcSslContexts;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
+import io.etcd.jetcd.common.vertx.Ssl;
+import io.etcd.jetcd.impl.Client;
+import io.etcd.jetcd.resolver.ServiceResolver;
 import io.vertx.core.Vertx;
-
-import com.google.common.base.Strings;
+import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.net.SocketAddress;
+import io.vertx.core.net.endpoint.LoadBalancer;
 
 /**
  * ClientBuilder knows how to create a Client instance.
  */
 public final class ClientBuilder implements Cloneable {
 
-    private String target;
-    private ByteSequence user;
-    private ByteSequence password;
-    private ExecutorService executorService;
-    private String loadBalancerPolicy;
-    private SslContext sslContext;
-    private String authority;
+    private final ServiceResolver<SocketAddress> serviceResolver;
+    private SecureByteSequence user;
+    private SecureByteSequence password;
+    private LoadBalancer loadBalancer;
+    private Map<String, String> headers;
+    private HttpClientOptions httpClientOptions;
     private Integer maxInboundMessageSize;
-    private Map<Metadata.Key<?>, Object> headers;
-    private Map<Metadata.Key<?>, Object> authHeaders;
-    private List<ClientInterceptor> interceptors;
-    private List<ClientInterceptor> authInterceptors;
     private ByteSequence namespace = ByteSequence.EMPTY;
     private long retryDelay = 500;
     private long retryMaxDelay = 2500;
     private int retryMaxAttempts = 2;
     private ChronoUnit retryChronoUnit = ChronoUnit.MILLIS;
     private Duration keepaliveTime = Duration.ofSeconds(30L);
-    private Duration keepaliveTimeout = Duration.ofSeconds(10L);
+    private Duration leaseKeepAliveTimeout = Duration.ofSeconds(10L);
     private Boolean keepaliveWithoutCalls = true;
     private Duration retryMaxDuration;
     private Duration connectTimeout;
     private boolean waitForReady = true;
     private Vertx vertx;
-    private boolean useVertx = false;
 
-    ClientBuilder() {
+    ClientBuilder(ServiceResolver<SocketAddress> serviceResolver) {
+        this.serviceResolver = Preconditions.requireNonNull(serviceResolver, "serviceResolver cannot be null");
     }
 
     /**
-     * Gets the etcd target.
+     * Gets the endpoint resolver.
      *
-     * @return the etcd target.
+     * @return the endpoint resolver.
      */
-    public String target() {
-        return target;
-    }
-
-    /**
-     * configure etcd server endpoints.
-     *
-     * @param  target               etcd server target
-     * @return                      this builder to train
-     * @throws NullPointerException if target is null or one of endpoint is null
-     */
-    public ClientBuilder target(String target) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(target), "target can't be null or empty");
-
-        this.target = target;
-
-        return this;
-    }
-
-    /**
-     * configure etcd server endpoints using the {@link IPNameResolver}.
-     *
-     * @param  endpoints                etcd server endpoints, at least one
-     * @return                          this builder to train
-     * @throws NullPointerException     if endpoints is null or one of endpoint is null
-     * @throws IllegalArgumentException if some endpoint is invalid
-     */
-    public ClientBuilder endpoints(String... endpoints) {
-        return endpoints(
-            Stream.of(endpoints).map(URI::create).toArray(URI[]::new));
-    }
-
-    /**
-     * configure etcd server endpoints using the {@link IPNameResolver}.
-     *
-     * @param  endpoints                etcd server endpoints, at least one
-     * @return                          this builder to train
-     * @throws NullPointerException     if endpoints is null or one of endpoint is null
-     * @throws IllegalArgumentException if some endpoint is invalid
-     */
-    public ClientBuilder endpoints(URI... endpoints) {
-        return endpoints(Arrays.asList(endpoints));
-    }
-
-    /**
-     * configure etcd server endpoints using the {@link IPNameResolver}.
-     *
-     * @param  endpoints                etcd server endpoints, at least one
-     * @return                          this builder to train
-     * @throws NullPointerException     if endpoints is null or one of endpoint is null
-     * @throws IllegalArgumentException if some endpoint is invalid
-     */
-    public ClientBuilder endpoints(Iterable<URI> endpoints) {
-        Objects.requireNonNull(endpoints, "endpoints can't be null");
-
-        endpoints.forEach(e -> {
-            if (e.getHost() == null) {
-                throw new IllegalArgumentException("Unable to compute target from endpoint: '" + e + "'");
-            }
-        });
-
-        final String target = StreamSupport.stream(endpoints.spliterator(), false)
-            .map(e -> e.getHost() + (e.getPort() != -1 ? ":" + e.getPort() : ""))
-            .distinct()
-            .collect(Collectors.joining(","));
-
-        if (Strings.isNullOrEmpty(target)) {
-            throw new IllegalArgumentException("Unable to compute target from endpoints: '" + endpoints + "'");
-        }
-
-        try {
-            return target(
-                new URI(IPNameResolver.SCHEME, authority != null ? authority : "", "/" + target, null, null).toString());
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Unable to compute target from endpoints: '" + endpoints + "'", e);
-        }
+    public ServiceResolver<SocketAddress> serviceResolver() {
+        return serviceResolver;
     }
 
     /**
@@ -165,17 +79,17 @@ public final class ClientBuilder implements Cloneable {
      * @return the user.
      */
     public ByteSequence user() {
-        return user;
+        return user != null ? user.toByteSequence() : null;
     }
 
     /**
-     * config etcd auth user.
+     * config etcd auth user with secure credential handling.
      *
-     * @param  user                 etcd auth user
+     * @param  user                 etcd auth user as SecureByteSequence
      * @return                      this builder
      * @throws NullPointerException if user is <code>null</code>
      */
-    public ClientBuilder user(ByteSequence user) {
+    public ClientBuilder user(SecureByteSequence user) {
         Objects.requireNonNull(user, "user can't be null");
         this.user = user;
         return this;
@@ -187,17 +101,17 @@ public final class ClientBuilder implements Cloneable {
      * @return the password.
      */
     public ByteSequence password() {
-        return password;
+        return password != null ? password.toByteSequence() : null;
     }
 
     /**
-     * config etcd auth password.
+     * config etcd auth password with secure credential handling.
      *
-     * @param  password             etcd auth password
+     * @param  password             etcd auth password as SecureByteSequence
      * @return                      this builder
      * @throws NullPointerException if password is <code>null</code>
      */
-    public ClientBuilder password(ByteSequence password) {
+    public ClientBuilder password(SecureByteSequence password) {
         Objects.requireNonNull(password, "password can't be null");
         this.password = password;
         return this;
@@ -227,117 +141,106 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * Returns the executor service
+     * Returns the HTTP client options used for configuring the gRPC client.
      *
-     * @return the executor service.
+     * @return the HTTP client options, or null if not configured.
      */
-    public ExecutorService executorService() {
-        return executorService;
+    public HttpClientOptions httpClientOptions() {
+        return httpClientOptions;
     }
 
     /**
-     * config executor service.
+     * Configure HTTP client options for the gRPC client.
      *
-     * @param  executorService      executor service
-     * @return                      this builder
-     * @throws NullPointerException if executorService is <code>null</code>
+     * <p>
+     * This allows full control over the HTTP/2 client configuration, including SSL/TLS settings,
+     * connection pooling, timeouts, and other HTTP client behaviors.
+     * </p>
+     *
+     * <p>
+     * Example usage for SSL/TLS configuration:
+     * </p>
+     *
+     * <pre>
+     * import io.vertx.core.http.HttpClientOptions;
+     * import io.vertx.core.net.PemTrustOptions;
+     *
+     * Client client = Client.builder("https://localhost:2379")
+     *     .httpClientOptions(new HttpClientOptions()
+     *         .setSsl(true)
+     *         .setUseAlpn(true)
+     *         .setTrustOptions(new PemTrustOptions().addCertPath("/path/to/ca.pem"))
+     *         .setVerifyHost(false))
+     *     .build();
+     * </pre>
+     *
+     * @param  httpClientOptions the HTTP client options
+     * @return                   this builder
      */
-    public ClientBuilder executorService(ExecutorService executorService) {
-        Objects.requireNonNull(executorService, "executorService can't be null");
-        this.executorService = executorService;
+    public ClientBuilder httpClientOptions(HttpClientOptions httpClientOptions) {
+        this.httpClientOptions = httpClientOptions;
         return this;
     }
 
     /**
-     * config load balancer policy.
+     * Configure HTTP client options using a fluent consumer pattern.
      *
-     * @param  loadBalancerPolicy   etcd load balancer policy
-     * @return                      this builder
-     * @throws NullPointerException if loadBalancerPolicy is <code>null</code>
+     * <p>
+     * This method provides a convenient way to configure HTTP client options inline.
+     * If HTTP client options were already set, this method will modify the existing
+     * options rather than replacing them.
+     * </p>
+     *
+     * <p>
+     * Example:
+     * </p>
+     *
+     * <pre>
+     * Client client = Client.builder("https://localhost:2379")
+     *     .httpClientOptions(options -> options
+     *         .setSsl(true)
+     *         .setUseAlpn(true)
+     *         .setTrustAll(true))
+     *     .build();
+     * </pre>
+     *
+     * <p>
+     * For SSL/TLS configuration, see {@link Ssl} for helper methods:
+     * </p>
+     *
+     * <pre>
+     * import io.etcd.jetcd.common.vertx.SslUtil;
+     *
+     * Client client = Client.builder("https://localhost:2379")
+     *     .httpClientOptions(SslUtil.withTrustManager("/path/to/ca.pem")
+     *         .andThen(options -> options.setVerifyHost(false)))
+     *     .build();
+     * </pre>
+     *
+     * @param  consumer a consumer that configures the HttpClientOptions
+     * @return          this builder
+     * @see             Ssl
      */
-    public ClientBuilder loadBalancerPolicy(String loadBalancerPolicy) {
-        Objects.requireNonNull(loadBalancerPolicy, "loadBalancerPolicy can't be null");
-        this.loadBalancerPolicy = loadBalancerPolicy;
-        return this;
+    public ClientBuilder httpClientOptions(Consumer<HttpClientOptions> consumer) {
+        // If options already exist, modify them. Otherwise create new ones.
+        HttpClientOptions options = this.httpClientOptions != null ? this.httpClientOptions : new HttpClientOptions();
+        consumer.accept(options);
+        return httpClientOptions(options);
     }
 
     /**
-     * get the load balancer policy for etcd client.
+     * Returns the configured maximum size for an inbound gRPC message.
      *
-     * @return loadBalancerFactory
-     */
-    public String loadBalancerPolicy() {
-        return loadBalancerPolicy;
-    }
-
-    /**
-     * Returns the ssl context
-     *
-     * @return the ssl context.
-     */
-    public SslContext sslContext() {
-        return sslContext;
-    }
-
-    /**
-     * SSL/TLS context to use instead of the system default. It must have been configured with {@link
-     * GrpcSslContexts}, but options could have been overridden.
-     *
-     * @param  sslContext the ssl context
-     * @return            this builder
-     */
-    public ClientBuilder sslContext(SslContext sslContext) {
-        this.sslContext = sslContext;
-        return this;
-    }
-
-    /**
-     * Configure SSL/TLS context create through {@link GrpcSslContexts#forClient} to use.
-     *
-     * @param  consumer     the SslContextBuilder consumer
-     * @return              this builder
-     * @throws SSLException if the SslContextBuilder fails
-     */
-    public ClientBuilder sslContext(Consumer<SslContextBuilder> consumer) throws SSLException {
-        SslContextBuilder builder = GrpcSslContexts.forClient();
-        consumer.accept(builder);
-
-        return sslContext(builder.build());
-    }
-
-    /**
-     * Returns The authority used to authenticate connections to servers.
-     *
-     * @return the authority.
-     */
-    public String authority() {
-        return authority;
-    }
-
-    /**
-     * Sets the authority used to authenticate connections to servers.
-     *
-     * @param  authority the authority used to authenticate connections to servers.
-     * @return           this builder
-     */
-    public ClientBuilder authority(String authority) {
-        this.authority = authority;
-        return this;
-    }
-
-    /**
-     * Returns the maximum message size allowed for a single gRPC frame.
-     *
-     * @return max inbound message size.
+     * @return the maximum size in bytes, or null if the default of 4 MiB applies
      */
     public Integer maxInboundMessageSize() {
         return maxInboundMessageSize;
     }
 
     /**
-     * Sets the maximum message size allowed for a single gRPC frame.
+     * Sets the maximum size for an inbound gRPC message.
      *
-     * @param  maxInboundMessageSize the maximum message size allowed for a single gRPC frame.
+     * @param  maxInboundMessageSize the positive maximum size in bytes, or null to use the default of 4 MiB
      * @return                       this builder
      */
     public ClientBuilder maxInboundMessageSize(Integer maxInboundMessageSize) {
@@ -346,156 +249,83 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * Returns the headers to be added to http request headers
+     * Sets the load balancer for distributing requests across etcd endpoints.
      *
-     * @return headers.
-     */
-    public Map<Metadata.Key<?>, Object> headers() {
-        return headers == null ? Collections.emptyMap() : Collections.unmodifiableMap(headers);
-    }
-
-    /**
-     * Sets headers to be added to http request headers.
+     * <p>
+     * Available strategies:
+     * </p>
+     * <ul>
+     * <li>LoadBalancer.ROUND_ROBIN: Distributes requests evenly (default)</li>
+     * <li>LoadBalancer.LEAST_REQUESTS: Routes to endpoint with fewest active requests</li>
+     * <li>LoadBalancer.RANDOM: Random endpoint selection</li>
+     * <li>LoadBalancer.POWER_OF_TWO_CHOICES: Picks best of two random endpoints</li>
+     * </ul>
      *
-     * @param  headers headers to be added to http request headers.
-     * @return         this builder
+     * @param  loadBalancer the load balancer instance
+     * @return              this builder
      */
-    public ClientBuilder headers(Map<Metadata.Key<?>, Object> headers) {
-        this.headers = new HashMap<>(headers);
-
+    public ClientBuilder loadBalancer(LoadBalancer loadBalancer) {
+        this.loadBalancer = loadBalancer;
         return this;
     }
 
     /**
-     * Set headers.
+     * Returns the load balancer.
      *
-     * @param  key   Sets an header key to be added to http request headers.
-     * @param  value Sets an header value to be added to http request headers.
+     * @return the load balancer.
+     */
+    public LoadBalancer loadBalancer() {
+        return loadBalancer;
+    }
+
+    /**
+     * Returns the custom headers configured for all gRPC requests.
+     *
+     * @return an unmodifiable map of custom headers
+     */
+    public Map<String, String> headers() {
+        return headers == null ? Collections.emptyMap() : Collections.unmodifiableMap(headers);
+    }
+
+    /**
+     * Configure custom headers to be added to all gRPC requests.
+     *
+     * <p>
+     * These headers will be added to every request made to etcd, including authentication
+     * requests. Useful for adding correlation IDs, tracing headers, or other custom metadata.
+     * </p>
+     *
+     * <p>
+     * Example:
+     * </p>
+     *
+     * <pre>
+     * Client client = Client.builder("http://localhost:2379")
+     *     .header("X-Request-ID", "abc-123")
+     *     .header("X-Trace-ID", "trace-456")
+     *     .build();
+     * </pre>
+     *
+     * @param  headers custom headers map
+     * @return         this builder
+     */
+    public ClientBuilder headers(Map<String, String> headers) {
+        this.headers = new HashMap<>(headers);
+        return this;
+    }
+
+    /**
+     * Add a single custom header to be included in all gRPC requests.
+     *
+     * @param  key   header name
+     * @param  value header value
      * @return       this builder
      */
     public ClientBuilder header(String key, String value) {
         if (this.headers == null) {
             this.headers = new HashMap<>();
         }
-
-        this.headers.put(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER), value);
-
-        return this;
-    }
-
-    /**
-     * Returns the headers to be added to auth request headers
-     *
-     * @return auth headers.
-     */
-    public Map<Metadata.Key<?>, Object> authHeaders() {
-        return authHeaders == null ? Collections.emptyMap() : Collections.unmodifiableMap(authHeaders);
-    }
-
-    /**
-     * Set the auth headers.
-     *
-     * @param  authHeaders Sets headers to be added to auth request headers.
-     * @return             this builder
-     */
-    public ClientBuilder authHeaders(Map<Metadata.Key<?>, Object> authHeaders) {
-        this.authHeaders = new HashMap<>(authHeaders);
-
-        return this;
-    }
-
-    /**
-     * Add an auth header.
-     *
-     * @param  key   Sets an header key to be added to auth request headers.
-     * @param  value Sets an header value to be added to auth request headers.
-     * @return       this builder
-     */
-    public ClientBuilder authHeader(String key, String value) {
-        if (this.authHeaders == null) {
-            this.authHeaders = new HashMap<>();
-        }
-
-        this.authHeaders.put(Metadata.Key.of(key, Metadata.ASCII_STRING_MARSHALLER), value);
-
-        return this;
-    }
-
-    /**
-     * Returns the interceptors
-     *
-     * @return the interceptors.
-     */
-    public List<ClientInterceptor> interceptors() {
-        return interceptors;
-    }
-
-    /**
-     * Set the interceptors.
-     *
-     * @param  interceptors the interceptors.
-     * @return              this builder
-     */
-    public ClientBuilder interceptors(List<ClientInterceptor> interceptors) {
-        this.interceptors = new ArrayList<>(interceptors);
-
-        return this;
-    }
-
-    /**
-     * Add an interceptor.
-     *
-     * @param  interceptor  an interceptors to add
-     * @param  interceptors additional interceptors
-     * @return              this builder
-     */
-    public ClientBuilder interceptor(ClientInterceptor interceptor, ClientInterceptor... interceptors) {
-        if (this.interceptors == null) {
-            this.interceptors = new ArrayList<>();
-        }
-
-        this.interceptors.add(interceptor);
-        this.interceptors.addAll(Arrays.asList(interceptors));
-
-        return this;
-    }
-
-    /**
-     * Returns the auth interceptors
-     *
-     * @return the interceptors.
-     */
-    public List<ClientInterceptor> authInterceptors() {
-        return authInterceptors;
-    }
-
-    /**
-     * Set the auth interceptors.
-     *
-     * @param  interceptors Set the interceptors to add to the auth chain
-     * @return              this builder
-     */
-    public ClientBuilder authInterceptors(List<ClientInterceptor> interceptors) {
-        this.authInterceptors = new ArrayList<>(interceptors);
-
-        return this;
-    }
-
-    /**
-     * Add an auth interceptor.
-     *
-     * @param  interceptor  an interceptors to add to the auth chain
-     * @param  interceptors additional interceptors to add to the auth chain
-     * @return              this builder
-     */
-    public ClientBuilder authInterceptors(ClientInterceptor interceptor, ClientInterceptor... interceptors) {
-        if (this.authInterceptors == null) {
-            this.authInterceptors = new ArrayList<>();
-        }
-
-        this.authInterceptors.add(interceptor);
-        this.authInterceptors.addAll(Arrays.asList(interceptors));
-
+        this.headers.put(key, value);
         return this;
     }
 
@@ -560,58 +390,94 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * Returns the keep alive time.
+     * Returns the legacy gRPC keepalive interval setting.
      *
-     * @return keep alive time.
+     * @return     the legacy setting
+     * @deprecated Vert.x gRPC does not expose periodic HTTP/2 keepalive pings as a client option.
      */
+    @Deprecated
     public Duration keepaliveTime() {
         return keepaliveTime;
     }
 
     /**
-     * The interval for gRPC keepalives.
-     * The current minimum allowed by gRPC is 10s
+     * Stores the legacy gRPC keepalive interval setting for compatibility.
      *
-     * @param  keepaliveTime time between keepalives
-     * @return               this builder
+     * @param      keepaliveTime the legacy setting
+     * @return                   this builder
+     * @deprecated               Vert.x gRPC does not use this setting.
      */
+    @Deprecated
     public ClientBuilder keepaliveTime(Duration keepaliveTime) {
-        // gRPC uses a minimum keepalive time of 10s, if smaller values are given.
-        // No check here though, as this gRPC value might change
         this.keepaliveTime = keepaliveTime;
         return this;
     }
 
     /**
-     * Returns the keep alive time out.
+     * Returns the time allowed to receive a lease's first keepalive response.
      *
-     * @return keep alive time out.
+     * @return the configured timeout, or {@code null} for the fallback timeout
      */
-    public Duration keepaliveTimeout() {
-        return keepaliveTimeout;
+    public Duration leaseKeepAliveTimeout() {
+        return leaseKeepAliveTimeout;
     }
 
     /**
-     * The timeout for gRPC keepalives
+     * Sets the time allowed to receive a lease's first keepalive response.
+     * Defaults to ten seconds. Pass {@code null} to use the five-second fallback.
      *
-     * @param  keepaliveTimeout the gRPC keep alive timeout.
-     * @return                  this builder
+     * @param  timeout the initial lease keepalive timeout
+     * @return         this builder
      */
-    public ClientBuilder keepaliveTimeout(Duration keepaliveTimeout) {
-        this.keepaliveTimeout = keepaliveTimeout;
+    public ClientBuilder leaseKeepAliveTimeout(Duration timeout) {
+        this.leaseKeepAliveTimeout = timeout;
         return this;
     }
 
+    /**
+     * Returns the time allowed to receive the first lease keepalive response.
+     *
+     * @return     the configured timeout
+     * @deprecated Use {@link #leaseKeepAliveTimeout()}.
+     */
+    @Deprecated
+    @SuppressWarnings("InlineMeSuggester")
+    public Duration keepaliveTimeout() {
+        return leaseKeepAliveTimeout();
+    }
+
+    /**
+     * Sets the time allowed to receive the first lease keepalive response.
+     *
+     * @param      keepaliveTimeout the initial lease keepalive timeout
+     * @return                      this builder
+     * @deprecated                  Use {@link #leaseKeepAliveTimeout(Duration)}.
+     */
+    @Deprecated
+    @SuppressWarnings("InlineMeSuggester")
+    public ClientBuilder keepaliveTimeout(Duration keepaliveTimeout) {
+        return leaseKeepAliveTimeout(keepaliveTimeout);
+    }
+
+    /**
+     * Returns the legacy setting for sending gRPC keepalive pings without active calls.
+     *
+     * @return     the legacy setting
+     * @deprecated Vert.x gRPC does not use this setting.
+     */
+    @Deprecated
     public Boolean keepaliveWithoutCalls() {
         return keepaliveWithoutCalls;
     }
 
     /**
-     * Keepalive option for gRPC
+     * Stores the legacy setting for sending gRPC keepalive pings without active calls.
      *
-     * @param  keepaliveWithoutCalls the gRPC keep alive without calls.
-     * @return                       this builder
+     * @param      keepaliveWithoutCalls the legacy setting
+     * @return                           this builder
+     * @deprecated                       Vert.x gRPC does not use this setting.
      */
+    @Deprecated
     public ClientBuilder keepaliveWithoutCalls(Boolean keepaliveWithoutCalls) {
         this.keepaliveWithoutCalls = keepaliveWithoutCalls;
         return this;
@@ -667,66 +533,46 @@ public final class ClientBuilder implements Cloneable {
     }
 
     /**
-     * Set the connection timeout.
+     * Sets the TCP connection timeout for cluster and direct member connections. This setting takes precedence over
+     * the timeout in {@link #httpClientOptions(HttpClientOptions)} regardless of call order.
      *
-     * @param  connectTimeout Sets the connection timeout.
-     *                        Clients connecting to fault tolerant etcd clusters (eg, clusters with more than 2 etcd server
-     *                        peers/endpoints)
-     *                        should consider a value that will allow switching timely from a crashed/partitioned peer to
-     *                        a consensus peer.
-     * @return                this builder
+     * @param  connectTimeout           a non-negative duration of at most {@link Integer#MAX_VALUE} milliseconds.
+     *                                  Positive durations below one millisecond use one millisecond. Zero disables the
+     *                                  TCP connect timeout. Pass {@code null} to use the HTTP client options or defaults.
+     * @return                          this builder
+     * @throws IllegalArgumentException if the duration is negative or exceeds the supported range
      */
     public ClientBuilder connectTimeout(Duration connectTimeout) {
-        if (connectTimeout != null) {
-            long millis = connectTimeout.toMillis();
-            if ((int) millis != millis) {
-                throw new IllegalArgumentException("connectTimeout outside of its bounds, max value: " +
-                    Integer.MAX_VALUE);
-            }
+        if (connectTimeout != null
+            && (connectTimeout.isNegative() || connectTimeout.compareTo(Duration.ofMillis(Integer.MAX_VALUE)) > 0)) {
+            throw new IllegalArgumentException("connectTimeout must be between 0 and " + Integer.MAX_VALUE + " milliseconds");
         }
         this.connectTimeout = connectTimeout;
         return this;
     }
 
     /**
-     * Enable gRPC's wait for ready semantics.
+     * Returns the legacy gRPC wait-for-ready setting.
      *
-     * @return if this client uses gRPC's wait for ready semantics.
-     * @see    <a href="https://github.com/grpc/grpc/blob/master/doc/wait-for-ready.md">gRPC Wait for Ready Semantics</a>
+     * @return     the legacy setting
+     * @deprecated Retry behavior is determined by the operation. Vert.x gRPC has no wait-for-ready option.
      */
+    @Deprecated
     public boolean waitForReady() {
         return waitForReady;
     }
 
     /**
-     * Configure the gRPC's wait for ready semantics.
+     * Stores the legacy gRPC wait-for-ready setting for compatibility.
      *
-     * @param  waitForReady if this client should use gRPC's wait for ready semantics. Enabled by default.
-     * @return              this builder.
-     * @see                 <a href="https://github.com/grpc/grpc/blob/master/doc/wait-for-ready.md">gRPC Wait for Ready
-     *                      Semantics</a>
+     * @param      waitForReady the legacy setting
+     * @return                  this builder
+     * @deprecated              Retry behavior is determined by the operation. Vert.x gRPC has no wait-for-ready
+     *                          option.
      */
+    @Deprecated
     public ClientBuilder waitForReady(boolean waitForReady) {
         this.waitForReady = waitForReady;
-        return this;
-    }
-
-    /**
-     * Returns whether to use Vertx for gRPC channel creation.
-     *
-     * @return true if using Vertx for gRPC channel creation.
-     */
-    public boolean isUsingVertx() {
-        return useVertx;
-    }
-
-    /**
-     * Use Vertx for gRPC channel creation instead of default grpc-netty.
-     *
-     * @return this builder
-     */
-    public ClientBuilder useVertx() {
-        useVertx = true;
         return this;
     }
 
@@ -750,7 +596,6 @@ public final class ClientBuilder implements Cloneable {
         Preconditions.checkArgument(vertx != null, "vertx can't be null");
 
         this.vertx = vertx;
-        this.useVertx = true;
 
         return this;
     }
@@ -762,9 +607,7 @@ public final class ClientBuilder implements Cloneable {
      * @throws EtcdException if client experiences build error.
      */
     public Client build() {
-        Preconditions.checkState(target != null, "please configure etcd server endpoints before build.");
-
-        return new ClientImpl(this);
+        return new Client(this);
     }
 
     /**
@@ -774,7 +617,16 @@ public final class ClientBuilder implements Cloneable {
      */
     public ClientBuilder copy() {
         try {
-            return (ClientBuilder) super.clone();
+            ClientBuilder clone = (ClientBuilder) super.clone();
+            // Deep copy the headers map to avoid shared mutable state
+            if (this.headers != null) {
+                clone.headers = new HashMap<>(this.headers);
+            }
+            // Deep copy HttpClientOptions to avoid shared mutable state
+            if (this.httpClientOptions != null) {
+                clone.httpClientOptions = new HttpClientOptions(this.httpClientOptions);
+            }
+            return clone;
         } catch (CloneNotSupportedException e) {
             throw EtcdExceptionFactory.toEtcdException(e);
         }

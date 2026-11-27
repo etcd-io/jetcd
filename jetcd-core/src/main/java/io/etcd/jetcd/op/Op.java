@@ -35,12 +35,27 @@ public abstract class Op {
      * Operation type.
      */
     public enum Type {
-        PUT, RANGE, DELETE_RANGE, TXN
+        /** Put operation. */
+        PUT,
+        /** Range/get operation. */
+        RANGE,
+        /** Delete range operation. */
+        DELETE_RANGE,
+        /** Transaction operation. */
+        TXN
     }
 
+    /** The operation type. */
     protected final Type type;
+    /** The key for the operation. */
     protected final ByteString key;
 
+    /**
+     * Creates a new Op.
+     *
+     * @param type the operation type
+     * @param key  the key
+     */
     protected Op(Type type, ByteString key) {
         this.type = type;
         this.key = key;
@@ -48,22 +63,55 @@ public abstract class Op {
 
     abstract RequestOp toRequestOp(ByteSequence namespace);
 
+    /**
+     * Creates a put operation.
+     *
+     * @param  key    the key
+     * @param  value  the value
+     * @param  option the put option
+     * @return        the put operation
+     */
     public static PutOp put(ByteSequence key, ByteSequence value, PutOption option) {
         return new PutOp(ByteString.copyFrom(key.getBytes()), ByteString.copyFrom(value.getBytes()), option);
     }
 
+    /**
+     * Creates a get operation.
+     *
+     * @param  key    the key
+     * @param  option the get option
+     * @return        the get operation
+     */
     public static GetOp get(ByteSequence key, GetOption option) {
         return new GetOp(ByteString.copyFrom(key.getBytes()), option);
     }
 
+    /**
+     * Creates a delete operation.
+     *
+     * @param  key    the key
+     * @param  option the delete option
+     * @return        the delete operation
+     */
     public static DeleteOp delete(ByteSequence key, DeleteOption option) {
         return new DeleteOp(ByteString.copyFrom(key.getBytes()), option);
     }
 
+    /**
+     * Creates a transaction operation.
+     *
+     * @param  cmps    the comparisons
+     * @param  thenOps the operations to execute if comparisons succeed
+     * @param  elseOps the operations to execute if comparisons fail
+     * @return         the transaction operation
+     */
     public static TxnOp txn(Cmp[] cmps, Op[] thenOps, Op[] elseOps) {
         return new TxnOp(cmps, thenOps, elseOps);
     }
 
+    /**
+     * Put operation implementation.
+     */
     public static final class PutOp extends Op {
 
         private final ByteString value;
@@ -84,6 +132,9 @@ public abstract class Op {
         }
     }
 
+    /**
+     * Get operation implementation.
+     */
     public static final class GetOp extends Op {
 
         private final GetOption option;
@@ -101,6 +152,9 @@ public abstract class Op {
         }
     }
 
+    /**
+     * Delete operation implementation.
+     */
     public static final class DeleteOp extends Op {
 
         private final DeleteOption option;
@@ -118,6 +172,9 @@ public abstract class Op {
         }
     }
 
+    /**
+     * Transaction operation implementation.
+     */
     public static final class TxnOp extends Op {
         private final Cmp[] cmps;
         private final Op[] thenOps;

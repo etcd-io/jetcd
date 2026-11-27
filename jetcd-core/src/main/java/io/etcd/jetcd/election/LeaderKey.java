@@ -18,55 +18,14 @@ package io.etcd.jetcd.election;
 
 import io.etcd.jetcd.ByteSequence;
 
-public class LeaderKey {
-    private final ByteSequence name;
-    private final ByteSequence key;
-    private final long revision;
-    private final long lease;
-
-    public LeaderKey(ByteSequence name, ByteSequence key, long revision, long lease) {
-        this.name = name;
-        this.key = key;
-        this.revision = revision;
-        this.lease = lease;
-    }
-
-    /**
-     * Returns the election identifier that corresponds to the leadership key.
-     *
-     * @return the name.
-     */
-    public ByteSequence getName() {
-        return name;
-    }
-
-    /**
-     * Returns the opaque key representing the ownership of the election. If the key
-     * is deleted, then leadership is lost.
-     *
-     * @return the key.
-     */
-    public ByteSequence getKey() {
-        return key;
-    }
-
-    /**
-     * Returns the creation revision of the key. It can be used to test for ownership
-     * of an election during transactions by testing the key's creation revision
-     * matches rev.
-     *
-     * @return the revision.
-     */
-    public long getRevision() {
-        return revision;
-    }
-
-    /**
-     * Returns the lease ID of the election leader.
-     *
-     * @return the lese id.
-     */
-    public long getLease() {
-        return lease;
-    }
+/**
+ * Represents a leader key in an election.
+ *
+ * @param name     the election identifier that corresponds to the leadership key
+ * @param key      the opaque key representing the ownership of the election; if the key is deleted, then leadership is
+ *                 lost
+ * @param revision the creation revision of the key; can be used to test for ownership during transactions
+ * @param lease    the lease ID of the election leader
+ */
+public record LeaderKey(ByteSequence name, ByteSequence key, long revision, long lease) {
 }

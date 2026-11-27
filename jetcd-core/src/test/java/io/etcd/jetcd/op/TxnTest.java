@@ -16,6 +16,7 @@
 
 package io.etcd.jetcd.op;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.etcd.jetcd.options.PutOption;
@@ -23,6 +24,7 @@ import io.etcd.jetcd.options.PutOption;
 import static io.etcd.jetcd.impl.TestUtil.bytesOf;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@Tag("kv")
 public class TxnTest {
 
     private static final Cmp CMP = new Cmp(bytesOf("key"), Cmp.Op.GREATER, CmpTarget.value(bytesOf("value")));

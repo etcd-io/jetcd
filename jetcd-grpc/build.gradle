@@ -20,37 +20,28 @@ plugins {
 
 dependencies {
     api libs.slf4j
-    api libs.vertxGrpc
-    api libs.bundles.grpc
-    api libs.bundles.javax
+    api libs.vertxGrpcClient
+    api platform(libs.protobufBom)
+    api libs.protobufJava
+    api libs.checkerQual
+
+    runtimeOnly libs.protobufJavaUtil
 }
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:${libs.versions.protoc.get()}"
+        artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
     }
     plugins {
-        grpc {
-            artifact = "io.grpc:protoc-gen-grpc-java:${libs.versions.grpc.get()}"
-        }
         vertx {
-            artifact = "io.vertx:vertx-grpc-protoc-plugin:${libs.versions.vertx.get()}"
+            artifact = "io.vertx:vertx-grpc-protoc-plugin2:${libs.versions.vertx.get()}"
         }
     }
     generateProtoTasks {
         all()*.plugins {
-            grpc
-            vertx
+            vertx {
+                option 'grpc-client=true'
+            }
         }
     }
 }
-
-//sourceSets {
-//    main {
-//        java {
-//            srcDirs "${projectDir}/build/generated/source/proto/main/java"
-//            srcDirs "${projectDir}/build/generated/source/proto/main/grpc"
-//            srcDirs "${projectDir}/build/generated/source/proto/main/vertx"
-//        }
-//    }
-//}

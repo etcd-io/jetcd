@@ -17,10 +17,11 @@
 package io.etcd.jetcd.auth;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 import io.etcd.jetcd.Auth;
 import io.etcd.jetcd.ByteSequence;
+import io.etcd.jetcd.common.suppliers.Suppliers;
 import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
@@ -29,40 +30,40 @@ import io.etcd.jetcd.impl.AbstractResponse;
  */
 public class AuthRoleGetResponse extends AbstractResponse<io.etcd.jetcd.api.AuthRoleGetResponse> {
 
-    private List<Permission> permissions;
+    private final Supplier<List<Permission>> permissions;
 
+    /**
+     * Creates a new AuthRoleGetResponse from the gRPC response.
+     *
+     * @param response the gRPC auth role get response
+     */
     public AuthRoleGetResponse(io.etcd.jetcd.api.AuthRoleGetResponse response) {
         super(response, response.getHeader());
+
+        this.permissions = Suppliers.memoizing(
+            () -> getResponse().getPermList().stream().map(AuthRoleGetResponse::toPermission).toList());
     }
 
     private static Permission toPermission(io.etcd.jetcd.api.Permission perm) {
         ByteSequence key = ByteSequence.from(perm.getKey());
         ByteSequence rangeEnd = ByteSequence.from(perm.getRangeEnd());
 
-        Permission.Type type;
-        switch (perm.getPermType()) {
-            case READ:
-                type = Permission.Type.READ;
-                break;
-            case WRITE:
-                type = Permission.Type.WRITE;
-                break;
-            case READWRITE:
-                type = Permission.Type.READWRITE;
-                break;
-            default:
-                type = Permission.Type.UNRECOGNIZED;
-        }
+        Permission.Type type = switch (perm.getPermType()) {
+            case READ -> Permission.Type.READ;
+            case WRITE -> Permission.Type.WRITE;
+            case READWRITE -> Permission.Type.READWRITE;
+            default -> Permission.Type.UNRECOGNIZED;
+        };
 
         return new Permission(type, key, rangeEnd);
     }
 
-    public synchronized List<Permission> getPermissions() {
-        if (permissions == null) {
-            permissions = getResponse().getPermList().stream().map(AuthRoleGetResponse::toPermission)
-                .collect(Collectors.toList());
-        }
-
-        return permissions;
+    /**
+     * Returns the list of permissions for this role.
+     *
+     * @return the list of permissions
+     */
+    public List<Permission> getPermissions() {
+        return permissions.get();
     }
 }

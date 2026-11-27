@@ -1,72 +1,50 @@
-# How to contribute
+# How to Contribute
 
-jetcd is Apache 2.0 licensed and accepts contributions via GitHub pull requests. This document outlines some of the conventions on commit message formatting, contact points for developers, and other resources to help get contributions into etcd.
+jetcd is Apache 2.0 licensed and accepts contributions via GitHub pull requests.
 
-# Email and chat
+## Contact
 
 - Email: [etcd-dev](https://groups.google.com/g/etcd-dev)
-- IRC: #[etcd](irc://irc.freenode.org:6667/#etcd) IRC channel on freenode.org
 
-## Getting started
+## Getting Started
 
-- Fork the repository on GitHub
+1. Fork the repository on GitHub
+2. Read [docs/development.md](docs/development.md) for code style and testing guidelines
+3. Read [docs/design.md](docs/design.md) for architecture decisions
 
-## Reporting bugs and creating issues
+## Reporting Bugs
 
-Reporting bugs is one of the best ways to contribute. However, a good bug report has some very specific qualities, so please read over our short document on [reporting bugs](https://github.com/etcd-io/etcd/blob/master/Documentation/reporting_bugs.md) before submitting a bug report. This document might contain links to known issues, another good reason to take a look there before reporting a bug.
+See the etcd [bug reporting guide](https://github.com/etcd-io/etcd/blob/main/Documentation/reporting_bugs.md).
 
-## Contribution flow
+## Contribution Flow
 
-This is a rough outline of what a contributor's workflow looks like:
+1. Create a topic branch from `main`
+2. Make commits of logical units
+3. Run quality checks: `./gradlew check`
+4. Fix formatting: `./gradlew spotlessApply`
+5. Push to your fork
+6. Submit a pull request to etcd-io/jetcd
+7. PR requires LGTM from a maintainer in [OWNERS](OWNERS)
 
-- Create a topic branch from where to base the contribution. This is usually master.
-- Make commits of logical units.
-- Run `license:format` to make sure license headers are properly formatted (see below).
-- Make sure commit messages are in the proper format (see below).
-- Push changes in a topic branch to a personal fork of the repository.
-- Submit a pull request to etcd-io/jetcd.
-- The PR must receive a LGTM from at least one maintainer found in the [OWNERS](https://github.com/etcd-io/jetcd/blob/main/OWNERS) file.
-
-Thanks for contributing!
-
-### Code style
-
-The coding style follows Google Java Style. See the [style doc](https://google.github.io/styleguide/javaguide.html) for details.
-
-Please follow this style to make jetcd easy to review, maintain, and develop.
-
-### License headers
-
-To make sure CI checks would pass please run
-
-```bash
-./gradlew spotlessApply
-```
-
-and including any changes in PR before opening it.
-
-### Format of the commit message
-
-We follow a rough convention for commit messages that is designed to answer two
-questions: what changed and why. The subject line should feature the what and
-the body of the commit should describe the why.
-
-```
-scripts: add the test-cluster command
-
-this uses tmux to setup a test cluster that can easily be killed and started for debugging.
-
-Fixes #38
-```
-
-The format can be described more formally as follows:
+## Commit Message Format
 
 ```
 <subsystem>: <what changed>
-<BLANK LINE>
+
 <why this change was made>
-<BLANK LINE>
-<footer>
+
+Fixes #123
 ```
 
-The first line is the subject and should be no longer than 70 characters, the second line is always blank, and other lines should be wrapped at 80 characters. This allows the message to be easier to read on GitHub as well as in various git tools.
+- Subject line: max 70 characters
+- Body: wrap at 80 characters
+
+Example:
+
+```
+kv: add prefix delete support
+
+Enables deleting all keys with a given prefix in a single operation.
+
+Fixes #38
+```

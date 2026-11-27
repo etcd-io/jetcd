@@ -19,6 +19,7 @@ package io.etcd.jetcd.impl;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -28,6 +29,7 @@ import io.etcd.jetcd.Auth;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
+import io.etcd.jetcd.SecureByteSequence;
 import io.etcd.jetcd.auth.AuthRoleGetResponse;
 import io.etcd.jetcd.auth.AuthRoleListResponse;
 import io.etcd.jetcd.auth.Permission;
@@ -50,6 +52,7 @@ public class AuthClientTest {
     private static final String rootRoleString = "root";
     private static final String userString = "user";
     private static final String userRoleString = "userRole";
+    private static Client authDisabledClient;
     private static Auth authDisabledAuthClient;
     private static KV authDisabledKVClient;
     private final ByteSequence rootRoleKey = bytesOf("root");
@@ -72,9 +75,16 @@ public class AuthClientTest {
      */
     @BeforeAll
     public static void setupEnv() {
-        Client client = TestUtil.client(cluster).build();
-        authDisabledKVClient = client.getKVClient();
-        authDisabledAuthClient = client.getAuthClient();
+        authDisabledClient = TestUtil.client(cluster).build();
+        authDisabledKVClient = authDisabledClient.getKVClient();
+        authDisabledAuthClient = authDisabledClient.getAuthClient();
+    }
+
+    @AfterAll
+    public static void tearDownEnv() throws Exception {
+        if (authDisabledClient != null) {
+            authDisabledClient.close();
+        }
     }
 
     @Test
@@ -107,8 +117,10 @@ public class AuthClientTest {
 
         authDisabledAuthClient.authEnable().get();
 
-        final Client userClient = TestUtil.client(cluster).user(user).password(userNewPass).build();
-        final Client rootClient = TestUtil.client(cluster).user(root).password(rootPass).build();
+        final Client userClient = TestUtil.client(cluster).user(SecureByteSequence.from(user.getBytes()))
+            .password(SecureByteSequence.from(userNewPass.getBytes())).build();
+        final Client rootClient = TestUtil.client(cluster).user(SecureByteSequence.from(root.getBytes()))
+            .password(SecureByteSequence.from(rootPass.getBytes())).build();
 
         userClient.getKVClient().put(rootRoleKey, rootRoleValue).get();
         userClient.getKVClient().put(userRoleKey, userRoleValue).get();
@@ -116,13 +128,13 @@ public class AuthClientTest {
         userClient.getKVClient().get(userRoleKey).get();
 
         assertThatThrownBy(() -> authDisabledKVClient.put(rootRoleKey, rootRoleValue).get())
-            .hasMessageContaining("etcdserver: user name is empty");
+            .hasMessageContaining("INVALID_ARGUMENT");
         assertThatThrownBy(() -> authDisabledKVClient.put(userRoleKey, rootRoleValue).get())
-            .hasMessageContaining("etcdserver: user name is empty");
+            .hasMessageContaining("INVALID_ARGUMENT");
         assertThatThrownBy(() -> authDisabledKVClient.get(rootRoleKey).get())
-            .hasMessageContaining("etcdserver: user name is empty");
+            .hasMessageContaining("INVALID_ARGUMENT");
         assertThatThrownBy(() -> authDisabledKVClient.get(userRoleKey).get())
-            .hasMessageContaining("etcdserver: user name is empty");
+            .hasMessageContaining("INVALID_ARGUMENT");
 
         AuthRoleGetResponse roleGetResponse = userClient.getAuthClient().roleGet(rootRole).get();
         assertThat(roleGetResponse.getPermissions().size()).isNotEqualTo(0);

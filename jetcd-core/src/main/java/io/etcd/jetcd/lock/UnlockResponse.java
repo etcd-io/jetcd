@@ -18,8 +18,16 @@ package io.etcd.jetcd.lock;
 
 import io.etcd.jetcd.impl.AbstractResponse;
 
+/**
+ * Response from an unlock operation.
+ */
 public class UnlockResponse extends AbstractResponse<io.etcd.jetcd.api.lock.UnlockResponse> {
 
+    /**
+     * Creates a new UnlockResponse from the gRPC response.
+     *
+     * @param response the gRPC unlock response
+     */
     public UnlockResponse(io.etcd.jetcd.api.lock.UnlockResponse response) {
         super(response, response.getHeader());
     }

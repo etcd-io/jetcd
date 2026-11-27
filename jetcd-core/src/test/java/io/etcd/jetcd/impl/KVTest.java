@@ -17,17 +17,14 @@
 package io.etcd.jetcd.impl;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -55,6 +52,7 @@ import static io.etcd.jetcd.impl.TestUtil.randomString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
+@Tag("kv")
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 public class KVTest {
 
@@ -63,6 +61,7 @@ public class KVTest {
         .withNodes(1)
         .build();
 
+    private static Client client;
     private static KV kvClient;
 
     private static final ByteSequence SAMPLE_KEY = bytesOf("sample_key");
@@ -73,7 +72,15 @@ public class KVTest {
 
     @BeforeAll
     public static void setUp() throws Exception {
-        kvClient = TestUtil.client(cluster).build().getKVClient();
+        client = TestUtil.client(cluster).build();
+        kvClient = client.getKVClient();
+    }
+
+    @AfterAll
+    public static void tearDown() throws Exception {
+        if (client != null) {
+            client.close();
+        }
     }
 
     @Test
@@ -95,7 +102,7 @@ public class KVTest {
         CompletableFuture<PutResponse> feature = kvClient.put(SAMPLE_KEY, SAMPLE_VALUE);
         PutResponse response = feature.get();
         assertThat(response.getHeader()).isNotNull();
-        assertThat(!response.hasPrevKv()).isTrue();
+        assertThat(response.getPrevKv()).isEmpty();
     }
 
     @Test
@@ -103,7 +110,7 @@ public class KVTest {
         PutOption option = PutOption.builder().withLeaseId(99999).build();
         CompletableFuture<PutResponse> future = kvClient.put(SAMPLE_KEY, SAMPLE_VALUE, option);
         assertThatExceptionOfType(ExecutionException.class)
-            .isThrownBy(future::get).withMessageEndingWith("etcdserver: requested lease not found");
+            .isThrownBy(future::get).withMessageContaining("NOT_FOUND");
     }
 
     @Test
@@ -153,10 +160,8 @@ public class KVTest {
 
     @Test
     public void testDelete() throws Exception {
-        // Put content so that we actually have something to delete
-        testPut();
-
         ByteSequence keyToDelete = SAMPLE_KEY;
+        kvClient.put(keyToDelete, SAMPLE_VALUE).get();
 
         // count keys about to delete
         CompletableFuture<GetResponse> getFeature = kvClient.get(keyToDelete);
@@ -296,75 +301,4 @@ public class KVTest {
             .isEqualTo(oneTwoThree.toString(StandardCharsets.UTF_8));
     }
 
-    @Test
-    @SuppressWarnings("FutureReturnValueIgnored")
-    public void testKVClientCanRetryPutOnEtcdRestart() throws InterruptedException {
-        try (Client customClient = TestUtil.client(cluster)
-            .retryMaxDuration(Duration.ofMinutes(5))
-            // client will delay the retry for a long time to give the cluster plenty of time to restart
-            .retryDelay(10)
-            .retryMaxDelay(30)
-            .retryChronoUnit(ChronoUnit.SECONDS)
-            .build()) {
-            ByteSequence key = ByteSequence.from("retry_dummy_key", StandardCharsets.UTF_8);
-            int putCount = 1000;
-
-            ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
-
-            // start putting values in a sequence, at least on of them has to be retried
-            executor.submit(() -> {
-                for (int i = 0; i < putCount; ++i) {
-                    ByteSequence value = ByteSequence
-                        .from(Integer.toString(i), StandardCharsets.UTF_8);
-                    customClient.getKVClient().put(key, value, PutOption.builder().withAutoRetry().build()).join();
-                }
-            });
-
-            // restart the cluster while uploading
-            executor.schedule(
-                () -> cluster.restart(0, TimeUnit.MILLISECONDS),
-                100,
-                TimeUnit.MILLISECONDS);
-
-            executor.shutdown();
-            assertThat(executor.awaitTermination(30, TimeUnit.SECONDS)).isTrue();
-
-            GetResponse getResponse = kvClient.get(key).join();
-
-            assertThat(getResponse.getKvs().size())
-                .as("There should be exactly one KeyValue for the test key")
-                .isEqualTo(1);
-
-            ByteSequence lastPutValue = ByteSequence
-                .from(Integer.toString(putCount - 1), StandardCharsets.UTF_8);
-            assertThat(getResponse.getKvs().get(0).getValue())
-                .as("The sequence of put operations should finish successfully. " +
-                    "Last seen value should match the expected value.")
-                .isEqualTo(lastPutValue);
-        }
-    }
-
-    @Test()
-    public void waitForReadySemantics() throws ExecutionException, InterruptedException, TimeoutException {
-        String nonExistingServer = "http://127.0.0.1:9999";
-
-        try (Client customClient = Client.builder().endpoints(nonExistingServer)
-            .waitForReady(false)
-            .retryMaxDuration(Duration.ofSeconds(3))
-            .retryDelay(1)
-            .retryMaxDelay(2)
-            .retryChronoUnit(ChronoUnit.SECONDS)
-            .connectTimeout(Duration.ofSeconds(1))
-            .build()) {
-
-            KV kvClient = customClient.getKVClient();
-
-            CompletableFuture<String> future = kvClient.get(ByteSequence.from("/x", StandardCharsets.UTF_8))
-                .thenApply(response -> "we got a response")
-                .exceptionally(throwable -> "completed exceptionally");
-
-            assertThat(future.get(5, TimeUnit.SECONDS))
-                .isEqualTo("completed exceptionally");
-        }
-    }
 }

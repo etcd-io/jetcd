@@ -52,17 +52,17 @@ class CommandWatch implements Runnable {
     public void run() {
         CountDownLatch latch = new CountDownLatch(maxEvents != null ? maxEvents : Integer.MAX_VALUE);
 
-        try (Client client = Client.builder().endpoints(main.endpoints).build()) {
+        try (Client client = Client.builder(main.endpoints).build()) {
             ByteSequence watchKey = ByteSequence.from(key, StandardCharsets.UTF_8);
             WatchOption watchOpts = WatchOption.builder().withRevision(rev != null ? rev : 0).build();
 
             Consumer<WatchResponse> consumer = response -> {
                 for (WatchEvent event : response.getEvents()) {
                     LOGGER.info("type={}, key={}, value={}",
-                        event.getEventType().toString(),
-                        Optional.ofNullable(event.getKeyValue().getKey()).map(bs -> bs.toString(StandardCharsets.UTF_8))
+                        event.eventType().toString(),
+                        Optional.ofNullable(event.keyValue().getKey()).map(bs -> bs.toString(StandardCharsets.UTF_8))
                             .orElse(""),
-                        Optional.ofNullable(event.getKeyValue().getValue()).map(bs -> bs.toString(StandardCharsets.UTF_8))
+                        Optional.ofNullable(event.keyValue().getValue()).map(bs -> bs.toString(StandardCharsets.UTF_8))
                             .orElse(""));
                 }
 

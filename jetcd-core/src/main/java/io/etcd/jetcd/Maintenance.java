@@ -18,10 +18,10 @@ package io.etcd.jetcd;
 
 import java.io.OutputStream;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import io.etcd.jetcd.maintenance.*;
 import io.etcd.jetcd.support.CloseableClient;
-import io.grpc.stub.StreamObserver;
 
 /**
  * Interface of maintenance talking to etcd.
@@ -43,6 +43,11 @@ import io.grpc.stub.StreamObserver;
  * Finally, periodic snapshot backups of etcd member state makes it possible
  * to recover any unintended logical data loss or corruption caused by
  * operational error.
+ *
+ * <p>
+ * Member-specific operations accept a host, a host and port, or an HTTP or HTTPS endpoint. The port defaults to 2379.
+ * An explicit scheme must match the client's TLS configuration. Endpoints without a scheme use the client's TLS
+ * settings.
  */
 public interface Maintenance extends CloseableClient {
 
@@ -92,6 +97,16 @@ public interface Maintenance extends CloseableClient {
     CompletableFuture<StatusResponse> statusMember(String target);
 
     /**
+     * returns a hash of the local KV state for consistency checking.
+     * This is designed for testing; do not use this in production when there
+     * are ongoing transactions.
+     *
+     * @param  target the etcd server endpoint.
+     * @return        the response result
+     */
+    CompletableFuture<HashResponse> hash(String target);
+
+    /**
      * returns a hash of the KV state at the time of the RPC.
      * If revision is zero, the hash is computed on all keys. If the revision
      * is non-zero, the hash is computed on all keys at or below the given revision.
@@ -103,19 +118,51 @@ public interface Maintenance extends CloseableClient {
     CompletableFuture<HashKVResponse> hashKV(String target, long rev);
 
     /**
-     * retrieves backend snapshot.
+     * Retrieves a backend snapshot. The caller owns the output stream.
      *
      * @param  output the output stream to write the snapshot content.
-     * @return        a Snapshot for retrieving backend snapshot.
+     * @return        the number of bytes written, once all snapshot data has been written
      */
     CompletableFuture<Long> snapshot(OutputStream output);
 
     /**
-     * retrieves backend snapshot as as stream of chunks.
+     * Retrieves a backend snapshot as a stream of chunks. Listener callbacks are delivered serially on worker threads.
+     * The next chunk is requested after the current callback returns. If a chunk callback throws, the snapshot is canceled
+     * and the listener receives the error.
      *
-     * @param observer a stream of data chunks
+     * @param listener a listener for snapshot data chunks
      */
-    void snapshot(StreamObserver<SnapshotResponse> observer);
+    void snapshot(Listener listener);
+
+    /**
+     * Retrieves a backend snapshot as a stream of chunks. See {@link #snapshot(Listener)} for callback delivery.
+     *
+     * @param onNext the on next consumer
+     */
+    default void snapshot(Consumer<SnapshotResponse> onNext) {
+        snapshot(listener(onNext));
+    }
+
+    /**
+     * Retrieves a backend snapshot as a stream of chunks. See {@link #snapshot(Listener)} for callback delivery.
+     *
+     * @param onNext  the on next consumer
+     * @param onError the on error consumer
+     */
+    default void snapshot(Consumer<SnapshotResponse> onNext, Consumer<Throwable> onError) {
+        snapshot(listener(onNext, onError));
+    }
+
+    /**
+     * Retrieves a backend snapshot as a stream of chunks. See {@link #snapshot(Listener)} for callback delivery.
+     *
+     * @param onNext      the on next consumer
+     * @param onError     the on error consumer
+     * @param onCompleted the on completion runnable
+     */
+    default void snapshot(Consumer<SnapshotResponse> onNext, Consumer<Throwable> onError, Runnable onCompleted) {
+        snapshot(listener(onNext, onError, onCompleted));
+    }
 
     /**
      * moveLeader requests current leader to transfer its leadership to the transferee.
@@ -125,4 +172,79 @@ public interface Maintenance extends CloseableClient {
      * @return              the response result
      */
     CompletableFuture<MoveLeaderResponse> moveLeader(long transfereeID);
+
+    /**
+     * Creates a snapshot listener with only onNext callback.
+     *
+     * @param  onNext the callback for snapshot responses
+     * @return        the listener
+     */
+    static Listener listener(Consumer<SnapshotResponse> onNext) {
+        return listener(onNext, t -> {
+        }, () -> {
+        });
+    }
+
+    /**
+     * Creates a snapshot listener with onNext and onError callbacks.
+     *
+     * @param  onNext  the callback for snapshot responses
+     * @param  onError the callback for errors
+     * @return         the listener
+     */
+    static Listener listener(Consumer<SnapshotResponse> onNext, Consumer<Throwable> onError) {
+        return listener(onNext, onError, () -> {
+        });
+    }
+
+    /**
+     * Creates a snapshot listener with all callbacks.
+     *
+     * @param  onNext      the callback for snapshot responses
+     * @param  onError     the callback for errors
+     * @param  onCompleted the callback when completed
+     * @return             the listener
+     */
+    static Listener listener(Consumer<SnapshotResponse> onNext, Consumer<Throwable> onError, Runnable onCompleted) {
+        return new Listener() {
+            @Override
+            public void onNext(SnapshotResponse response) {
+                onNext.accept(response);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                onError.accept(throwable);
+            }
+
+            @Override
+            public void onCompleted() {
+                onCompleted.run();
+            }
+        };
+    }
+
+    /**
+     * Listener for snapshot responses.
+     */
+    interface Listener {
+        /**
+         * Invoked on new snapshot responses.
+         *
+         * @param response the response.
+         */
+        void onNext(SnapshotResponse response);
+
+        /**
+         * Invoked on errors.
+         *
+         * @param throwable the error.
+         */
+        void onError(Throwable throwable);
+
+        /**
+         * Invoked on completion.
+         */
+        void onCompleted();
+    }
 }

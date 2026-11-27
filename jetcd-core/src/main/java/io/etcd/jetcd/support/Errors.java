@@ -16,55 +16,93 @@
 
 package io.etcd.jetcd.support;
 
-import io.grpc.Status;
+import io.vertx.grpc.common.GrpcStatus;
 
+/**
+ * Utility class for error detection and classification.
+ */
 public final class Errors {
+    /** Error message indicating no leader. */
     public static final String NO_LEADER_ERROR_MESSAGE = "etcdserver: no leader";
+    /** Error message indicating invalid auth token. */
     public static final String INVALID_AUTH_TOKEN_ERROR_MESSAGE = "etcdserver: invalid auth token";
+    /** Error message indicating permission denied. */
+    public static final String PERMISSION_DENIED_ERROR_MESSAGE = "etcdserver: permission denied";
+    /** Error message indicating old auth store revision. */
     public static final String ERROR_AUTH_STORE_OLD = "etcdserver: revision of auth store is old";
 
     private Errors() {
     }
 
-    // isRetryable implementation for idempotent operations.
-    public static boolean isRetryableForSafeRedoOp(Status status) {
-        return Status.UNAVAILABLE.getCode().equals(status.getCode()) || isAlwaysSafeToRetry(status);
+    /**
+     * Checks for an etcd response that rejected the token before executing the operation.
+     *
+     * @param  status  the gRPC status
+     * @param  message the server's gRPC status message
+     * @return         whether a new token can resolve the rejection
+     */
+    public static boolean isRefreshableAuthError(GrpcStatus status, String message) {
+        return switch (status) {
+            case UNAUTHENTICATED -> INVALID_AUTH_TOKEN_ERROR_MESSAGE.equals(message);
+            case INVALID_ARGUMENT -> ERROR_AUTH_STORE_OLD.equals(message);
+            default -> false;
+        };
     }
 
-    // isRetryable implementation for non-idempotent operations
-    public static boolean isRetryableForNoSafeRedoOp(Status status) {
-        return isAlwaysSafeToRetry(status);
+    /**
+     * Checks if the error status should halt reconnection attempts.
+     * Transient errors (UNAVAILABLE, INTERNAL, UNKNOWN) allow reconnection.
+     *
+     * @param  status the gRPC status to check
+     * @return        true if reconnection should be halted
+     */
+    public static boolean isHaltError(final GrpcStatus status) {
+        // Allow reconnection for transient errors:
+        // - UNAVAILABLE: server temporarily unavailable
+        // - INTERNAL: internal server errors
+        // - UNKNOWN: unexpected stream closures (e.g., during cluster restarts)
+        return status != GrpcStatus.UNAVAILABLE
+            && status != GrpcStatus.INTERNAL
+            && status != GrpcStatus.UNKNOWN;
     }
 
-    public static boolean isAlwaysSafeToRetry(Status status) {
-        return isInvalidTokenError(status) || isAuthStoreExpired(status);
+    /**
+     * Checks if the error status indicates a no-leader condition.
+     *
+     * @param  status the gRPC status to check
+     * @return        true if it indicates a no-leader condition
+     */
+    public static boolean isNoLeaderError(final GrpcStatus status) {
+        return status == GrpcStatus.UNAVAILABLE;
     }
 
-    public static boolean isInvalidTokenError(Throwable e) {
-        Status status = Status.fromThrowable(e);
-        return isInvalidTokenError(status);
+    /**
+     * Checks if the error message indicates a permission denied error.
+     *
+     * @param  message the error message to check
+     * @return         true if permission denied error
+     */
+    public static boolean isPermissionDenied(String message) {
+        return message != null && message.contains(PERMISSION_DENIED_ERROR_MESSAGE);
     }
 
-    public static boolean isInvalidTokenError(Status status) {
-        return (status.getCode() == Status.Code.UNAUTHENTICATED || status.getCode() == Status.Code.UNKNOWN)
-            && INVALID_AUTH_TOKEN_ERROR_MESSAGE.equals(status.getDescription());
+    /**
+     * Checks if the error message indicates an invalid auth token error.
+     *
+     * @param  message the error message to check
+     * @return         true if invalid auth token error
+     */
+    public static boolean isInvalidAuthToken(String message) {
+        return message != null && message.contains(INVALID_AUTH_TOKEN_ERROR_MESSAGE);
     }
 
-    public static boolean isAuthStoreExpired(Throwable e) {
-        Status status = Status.fromThrowable(e);
-        return isAuthStoreExpired(status);
-    }
-
-    public static boolean isAuthStoreExpired(Status status) {
-        return (status.getCode() == Status.Code.UNAUTHENTICATED || status.getCode() == Status.Code.INVALID_ARGUMENT)
-            && ERROR_AUTH_STORE_OLD.equals(status.getDescription());
-    }
-
-    public static boolean isHaltError(final Status status) {
-        return status.getCode() != Status.Code.UNAVAILABLE && status.getCode() != Status.Code.INTERNAL;
-    }
-
-    public static boolean isNoLeaderError(final Status status) {
-        return status.getCode() == Status.Code.UNAVAILABLE && NO_LEADER_ERROR_MESSAGE.equals(status.getDescription());
+    /**
+     * Checks if the error message indicates an authentication error (permission denied or invalid token).
+     *
+     * @param  message the error message to check
+     * @return         true if authentication error
+     */
+    public static boolean isAuthenticationError(String message) {
+        return isPermissionDenied(message) || isInvalidAuthToken(message);
     }
 }

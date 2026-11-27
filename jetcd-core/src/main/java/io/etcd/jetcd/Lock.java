@@ -29,6 +29,8 @@ public interface Lock extends CloseableClient {
 
     /**
      * Acquire a lock with the given name.
+     * Cancelling the returned future requests cancellation of a pending acquisition.
+     * If etcd grants ownership first, the lock remains subject to the normal release and lease rules.
      *
      * @param  name
      *                 the identifier for the distributed shared lock to be acquired.

@@ -20,4 +20,9 @@ package io.etcd.jetcd.election;
  * Signals that leader for given election does not exist.
  */
 public class NoLeaderException extends RuntimeException {
+    /**
+     * Creates a new NoLeaderException.
+     */
+    public NoLeaderException() {
+    }
 }

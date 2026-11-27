@@ -1,0 +1,25 @@
+project:
+  name: jetcd
+
+signing:
+  pgp:
+    active: RELEASE
+    armored: true
+
+deploy:
+  maven:
+    mavenCentral:
+      release-deploy:
+        active: RELEASE
+        url: https://central.sonatype.com/api/v1/publisher
+        applyMavenCentralRules: true
+        stagingRepositories:
+          - build/staging-deploy
+    nexus2:
+      snapshot-deploy:
+        active: SNAPSHOT
+        snapshotUrl: https://central.sonatype.com/repository/maven-snapshots/
+        applyMavenCentralRules: false
+        snapshotSupported: true
+        stagingRepositories:
+          - build/staging-deploy

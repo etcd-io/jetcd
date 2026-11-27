@@ -16,17 +16,15 @@
 
 dependencies {
     api project(':jetcd-api')
+    api project(':jetcd-core')
     api project(':jetcd-launcher')
 
     api libs.slf4j
     api libs.guava
-    api libs.bundles.grpc
-    api libs.bundles.grpcTest
-
     api libs.junit
-    api libs.autoServiceAnnotations
+    api "io.vertx:vertx-core:${libs.versions.vertx.get()}"
 
-    annotationProcessor libs.autoServiceProcessor
+    testImplementation libs.assertj
 
     testRuntimeOnly libs.bundles.log4j
 }

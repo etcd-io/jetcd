@@ -20,10 +20,19 @@ import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.impl.AbstractResponse;
 import io.etcd.jetcd.support.Util;
 
+/**
+ * Response from a lock operation.
+ */
 public class LockResponse extends AbstractResponse<io.etcd.jetcd.api.lock.LockResponse> {
 
     private final ByteSequence unprefixedKey;
 
+    /**
+     * Creates a new LockResponse from the gRPC response.
+     *
+     * @param response  the gRPC lock response
+     * @param namespace the namespace used
+     */
     public LockResponse(io.etcd.jetcd.api.lock.LockResponse response, ByteSequence namespace) {
         super(response, response.getHeader());
         this.unprefixedKey = ByteSequence.from(Util.unprefixNamespace(getResponse().getKey(), namespace));

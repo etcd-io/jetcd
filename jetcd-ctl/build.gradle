@@ -38,6 +38,9 @@ shadowJar {
     archiveVersion.set('')
 
     mergeServiceFiles()
+    filesMatching('META-INF/services/**') {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
 }
 
 application {

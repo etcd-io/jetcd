@@ -24,12 +24,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -38,13 +40,11 @@ import org.junit.jupiter.api.io.TempDir;
 
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Maintenance;
-import io.etcd.jetcd.maintenance.SnapshotResponse;
 import io.etcd.jetcd.maintenance.StatusResponse;
 import io.etcd.jetcd.test.EtcdClusterExtension;
-import io.grpc.stub.StreamObserver;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Fail.fail;
 
 @Timeout(value = 30, unit = TimeUnit.SECONDS)
 public class MaintenanceTest {
@@ -68,19 +68,35 @@ public class MaintenanceTest {
         maintenance = client.getMaintenanceClient();
     }
 
+    @AfterEach
+    public void tearDown() throws Exception {
+        if (client != null) {
+            client.close();
+        }
+    }
+
     @Test
     public void testStatusMember() throws ExecutionException, InterruptedException {
-        StatusResponse statusResponse = maintenance.statusMember(endpoints.get(0)).get();
-        assertThat(statusResponse.getDbSize()).isGreaterThan(0);
-        assertThat(statusResponse.getRaftIndex()).isGreaterThan(0);
-        assertThat(statusResponse.getRaftAppliedIndex())
-            .isGreaterThan(0)
-            .isLessThanOrEqualTo(statusResponse.getRaftIndex());
-        assertThat(statusResponse.getDbSizeInUse())
-            .isGreaterThan(0)
-            .isLessThanOrEqualTo(statusResponse.getDbSize());
-        assertThat(statusResponse.isLearner()).isFalse();
-        assertThat(statusResponse.getErrorList().size()).isEqualTo(0);
+        List<Long> memberIds = new ArrayList<>();
+        for (String endpoint : endpoints) {
+            try (Client member = Client.builder(endpoint).build()) {
+                long expectedId = member.getClusterClient().listMember().get().getHeader().getMemberId();
+                StatusResponse statusResponse = maintenance.statusMember(endpoint).get();
+                assertThat(statusResponse.getHeader().getMemberId()).isEqualTo(expectedId);
+                assertThat(statusResponse.getDbSize()).isGreaterThan(0);
+                assertThat(statusResponse.getRaftIndex()).isGreaterThan(0);
+                assertThat(statusResponse.getRaftAppliedIndex())
+                    .isGreaterThan(0)
+                    .isLessThanOrEqualTo(statusResponse.getRaftIndex());
+                assertThat(statusResponse.getDbSizeInUse())
+                    .isGreaterThan(0)
+                    .isLessThanOrEqualTo(statusResponse.getDbSize());
+                assertThat(statusResponse.isLearner()).isFalse();
+                assertThat(statusResponse.getErrorList()).isEmpty();
+                memberIds.add(expectedId);
+            }
+        }
+        assertThat(memberIds).doesNotHaveDuplicates();
     }
 
     @Test
@@ -101,38 +117,23 @@ public class MaintenanceTest {
     }
 
     @Test
-    public void testSnapshotChunks() throws InterruptedException {
-        // One snapshot only: comparing two snapshot() calls is flaky because etcd state
-        // (WAL, raft index) can change between them, so totals need not match.
-        final AtomicLong chunkSum = new AtomicLong();
-        final ByteArrayOutputStream captured = new ByteArrayOutputStream();
-        final CountDownLatch latcht = new CountDownLatch(1);
+    public void testSnapshotChunks() throws ExecutionException, InterruptedException, TimeoutException {
+        final var captured = new ByteArrayOutputStream();
+        final var chunkSum = new AtomicLong();
+        final var completed = new CompletableFuture<Void>();
 
-        maintenance.snapshot(new StreamObserver<SnapshotResponse>() {
-            @Override
-            public void onNext(SnapshotResponse value) {
-                try {
-                    chunkSum.addAndGet(value.getBlob().size());
-                    value.getBlob().writeTo(captured);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+        maintenance.snapshot(
+            Maintenance.listener(
+                value -> {
+                    var blob = value.getBlob();
+                    captured.writeBytes(blob.toByteArray());
+                    chunkSum.addAndGet(blob.size());
+                },
+                completed::completeExceptionally,
+                () -> completed.complete(null)));
 
-            @Override
-            public void onError(Throwable t) {
-                fail("Should not throw exception", t);
-            }
-
-            @Override
-            public void onCompleted() {
-                latcht.countDown();
-            }
-        });
-
-        latcht.await(10, TimeUnit.SECONDS);
-
-        assertThat(chunkSum.get()).isEqualTo((long) captured.size());
+        completed.get(10, TimeUnit.SECONDS);
+        assertThat(chunkSum.get()).isPositive().isEqualTo(captured.size());
     }
 
     @Test
@@ -169,7 +170,7 @@ public class MaintenanceTest {
             fail("leader not found");
         }
 
-        try (Client client = Client.builder().endpoints(leaderEndpoint).build()) {
+        try (Client client = Client.builder(leaderEndpoint.toString()).build()) {
             client.getMaintenanceClient().moveLeader(followers.get(0)).get();
         }
     }

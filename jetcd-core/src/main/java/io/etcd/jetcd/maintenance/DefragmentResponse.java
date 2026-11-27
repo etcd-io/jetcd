@@ -24,6 +24,11 @@ import io.etcd.jetcd.impl.AbstractResponse;
  */
 public class DefragmentResponse extends AbstractResponse<io.etcd.jetcd.api.DefragmentResponse> {
 
+    /**
+     * Creates a new DefragmentResponse from the gRPC response.
+     *
+     * @param response the gRPC defragment response
+     */
     public DefragmentResponse(io.etcd.jetcd.api.DefragmentResponse response) {
         super(response, response.getHeader());
     }

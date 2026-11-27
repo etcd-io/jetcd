@@ -43,7 +43,7 @@ class CommandGet implements Runnable {
 
     @Override
     public void run() {
-        try (Client client = Client.builder().endpoints(main.endpoints).build()) {
+        try (Client client = Client.builder(main.endpoints).build()) {
             GetResponse getResponse = client.getKVClient().get(
                 ByteSequence.from(key, StandardCharsets.UTF_8),
                 GetOption.builder().withRevision(rev).build()).get();

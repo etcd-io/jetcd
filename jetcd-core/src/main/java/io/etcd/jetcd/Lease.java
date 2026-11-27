@@ -18,14 +18,16 @@ package io.etcd.jetcd;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
+import io.etcd.jetcd.common.exception.ErrorCode;
+import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.lease.LeaseGrantResponse;
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
 import io.etcd.jetcd.lease.LeaseRevokeResponse;
 import io.etcd.jetcd.lease.LeaseTimeToLiveResponse;
 import io.etcd.jetcd.options.LeaseOption;
 import io.etcd.jetcd.support.CloseableClient;
-import io.grpc.stub.StreamObserver;
 
 /**
  * Interface of KeepAlive talking to etcd.
@@ -33,7 +35,8 @@ import io.grpc.stub.StreamObserver;
 public interface Lease extends CloseableClient {
 
     /**
-     * New a lease with ttl value.
+     * Grants a lease with the given TTL.
+     * The operation is retried only after a confirmed token rejection.
      *
      * @param  ttl ttl value, unit seconds
      * @return     the grant response
@@ -41,13 +44,14 @@ public interface Lease extends CloseableClient {
     CompletableFuture<LeaseGrantResponse> grant(long ttl);
 
     /**
-     * New a lease with ttl value.Waits if necessary for at most the given time
-     * if etcd server is available.
+     * Grants a lease with the given TTL and a deadline covering authentication and any auth retry.
+     * If the deadline expires, the future fails with an
+     * {@link EtcdException} with code {@link ErrorCode#DEADLINE_EXCEEDED}.
      *
      * @param  ttl     ttl value, unit seconds
-     * @param  timeout the maximum time to waits
+     * @param  timeout the maximum time to wait. A nonpositive value creates an expired deadline
      * @param  unit    the time unit of the timeout argument
-     * @return         The grant response
+     * @return         the grant response
      */
     CompletableFuture<LeaseGrantResponse> grant(long ttl, long timeout, TimeUnit unit);
 
@@ -77,11 +81,126 @@ public interface Lease extends CloseableClient {
     CompletableFuture<LeaseTimeToLiveResponse> timeToLive(long leaseId, LeaseOption leaseOption);
 
     /**
-     * keep the given lease alive forever.
+     * Keeps the given lease alive and delivers callbacks serially for this listener registration on worker threads.
+     * Each keepalive response or reconnect error replaces any pending notification of the same kind.
+     * Terminal notifications are delivered after the callbacks still pending for the registration.
+     * The client continues renewing the lease while the listener is busy.
      *
      * @param  leaseId  lease to be keep alive forever.
-     * @param  observer the observer
-     * @return          a KeepAliveListener that listens for KeepAlive responses.
+     * @param  listener the listener
+     * @return          a CloseableClient that can be used to stop the keep alive.
      */
-    CloseableClient keepAlive(long leaseId, StreamObserver<LeaseKeepAliveResponse> observer);
+    CloseableClient keepAlive(long leaseId, Listener listener);
+
+    /**
+     * keep the given lease alive forever.
+     *
+     * @param  leaseId lease to be keep alive forever.
+     * @param  onNext  the on next consumer
+     * @return         a CloseableClient that can be used to stop the keep alive.
+     */
+    default CloseableClient keepAlive(long leaseId, Consumer<LeaseKeepAliveResponse> onNext) {
+        return keepAlive(leaseId, listener(onNext));
+    }
+
+    /**
+     * keep the given lease alive forever.
+     *
+     * @param  leaseId lease to be keep alive forever.
+     * @param  onNext  the on next consumer
+     * @param  onError the on error consumer
+     * @return         a CloseableClient that can be used to stop the keep alive.
+     */
+    default CloseableClient keepAlive(long leaseId, Consumer<LeaseKeepAliveResponse> onNext, Consumer<Throwable> onError) {
+        return keepAlive(leaseId, listener(onNext, onError));
+    }
+
+    /**
+     * keep the given lease alive forever.
+     *
+     * @param  leaseId     lease to be keep alive forever.
+     * @param  onNext      the on next consumer
+     * @param  onError     the on error consumer
+     * @param  onCompleted the on completion runnable
+     * @return             a CloseableClient that can be used to stop the keep alive.
+     */
+    default CloseableClient keepAlive(long leaseId, Consumer<LeaseKeepAliveResponse> onNext, Consumer<Throwable> onError,
+        Runnable onCompleted) {
+        return keepAlive(leaseId, listener(onNext, onError, onCompleted));
+    }
+
+    /**
+     * Creates a listener with only onNext callback.
+     *
+     * @param  onNext the callback for responses
+     * @return        the listener
+     */
+    static Listener listener(Consumer<LeaseKeepAliveResponse> onNext) {
+        return listener(onNext, t -> {
+        }, () -> {
+        });
+    }
+
+    /**
+     * Creates a listener with onNext and onError callbacks.
+     *
+     * @param  onNext  the callback for responses
+     * @param  onError the callback for errors
+     * @return         the listener
+     */
+    static Listener listener(Consumer<LeaseKeepAliveResponse> onNext, Consumer<Throwable> onError) {
+        return listener(onNext, onError, () -> {
+        });
+    }
+
+    /**
+     * Creates a listener with all callbacks.
+     *
+     * @param  onNext      the callback for responses
+     * @param  onError     the callback for errors
+     * @param  onCompleted the callback when completed
+     * @return             the listener
+     */
+    static Listener listener(Consumer<LeaseKeepAliveResponse> onNext, Consumer<Throwable> onError, Runnable onCompleted) {
+        return new Listener() {
+            @Override
+            public void onNext(LeaseKeepAliveResponse response) {
+                onNext.accept(response);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                onError.accept(throwable);
+            }
+
+            @Override
+            public void onCompleted() {
+                onCompleted.run();
+            }
+        };
+    }
+
+    /**
+     * Listener for lease keepalive responses. See {@link Lease#keepAlive(long, Listener)} for callback delivery.
+     */
+    interface Listener {
+        /**
+         * Invoked on new keepalive responses. A busy listener may skip intermediate responses.
+         *
+         * @param response the response.
+         */
+        void onNext(LeaseKeepAliveResponse response);
+
+        /**
+         * Invoked on errors. A busy listener may skip intermediate reconnect errors.
+         *
+         * @param throwable the error.
+         */
+        void onError(Throwable throwable);
+
+        /**
+         * Invoked on completion.
+         */
+        void onCompleted();
+    }
 }

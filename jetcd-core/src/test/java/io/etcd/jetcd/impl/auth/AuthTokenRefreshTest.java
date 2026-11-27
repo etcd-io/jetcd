@@ -13,7 +13,9 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
+import io.etcd.jetcd.SecureByteSequence;
 import io.etcd.jetcd.auth.Permission;
+import io.etcd.jetcd.common.vertx.Ssl;
 import io.etcd.jetcd.impl.TestUtil;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.test.EtcdClusterExtension;
@@ -40,35 +42,30 @@ public class AuthTokenRefreshTest {
     public void testTokenIsRefreshedWhenRevisionsIsOld() throws Exception {
         setUpEnvironment();
 
-        Client authClient = createAuthClient();
-        KV kvClient = authClient.getKVClient();
+        try (Client authClient = createAuthClient()) {
+            KV kvClient = authClient.getKVClient();
+            kvClient.put(key, TestUtil.randomByteSequence()).get(5, TimeUnit.SECONDS);
 
-        ByteSequence value = TestUtil.randomByteSequence();
-        kvClient.put(key, value).get(1, TimeUnit.SECONDS);
+            // Adding a role advances the auth revision and invalidates the cached JWT.
+            authClient.getAuthClient().roleAdd(TestUtil.bytesOf("newRole")).get(5, TimeUnit.SECONDS);
 
-        //read the created key to generate a new jwt token
-        GetResponse getResponse = kvClient.get(key).get(1, TimeUnit.SECONDS);
-        Assertions.assertEquals(1, getResponse.getKvs().size());
-        Assertions.assertEquals(key, getResponse.getKvs().get(0).getKey());
-        Assertions.assertEquals(value, getResponse.getKvs().get(0).getValue());
+            // The default put can retry after etcd confirms it rejected the stale token.
+            ByteSequence replacement = TestUtil.randomByteSequence();
+            kvClient.put(key, replacement).get(5, TimeUnit.SECONDS);
 
-        //update auth database revision by adding a new role thus invalidating existing token of the kv client
-        authClient.getAuthClient().roleAdd(TestUtil.bytesOf("newRole")).get(1, TimeUnit.SECONDS);
-
-        //kv client should automatically refresh the old token and read the key
-        getResponse = kvClient.get(key).get(1, TimeUnit.SECONDS);
-
-        Assertions.assertEquals(1, getResponse.getKvs().size());
-        Assertions.assertEquals(key, getResponse.getKvs().get(0).getKey());
-        Assertions.assertEquals(value, getResponse.getKvs().get(0).getValue());
+            GetResponse getResponse = kvClient.get(key).get(5, TimeUnit.SECONDS);
+            Assertions.assertEquals(1, getResponse.getKvs().size());
+            Assertions.assertEquals(key, getResponse.getKvs().get(0).getKey());
+            Assertions.assertEquals(replacement, getResponse.getKvs().get(0).getValue());
+        }
     }
 
     private void setUpEnvironment() throws Exception {
         final File caFile = new File(Objects.requireNonNull(getClass().getResource("/ssl/cert/ca.pem")).toURI());
 
         Client client = TestUtil.client(cluster)
-            .authority("etcd0")
-            .sslContext(b -> b.trustManager(caFile))
+            .httpClientOptions(Ssl.withTrustManager(caFile)
+                .andThen(options -> options.setVerifyHost(false)))
             .build();
 
         // enable authentication to enforce usage of access token
@@ -87,10 +84,10 @@ public class AuthTokenRefreshTest {
         final File caFile = new File(Objects.requireNonNull(getClass().getResource("/ssl/cert/ca.pem")).toURI());
 
         return TestUtil.client(cluster)
-            .user(user)
-            .password(password)
-            .authority("etcd0")
-            .sslContext(b -> b.trustManager(caFile))
+            .user(SecureByteSequence.from(user.getBytes()))
+            .password(SecureByteSequence.from(password.getBytes()))
+            .httpClientOptions(Ssl.withTrustManager(caFile)
+                .andThen(options -> options.setVerifyHost(false)))
             .build();
     }
 

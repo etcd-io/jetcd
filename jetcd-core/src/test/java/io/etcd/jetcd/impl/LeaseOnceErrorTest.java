@@ -73,6 +73,6 @@ public class LeaseOnceErrorTest {
 
         assertThatThrownBy(() -> leaseClient.keepAliveOnce(leaseID).get(1, TimeUnit.SECONDS))
             .hasCauseInstanceOf(EtcdException.class)
-            .hasMessageContaining("etcdserver: requested lease not found");
+            .hasMessageContaining("requested lease not found");
     }
 }

@@ -18,7 +18,15 @@ package io.etcd.jetcd.election;
 
 import io.etcd.jetcd.impl.AbstractResponse;
 
+/**
+ * Response from an election resign operation.
+ */
 public class ResignResponse extends AbstractResponse<io.etcd.jetcd.api.ResignResponse> {
+    /**
+     * Creates a new ResignResponse from the gRPC response.
+     *
+     * @param response the gRPC resign response
+     */
     public ResignResponse(io.etcd.jetcd.api.ResignResponse response) {
         super(response, response.getHeader());
     }

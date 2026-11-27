@@ -9,25 +9,43 @@ on:
       etcdImage:
         required: true
         type: string
-
+      includeTags:
+        required: false
+        type: string
+        default: ""
+      excludeTags:
+        required: false
+        type: string
+        default: ""
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 'Checkout'
+      - name: "Checkout"
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: 'Set Up Java'
+      - name: "Set Up Java"
         uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           java-version: ${{ inputs.javaVersion }}
-          distribution: 'temurin'
-          cache: 'gradle'
-      - name: 'Build Project'
+          distribution: "temurin"
+          cache: "gradle"
+      - name: "Build Project"
         env:
           ETCD_IMAGE: ${{ inputs.etcdImage }}
+          INCLUDE_TAGS: ${{ inputs.includeTags }}
+          EXCLUDE_TAGS: ${{ inputs.excludeTags }}
         run: |
-          export TC_USER="$(id -u):$(id -g)"
+          TC_USER="$(id -u):$(id -g)"
+          export TC_USER
           echo "tc user -> $TC_USER"
 
-          ./gradlew test --info
+          GRADLE_ARGS=()
+          if [ -n "$INCLUDE_TAGS" ]; then
+            GRADLE_ARGS+=("-PincludeTags=$INCLUDE_TAGS")
+          fi
+          if [ -n "$EXCLUDE_TAGS" ]; then
+            GRADLE_ARGS+=("-PexcludeTags=$EXCLUDE_TAGS")
+          fi
+
+          ./gradlew test "${GRADLE_ARGS[@]}" --info

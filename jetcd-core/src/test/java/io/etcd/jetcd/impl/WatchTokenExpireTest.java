@@ -26,6 +26,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -34,14 +35,17 @@ import org.slf4j.LoggerFactory;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
+import io.etcd.jetcd.SecureByteSequence;
 import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.auth.Permission;
+import io.etcd.jetcd.common.vertx.Ssl;
 import io.etcd.jetcd.options.WatchOption;
 import io.etcd.jetcd.test.EtcdClusterExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+@Tag("watch")
 @Timeout(value = 90)
 public class WatchTokenExpireTest {
     // create a cluster with SSL enabled, because otherwise volumes with certificates are not mapped
@@ -63,47 +67,38 @@ public class WatchTokenExpireTest {
     private static final ByteSequence user = TestUtil.bytesOf("root");
     private static final ByteSequence password = TestUtil.randomByteSequence();
 
-    /**
-     * JWT ttl in this suite is 1s; wait long enough for tokens to expire under slow CI before
-     * exercising refresh paths (avoids racing fixed 3s sleeps on loaded runners).
-     */
-    private static long millisToWaitPastJwtTtl() {
-        boolean onCi = Boolean.parseBoolean(System.getenv().getOrDefault("CI", "false"));
-        return onCi ? 4500L : 3000L;
-    }
-
     private static void sleepPastJwtTtl() throws InterruptedException {
-        Thread.sleep(millisToWaitPastJwtTtl());
+        boolean onCi = Boolean.parseBoolean(System.getenv("CI"));
+        Thread.sleep(onCi ? 4500L : 3000L);
     }
 
     private void setUpEnvironment() throws Exception {
         final File caFile = new File(Objects.requireNonNull(getClass().getResource("/ssl/cert/ca.pem")).toURI());
 
-        Client client = TestUtil.client(cluster)
-            .authority("etcd0")
-            .sslContext(b -> b.trustManager(caFile))
-            .build();
+        try (Client client = TestUtil.client(cluster)
+            .httpClientOptions(Ssl.withTrustManager(caFile)
+                .andThen(options -> options.setVerifyHost(false)))
+            .build()) {
 
-        // enable authentication to enforce usage of access token
-        ByteSequence role = TestUtil.bytesOf("root");
-        client.getAuthClient().roleAdd(role).get();
-        client.getAuthClient().userAdd(user, password).get();
-        // grant access only to given key
-        client.getAuthClient().roleGrantPermission(role, key, keyEnd, Permission.Type.READWRITE).get();
-        client.getAuthClient().userGrantRole(user, role).get();
-        client.getAuthClient().authEnable().get();
-
-        client.close();
+            // enable authentication to enforce usage of access token
+            ByteSequence role = TestUtil.bytesOf("root");
+            client.getAuthClient().roleAdd(role).get();
+            client.getAuthClient().userAdd(user, password).get();
+            // grant access only to given key
+            client.getAuthClient().roleGrantPermission(role, key, keyEnd, Permission.Type.READWRITE).get();
+            client.getAuthClient().userGrantRole(user, role).get();
+            client.getAuthClient().authEnable().get();
+        }
     }
 
     private Client createAuthClient() throws Exception {
         final File caFile = new File(Objects.requireNonNull(getClass().getResource("/ssl/cert/ca.pem")).toURI());
 
         return TestUtil.client(cluster)
-            .user(user)
-            .password(password)
-            .authority("etcd0")
-            .sslContext(b -> b.trustManager(caFile))
+            .user(SecureByteSequence.from(user.getBytes()))
+            .password(SecureByteSequence.from(password.getBytes()))
+            .httpClientOptions(Ssl.withTrustManager(caFile)
+                .andThen(options -> options.setVerifyHost(false)))
             .build();
     }
 
@@ -111,51 +106,50 @@ public class WatchTokenExpireTest {
     public void testRefreshExpiredToken() throws Exception {
         setUpEnvironment();
 
-        Client authClient = createAuthClient();
-        Watch authWatchClient = authClient.getWatchClient();
-        KV authKVClient = authClient.getKVClient();
+        try (Client authClient = createAuthClient()) {
+            Watch authWatchClient = authClient.getWatchClient();
+            KV authKVClient = authClient.getKVClient();
 
-        authKVClient.put(key, TestUtil.randomByteSequence()).get(1, TimeUnit.SECONDS);
-        sleepPastJwtTtl();
+            authKVClient.put(key, TestUtil.randomByteSequence()).get(1, TimeUnit.SECONDS);
+            sleepPastJwtTtl();
 
-        AtomicInteger modifications = new AtomicInteger();
+            AtomicInteger modifications = new AtomicInteger();
 
-        // watch should handle token refresh automatically
-        // token is already expired when we attempt to create a watch
-        Watch.Watcher watcher = authWatchClient.watch(
-            key,
-            WatchOption.builder().withRange(keyEnd).build(),
-            response -> {
-                modifications.incrementAndGet();
-            },
-            error -> {
-                LoggerFactory.getLogger(getClass()).info(">>> {}", error.toString());
-            });
+            // watch should handle token refresh automatically
+            // token is already expired when we attempt to create a watch
+            try (Watch.Watcher watcher = authWatchClient.watch( // NOPMD - UnusedLocalVariable
+                key,
+                WatchOption.builder().withRange(keyEnd).build(),
+                response -> {
+                    modifications.incrementAndGet();
+                },
+                error -> {
+                    LoggerFactory.getLogger(getClass()).info(">>> {}", error.toString());
+                })) {
 
-        // create single thread pool, so that tasks are executed one after another
-        ExecutorService executor = Executors.newFixedThreadPool(1);
-        List<Future<?>> futures = new ArrayList<>(2);
-        Client anotherClient = createAuthClient();
-        for (int i = 0; i < 2; ++i) {
-            futures.add(executor.submit(() -> {
-                try {
-                    sleepPastJwtTtl();
-                    anotherClient.getKVClient().put(key, TestUtil.randomByteSequence()).get(1, TimeUnit.SECONDS);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
+                // create single thread pool, so that tasks are executed one after another
+                ExecutorService executor = Executors.newFixedThreadPool(1);
+                List<Future<?>> futures = new ArrayList<>(2);
+                try (Client anotherClient = createAuthClient()) {
+                    for (int i = 0; i < 2; ++i) {
+                        futures.add(executor.submit(() -> {
+                            try {
+                                sleepPastJwtTtl();
+                                anotherClient.getKVClient().put(key, TestUtil.randomByteSequence()).get(1, TimeUnit.SECONDS);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        }));
+                    }
+
+                    await().atMost(45, TimeUnit.SECONDS).pollInterval(200, TimeUnit.MILLISECONDS)
+                        .untilAsserted(() -> assertThat(modifications.get()).isEqualTo(2));
+
+                    executor.shutdownNow();
+                    futures.forEach(f -> assertThat(f).isDone());
                 }
-            }));
+            }
+            authWatchClient.close();
         }
-
-        await().atMost(45, TimeUnit.SECONDS).pollInterval(200, TimeUnit.MILLISECONDS)
-            .untilAsserted(() -> assertThat(modifications.get()).isEqualTo(2));
-
-        executor.shutdownNow();
-        futures.forEach(f -> assertThat(f).isDone());
-
-        anotherClient.close();
-        watcher.close();
-        authWatchClient.close();
-        authClient.close();
     }
 }

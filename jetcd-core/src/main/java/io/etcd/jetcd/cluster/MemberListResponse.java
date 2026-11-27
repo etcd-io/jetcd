@@ -17,8 +17,10 @@
 package io.etcd.jetcd.cluster;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import io.etcd.jetcd.Cluster;
+import io.etcd.jetcd.common.suppliers.Suppliers;
 import io.etcd.jetcd.impl.AbstractResponse;
 
 /**
@@ -27,10 +29,17 @@ import io.etcd.jetcd.impl.AbstractResponse;
  */
 public class MemberListResponse extends AbstractResponse<io.etcd.jetcd.api.MemberListResponse> {
 
-    private List<Member> members;
+    private final Supplier<List<Member>> members;
 
+    /**
+     * Creates a new MemberListResponse from the gRPC response.
+     *
+     * @param response the gRPC member list response
+     */
     public MemberListResponse(io.etcd.jetcd.api.MemberListResponse response) {
         super(response, response.getHeader());
+
+        this.members = Suppliers.memoizing(() -> Util.toMembers(getResponse().getMembersList()));
     }
 
     /**
@@ -38,11 +47,7 @@ public class MemberListResponse extends AbstractResponse<io.etcd.jetcd.api.Membe
      *
      * @return the list of members.
      */
-    public synchronized List<Member> getMembers() {
-        if (members == null) {
-            members = Util.toMembers(getResponse().getMembersList());
-        }
-
-        return members;
+    public List<Member> getMembers() {
+        return members.get();
     }
 }

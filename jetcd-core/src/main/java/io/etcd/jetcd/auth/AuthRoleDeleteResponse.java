@@ -26,6 +26,11 @@ import io.etcd.jetcd.impl.AbstractResponse;
  */
 public class AuthRoleDeleteResponse extends AbstractResponse<io.etcd.jetcd.api.AuthRoleDeleteResponse> {
 
+    /**
+     * Creates a new AuthRoleDeleteResponse from the gRPC response.
+     *
+     * @param response the gRPC auth role delete response
+     */
     public AuthRoleDeleteResponse(io.etcd.jetcd.api.AuthRoleDeleteResponse response) {
         super(response, response.getHeader());
     }

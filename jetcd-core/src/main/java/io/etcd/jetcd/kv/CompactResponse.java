@@ -19,8 +19,16 @@ package io.etcd.jetcd.kv;
 import io.etcd.jetcd.api.CompactionResponse;
 import io.etcd.jetcd.impl.AbstractResponse;
 
+/**
+ * Response from a compact operation.
+ */
 public class CompactResponse extends AbstractResponse<CompactionResponse> {
 
+    /**
+     * Creates a new CompactResponse from the gRPC response.
+     *
+     * @param response the gRPC compaction response
+     */
     public CompactResponse(CompactionResponse response) {
         super(response, response.getHeader());
     }

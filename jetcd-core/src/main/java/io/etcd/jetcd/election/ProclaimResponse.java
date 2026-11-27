@@ -18,7 +18,15 @@ package io.etcd.jetcd.election;
 
 import io.etcd.jetcd.impl.AbstractResponse;
 
+/**
+ * Response from an election proclaim operation.
+ */
 public class ProclaimResponse extends AbstractResponse<io.etcd.jetcd.api.ProclaimResponse> {
+    /**
+     * Creates a new ProclaimResponse from the gRPC response.
+     *
+     * @param response the gRPC proclaim response
+     */
     public ProclaimResponse(io.etcd.jetcd.api.ProclaimResponse response) {
         super(response, response.getHeader());
     }
